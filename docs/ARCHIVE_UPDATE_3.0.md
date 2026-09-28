@@ -1,7 +1,8 @@
 # UPDATE 3.0 — Scale the Core & Fix What's Urgent
 
-STATUS: **ARCHIVED — built.** Phases 1 and 2 are fully shipped, and Phase 3 is complete
-except item 3.4. Kept as the audit trail of the scaling work: the live plan is
+STATUS: **ARCHIVED — built.** All four phases are shipped, including 3.4 (optimistic UI +
+pending-sync badge) and the Phase 4 token-efficiency items — 4.5 (`api/lib/*.py` extraction)
+is the only one left open. Kept as the audit trail of the scaling work: the live plan is
 `memory-bank/activeContext.md`, the forward scope is [ROADMAP.md](ROADMAP.md), and the
 per-step history is [CHANGELOG.md](CHANGELOG.md) + [ARCHIVE.md](ARCHIVE.md).
 
@@ -487,18 +488,27 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     lock, and that `initCatchReconcile()` is actually called) plus a 12-assertion
     functional test covering the lock, the throttle, the force bypass, the signed-out
     short-circuit and live listener registration.
-- [ ] **3.4 Optimistic UI + pending-sync badge.**
-  - Files: `src/features/catch-log/*`, `src/styles.css`.
-  - Verify: an offline catch shows instantly with the badge; badge clears on confirm.
+- [x] **3.4 Optimistic UI + pending-sync badge.** Shipped as
+  `src/features/catch-log/pending.js`: `pendingRows()` reads `outboxPending()` (no second
+  store), both scopes render those rows on top with a `.sync-badge`, and a confirmed flush
+  calls `refreshCatchLists()`, which re-renders and drops the badge. A pending row has no
+  server id yet, so the "yours" scope withholds Edit/Delete until it lands. The public view
+  selects no `id` (privacy boundary), so a lost *response* can briefly double-show one catch
+  — the retry resolves it; documented in the module header.
+  - Files: `src/features/catch-log/pending.js` (new), `board.js`, `mycatches.js`,
+    `src/features/auth/auth.js`, `src/styles.css`, `index.html`, `sw.js`.
+  - Verify: `node sanity_pass.js` — 8 runtime assertions on `pending.js` (filter, order,
+    no-mutation, dedupe, mapping, badge, re-render, absent-globals) + the static guard
+    "pending catches paint optimistically with a sync badge".
 
 ### Phase 4 — Token Efficiency Protocol (structural)
 
-- [ ] **4.1 `SYMBOLS.md`** — file → public functions + one-line purpose.
-- [ ] **4.2 File-header convention** — `// public: ... — purpose` on every feature file.
-- [ ] **4.3 Contracts** — `docs/CONTRACT_REGIONS.md`, `docs/CONTRACT_TECHNIQUE.md`,
+- [x] **4.1 `SYMBOLS.md`** — file → public functions + one-line purpose.
+- [x] **4.2 File-header convention** — `// public: ... — purpose` on every feature file.
+- [x] **4.3 Contracts** — `docs/CONTRACT_REGIONS.md`, `docs/CONTRACT_TECHNIQUE.md`,
       `docs/CONTRACT_CATCH.md`.
-- [ ] **4.4 Doc hygiene** — trim `TASK.md` to the ACTIVE phase (archive the rest);
-      remove the stray `.kilo/worktrees/clumsy-college/` worktree.
+- [x] **4.4 Doc hygiene** — `TASK.md` folded into `memory-bank/activeContext.md`; the stray
+      `.kilo/worktrees/` checkouts removed.
 - [ ] **4.5 Extract `api/water_report.py` pure helpers → `api/lib/*.py`** (thin handler).
   - Potential bug: the handler must still be a single importable `handler` class for Vercel.
   - Verify: `python3 -m py_compile`; dev-server API unchanged.

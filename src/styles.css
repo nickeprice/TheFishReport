@@ -93,6 +93,10 @@ td { padding: 8px; border-bottom: 1px solid #222; }
 .mini-btn:hover { background-color: #444; }
 .mini-btn-danger { color: var(--accent-red); border-color: #7f1d1d; }
 .mini-btn-danger:hover { background-color: #3a1010; }
+/* Pending-sync badge (Phase 3.4): a catch buffered on this device, not confirmed by
+   Supabase yet. Amber = "saved locally, will upload", never an error state. */
+.sync-badge { display: inline-block; background-color: #3a2f10; color: var(--accent-yellow); border: 1px solid var(--accent-yellow); border-radius: 4px; padding: 1px 5px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+tr.row-pending td:first-child { box-shadow: inset 2px 0 0 var(--accent-yellow); }
 /* Catch Log "yours / everyone" scope toggle — segmented control above the ONE list */
 .catch-scope-toggle { display: flex; gap: 6px; margin: 0 0 8px 0; }
 .scope-btn { flex: 1; min-height: 40px; padding: 0 10px; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; color: var(--text-muted); background-color: #151517; border: 1px solid #2c2c2e; border-radius: 8px; cursor: pointer; }

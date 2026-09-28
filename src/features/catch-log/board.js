@@ -60,13 +60,35 @@ async function loadDatabase() {
         logDebug('Brag board falling back to ' + rows.length + ' buffered row(s)', 'DB');
     }
 
-    var rendered = 0;
+    // Phase 3.4: rows still sitting in the outbox are shown optimistically at the top with
+    // a "Syncing..." badge. The public view exposes no id (privacy boundary), so a row that
+    // was stored but whose reply was lost can appear twice until the retry clears it —
+    // see the DEDUPE note in pending.js.
+    var localFallback = !fromCloud;
+    var entries = [];
+    if (!localFallback && typeof pendingRows === 'function') {
+        var pending = pendingRows();
+        for (var p = 0; p < pending.length; p++) entries.push({ row: pending[p], pending: true });
+    }
     for (var i = 0; i < rows.length; i++) {
-        var r = normalizeFeedRow(rows[i]);
+        // Already rendered from the outbox in the fallback case — badge, don't duplicate.
+        entries.push({ row: rows[i], pending: localFallback && !!rows[i].pendingSync });
+    }
+
+    var rendered = 0;
+    for (var e = 0; e < entries.length; e++) {
+        var src = entries[e];
+        var r = normalizeFeedRow(src.row);
         if (!r) continue;
         var tr = document.createElement('tr');
+        if (src.pending) tr.className = 'row-pending';
         var tdName = document.createElement('td');
         tdName.textContent = (r.name !== undefined && r.name !== null && r.name !== '') ? String(r.name) : '--';
+        // The badge rides inside the Name cell so the board keeps its four public columns.
+        if (src.pending && typeof pendingBadge === 'function') {
+            tdName.appendChild(document.createTextNode(' '));
+            tdName.appendChild(pendingBadge());
+        }
         var tdTime = document.createElement('td');
         tdTime.textContent = formatCatchTime(r.time);
         var tdRiver = document.createElement('td');

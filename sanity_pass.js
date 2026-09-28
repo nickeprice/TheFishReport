@@ -227,6 +227,98 @@ function staticIntegrity() {
    /initCatchReconcile\(\)/.test(appSrcReconcile))
     ? ok('the catch outbox reconciles on online / resume / focus', 'guarded by an in-flight lock')
     : fail('the catch outbox reconciles on online / resume / focus', 'listener(s) or lock missing');
+  // Phase 3.4: a just-logged catch must paint immediately with a pending-sync badge, and
+  // the badge must clear once the flush confirms. Both scopes read ONE pending source
+  // (outboxPending) — no second store — and pending.js must load before its consumers.
+  const pendingSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'pending.js'), 'utf8');
+  const boardSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'board.js'), 'utf8');
+  const mineSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'mycatches.js'), 'utf8');
+  const authSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'auth', 'auth.js'), 'utf8');
+  const loaded = localScriptPaths();
+  const pIdx = loaded.findIndex((p) => p.indexOf('catch-log/pending.js') !== -1);
+  const bIdx = loaded.findIndex((p) => p.indexOf('catch-log/board.js') !== -1);
+  const mIdx = loaded.findIndex((p) => p.indexOf('catch-log/mycatches.js') !== -1);
+  // Slice the flush body rather than regex-window it — the badge reset must be inside it.
+  const flush = authSrc.slice(authSrc.indexOf('async function syncPendingCatches()'));
+  const flushBody = flush.slice(0, flush.indexOf('\n}\n') + 3);
+  (/outboxPending\(\)/.test(pendingSrc) &&
+   boardSrc.indexOf('pendingBadge()') !== -1 &&
+   mineSrc.indexOf('pendingBadge()') !== -1 &&
+   /refreshCatchLists\(\)/.test(flushBody) &&
+   pIdx >= 0 && bIdx > pIdx && mIdx > pIdx)
+    ? ok('pending catches paint optimistically with a sync badge', 'both scopes; cleared by the flush')
+    : fail('pending catches paint optimistically with a sync badge', 'badge, flush reset or load order missing');
+
+  // Phase 3.4 runtime: pending.js is pure logic, so exercise it for real against a fake
+  // outbox instead of only grepping the source — filter, order, dedupe, mapping, badge and
+  // the post-flush re-render all have to behave, not merely appear.
+  try {
+    const vm = require('vm');
+    const mockEl = (tag) => ({ tag: tag, className: '', textContent: '', title: '',
+                               children: [], appendChild(c) { this.children.push(c); } });
+    const FAKE_OUTBOX = [
+      { clientId: 'c-old',    time: '2026-09-28T05:00:00Z', spc: 'Chinook', flow: 1040, score: 7.2, pendingSync: true },
+      { clientId: 'c-new',    time: '2026-09-28T09:00:00Z', spc: 'Coho',    flow: 1010, score: 6.1, pendingSync: true },
+      { clientId: 'c-synced', time: '2026-09-28T03:00:00Z', spc: 'Chum',    flow: 990,  score: 5.5, pendingSync: false },
+      { clientId: 'c-lost',   time: '2026-09-28T08:00:00Z', spc: 'Pink',    flow: 1000, score: 4.0, pendingSync: true }
+    ];
+    let scopeRenders = 0;
+    const box = {
+      document: { createElement: mockEl },
+      outboxPending: () => FAKE_OUTBOX.filter((r) => r && r.pendingSync),
+      CATCH_SCOPE: 'yours',
+      setCatchScope: () => { scopeRenders++; }
+    };
+    box.window = box;
+    vm.createContext(box);
+    vm.runInContext(pendingSrc, box, { filename: 'pending.js' });
+
+    const pr = box.pendingRows();
+    const ids = pr.map((r) => r.clientId).join(',');
+    (pr.length === 3 && ids === 'c-new,c-lost,c-old')
+      ? ok('pendingRows() returns only pending rows, newest first', ids)
+      : fail('pendingRows() returns only pending rows, newest first', ids || '(none)');
+    FAKE_OUTBOX.length === 4
+      ? ok('pendingRows() does not mutate the outbox', '4 rows retained')
+      : fail('pendingRows() does not mutate the outbox', FAKE_OUTBOX.length + ' rows');
+
+    const d1 = box.pendingNotIn([{ id: 'c-lost' }]).map((r) => r.clientId).join(',');
+    (d1 === 'c-new,c-old')
+      ? ok('pendingNotIn() drops a row the server already has', 'lost-response dedupe')
+      : fail('pendingNotIn() drops a row the server already has', d1);
+    box.pendingNotIn(null).length === 3
+      ? ok('pendingNotIn() tolerates a null server list', '3 rows')
+      : fail('pendingNotIn() tolerates a null server list', 'wrong length');
+
+    const m = box.asMyCatchRow(FAKE_OUTBOX[1]);
+    (m.id === 'c-new' && m.species === 'Coho' && m.catch_time === '2026-09-28T09:00:00Z' &&
+     m.flow === 1010 && m.sim_score === 6.1 && m._pending === true)
+      ? ok('asMyCatchRow() maps the outbox payload to the private row shape', 'spc/score -> species/sim_score')
+      : fail('asMyCatchRow() maps the outbox payload to the private row shape', JSON.stringify(m));
+
+    const badge = box.pendingBadge();
+    (badge.className === 'sync-badge' && badge.textContent === 'Syncing...' && badge.title.length > 10)
+      ? ok('pendingBadge() renders the sync badge', badge.textContent)
+      : fail('pendingBadge() renders the sync badge', badge.className + ' / ' + badge.textContent);
+
+    box.refreshCatchLists();
+    scopeRenders === 1
+      ? ok('refreshCatchLists() re-renders the active scope', '1 render')
+      : fail('refreshCatchLists() re-renders the active scope', scopeRenders + ' renders');
+
+    // Offline / stripped builds: no outbox globals must degrade, not throw.
+    const bare = { document: { createElement: mockEl } };
+    bare.window = bare;
+    vm.createContext(bare);
+    vm.runInContext(pendingSrc, bare, { filename: 'pending.js' });
+    let threw = '';
+    try { bare.pendingRows(); bare.pendingNotIn([]); bare.refreshCatchLists(); } catch (e) { threw = e.message; }
+    threw === ''
+      ? ok('pending.js degrades safely when the outbox globals are absent', 'no throw')
+      : fail('pending.js degrades safely when the outbox globals are absent', threw);
+  } catch (e) {
+    fail('pending.js runtime behaviour', e.message);
+  }
 
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
   (gearRows === 12 && !html.includes('gear-grid'))

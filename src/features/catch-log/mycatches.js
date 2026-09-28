@@ -26,7 +26,11 @@ async function renderMyCatches() {
     try { rows = await Supa.fetchMyCatches(); } catch (e) { rows = []; }
     _myCatches = rows || [];
 
-    if (!_myCatches.length) {
+    // Phase 3.4: optimistic rows first — buffered locally, not confirmed by the server yet.
+    var pending = (typeof pendingNotIn === 'function') ? pendingNotIn(_myCatches).map(asMyCatchRow) : [];
+    var list = pending.concat(_myCatches);
+
+    if (!list.length) {
         var empty = document.createElement('tr');
         empty.innerHTML = '<td colspan="5" class="empty-state">' +
             '<div class="empty-state-title">No logged catches yet</div>' +
@@ -35,9 +39,10 @@ async function renderMyCatches() {
         return;
     }
 
-    for (var i = 0; i < _myCatches.length; i++) {
-        var c = _myCatches[i];
+    for (var i = 0; i < list.length; i++) {
+        var c = list[i];
         var tr = document.createElement('tr');
+        if (c._pending) tr.className = 'row-pending';
 
         var tdSpc = document.createElement('td');
         tdSpc.textContent = c.species || '--';
@@ -53,18 +58,23 @@ async function renderMyCatches() {
         tr.appendChild(tdScore);
 
         var tdAct = document.createElement('td');
-        var editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'mini-btn';
-        editBtn.textContent = 'Edit';
-        editBtn.onclick = (function (row) { return function () { editMyCatch(row); }; })(c);
-        var delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'mini-btn mini-btn-danger';
-        delBtn.textContent = 'Delete';
-        delBtn.onclick = (function (id) { return function () { deleteMyCatch(id); }; })(c.id);
-        tdAct.appendChild(editBtn);
-        tdAct.appendChild(delBtn);
+        if (c._pending) {
+            // Buffered only: there is no server id yet, so Edit/Delete would have no target.
+            tdAct.appendChild(pendingBadge());
+        } else {
+            var editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'mini-btn';
+            editBtn.textContent = 'Edit';
+            editBtn.onclick = (function (row) { return function () { editMyCatch(row); }; })(c);
+            var delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'mini-btn mini-btn-danger';
+            delBtn.textContent = 'Delete';
+            delBtn.onclick = (function (id) { return function () { deleteMyCatch(id); }; })(c.id);
+            tdAct.appendChild(editBtn);
+            tdAct.appendChild(delBtn);
+        }
         tr.appendChild(tdAct);
 
         tbody.appendChild(tr);

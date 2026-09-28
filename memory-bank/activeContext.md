@@ -1,16 +1,18 @@
 # ACTIVE — current work focus
 
-STATUS: UPDATE 3.0 **Phases 1 + 2 COMPLETE**; Phase 3 at **3.4 (the last item)**.
+STATUS: UPDATE 3.0 **COMPLETE** — Phases 1–4 all shipped (4.5, the `api/lib/*.py`
+extraction, is the only open item). Next up is Update 4.0.
 
 Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `docs/ROADMAP.md`
 · History: `docs/CHANGELOG.md` + `docs/ARCHIVE.md` · Status: `progress.md`.
 
-## Ready to build (in order)
+## Ready to build
 
-- [ ] **3.4** Optimistic UI + pending-sync indicator, in `src/features/catch-log/`.
-      A just-logged catch paints into the list immediately and carries a "syncing" badge
-      until the outbox flush confirms it. The outbox already exposes `pendingSync`, so this
-      is a render change — no new storage.
+- [x] **3.4** Optimistic UI + pending-sync indicator — `src/features/catch-log/pending.js`.
+      Pending outbox rows paint at the top of both scopes with a `.sync-badge`; a confirmed
+      flush calls `refreshCatchLists()`. Verify: `node sanity_pass.js` (100/100).
+- [ ] **Update 4.0** — engagement + native packaging. Read `docs/ROADMAP.md` and write the
+      ACTIVE items here before starting.
 
 ## Open product decisions (do NOT build without an explicit call)
 

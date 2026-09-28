@@ -7,13 +7,18 @@
 - **Phase 2 ✅** — USGS WDFN OGC API migration (all 5 call sites; legacy kept as a fallback
   ahead of the Q1 2027 decommission), dynamic radial station discovery, NOAA CO-OPS tide
   pairing per waterbody, proxy hardening, interactive Leaflet station map.
-- **Phase 3 🔶** — idempotent catch writes ✅, durable IndexedDB outbox ✅, reconciliation on
-  `online`/resume/focus ✅. **Only 3.4 (optimistic UI + pending-sync badge) remains.**
+- **Phase 3 ✅** — idempotent catch writes, durable IndexedDB outbox, reconciliation on
+  `online`/resume/focus, and (3.4) optimistic UI: a just-logged catch paints immediately
+  with a "Syncing..." badge that clears once the flush confirms.
+- **Phase 4 ✅** — token-efficiency: `docs/SYMBOLS.md`, the `// public:` file headers, the
+  four contracts, and doc hygiene. Only 4.5 (`api/lib/*.py` extraction) is open.
 
-**Next:** finish 3.4, then UPDATE 4.0 — engagement + native packaging (`docs/ROADMAP.md`).
+**Next:** UPDATE 4.0 — engagement + native packaging (`docs/ROADMAP.md`).
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-28 — Phase 3.4 optimistic UI + pending-sync badge (`catch-log/pending.js`); sanity
+  gains 8 runtime assertions on the pending logic (100/100).
 - 2026-09-28 — Phase 3.3 outbox reconciliation + docs consolidation into `memory-bank/`.
 - 2026-09-28 — Phase 3.1/3.2 durable IndexedDB outbox + idempotent writes (`clientId`).
 - 2026-09-28 — Phase 2.5 Leaflet station map; cleanup pass (dead API fields, dead DB

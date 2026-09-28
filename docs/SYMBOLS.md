@@ -84,6 +84,8 @@ this file**, or the pass fails.
 - **log.js** — `deriveRiverName()`, `logData()`
 - **board.js** — `CATCH_SCOPE`, `setCatchScope(scope)`, `loadDatabase()`
 - **mycatches.js** — `_myCatches`, `renderMyCatches()`, `editMyCatch(row)`, `deleteMyCatch(id)`
+- **pending.js** — `pendingRows()`, `pendingNotIn(serverRows)`, `pendingBadge()`,
+  `asMyCatchRow(row)`, `refreshCatchLists()`
 - **reconcile.js** — `initCatchReconcile()`, `reconcileCatches(force)`
 
 ## src/features/station

@@ -61,7 +61,7 @@ async function startFishing() {
     }
     applyAuthState(true, res.name || name);
     if (res.offline) logDebug('Local-only guest session (Supabase unreachable)', 'AUTH');
-    syncPendingCatches();
+    await syncPendingCatches();
     if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);
     switchTab('tab-gear-sim');
 }
@@ -94,6 +94,11 @@ async function syncPendingCatches() {
             break;   // still offline: stop here and retry next session
         }
     }
-    if (synced > 0) logDebug('Flushed ' + synced + ' buffered catch(es) to Supabase', 'SYNC');
+    if (synced > 0) {
+        logDebug('Flushed ' + synced + ' buffered catch(es) to Supabase', 'SYNC');
+        // Phase 3.4: confirmed now, so drop the "Syncing..." badge and let the rows come
+        // back from the server rather than the outbox.
+        if (typeof refreshCatchLists === 'function') refreshCatchLists();
+    }
     return synced;
 }

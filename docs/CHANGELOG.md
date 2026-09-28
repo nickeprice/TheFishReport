@@ -4,6 +4,36 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 3.4 COMPLETE ✅: optimistic UI + pending-sync badge
+Phase 3 finished. A catch is written to the durable outbox *before* the network call, which
+is what makes it unloseable — but it also meant the list simply did not show it: the angler
+tapped LOG CATCH DATA, the row went into IndexedDB, and nothing appeared until a later
+successful flush. This closes that gap with a render change and no new storage.
+
+New `src/features/catch-log/pending.js` owns all of it: `pendingRows()` (newest-first, from
+`outboxPending()` — the ONE source of pending truth), `pendingNotIn(serverRows)`,
+`pendingBadge()`, `asMyCatchRow(row)` and `refreshCatchLists()`. Board and My Catches both
+paint pending rows at the top of their list; the badge rides inside the Name cell on the
+public board so the four-column privacy shape is unchanged, and in the action cell in
+"yours" — where Edit/Delete are deliberately withheld, since a buffered row has no server
+id to act on yet. `syncPendingCatches()` now calls `refreshCatchLists()` on a confirmed
+flush, so the badge clears and the row comes back from the server instead of the outbox
+(one small fix folded in: `startFishing()` now awaits that flush instead of racing it).
+
+Two honest limits, both documented in the module header: the public view selects no `id`
+(privacy boundary), so the lost-*response* case — insert committed, reply never arrived —
+can briefly show one catch twice until the retry resolves it; and the "yours" scope cannot
+leak gear/GPS through this path, because only the columns that scope already renders are
+read. `sw.js` VERSION → `v2.03.04`; `pending.js` added to SHELL_FILES + `index.html` +
+`docs/SYMBOLS.md`.
+Verified: sanity **100/100 GREEN** — the new static guard plus **8 runtime assertions** that
+load the real module into a `vm` sandbox with a fake outbox and check filter, order,
+no-mutation, dedupe, mapping, badge, post-flush re-render and absent-global safety.
+- Key files: `src/features/catch-log/pending.js` (new), `src/features/catch-log/{board.js,
+  mycatches.js}`, `src/features/auth/auth.js`, `src/styles.css`, `index.html`, `sw.js`,
+  `sanity_pass.js`, `docs/SYMBOLS.md`, `docs/ARCHIVE_UPDATE_3.0.md`, `memory-bank/*`.
+
+
 ## 2026-09-28 — Docs consolidation into memory-bank/ + token-efficiency pass
 Reorganized the docs into a cohesive `memory-bank/` front page (projectbrief, productContext,
 activeContext, systemPatterns, techContext, progress) and moved the long-form docs under

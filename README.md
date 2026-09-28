@@ -38,7 +38,8 @@ src/
     telemetry/              tide, hero, day-nav, the water-report pipeline
     gear-sim/               inputs, physics (Cd locked 1.0), sonar, zone, rig,
                             solver, sim, techniques/drift.js, registry
-    catch-log/              outbox (durable), board, mycatches, log
+    catch-log/              outbox (durable), pending (optimistic rows),
+                            board, mycatches, log
     station/                picker (modal/GPS) + search (USGS by id/name)
     map/                    Leaflet station map (lazy-loaded enhancement)
   data/
@@ -112,6 +113,11 @@ them.
   Rows that fail to reach the server are flagged `pendingSync` and retried on the next
   session. If IndexedDB is unavailable (private browsing) the outbox degrades to the
   legacy `localStorage` buffer rather than losing the catch.
+- **Optimistic UI**: because the outbox is written *before* the network call, a just-logged
+  catch is rendered straight from it (`src/features/catch-log/pending.js`) at the top of
+  whichever scope is on screen, carrying a "Syncing..." badge. A confirmed flush re-renders,
+  so the badge clears and the row comes from the server instead of the outbox. A pending row
+  has no server id yet, so the private "Yours" scope withholds Edit/Delete until it lands.
 
 ## PWA
 

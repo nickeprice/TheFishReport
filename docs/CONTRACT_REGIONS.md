@@ -18,6 +18,25 @@ window.REGIONS.WA = { /* ...state object... */ };
 Loaded from `index.html` after the other `src/data/*` scripts and before the feature
 modules; listed in `sw.js` `SHELL_FILES`.
 
+## Backend read (Python) — one file, two consumers
+
+`api/water_report.py` reads **the same file**: it slices from the state assignment
+marker to the **final semicolon** and `json.loads()` it. So the payload must stay
+strict JSON:
+
+- double-quoted keys and strings, **no comments**, no trailing commas;
+- the marker is `window.REGIONS.<STATE> = ` and the assignment must end with `;`;
+- never write the literal marker text inside a comment (the loader uses `rindex`,
+  but keeping it unique is safer).
+
+Because of this, **notes belong in this contract, not inside the JSON payload.**
+
+`load_region_registry()` caches the parse for the life of the warm serverless
+instance, so there is no per-request file read. **Deploy note:** the registry file
+must ship alongside the handler; if it cannot be read, the API falls back to the
+legacy literals in `api/water_report.py` so the default river still serves.
+
+
 ## State object
 
 | field | type | meaning |

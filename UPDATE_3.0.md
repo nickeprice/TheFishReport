@@ -274,11 +274,22 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     (`nearbyStationIds`, `NETTING_SITES`, `NETTING_DAYS`, `USGS_SITE`, `NOAA_STATION`,
     `LAT/LON`, `STOCK_BASELINES`) and the `index.html` presets/`#species` options.
   - Still data-only: nothing reads the registry yet (1.3 backend, 1.4/1.5 frontend).
-- [ ] **1.3 Make `api/water_report.py` region-aware.**
-  - Files: `api/water_report.py` (constants at lines 12–24, 286, 677).
-  - Potential bug: reading config per request without caching adds latency; cache it.
-  - Verify: dev server `/api/water_report?site=12101500` unchanged; an off-basin site
-    (e.g. `12113000`) returns no Puyallup-only fields.
+- [x] **1.3 Make `api/water_report.py` region-aware.** ✅ COMPLETE (backend half)
+  - Result: the registry payload is now **strict JSON** so `api/water_report.py` reads
+    the SAME file (`load_region_registry()` slices marker→final `;`, `json.loads()`,
+    cached for the warm instance). Derived from the registry: `USGS_SITE`,
+    `NOAA_STATION`, `LAT`/`LON`, `FORECAST_DAYS`, `NETTING_DAYS`, `NETTING_SITES`,
+    `nearbyStationIds` (from `discovery_pool`). New `stocks_for_site(site)` replaces the
+    global `STOCK_BASELINES`, and `calculate_stock_base_score`/`build_species_calendar`
+    now take the active `site` — so an off-basin river can no longer inherit Puyallup run
+    numbers. Legacy literals remain ONLY as a fallback when the registry is unreadable.
+  - Files: `api/water_report.py`, `src/data/regions/washington.js`, `sanity_pass.js`.
+  - Potential bug: per-request config reads would add latency — cached at module level.
+  - Verify: dev-server API — `12101500` unchanged (4 days, Chinook/Coho calendar,
+    `clarity_outlook` present); `12113000` (Green) → `species_calendar: []`,
+    `clarity_outlook: null`, `is_netting: false`, telemetry intact. ✅
+  - **Still pending in 1.3:** the `report.js` → `cards.js` split (Step 4) — deferred to
+    keep the backend change reviewable; `sim.js` → `solver.js` rides on 1.4.
 - [ ] **1.4 Technique/style/species registries + `<TechniqueSpeciesPicker>`.**
   - Files: `src/features/gear-sim/registry.js`, `.../techniques/drift.js`,
     `.../physics/*`, `docs/CONTRACT_TECHNIQUE.md`; wire picker into BOTH tabs.

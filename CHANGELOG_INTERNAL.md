@@ -3,6 +3,25 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 1.3 (backend) COMPLETE ✅: the API reads the region registry
+`src/data/regions/washington.js` is now **strict JSON** (header comment + JSON payload)
+so ONE file serves both consumers: the frontend loads it as a classic script and
+`api/water_report.py` slices marker→final `;` and `json.loads()` it
+(`load_region_registry()`, cached for the warm serverless instance). Derived from the
+registry: `USGS_SITE`, `NOAA_STATION`, `LAT`/`LON`, `FORECAST_DAYS`, `NETTING_DAYS`,
+`NETTING_SITES` and `nearbyStationIds` (from `discovery_pool`). New `stocks_for_site(site)`
+replaces the global `STOCK_BASELINES`; `calculate_stock_base_score`/`build_species_calendar`
+now take the active `site` — an off-basin river can no longer inherit Puyallup run numbers.
+Legacy literals survive ONLY as a fallback when the registry is unreadable.
+Gotcha fixed en route: my own header comment contained the loader's marker string, so a
+naive `index()` matched inside the comment → loader uses `rindex` and the comment no longer
+repeats the marker. LIVE-VERIFIED (dev server): `12101500` unchanged (4 days, Chinook/Coho,
+`clarity_outlook` present); `12113000` (Green) → `species_calendar: []`,
+`clarity_outlook: null`, `is_netting: false`, telemetry intact. `sanity_pass.js` guard
+rewritten to assert BOTH parse paths agree and that the backend derives from the registry
+→ **72/72 GREEN**. STILL PENDING: `report.js` → `cards.js` split (deferred, non-blocking).
+
+
 ## 2026-09-28 — Phase 1.2 COMPLETE ✅: region registry (data + contract)
 Authored `docs/CONTRACT_REGIONS.md` (schema + "what it replaces" table) and
 `src/data/regions/washington.js` — `window.REGIONS.WA`: **15 waterbodies** (Puyallup,

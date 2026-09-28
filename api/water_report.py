@@ -1,5 +1,6 @@
 import json
 import math
+import os
 import urllib.request
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler
@@ -9,20 +10,80 @@ import ssl
 
 SSL_CONTEXT = ssl._create_unverified_context()
 
-USGS_SITE = "12101500"   
-NOAA_STATION = "9446484" 
-LAT, LON = 47.1950, -122.3020 
+# ==================================================================================
+# REGION REGISTRY (UPDATE 3.0 Phase 1.3)
+# ONE source of truth shared with the frontend: src/data/regions/washington.js, whose
+# payload is strict JSON (the frontend loads that same file as a classic script).
+# We slice from the state assignment marker to the final semicolon and json.loads()
+# it, so these station constants can never drift from the app's.
+#
+# DEPLOY NOTE: the registry file must ship alongside this handler. If it cannot be
+# read, the legacy literals below are used verbatim so the API still serves the
+# default river instead of failing outright.
+# ==================================================================================
+_REGION_STATE = "WA"
+_REGION_CANDIDATES = (
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "data", "regions", "washington.js"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "regions", "washington.js"),
+)
+_registry = None
 
-STOCK_BASELINES = {
-    "Chinook": {"peak_window": (8, 1, 9, 30), "peak_date": "09-10", "avg_run": 34000, "present": True},
-    "Coho":    {"peak_window": (8, 25, 11, 15), "peak_date": "10-05", "avg_run": 48000, "present": True},
-    "Pink":    {"peak_window": (8, 1, 9, 15), "peak_date": "08-20", "avg_run": 150000, "present": False}
-}
-NETTING_DAYS = [6, 0, 1] 
+
+def load_region_registry(state=_REGION_STATE):
+    """Parsed region registry for `state` (cached for the warm instance); {} if unreadable."""
+    global _registry
+    if _registry is None:
+        _registry = {}
+        marker = "window.REGIONS." + state + " = "
+        for path in _REGION_CANDIDATES:
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    text = fh.read()
+                _registry = json.loads(text[text.rindex(marker) + len(marker):text.rindex(";")])
+                break
+            except Exception:
+                continue
+    return _registry
+
+
+_WA = load_region_registry("WA")
+
+# Every gauged site id -> the waterbody that owns it (gauge + related gauges).
+_WB_BY_SITE = {}
+for _wb in _WA.get("waterbodies", []):
+    if (_wb.get("gauge") or {}).get("site_id"):
+        _WB_BY_SITE[str(_wb["gauge"]["site_id"])] = _wb
+    for _rel in (_wb.get("related_gauges") or []):
+        if _rel.get("site_id"):
+            _WB_BY_SITE.setdefault(str(_rel["site_id"]), _wb)
+
+
+def stocks_for_site(site_id):
+    """Species -> baseline meta for the waterbody that owns `site_id`.
+
+    Empty when that waterbody has no verified baselines, so an off-basin river can
+    never inherit another river's run numbers (AGENTS.md: never fabricate)."""
+    _wb = _WB_BY_SITE.get(str(site_id))
+    if not _wb or not _wb.get("stocks"):
+        return {}
+    return {_s["species"]: _s for _s in _wb["stocks"]}
+
+
+USGS_SITE = _WA.get("default_site") or "12101500"
+NOAA_STATION = _WA.get("default_tide_station") or "9446484"
+_coords = _WA.get("default_coords") or {}
+LAT = _coords.get("lat", 47.1950)
+LON = _coords.get("lon", -122.3020)
+FORECAST_DAYS = _WA.get("forecast_days") or 4
+
 # Netting (gillnet sets by tribes) is a Puyallup/White/Carbon basin reality ONLY.
 # Off-basin rivers (Green, Nisqually, Skagit, ...) must never read "Nets In".
-NETTING_SITES = {"12101500", "12093500", "12094000"}
-FORECAST_DAYS = 4 
+NETTING_DAYS = _WA.get("netting_days") or [6, 0, 1]
+NETTING_SITES = set()
+for _wb in _WA.get("waterbodies", []):
+    NETTING_SITES.update(_wb.get("netting_sites") or [])
+if not NETTING_SITES:
+    NETTING_SITES = {"12101500", "12093500", "12094000"}
 
 def mm_to_in(mm): return mm / 25.4
 def hpa_to_inhg(hpa): return hpa * 0.02953
@@ -283,31 +344,9 @@ def fetch_dam_clarity():
 # Using sites= (instead of the flaky bBox= query — USGS NWIS bBox often 503s/timeouts
 # while the multi-site list endpoint is fast and reliable) means "nearest" always
 # resolves to a real *river* gauge, not random tributaries/ditches from a bbox.
-nearbyStationIds = [
-    # Puyallup system
-    "12101500",  # Puyallup River at Puyallup
-    "12093500",  # Puyallup River near Orting
-    "12094000",  # Carbon River near Fairfax
-    # Green/Duwamish
-    "12113000",  # Green River at Auburn
-    # Nisqually
-    "12089500",  # Nisqually River at McKenna
-    # Skagit
-    "12200500",  # Skagit River near Mount Vernon
-    # Snohomish / Snoqualmie / Skykomish
-    "12150800",  # Snoqualmie River near Snoqualmie
-    "12134500",  # Skykomish River near Gold Bar
-    "12155300",  # Snohomish River near Monroe
-    # Stillaguamish
-    "12167000",  # North Fork Stillaguamish near Arlington
-    # Cowlitz / Lewis / Kalama (south sound)
-    "14242500",  # Cowlitz River near Castle Rock
-    "14240500",  # Toutle River near Silver Lake
-    "14236000",  # Lewis River at Ariel
-    "14241000",  # Kalama River near Kalama
-    # Cedar / Sammamish (eastside)
-    "12115000",  # Cedar River near Renton
-]
+# Was a curated literal list; now the registry's discovery_pool (TEMPORARY —
+# UPDATE 3.0 Phase 2 replaces this with USGS WDFN site-index discovery).
+nearbyStationIds = [s["site_id"] for s in _WA.get("discovery_pool", [])] or [USGS_SITE]
 
 
 def fetch_nearby_stations(lat, lon):
@@ -443,7 +482,7 @@ def fetch_meteorological_data(lat=LAT, lon=LON):
             return json.loads(res.read().decode('utf-8'))
     except: return None
 
-def calculate_stock_base_score(target_date):
+def calculate_stock_base_score(target_date, site_id=None):
     """Baseline (0-25ish) that the dynamic timeline adds to per-minute scores.
 
     The old version fabricated a fake "~N entering today" Gaussian count
@@ -453,7 +492,9 @@ def calculate_stock_base_score(target_date):
     only the structure: how far today sits inside each stock's real peak window.
     """
     base_score = 10.0
-    for species, meta in STOCK_BASELINES.items():
+    # Baselines come from the waterbody that owns this site (empty off-basin,
+    # so another river's run numbers can never leak in).
+    for species, meta in stocks_for_site(site_id or USGS_SITE).items():
         if not meta.get("present", True): continue
         sm, sd, em, ed = meta["peak_window"]
         s_dt, e_dt = datetime(target_date.year, sm, sd), datetime(target_date.year, em, ed)
@@ -467,7 +508,7 @@ def calculate_stock_base_score(target_date):
     return base_score
 
 
-def build_species_calendar(target_date):
+def build_species_calendar(target_date, site_id=None):
     """Per-species run calendar for the current day.
 
     For each modeled stock returns:
@@ -482,7 +523,7 @@ def build_species_calendar(target_date):
     # 2028, ...) there is no pink run, so do NOT show a pink card at all —
     # honest data, no stale "NO PEAK PERIOD" entry.
     odd_year = (target_date.year % 2) == 1
-    for species, meta in STOCK_BASELINES.items():
+    for species, meta in stocks_for_site(site_id or USGS_SITE).items():
         if species == "Pink" and not odd_year:
             continue
         sm, sd, em, ed = meta["peak_window"]
@@ -796,7 +837,7 @@ class handler(BaseHTTPRequestHandler):
             angler_desc, angler_mult = ("High (Weekend)", 0.80) if dt.weekday() in [5, 6] else ("Low/Moderate (Weekday)", 1.0)
             
             transit_time, transit_state, flow_index, transit_hrs = calculate_transit_time_and_flow(usgs_data["cfs"], is_netting_day)
-            stock_base = calculate_stock_base_score(dt)
+            stock_base = calculate_stock_base_score(dt, site)
             env_score, flow_mult, push_status = calculate_macro_environment(flow_index, press_curr_inHg, press_prev_inHg, rain_in, lunar_val, is_netting_day)
             
             civil_in, civil_out = sunrise_dt - timedelta(minutes=35), sunset_dt + timedelta(minutes=35)
@@ -831,7 +872,7 @@ class handler(BaseHTTPRequestHandler):
             tide_points = [{"t": pt["dt"].strftime("%-I:%M %p"), "h": round(pt["height"], 2)}
                            for pt in all_tides_curve if pt["dt"].date() == dt.date()]
 
-            species_calendar = build_species_calendar(dt)
+            species_calendar = build_species_calendar(dt, site)
 
             timeline_windows = build_dynamic_timeline(lines_in, lines_out, sunrise_dt, sunset_dt, cloud_pct, arrivals, stock_base, env_score, flow_mult, angler_mult)
             peak_potential = max([w["score"] for w in timeline_windows]) if timeline_windows else 0

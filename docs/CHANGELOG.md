@@ -4,6 +4,44 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Hygiene sprint H1–H3: module-list parity guard, `schema.sql` removed
+A full repo-structure review surfaced one real bug class plus some drift, so the safe cleanups
+went first; the feature ideas and architecture bets were parked rather than built.
+
+**H1 — `SHELL_FILES` ↔ `index.html` parity guard (the only real defect).** The module list was
+hand-maintained in TWO places: the `<script>` tags in `index.html` and `sw.js`'s `SHELL_FILES`.
+Nothing asserted they agreed, so adding a module to one but not the other broke offline caching
+*silently* — the page requests a script the service worker never precached, which works
+perfectly online and fails in a dead zone, exactly where this app is supposed to earn its keep.
+It had to be hand-synced twice in the two preceding commits. The sanity pass now asserts the two
+`src/*.js` subsets match and names the offending file. Verified in BOTH directions: a probe
+script added to `index.html` alone makes the guard FAIL with the filename; reverting is
+byte-identical (`git diff` empty) and returns 101/101 green. The CDN script and the
+non-`<script>` shell assets (manifest, icons, `styles.css`) are excluded by construction, since
+neither belongs to both lists.
+
+**H2 — deleted `src/services/schema.sql`.** A 179-line copy of the database schema living in the
+frontend tree, self-labeled "DEPRECATED — superseded by `supabase/migrations/`", referenced by no
+code, CI or config, and already caught going stale once (it still listed `corky_size`).
+`supabase/migrations/` is the single source of truth and `supabase/README.md` documents it, so
+the file was pure drift risk. It was never in `SHELL_FILES`, so no service-worker VERSION bump.
+
+**H3 — recorded the over-target files.** Only `report.js` was tracked before; `activeContext.md`
+now tables all six non-exempt files over the soft <150-line target (`regulations.js` 536,
+`water.js` 450, `supabase.js` 361, `report.js` 295, `daynav.js` 183, `zone.js` 180) so the debt
+stops being invisible. Exempt `src/data/*` files are called out separately.
+
+**Parked on purpose**, now listed in `memory-bank/activeContext.md` rather than half-started:
+future ideas (data-freshness gate + regulation-change alert, a source-status honesty panel,
+legal-hours countdown, "which rig fits today?", offline photo queue, trip card) and future
+tests/experiments (a second region, technique/species expansion, Capacitor packaging, extending
+the `vm` runtime-test pattern to the pure modules). H4 — de-monolithing `sanity_pass.js` — is
+parked as the lowest-value item.
+Verified: sanity **101/101 GREEN** (was 100); `./scripts/check.sh --quick` clean.
+- Key files: `sanity_pass.js`, `src/services/schema.sql` (removed),
+  `memory-bank/activeContext.md`.
+
+
 ## 2026-09-28 — Phase 3.4 COMPLETE ✅: optimistic UI + pending-sync badge
 Phase 3 finished. A catch is written to the durable outbox *before* the network call, which
 is what makes it unloseable — but it also meant the list simply did not show it: the angler

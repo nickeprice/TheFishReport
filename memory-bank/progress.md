@@ -17,6 +17,9 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-28 — Hygiene sprint H1–H3: `sw.js` `SHELL_FILES` ↔ `index.html` parity guard
+  (kills a silent offline-cache drift bug), orphaned `src/services/schema.sql` deleted,
+  over-target files recorded (101/101).
 - 2026-09-28 — Phase 3.4 optimistic UI + pending-sync badge (`catch-log/pending.js`); sanity
   gains 8 runtime assertions on the pending logic (100/100).
 - 2026-09-28 — Phase 3.3 outbox reconciliation + docs consolidation into `memory-bank/`.

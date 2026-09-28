@@ -109,6 +109,26 @@ function staticIntegrity() {
     ? ok('script load order ends with app.js', scripts.join(' → '))
     : fail('script load order ends with app.js', scripts.join(' → '));
 
+  // index.html and sw.js SHELL_FILES are hand-maintained in PARALLEL. A module added to one
+  // but not the other breaks offline caching SILENTLY: the page requests a script the
+  // service worker never precached, so it works online and fails in a dead zone — exactly
+  // where this app is supposed to earn its keep. Assert the two src/*.js subsets agree.
+  // The CDN script is not a shell file, and the non-<script> shell assets (manifest.json,
+  // icons, styles.css) have no <script> tag, so both are excluded by the .js-under-src/ match.
+  const swShellSrc = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  const shellAt = swShellSrc.indexOf('const SHELL_FILES');
+  const shellBlock = swShellSrc.slice(shellAt, swShellSrc.indexOf('];', shellAt));
+  const shellJs = [...shellBlock.matchAll(/'\/(src\/[^']+\.js)'/g)].map((m) => m[1]);
+  const htmlJs = localScriptPaths();
+  const notShelled = htmlJs.filter((p) => !shellJs.includes(p));
+  const staleShell = shellJs.filter((p) => !htmlJs.includes(p));
+  (notShelled.length === 0 && staleShell.length === 0)
+    ? ok('sw.js SHELL_FILES matches the index.html script list', `${htmlJs.length} modules`)
+    : fail('sw.js SHELL_FILES matches the index.html script list',
+        [notShelled.length ? 'missing from SHELL_FILES: ' + notShelled.join(', ') : '',
+         staleShell.length ? 'in SHELL_FILES but not loaded: ' + staleShell.join(', ') : '']
+          .filter(Boolean).join(' | '));
+
   // Catch Log merge: ONE list with a yours/everyone toggle; default = Everyone
   const merged = html.includes('id="catch-log-table"') && html.includes('id="catch-log-body"') &&
     html.includes('id="scope-yours"') && html.includes('id="scope-everyone"') &&

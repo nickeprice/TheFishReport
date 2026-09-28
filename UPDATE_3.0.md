@@ -445,10 +445,12 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
   - Verify: live read-only query confirmed the PK; a 6-assertion functional test proves
     the row carries the id and the call is an upsert with `ignoreDuplicates` (a plain
     `insert()` throws in the harness); two new `sanity_pass.js` guards → **82/82 GREEN**.
-  - Caveat: an end-to-end double-insert against the live DB was **not possible** —
-    anonymous sign-ins are disabled on the project, so no session can be minted here to
-    satisfy the RLS `with check (user_id = auth.uid())`. The path is verified by
-    construction, not by a live replay.
+  - Caveat (CORRECTED): a live end-to-end double-insert was not run from here because it
+    would mint throwaway auth users. **Anonymous sign-ins ARE enabled on the project** —
+    verified against the live DB: 7 anonymous auth users plus one private catch row owned
+    by one of them (`Nick` / Coho / Puyallup River, 2026-09-18) which correctly surfaces in
+    `public_catch_feed` as 4 columns only. (An earlier note in this file wrongly claimed
+    sign-ins were disabled — that came from a stale code comment, now fixed.)
 - [ ] **3.3 In-app reconciliation.**
   - Files: `src/features/catch-log/outbox.js`, `src/app.js` (online/focus/resume hooks).
   - Potential bug: concurrent flushes can double-send — guard with a single in-flight lock.

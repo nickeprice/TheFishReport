@@ -80,8 +80,11 @@ async function signInGuest(name) {
 
     var sdk = await ensureSdk();
     var client = sdk ? getClient() : null;
-    // Local-only guest: Supabase not configured, unreachable, or anonymous
-    // sign-ins disabled in the dashboard (current state) — the app still works.
+    // Local-only guest: Supabase is not configured, or the SDK failed to load / could
+    // not be reached. NOTE: anonymous sign-ins ARE ENABLED on this project (verified
+    // 2026-09-28 against the live DB: 7 anonymous auth users, and one private catch row
+    // written by one of them). Do NOT assume they are disabled without querying first —
+    // an earlier version of this comment claimed the opposite and was simply stale.
     if (!client) return { ok: true, offline: true, name: clean, user: null };
 
     try {

@@ -14,9 +14,12 @@ mint a fresh one on every retry. Added `newUuid()` to `src/shared/format.js` (wi
 (0 rows returned) is treated as SUCCESS — otherwise the outbox would retry a stored catch
 forever. Verified: 6-assertion functional test (the row carries the id; the call is an
 upsert with ignoreDuplicates; a plain `insert()` throws in the harness) + two new
-sanity_pass guards → **82/82 GREEN**. CAVEAT: an end-to-end double-insert against the live
-DB was not possible — **anonymous sign-ins are disabled** on the project, so no session can
-be minted to satisfy RLS `with check (user_id = auth.uid())`; verified by construction.
+sanity_pass guards → **82/82 GREEN**. CAVEAT (CORRECTED): a live double-insert was not run
+from here (it would mint throwaway auth users), but **anonymous sign-ins ARE ENABLED** —
+verified live: 7 anonymous auth users + one private catch row owned by one of them, which
+correctly surfaces in `public_catch_feed` as 4 columns only. An earlier draft of this entry
+claimed sign-ins were disabled; that came from a STALE CODE COMMENT in supabase.js (now
+fixed) and was wrong. Lesson: verify auth config against the DB, not against a comment.
 Phase 3 continues: 3.1 IndexedDB outbox, 3.3 reconciliation, 3.4 optimistic UI.
 
 

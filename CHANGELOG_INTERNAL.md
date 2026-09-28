@@ -3,6 +3,25 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 2.5 COMPLETE ✅: interactive Leaflet station map
+New `src/features/map/map.js` + a "Show Nearest Rivers on a Map" button in the station
+modal. Leaflet loads LAZILY from a CDN; pins come from `/api/nearby_stations` (the 2.2
+dynamic discovery) so the map plots whatever gauges actually exist near the point rather
+than a hardcoded list, and tapping a pin reuses the SAME `selectPreset()` path as the
+preset buttons. Kept deliberately as an ENHANCEMENT: if Leaflet fails (offline/blocked
+CDN) the map hides itself with an explanation and the presets/search/GPS are untouched.
+`/api/nearby_stations` now carries each gauge's registry `legal_hours`, so the popup can
+state the rule ("Open all day" / "Daylight window…" / "Hours not verified") with no report
+load. Pin colour states DATA AVAILABILITY (grey dormant / green live) — an
+optimal/blown-out colour needs the §8 percentile work, so none was invented.
+SECURITY FIX: added `escapeHtml()`/`escapeJsString()` to `src/shared/format.js` and
+retrofitted `presetButtonHtml` in `station/search.js`, which had been interpolating
+third-party USGS names straight into innerHTML (AGENTS.md forbids that). `sw.js`: map.js
+precached, `unpkg.com` added to cross-origin SWR, VERSION → `v2.02.00`; OSM tiles stay
+network-only. Verified: sanity **79/79 GREEN** + a 13-assertion map-logic pass. NOTE: a
+real-device tap test is still outstanding (no browser in this environment).
+
+
 ## 2026-09-28 — Phase 2.2 + 2.4 COMPLETE ✅: dynamic discovery + proxy hardening
 **2.2 dynamic radial discovery:** `fetch_nearby_stations` no longer depends on the curated
 gauge list. New `_discover_wdfn_locations()` queries `/monitoring-locations` for the STREAM

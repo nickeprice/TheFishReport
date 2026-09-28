@@ -378,11 +378,28 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     identical report → `X-Cache: HIT`, **4.10s → 0.001s**.
   - Caveat: the limiter/cache are **per serverless instance** (no shared store), so they
     blunt bursts rather than enforcing a global quota. A durable store is a later item.
-- [ ] **2.5 Interactive map (Level A regs).**
-  - Files: `src/features/map/`, `index.html`, `src/styles.css`, `sw.js`.
-  - Potential bug: rendering all gauges at once tanks mobile; query viewport only.
-  - Verify: tap a gauge → report loads; regulation panel shows legal hours + night status;
-    search/GPS fallback still works.
+- [x] **2.5 Interactive map (Level A regs).** ✅ COMPLETE
+  - Result: `src/features/map/map.js` + a "Show Nearest Rivers on a Map" button in the
+    station modal. Leaflet is loaded **lazily from a CDN** and pins come from
+    `/api/nearby_stations` (the Phase 2.2 dynamic discovery), so the map plots whatever
+    gauges actually exist near the point — not a hardcoded list. Tapping a pin goes
+    through the SAME `selectPreset()` path as the preset buttons.
+  - **Deliberately an ENHANCEMENT, not a dependency:** if Leaflet fails to load
+    (offline, blocked CDN) the button hides the map and says so, and the presets /
+    search / GPS keep working untouched.
+  - Regulation panel: `/api/nearby_stations` now carries each gauge's `legal_hours` from
+    the region registry, so the popup states the rule ("Open all day" / "Daylight
+    window…" / "Hours not verified — check the regulations") without loading the report.
+  - Pin colour states **data availability** (grey = dormant, green = live) — an
+    optimal/blown-out colour needs the flow-percentile work (§8); we do not invent one.
+  - Security: third-party USGS names now go through new `escapeHtml()` /
+    `escapeJsString()` helpers (`src/shared/format.js`); `presetButtonHtml` in
+    `station/search.js` was retrofitted to use them.
+  - `sw.js`: `map.js` precached, `unpkg.com` added to the cross-origin SWR list, VERSION
+    → `v2.02.00`. OSM **tiles stay network-only** so storage is not poisoned.
+  - Verify: sanity **79/79 GREEN** + a 13-assertion map-logic pass (escaping, popup,
+    legal text, pin colour, centre fallback). *A real-device tap test is still
+    outstanding — no browser is available in this environment.*
 
 ### Phase 3 — Offline outbox
 

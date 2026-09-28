@@ -34,9 +34,11 @@ function wdfnLocationsToStations(feats) {
 }
 
 function presetButtonHtml(id, name, lat, lon) {
-    var safeName = String(name).replace(/'/g, "\\'");
-    return '<button class="preset-btn" onclick="selectPreset(\'' + id + '\', ' + lat + ', ' + lon + ', \'' + safeName + '\')" style="margin:5px 0;">' +
-        '<span>' + name + '</span> <span class="preset-id">' + id + '</span></button>';
+    // USGS station text is third-party data: escape it for BOTH the HTML body and the
+    // JS string literal inside the onclick attribute (never interpolate it raw).
+    return '<button class="preset-btn" onclick="selectPreset(\'' + escapeJsString(id) + '\', ' +
+        Number(lat) + ', ' + Number(lon) + ', \'' + escapeJsString(name) + '\')" style="margin:5px 0;">' +
+        '<span>' + escapeHtml(name) + '</span> <span class="preset-id">' + escapeHtml(id) + '</span></button>';
 }
 
 function searchErrorHtml(msg) {

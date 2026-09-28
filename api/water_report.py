@@ -570,7 +570,11 @@ def _haversine_mi(lat1, lon1, lat2, lon2):
 def _station_add(stations, code, name, s_lat, s_lon, lat_f, lon_f, param, val):
     if code not in stations:
         stations[code] = {'id': code, 'name': name, 'lat': s_lat, 'lon': s_lon,
-                          'distance_mi': round(_haversine_mi(lat_f, lon_f, s_lat, s_lon), 1)}
+                          'distance_mi': round(_haversine_mi(lat_f, lon_f, s_lat, s_lon), 1),
+                          # Registry-driven fishing-hours rule, so the map's regulation
+                          # panel can state it without loading the full report. Unknown
+                          # for gauges the registry does not cover yet (never invented).
+                          'legal_hours': legal_hours_for_site(code)}
     if param == '00060':
         stations[code]['cfs'] = int(round(val))
     elif param == '00065':

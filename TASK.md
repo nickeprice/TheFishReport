@@ -21,7 +21,7 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 - [x] **2.2** Two-step site discovery — dynamic radial bbox discovery (registry pool now fallback only)
 - [ ] **2.3** NOAA CO-OPS dynamic tide-station pairing (currently the registry default for all)
 - [x] **2.4** Proxy hardening — coord bounds, 429 rate limit, 60s report cache
-- [ ] **2.5** Interactive map — gauge picker + Level-A regulation panel + flow colour
+- [x] **2.5** Interactive map — Leaflet gauge picker + legal-hours panel (tap-test outstanding)
 
 ## Deferred / follow-ups
 

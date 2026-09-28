@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.01.04';
+const VERSION = 'v2.02.00';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -64,6 +64,7 @@ const SHELL_FILES = [
     '/src/features/station/search.js',
     '/src/shared/refresh.js',
     '/src/shared/pwa.js',
+    '/src/features/map/map.js',
     '/src/app.js',
     '/src/services/supabase.js',
     '/src/services/water.js',
@@ -212,12 +213,16 @@ self.addEventListener('fetch', function (event) {
 
     // Live telemetry from third parties: never cache, always fresh.
     if (url.origin !== self.location.origin) {
-        if (url.hostname.indexOf('cdn.jsdelivr.net') !== -1) {
-            // allowOpaque: a cross-origin <script> load yields an opaque response.
+        // Static, version-pinned libraries the shell needs (Supabase SDK, Leaflet):
+        // cache them so the map and auth survive a CDN outage or a cold offline start.
+        if (url.hostname.indexOf('cdn.jsdelivr.net') !== -1 ||
+            url.hostname.indexOf('unpkg.com') !== -1) {
+            // allowOpaque: a cross-origin <script>/<link> load yields an opaque response.
             event.respondWith(staleWhileRevalidate(request, ASSET_CACHE, true));
             return;
         }
-        // USGS NWIS, Open-Meteo, data.wa.gov Socrata, Supabase REST/RPC.
+        // Live telemetry (USGS WDFN, Open-Meteo, NOAA, Socrata), OpenStreetMap tiles
+        // and Supabase REST/RPC stay network-only.
         return;
     }
 

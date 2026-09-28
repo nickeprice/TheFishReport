@@ -1,8 +1,24 @@
 /**
- * src/shared/format.js - feed-row normalisation + time formatting.
- * public: normalizeFeedRow(row), formatCatchTime(value)
+ * src/shared/format.js - feed-row normalisation, time formatting + text escaping.
+ * public: normalizeFeedRow(row), formatCatchTime(value),
+ *         escapeHtml(value), escapeJsString(value)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
+// Third-party text (USGS station names, WDFW strings) must never be interpolated into
+// an HTML string raw — AGENTS.md forbids unsanitised HTML interpolation.
+function escapeHtml(value) {
+    return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Escape text for a JS string literal inside an HTML attribute (e.g. onclick="...").
+// Also neutralises "</script>"-style breakouts and newlines.
+function escapeJsString(value) {
+    return String(value === null || value === undefined ? '' : value)
+        .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"')
+        .replace(/</g, '\\x3c').replace(/\r?\n/g, ' ');
+}
 // Accepts either Supabase (angler_name/catch_time/river/species) or local buffer
 // (name/time/river/spc) shapes so the offline fallback renders identically.
 function normalizeFeedRow(row) {

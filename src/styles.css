@@ -468,3 +468,37 @@ td.empty-state { padding: 30px 10px; }
 }
 .tab-btn:active { background-color: rgba(255,255,255,0.06); }
 
+
+/* --- 2.5 Station map (modal enhancement; degrades away if Leaflet is unavailable) --- */
+.station-map {
+    height: 260px;
+    margin-top: 10px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #111;
+}
+.station-map-note {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 6px 2px 0;
+    line-height: 1.4;
+}
+.station-pin-dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #0b0b0d;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.85);
+}
+/* Leaflet chrome follows the app's dark palette instead of the default white. */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #1c1c1f;
+    color: #e5e7eb;
+}
+.leaflet-popup-content { font-size: 12px; line-height: 1.5; margin: 10px 12px; }
+.leaflet-popup-content a { color: var(--accent-blue); font-weight: bold; }
+.leaflet-container { background: #111; }
+

@@ -33,6 +33,15 @@
         
         <button class="btn-main" onclick="useGPS()" style="background-color: var(--accent-blue); color: #fff; margin-top: 0; min-height: 44px;">📍 Use My GPS (Nearest River)</button>
         <div id="gps-status" style="font-size: 11px; color: var(--accent-yellow); margin-top: 8px; text-align: center; font-weight: bold; min-height: 14px;"></div>
+
+        <!-- Interactive map (UPDATE 3.0 Phase 2.5). An ENHANCEMENT: if Leaflet cannot
+             load, the presets / search / GPS below still work exactly as before. -->
+        <button class="btn-main" onclick="showStationMap()"
+                style="background-color: #23402a; color: #fff; margin-top: 12px; min-height: 44px;">
+            🗺️ Show Nearest Rivers on a Map
+        </button>
+        <div id="station-map" class="station-map" hidden></div>
+        <div id="station-map-note" class="station-map-note" hidden></div>
         
         <h3 class="modal-subtitle" style="margin-top: 25px;">Quick Regional Presets</h3>
         <div class="preset-list">
@@ -373,6 +382,7 @@
 <script src="src/features/station/search.js"></script>
 <script src="src/shared/refresh.js"></script>
 <script src="src/shared/pwa.js"></script>
+<script src="src/features/map/map.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>

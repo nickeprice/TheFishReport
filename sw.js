@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.01.01';
+const VERSION = 'v2.01.02';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -52,6 +52,9 @@ const SHELL_FILES = [
     '/src/features/gear-sim/sonar.js',
     '/src/features/gear-sim/zone.js',
     '/src/features/gear-sim/rig.js',
+    '/src/features/gear-sim/techniques/drift.js',
+    '/src/features/gear-sim/registry.js',
+    '/src/features/gear-sim/solver.js',
     '/src/features/gear-sim/sim.js',
     '/src/features/catch-log/board.js',
     '/src/features/catch-log/mycatches.js',

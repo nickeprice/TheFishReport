@@ -390,6 +390,77 @@ function behaviorChecks(done) {
   }
   eval(code);
 
+  // --- Gear Sim physics regression -------------------------------------------
+  // The deterministic solver must NOT drift when it is refactored into the
+  // technique/style registry (UPDATE 3.0 Phase 1.4). Drag coefficient stays LOCKED
+  // at 1.0. The expected values were captured from the pre-refactor implementation.
+  try {
+    const gearSrc = ['inputs', 'physics', 'sonar', 'zone']
+      .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
+      .join('\n');
+    eval(gearSrc);
+    const cases = [
+      { rig: [1040, 0.5, 12, 'mono', 15, 'mono', 2, 0, 'hard', 6, 8, '12', '0'],
+        want: [2.442952438, 4.024883779, 9.768709397, 0.3936, 2.893378245, false] },
+      { rig: [1040, 0.25, 12, 'mono', 15, 'mono', 2, 0, 'hard', 6, 8, '14', '12'],
+        want: [2.442952438, 4.024883779, 8.646945522, 0.6936, 5.097407217, false] },
+      { rig: [2500, 0.75, 15, 'fluoro', 20, 'braid', 0, 1, 'soft', 8, 10, '10', '0'],
+        want: [3.469586182, 5.716313149, 14.159326707, 0.65736, 3.379233224, false] },
+      { rig: [600, 0.5, 10, 'copoly', 12, 'mono', -1, 2, 'hard', 4, 6, 'c12', '0'],
+        want: [1.960478917, 3.229985025, 6.875002232, 0.6244, 5.322687201, false] },
+    ];
+    let drift = 0;
+    for (const c of cases) {
+      const [flow, weightOz, ldLb, ldMat, mlLb, mlMat, hook, yarn, bdMat, bdSz, ldLen, f1, f2] = c.rig;
+      const v = hydraulicVelocity(flow);
+      const drag = totalDragPerFt(v.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz);
+      const foam = parseFoam(f1), foam2 = parseFoam(f2);
+      const lift = rigLift(foam.lift + foam2.lift, yarn, hook, bdMat, bdSz);
+      const hgt = presentationHeightInches(lift, ldLen, drag);
+      const blown = (v.bottom > 3.5 && weightOz < 0.5);
+      const got = [v.bottom, v.mean, drag, lift, hgt, blown];
+      for (let i = 0; i < got.length; i++) if (Math.abs(got[i] - c.want[i]) > 1e-6) drift++;
+    }
+    drift === 0
+      ? ok('gear-sim physics is deterministic (frozen baseline)', `${cases.length} rigs, drag coefficient locked at 1.0`)
+      : fail('gear-sim physics is deterministic (frozen baseline)', `${drift} value(s) drifted`);
+  } catch (e) {
+    fail('gear-sim physics is deterministic (frozen baseline)', String(e.message).split('\n')[0]);
+  }
+
+  // --- Drift technique (COMPOSED solver) regression ---------------------------
+  // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),
+  // not just the primitives, so moving the solver into techniques/drift.js and
+  // routing it through the technique registry cannot silently change behaviour.
+  try {
+    var reportsData = [];   // no live report in the harness -> baseline strike zone
+    const extraSrc = ['src/shared/forms.js', 'src/features/gear-sim/techniques/drift.js',
+      'src/features/gear-sim/registry.js']
+      .map((p) => fs.readFileSync(path.join(ROOT, p), 'utf8')).join('\n');
+    eval(extraSrc);
+    const rig = {
+      flow: 1040, weightOz: 0.5, rodFt: 9, ldLen: 8, ldMat: 'mono', ldLb: 12,
+      mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+      foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
+    };
+    const t = gearTechnique();
+    const got = t.compute(rig, { flow: 1040, species: 'Chinook', dbArray: [] });
+    const near = (a, b) => Math.abs(a - b) < 1e-6;
+    const okT = t.id === 'drift' &&
+      near(got.hgt, 2.893378245) && near(got.score, 4.502020210) &&
+      near(got.velocity.bottom, 2.442952438) &&
+      got.zone.min === 4 && got.zone.max === 12 && got.blownOut === false &&
+      got.suggestions.length === 3;
+    okT
+      ? ok('drift technique reproduces the frozen solver output', 'hgt 2.893", score 4.502, 3 suggestions')
+      : fail('drift technique reproduces the frozen solver output',
+             `hgt=${got.hgt} score=${got.score} zone=${got.zone.min}-${got.zone.max} sugg=${got.suggestions.length}`);
+  } catch (e) {
+    fail('drift technique reproduces the frozen solver output', String(e.message).split('\n')[0]);
+  }
+
+
+
   // --- debounce ---
   let calls = 0;
   const db = debounce(() => { calls++; }, 30);

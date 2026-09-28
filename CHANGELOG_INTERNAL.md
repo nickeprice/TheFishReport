@@ -3,6 +3,22 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 1.4a COMPLETE ✅: Gear Sim technique registry (behaviour frozen)
+Split the deterministic solver out of `sim.js` into a REGISTRY-DRIVEN technique:
+`techniques/drift.js` owns the logic as `DRIFT_TECHNIQUE.compute(rig, env)` (flossing is a
+drift STYLE, not a technique), `registry.js` indexes techniques + `gearTechnique(id)` with a
+safe default, and `solver.js` holds the impure halves (`readRigFromForm`,
+`loadCalibrationData`, `buildSimStats`, `paintSimHud`). **`sim.js` is now a 37-line
+orchestrator (was 162)** — adding a technique never edits it. New
+`docs/CONTRACT_TECHNIQUE.md` documents the interface + the technique/style/preset hierarchy.
+VERIFICATION FIRST: before refactoring, `sanity_pass.js` gained two frozen-baseline
+assertions — the raw physics (4 rigs) AND the COMPOSED drift solver (hgt 2.893", score
+4.502, zone 4–12, 3 suggestions) — captured from the pre-refactor implementation, so parity
+is proven rather than assumed. `sw.js` VERSION → `v2.01.02`. **77/77 GREEN**.
+DEFERRED (deliberate): the Technique/Species picker + `GEAR_STYLES`/`GEAR_SPECIES` — they
+land together with real style tuning, so the repo carries no data without a consumer.
+
+
 ## 2026-09-28 — Phase 1.3 (backend) COMPLETE ✅: the API reads the region registry
 `src/data/regions/washington.js` is now **strict JSON** (header comment + JSON payload)
 so ONE file serves both consumers: the frontend loads it as a classic script and

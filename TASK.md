@@ -10,7 +10,8 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 - [x] **1.1** Split `src/app.js` into feature modules — 24 lines, bootstrap only
 - [x] **1.2** Region registry — `src/data/regions/washington.js` + `docs/CONTRACT_REGIONS.md`
 - [x] **1.3** Region-aware `api/water_report.py` (constants at lines 12–24, 286, 677)
-- [ ] **1.4** Technique/style/species registries + shared `<TechniqueSpeciesPicker>`
+- [x] **1.4a** Technique registry + `drift.compute()` + `solver.js` split (behavior pinned)
+- [ ] **1.4b** Technique/Species picker in both tabs + `GEAR_STYLES`/`GEAR_SPECIES` (deferred)
 - [ ] **1.5** Legal hours from `waterbody.legal_hours` (daylight/24hr/custom/unknown)
 
 ## Known follow-ups (non-blocking)

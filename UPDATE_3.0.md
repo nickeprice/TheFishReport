@@ -290,11 +290,23 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     `clarity_outlook: null`, `is_netting: false`, telemetry intact. ✅
   - **Still pending in 1.3:** the `report.js` → `cards.js` split (Step 4) — deferred to
     keep the backend change reviewable; `sim.js` → `solver.js` rides on 1.4.
-- [ ] **1.4 Technique/style/species registries + `<TechniqueSpeciesPicker>`.**
-  - Files: `src/features/gear-sim/registry.js`, `.../techniques/drift.js`,
-    `.../physics/*`, `docs/CONTRACT_TECHNIQUE.md`; wire picker into BOTH tabs.
-  - Potential bug: picker must not desync the duplicated Gear Sim / Catch Log fields.
-  - Verify: same rig inputs → identical `compute()` output as today; both tabs update together.
+- [x] **1.4a Technique registry + `drift.compute()` + solver split.** ✅ COMPLETE
+  - Result: `techniques/drift.js` (the DRIFT technique; **flossing is a drift *style*,
+    not a technique**), `registry.js` (`GEAR_TECHNIQUES`, `gearTechnique(id)` with a
+    safe default), `solver.js` (`readRigFromForm`, `loadCalibrationData`,
+    `buildSimStats`, `paintSimHud`), and `docs/CONTRACT_TECHNIQUE.md`. `sim.js` went
+    **162 → 37 lines** — a pure orchestrator, so adding a technique never touches it.
+  - Verify: `node sanity_pass.js` → **77/77 GREEN**, including two new frozen-baseline
+    assertions: the raw physics (4 rigs) AND the **composed** drift solver
+    (`hgt 2.893"`, `score 4.502`, zone 4–12, 3 suggestions) — captured BEFORE the
+    refactor, so parity is proven, not assumed.
+- [ ] **1.4b Technique/Species picker + `GEAR_STYLES`/`GEAR_SPECIES`.** *deferred*
+  - Deliberately NOT built yet: a picker with one technique and styles that change no
+    tuning would be dead UI. Do it together with real style tuning.
+  - Files: `src/features/gear-sim/registry.js`, `index.html` (BOTH tabs),
+    `src/styles.css`, `src/features/gear-sim/debounce.js`.
+  - Potential bug: the picker must not desync the duplicated Gear Sim / Catch Log fields.
+  - Verify: both tabs change together; styles visibly change the leader/weight bias.
 - [ ] **1.5 Legal hours from `waterbody.legal_hours`.**
   - Files: `api/water_report.py` (report loop), `src/app.js` legal-hours UI.
   - Potential bug: `24hr` rivers must not render a sunrise/sunset bar.

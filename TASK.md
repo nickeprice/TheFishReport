@@ -27,7 +27,7 @@ STATUS: **Phases 1 + 2 COMPLETE**; Phase 3.2 (idempotency) done. Next: 3.1 Index
 ## Phase 3 — Offline outbox
 
 - [x] **3.2** Idempotency — client `clientId` → `ON CONFLICT (id) DO NOTHING` (no migration needed)
-- [ ] **3.1** IndexedDB outbox + per-waterbody telemetry snapshot (replaces `localStorage`)
+- [x] **3.1** IndexedDB outbox (in-memory mirror + write-through, legacy `catch_db` imported)
 - [ ] **3.3** In-app reconciliation on `online` / `focus` / `resume`
 - [ ] **3.4** Optimistic UI + pending-sync indicator
 

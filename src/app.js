@@ -9,7 +9,7 @@
  * defined by the scripts loaded above it in index.html.
  */
 // --- BOOTSTRAP ---
-window.onload = function() {
+window.onload = async function() {
     var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('log-datetime').value = d.toISOString().slice(0,16);
     restoreRig();
@@ -17,6 +17,13 @@ window.onload = function() {
     applyTabDeepLink();
     registerServiceWorker();
     startAutoRefresh();
+
+    // Load the durable catch outbox BEFORE anything reads it: the board fallback, the
+    // gear-sim calibration fallback and the pending-sync flush all read it synchronously.
+    if (typeof outboxLoad === 'function') {
+        try { await outboxLoad(); } catch (e) { logDebug('Outbox load failed: ' + e.message, 'DB'); }
+    }
+
     getGPS();
     initAuth();
     if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);

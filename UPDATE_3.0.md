@@ -426,10 +426,28 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
 
 ### Phase 3 — Offline outbox
 
-- [ ] **3.1 IndexedDB outbox + per-waterbody telemetry snapshot.**
-  - Files: new `src/features/catch-log/outbox.js`, `src/shared/idb.js`.
-  - Potential bug: must migrate any existing `localStorage` `catch_db` rows on first run.
-  - Verify: logging offline persists across reload; snapshot replays per waterbody.
+- [x] **3.1 IndexedDB outbox.** ✅ COMPLETE (telemetry snapshot deliberately dropped)
+  - Result: new `src/shared/idb.js` (a minimal promise wrapper) and
+    `src/features/catch-log/outbox.js`, which keeps an **in-memory mirror** of the catch
+    list and writes through to IndexedDB. The mirror exists because several readers need
+    the list SYNCHRONOUSLY (board fallback, gear-sim calibration fallback, pending-sync
+    flush) while IndexedDB is async — so callers keep their existing API and the store
+    stays durable. `app.js` now `await`s `outboxLoad()` in the bootstrap, before any reader.
+  - **Migration is built in:** the legacy `catch_db` key is imported on first load, every
+    legacy row is given a stable `clientId` (so a retry can never duplicate it), and the
+    key is retired ONLY after the durable copy is confirmed written.
+  - **Graceful degradation:** private-browsing modes can make IndexedDB unavailable, so
+    `idb.js` never throws; the outbox then keeps using `catch_db` as its store rather than
+    losing the angler's catch.
+  - All 4 existing `catch_db` call sites now go through the outbox
+    (`board.js`, `log.js`, `auth.js`, `solver.js`).
+  - Verify: sanity **85/85 GREEN** (new guard asserts NO module outside `outbox.js` touches
+    `catch_db`), plus a 9-assertion outbox test covering legacy import, stable ids, dedup
+    across a reload, flag persistence, and the fallback store kind.
+  - **Dropped on purpose — the per-waterbody telemetry snapshot.** `sw.js` already caches
+    `/api/water_report` under a NORMALISED per-station key, so an IndexedDB copy would be a
+    second cache of the same payload with no consumer. Revisit only with a feature that
+    displays it (e.g. "offline: data from 3h ago").
 - [x] **3.2 Idempotency (`ON CONFLICT (id) DO NOTHING`).** ✅ COMPLETE — **no migration needed**
   - Finding: **the fix was purely client-side.** A read-only live query confirmed
     `public.catches` already has `catches_pkey PRIMARY KEY (id)`, so the conflict target

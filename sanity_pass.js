@@ -208,6 +208,15 @@ function staticIntegrity() {
     ? ok('logged catches carry a client-generated id', 'newUuid() at buffer time')
     : fail('logged catches carry a client-generated id', 'clientId missing from the buffered payload');
 
+  // Phase 3.1: catch storage must go through the durable outbox — no module may reach
+  // for the legacy localStorage buffer directly any more.
+  const catchDbOffenders = localScriptPaths()
+    .filter((p) => p.indexOf('catch-log/outbox.js') === -1)
+    .filter((p) => fs.readFileSync(path.join(ROOT, p), 'utf8').indexOf("'catch_db'") !== -1);
+  catchDbOffenders.length === 0
+    ? ok('catch storage goes through the outbox', 'no direct catch_db access outside outbox.js')
+    : fail('catch storage goes through the outbox', catchDbOffenders.join(', '));
+
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
   (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)

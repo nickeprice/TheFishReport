@@ -75,17 +75,12 @@ async function stopFishing() {
     switchTab('tab-catch-log');
 }
 
-// Rows that failed to reach Supabase stay in the local buffer flagged pendingSync and are
-// retried whenever a session becomes available. Seed/demo rows never carry the flag, so
-// the historical sample data is never uploaded to the shared board.
+// Rows that failed to reach Supabase stay in the durable outbox flagged pendingSync and
+// are retried whenever a session becomes available. The write is idempotent (clientId ->
+// ON CONFLICT DO NOTHING), so a retry can never double-log a catch.
 async function syncPendingCatches() {
-    if (typeof Supa === 'undefined') return 0;
-    var db = [];
-    try {
-        var jStr = localStorage.getItem('catch_db');
-        db = jStr ? JSON.parse(jStr) : [];
-    } catch (e) { return 0; }
-    var pending = db.filter(function (r) { return r && r.pendingSync; });
+    if (typeof Supa === 'undefined' || typeof outboxPending !== 'function') return 0;
+    var pending = outboxPending();
     if (!pending.length) return 0;
 
     var synced = 0;
@@ -93,16 +88,12 @@ async function syncPendingCatches() {
         var res = null;
         try { res = await Supa.insertCatch(pending[i]); } catch (e) { res = null; }
         if (res && res.ok) {
-            delete pending[i].pendingSync;
-            pending[i].syncedAt = new Date().toISOString();
+            outboxUpdate(pending[i].clientId, { pendingSync: false, syncedAt: new Date().toISOString() });
             synced++;
         } else {
             break;   // still offline: stop here and retry next session
         }
     }
-    if (synced > 0) {
-        try { localStorage.setItem('catch_db', JSON.stringify(db)); } catch (e) {}
-        logDebug('Flushed ' + synced + ' buffered catch(es) to Supabase', 'SYNC');
-    }
+    if (synced > 0) logDebug('Flushed ' + synced + ' buffered catch(es) to Supabase', 'SYNC');
     return synced;
 }

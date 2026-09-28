@@ -92,28 +92,20 @@ async function logData() {
         score: (currentStats && currentStats.score != null) ? Number(currentStats.score.toFixed(2)) : null
     };
 
-    // 1. Offline buffer first, so a logged catch is never lost.
-    var db = [];
-    try {
-        var jStr = localStorage.getItem('catch_db');
-        db = jStr ? JSON.parse(jStr) : [];
-    } catch (e) { db = []; }
-    var idx = db.push(payload) - 1;
-    try { localStorage.setItem('catch_db', JSON.stringify(db)); } catch (e) {}
-    logDebug('Catch buffered locally', 'DB');
+    // 1. Durable outbox first (IndexedDB, localStorage fallback) so it is never lost.
+    outboxAdd(payload);
+    logDebug('Catch buffered in the outbox', 'DB');
 
-    // 2. Async push of the private record to Supabase.
+    // 2. Async push of the private record to Supabase (idempotent on clientId).
     var res = null;
     if (typeof Supa !== 'undefined') {
         try { res = await Supa.insertCatch(payload); } catch (e) { res = null; }
     }
     if (res && res.ok) {
-        db[idx].syncedAt = new Date().toISOString();
-        try { localStorage.setItem('catch_db', JSON.stringify(db)); } catch (e) {}
-        logDebug('Catch synced to Supabase', 'SYNC');
+        outboxUpdate(payload.clientId, { syncedAt: new Date().toISOString(), pendingSync: false });
+        logDebug('Catch synced to Supabase' + (res.deduped ? ' (already stored)' : ''), 'SYNC');
     } else {
-        db[idx].pendingSync = true;
-        try { localStorage.setItem('catch_db', JSON.stringify(db)); } catch (e) {}
+        outboxUpdate(payload.clientId, { pendingSync: true });
         logDebug('Queued for retry: ' + ((res && res.error) || 'offline'), 'SYNC');
     }
 

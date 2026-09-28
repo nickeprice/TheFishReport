@@ -40,10 +40,8 @@ async function loadCalibrationData(flow, species) {
         try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }
     }
     if (!dbArray.length) {
-        try {
-            var jStr = localStorage.getItem('catch_db');
-            dbArray = jStr ? JSON.parse(jStr) : [];
-        } catch (e) { dbArray = []; }
+        // Offline fallback: the durable outbox (in-memory mirror, loaded at boot).
+        dbArray = (typeof outboxAll === 'function') ? outboxAll() : [];
     }
     return dbArray;
 }

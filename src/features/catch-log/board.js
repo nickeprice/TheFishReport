@@ -54,11 +54,8 @@ async function loadDatabase() {
     }
 
     if (!fromCloud) {
-        var local = [];
-        try {
-            var jStr = localStorage.getItem('catch_db');
-            local = jStr ? JSON.parse(jStr) : [];
-        } catch (e) { local = []; }
+        // Offline fallback: the durable outbox (in-memory mirror, loaded at boot).
+        var local = (typeof outboxAll === 'function') ? outboxAll() : [];
         rows = local.slice().reverse();
         logDebug('Brag board falling back to ' + rows.length + ' buffered row(s)', 'DB');
     }

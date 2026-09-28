@@ -3,6 +3,26 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 3.1 COMPLETE ✅: durable IndexedDB outbox (localStorage retired)
+New `src/shared/idb.js` (minimal promise wrapper: `idbOpen/idbGetAll/idbPutAll/idbDelete`)
+and `src/features/catch-log/outbox.js`, which keeps an IN-MEMORY MIRROR of the catch list and
+writes through to IndexedDB. The mirror is the key design call: several readers need the list
+SYNCHRONOUSLY (board fallback, gear-sim calibration fallback, pending-sync flush) while
+IndexedDB is async — so callers keep their API and the store stays durable. `app.js` boot is
+now `async` and `await outboxLoad()`s BEFORE any reader runs. Migration is built in: the
+legacy `catch_db` key is imported on first load, every legacy row gets a stable `clientId`
+(so a retry can't duplicate it), and the key is retired ONLY once the durable copy is
+confirmed written. GRACEFUL DEGRADATION: private browsing can make IndexedDB unavailable, so
+`idb.js` never throws and the outbox falls back to using `catch_db` as its store rather than
+losing a catch. All 4 `catch_db` call sites (`board.js`, `log.js`, `auth.js`, `solver.js`) now
+go through the outbox. DELIBERATELY DROPPED: the planned per-waterbody telemetry snapshot —
+`sw.js` already caches `/api/water_report` under a normalised per-station key, so an
+IndexedDB copy would be a second cache of the same payload with no consumer (recorded in the
+code + plan). Verified: sanity **85/85 GREEN** (new guard: no module outside `outbox.js`
+touches `catch_db`) + a 9-assertion outbox test (legacy import, stable ids, dedup across a
+reload, flag persistence, fallback kind). `sw.js` → `v2.03.00`.
+
+
 ## 2026-09-28 — Phase 3.2 COMPLETE ✅: idempotent catch writes (no migration needed)
 The dead-zone double-log bug is fixed CLIENT-SIDE. A read-only LIVE query confirmed
 `public.catches` already has `catches_pkey PRIMARY KEY (id)`, so the conflict target needed

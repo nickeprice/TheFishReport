@@ -71,66 +71,48 @@ Static specs give you everything *except* the line's `cd`. Get it two ways:
 
 ---
 
-## Template — fill these in
+## Where the values live
 
-### Metadata
+Values go in **`docs/tackle_measurements.csv`** — one row per item, header row on top. Open
+it in Numbers, Excel or Google Sheets: you get typed columns for free, and the sheet can
+compute the derived fields for you. The CSV is the **single source of truth**;
+`src/data/tackle.json` is generated from it and is never hand-edited. One source, so the two
+cannot drift.
 
-```json
-{
-  "measured_on": "YYYY-MM-DD",
-  "water_temp_c": 18,
-  "water_density_g_cm3": 0.9986,
-  "scale_resolution_g": 0.01,
-  "items": []
-}
+### Columns
+
+| Column | Unit | Applies to | Notes |
+|---|---|---|---|
+| `id` | — | all | unique slug, e.g. `corky-10` (the stable key) |
+| `type` | — | all | `foam` \| `line` \| `bead` \| `hook` \| `yarn` |
+| `label` | — | all | display name |
+| `material` | — | line, bead | line: `mono`/`copoly`/`fluoro`/`braid`; bead: `hard`/`soft` |
+| `lb_test` | lb | line | |
+| `diameter_mm` | mm | line, bead, foam | line: wrap-and-divide |
+| `mass_g` | g | all | |
+| `buoyancy_g` | g-force | all | straight off the Archimedes rig |
+| `density_g_cm3` | g/cm³ | all | **derived** when blank (`mass / volume`) |
+| `area_cm2` | cm² | foam, bead | spheres: `π(d/2)²` |
+| `shape` | — | foam, bead | `sphere` (drives the standard `cd`) |
+| `cd` | — | foam, bead | `0.47` for spheres; flat plate ≈ 1.1 |
+| `gap_width_mm` | mm | hook | |
+| `wire_diameter_mm` | mm | hook | |
+| `buoyancy_per_inch_g` | g/in | yarn | 10 in saturated ÷ 10 |
+| `notes` | — | all | free text — avoid commas, or wrap the cell in quotes |
+
+Leave a cell **blank** when it does not apply, and blank when you have not measured it yet.
+Blank means "unknown", which is honest. Never type a guess.
+
+### Generate the JSON
+
+```bash
+python3 scripts/tackle_csv_to_json.py            # validate + write src/data/tackle.json
+python3 scripts/tackle_csv_to_json.py --check    # validate only, write nothing
 ```
 
-### Worked example (reference — keep it)
-
-```json
-{
-  "id": "corky-10",
-  "type": "foam",
-  "label": "Corky 10 (10mm)",
-  "diameter_mm": 10.0,
-  "mass_g": 0.42,
-  "buoyancy_g": 0.51,
-  "density_g_cm3": 0.41,
-  "projected_area_cm2": 0.785,
-  "shape": "sphere",
-  "cd": 0.47,
-  "notes": "saturated; Method A, tap-water 18C"
-}
-```
-
-### Blank entries — copy one per item and fill
-
-This is a ready-to-extend JSON **array** — once filled, paste it straight into the `items`
-field of the metadata block above.
-
-```json
-[
-{ "id": "corky-14",  "type": "foam", "label": "Corky 14 (6mm)",  "diameter_mm": null, "mass_g": null, "buoyancy_g": null, "density_g_cm3": null, "shape": "sphere", "cd": 0.47, "notes": "" },
-{ "id": "corky-12",  "type": "foam", "label": "Corky 12 (8mm)",  "diameter_mm": null, "mass_g": null, "buoyancy_g": null, "density_g_cm3": null, "shape": "sphere", "cd": 0.47, "notes": "" },
-{ "id": "cheater-12","type": "foam", "label": "Cheater 12",      "diameter_mm": null, "mass_g": null, "buoyancy_g": null, "density_g_cm3": null, "shape": "sphere", "cd": 0.47, "notes": "" },
-
-{ "id": "leader-mono-12",    "type": "line", "material": "mono",   "lb_test": 12, "diameter_mm": null, "density_g_cm3": null, "notes": "wrap/40" },
-{ "id": "leader-copoly-12",  "type": "line", "material": "copoly", "lb_test": 12, "diameter_mm": null, "density_g_cm3": null, "notes": "wrap/40" },
-{ "id": "leader-fluoro-12",  "type": "line", "material": "fluoro", "lb_test": 12, "diameter_mm": null, "density_g_cm3": null, "notes": "wrap/40" },
-{ "id": "mainline-braid-30", "type": "line", "material": "braid",  "lb_test": 30, "diameter_mm": null, "density_g_cm3": null, "notes": "wrap/40" },
-
-{ "id": "bead-hard-6", "type": "bead", "material": "hard", "diameter_mm": 6.0, "mass_g": null, "buoyancy_g": null, "density_g_cm3": null, "shape": "sphere", "cd": 0.47, "notes": "" },
-{ "id": "bead-soft-6", "type": "bead", "material": "soft", "diameter_mm": 6.0, "mass_g": null, "buoyancy_g": null, "density_g_cm3": null, "shape": "sphere", "cd": 0.47, "notes": "" },
-{ "id": "bead-soft-8", "type": "bead", "material": "soft", "diameter_mm": 8.0, "mass_g": null, "buoyancy_g": null, "density_g_cm3": null, "shape": "sphere", "cd": 0.47, "notes": "" },
-
-{ "id": "hook-2-0", "type": "hook", "size_label": "2/0", "mass_g": null, "gap_width_mm": null, "wire_diameter_mm": null, "notes": "" },
-{ "id": "hook-1-0", "type": "hook", "size_label": "1/0", "mass_g": null, "gap_width_mm": null, "wire_diameter_mm": null, "notes": "" },
-{ "id": "hook-1",   "type": "hook", "size_label": "1",   "mass_g": null, "gap_width_mm": null, "wire_diameter_mm": null, "notes": "" },
-{ "id": "hook-2",   "type": "hook", "size_label": "2",   "mass_g": null, "gap_width_mm": null, "wire_diameter_mm": null, "notes": "" },
-
-{ "id": "yarn-egg", "type": "yarn", "label": "Egg yarn (saturated)", "buoyancy_per_inch_g": null, "density_g_cm3": null, "notes": "measure 10 in, soak 5 min, ÷ 10" }
-]
-```
+The converter derives `volume_cm3` and `density_g_cm3` from `mass_g` + `buoyancy_g`, fails
+loudly on a malformed row (a miscounted comma is caught, never silently shifted), and lists
+which items are still incomplete — so it doubles as the progress tracker.
 
 ---
 
@@ -142,6 +124,8 @@ That alone replaces every unitless constant with real units.
 
 ## After you fill it in
 
-The filled values become `src/data/tackle.json` (strict JSON, same pattern as the region
-registry), read by the Gear Sim so `rigLift()` / `totalDragPerFt()` take real numbers instead
-of tuned coefficients.
+`src/data/tackle.json` is the machine-readable result, read by the Gear Sim so `rigLift()` /
+`totalDragPerFt()` take real units instead of tuned coefficients. It is **not committed yet**:
+it appears alongside the physics rewrite (and then joins `sw.js` SHELL_FILES with a VERSION
+bump), so the repo never ships data without a consumer.
+

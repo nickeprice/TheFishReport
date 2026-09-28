@@ -4,6 +4,35 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Tackle spec: CSV entry surface + validator (supersedes the md template)
+Split the tackle-spec deliverable into two files with different lifecycles, because a cheat
+sheet does not change when data does:
+
+- **`docs/tackle_measurements.csv`** — the values, one row per item, 16 columns. CSV rather
+  than embedded JSON so it opens in Numbers / Excel / Sheets (typed columns, sheet-side
+  formulas for the derived fields) and so a miscounted comma cannot silently corrupt
+  hand-edited JSON. Blank means "not measured", and blanks are never guessed.
+- **`scripts/tackle_csv_to_json.py`** — the ONLY writer of `src/data/tackle.json`. Stdlib
+  only and deterministic (sorted by id, no timestamp, so a no-op re-run is byte-identical).
+  Derives `volume_cm3` and `density_g_cm3` from `mass_g` + `buoyancy_g`; rejects a wrong field
+  count, an unknown `type`/`shape`, a duplicate id, or a non-numeric cell; and prints which
+  items are still incomplete so it doubles as the progress tracker.
+- **`docs/CONTRACT_TACKLE.md`** — now the cheat sheet only (measurement protocol), plus a
+  column reference and the converter command. The old fill-in JSON template block is gone.
+
+`src/data/tackle.json` is deliberately **not committed**: 15 of 16 seeded items are still
+unmeasured and nothing reads the file yet, so it should appear alongside the physics rewrite
+(and then join `sw.js` SHELL_FILES with a VERSION bump) rather than ship as a null skeleton.
+
+Verified: a new sanity guard runs the **real** converter in `--check` mode instead of
+reimplementing CSV parsing in JS — proven in BOTH directions. An injected extra comma on row 2
+fails with "line 2: 17 fields, expected at most 16"; reverting is byte-identical (`git diff`
+empty) and returns **102/102 green**. The guard earned its place immediately by catching a
+genuine miscount in my own `cheater-12` row while building this.
+- Key files: `docs/tackle_measurements.csv` (new), `scripts/tackle_csv_to_json.py` (new),
+  `docs/CONTRACT_TACKLE.md`, `sanity_pass.js`.
+
+
 ## 2026-09-28 — docs/CONTRACT_TACKLE.md: measurement protocol + data template
 Added the tackle-spec contract: how to measure every physical property of a tackle item
 (mass, buoyancy, volume, density, diameters, projected area) plus an editable JSON template

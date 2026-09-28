@@ -1,0 +1,17 @@
+id,type,label,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,notes
+corky-14,foam,Corky 14 (6mm),,,6.0,,,,0.283,sphere,0.47,,,,
+corky-12,foam,Corky 12 (8mm),,,8.0,,,,0.503,sphere,0.47,,,,
+corky-10,foam,Corky 10 (10mm),,,10.0,0.42,0.51,,0.785,sphere,0.47,,,,worked example - replace with your own measurement
+cheater-12,foam,Cheater 12,,,,,,,,sphere,0.47,,,,
+leader-mono-12,line,Leader mono 12lb,mono,12,,,,,,,,,,,
+leader-copoly-12,line,Leader copoly 12lb,copoly,12,,,,,,,,,,,
+leader-fluoro-12,line,Leader fluoro 12lb,fluoro,12,,,,,,,,,,,
+mainline-braid-30,line,Mainline braid 30lb,braid,30,,,,,,,,,,,
+bead-hard-6,bead,Bead hard 6mm,hard,,6.0,,,,0.283,sphere,0.47,,,,
+bead-soft-6,bead,Bead soft 6mm,soft,,6.0,,,,0.283,sphere,0.47,,,,
+bead-soft-8,bead,Bead soft 8mm,soft,,8.0,,,,0.503,sphere,0.47,,,,
+hook-2-0,hook,Hook 2/0,,,,,,,,,,,,,
+hook-1-0,hook,Hook 1/0,,,,,,,,,,,,,
+hook-1,hook,Hook 1,,,,,,,,,,,,,
+hook-2,hook,Hook 2,,,,,,,,,,,,,
+yarn-egg,yarn,Egg yarn (saturated),,,,,,,,,,,,,measure 10in soaked 5min then divide by 10

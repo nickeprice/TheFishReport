@@ -406,6 +406,24 @@ function symbolsIndex() {
   } catch (e) {
     fail('contract docs present', String(e.message).split('\n')[0]);
   }
+  // Tackle spec: docs/tackle_measurements.csv is the single source of truth for measured
+  // tackle properties; docs/CONTRACT_TACKLE.md says how to measure each field. Validate by
+  // running the REAL converter in --check mode rather than reimplementing CSV parsing here —
+  // a miscounted comma silently SHIFTS every value after it, so it should fail CI rather than
+  // being discovered downstream.
+  try {
+    const tackleFiles = ['docs/CONTRACT_TACKLE.md', 'docs/tackle_measurements.csv',
+                         'scripts/tackle_csv_to_json.py'];
+    const gone = tackleFiles.filter((p) => !fs.existsSync(path.join(ROOT, p)));
+    if (gone.length) throw new Error('missing ' + gone.join(', '));
+    const checked = execFileSync('python3',
+      [path.join(ROOT, 'scripts', 'tackle_csv_to_json.py'), '--check'],
+      { cwd: ROOT, encoding: 'utf8' });
+    ok('tackle spec validates', checked.trim().split('\n')[0]);
+  } catch (e) {
+    fail('tackle spec validates', String(e.stderr || e.message).trim().split('\n').pop());
+  }
+
   try {
     const mb = ['projectbrief', 'productContext', 'activeContext', 'systemPatterns', 'techContext', 'progress'];
     const absent = mb.filter((f) => !fs.existsSync(path.join(ROOT, 'memory-bank', f + '.md')));

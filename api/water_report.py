@@ -582,30 +582,90 @@ def _station_add(stations, code, name, s_lat, s_lon, lat_f, lon_f, param, val):
 _POOL_NAMES = {s["site_id"]: s["name"] for s in _WA.get("discovery_pool", []) if s.get("name")}
 
 
-def _nearby_from_wdfn(lat_f, lon_f):
-    """Latest WDFN values + coordinates for the discovery pool.
+# --- Dynamic radial discovery (UPDATE 3.0 Phase 2.2) --------------------------
+# Instead of the curated gauge list we ask WDFN for the stream monitoring locations
+# around the point (bbox), keep the closest handful by real distance, then ask which
+# of THOSE report live discharge/gage. This is the two-step pattern USGS recommends,
+# and it scales to any waterbody rather than the 15 gauges hand-picked for WA.
+NEARBY_BBOX_DEG = 0.6           # ~ +/- 40 miles at these latitudes
+NEARBY_LOCATION_LIMIT = 1000    # enough to receive every stream site inside the box
+NEARBY_CANDIDATES = 120         # closest N candidates we then check for live data
 
-    Returns None (so the caller falls back to legacy) when the API is unusable;
-    an empty dict is a valid "nothing fresh right now" answer.
-    """
-    site_ids = ",".join("USGS-" + s for s in nearbyStationIds)
+
+def _discover_wdfn_locations(lat_f, lon_f):
+    """Stream monitoring locations around a point, nearest first.
+
+    Returns None when discovery is unusable so the caller can fall back to the
+    registry's curated discovery_pool."""
+    bbox = "{},{},{},{}".format(round(lon_f - NEARBY_BBOX_DEG, 4), round(lat_f - NEARBY_BBOX_DEG, 4),
+                                round(lon_f + NEARBY_BBOX_DEG, 4), round(lat_f + NEARBY_BBOX_DEG, 4))
     try:
-        d = _wdfn_get(f"{WDFN_BASE}/latest-continuous/items"
-                      f"?monitoring_location_id={site_ids}"
-                      f"&parameter_code=00060,00065&limit=200", timeout=10)
+        d = _wdfn_get(WDFN_BASE + "/monitoring-locations/items"
+                      "?bbox=" + bbox + "&site_type_code=ST&limit=" + str(NEARBY_LOCATION_LIMIT), timeout=12)
     except Exception:
         return None
     feats = d.get("features")
     if feats is None:
         return None
+    out = []
+    for f in feats:
+        try:
+            p = f.get("properties") or {}
+            coords = (f.get("geometry") or {}).get("coordinates") or []
+            if len(coords) < 2:
+                continue
+            code = str(p.get("id") or "").replace("USGS-", "", 1)
+            if not code:
+                continue
+            s_lat, s_lon = float(coords[1]), float(coords[0])
+            out.append({"id": code,
+                        "name": format_site_name(p.get("monitoring_location_name")) or code,
+                        "lat": s_lat, "lon": s_lon,
+                        "distance_mi": round(_haversine_mi(lat_f, lon_f, s_lat, s_lon), 1)})
+        except Exception:
+            continue
+    out.sort(key=lambda s: s["distance_mi"])
+    return out
+
+
+
+def _nearby_from_wdfn(lat_f, lon_f):
+    """Nearest LIVE gauges: dynamic radial discovery, then one multi-location query.
+
+    Discovery is the Phase 2.2 two-step pattern. If discovery itself is unusable it
+    degrades to the registry's curated discovery_pool, so a WDFN hiccup cannot break
+    the 'Use My GPS' flow. Returns None when nothing could be read at all.
+    """
+    candidates = _discover_wdfn_locations(lat_f, lon_f)
+    if candidates is None:
+        candidates = [{"id": s, "name": _POOL_NAMES.get(s, s)} for s in nearbyStationIds]
+        if not candidates:
+            return None
+    candidates = candidates[:NEARBY_CANDIDATES]
+    by_id = {c["id"]: c for c in candidates}
+
+    ids = ",".join("USGS-" + c["id"] for c in candidates)
+    try:
+        d = _wdfn_get(WDFN_BASE + "/latest-continuous/items"
+                      "?monitoring_location_id=" + ids +
+                      "&parameter_code=00060,00065&limit=400", timeout=12)
+    except Exception:
+        return None
+    feats = d.get("features")
+    if feats is None:
+        return None
+
     now_aware = datetime.now(timezone.utc)
     stations = {}
     for f in feats:
         try:
             p = f.get("properties") or {}
             code = str(p.get("monitoring_location_id") or "").replace("USGS-", "", 1)
+            cand = by_id.get(code)
+            if not cand:
+                continue
             param = str(p.get("parameter_code") or "")
-            if not code or param not in ('00060', '00065'):
+            if param not in ('00060', '00065'):
                 continue
             val = float(p.get("value"))
             if val < -900000:
@@ -615,11 +675,14 @@ def _nearby_from_wdfn(lat_f, lon_f):
                 reading_dt = reading_dt.replace(tzinfo=timezone.utc)
             if (now_aware - reading_dt).total_seconds() > 24 * 3600:
                 continue
-            coords = (f.get("geometry") or {}).get("coordinates") or []
-            if len(coords) < 2:
-                continue
-            s_lon, s_lat = float(coords[0]), float(coords[1])
-            _station_add(stations, code, _POOL_NAMES.get(code, code), s_lat, s_lon, lat_f, lon_f, param, val)
+            # Prefer the discovery coordinates (basin-correct); else the feature's own.
+            s_lat, s_lon = cand.get("lat"), cand.get("lon")
+            if s_lat is None or s_lon is None:
+                coords = (f.get("geometry") or {}).get("coordinates") or []
+                if len(coords) < 2:
+                    continue
+                s_lon, s_lat = float(coords[0]), float(coords[1])
+            _station_add(stations, code, cand.get("name") or code, s_lat, s_lon, lat_f, lon_f, param, val)
         except Exception:
             continue
     return stations
@@ -910,8 +973,87 @@ def build_dynamic_timeline(lines_in, lines_out, sunrise_dt, sunset_dt, cloud_pct
     windows.append({"start": start_time.isoformat(), "end": timeline[-1]["time"].isoformat(), "score": curr_score, "triggers": curr_trig, "start_str": start_time.strftime('%-I:%M %p'), "end_str": timeline[-1]["time"].strftime('%-I:%M %p')})
     return windows
 
+# ==================================================================================
+# PROXY HARDENING (UPDATE 3.0 Phase 2.3)
+# The handler takes arbitrary lat/lon and fans out to USGS / NOAA / Open-Meteo, so it
+# must not be usable as a free open proxy:
+#   * coordinates are validated against plausible bounds for the covered region,
+#   * each client gets a small token bucket (best effort — serverless instances are
+#     ephemeral, so this blunts bursts rather than enforcing a global quota),
+#   * the expensive water report is memoised briefly so repeat views are free.
+# ==================================================================================
+import time as _time
+
+US_LAT_BOUNDS = (24.0, 50.0)      # covers WA today; widen as more states are added
+US_LON_BOUNDS = (-125.5, -66.0)
+RATE_LIMIT_MAX = 40               # requests per client per window
+RATE_LIMIT_WINDOW = 60.0          # seconds
+REPORT_CACHE_TTL = 60.0           # seconds
+_recent_hits = {}
+_report_cache = {}
+
+
+def coords_ok(lat, lon):
+    """True when the pair is a plausible coordinate inside the covered region."""
+    try:
+        lat_f, lon_f = float(lat), float(lon)
+    except (TypeError, ValueError):
+        return False
+    if lat_f != lat_f or lon_f != lon_f:          # NaN
+        return False
+    return (US_LAT_BOUNDS[0] <= lat_f <= US_LAT_BOUNDS[1]
+            and US_LON_BOUNDS[0] <= lon_f <= US_LON_BOUNDS[1])
+
+
+def client_key(req_handler):
+    """Best-effort client identity: proxies put the real IP in a header."""
+    for header in ('x-forwarded-for', 'x-real-ip', 'cf-connecting-ip'):
+        val = req_handler.headers.get(header)
+        if val:
+            return val.split(',')[0].strip()
+    try:
+        return req_handler.client_address[0]
+    except Exception:
+        return 'unknown'
+
+
+def is_rate_limited(key):
+    """Sliding-window counter. Best effort by design (no shared store)."""
+    now = _time.time()
+    hits = [t for t in _recent_hits.get(key, []) if now - t < RATE_LIMIT_WINDOW]
+    hits.append(now)
+    if len(_recent_hits) > 5000:                  # bounded memory
+        _recent_hits.clear()
+    _recent_hits[key] = hits
+    return len(hits) > RATE_LIMIT_MAX
+
+
+def cache_get(key):
+    entry = _report_cache.get(key)
+    if entry and (_time.time() - entry[0]) < REPORT_CACHE_TTL:
+        return entry[1]
+    return None
+
+
+def cache_put(key, body):
+    if len(_report_cache) > 200:
+        _report_cache.clear()
+    _report_cache[key] = (_time.time(), body)
+
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        # Hardening (Phase 2.3): reject bursts BEFORE any fan-out to third parties.
+        if is_rate_limited(client_key(self)):
+            body = json.dumps({'error': 'Too many requests'}).encode('utf-8')
+            self.send_response(429)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Retry-After', str(int(RATE_LIMIT_WINDOW)))
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         # Pacific wall-clock time, NOT the server's local zone (Vercel runs UTC):
         # this `now` drives the 4 forecast days, the TODAY/TOMORROW tag, the
         # dt.weekday() netting check, sunrise/sunset and the tide-day filter, so a
@@ -925,6 +1067,15 @@ class handler(BaseHTTPRequestHandler):
         if urlparse(self.path).path == '/api/nearby_stations':
             lat = qs.get('lat', [None])[0]
             lon = qs.get('lon', [None])[0]
+            if (lat and lon) and not coords_ok(lat, lon):
+                # Outside the covered region: refuse rather than fan out on its behalf.
+                body = json.dumps({'stations': [], 'error': 'Coordinates outside the covered region'}).encode('utf-8')
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(body)
+                return
             stations = fetch_nearby_stations(lat, lon) if (lat and lon) else []
             body = json.dumps({'stations': stations}).encode('utf-8')
             self.send_response(200)
@@ -942,6 +1093,23 @@ class handler(BaseHTTPRequestHandler):
             req_lon = float(qs.get('lon', [str(LON)])[0])
         except:
             req_lat, req_lon = LAT, LON
+        # Out-of-region coordinates fall back to the default, so a bad/abused link still
+        # serves the default river instead of fanning out for an arbitrary point.
+        if not coords_ok(req_lat, req_lon):
+            req_lat, req_lon = LAT, LON
+
+        # Short-lived memoisation (Phase 2.3): the third-party fan-out is the expensive
+        # part of this endpoint, and the report only changes every few minutes.
+        cache_key = '{}|{:.3f}|{:.3f}'.format(site, req_lat, req_lon)
+        cached = cache_get(cache_key)
+        if cached is not None:
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('X-Cache', 'HIT')
+            self.end_headers()
+            self.wfile.write(cached)
+            return
 
         forecast_dates = [now + timedelta(days=d) for d in range(FORECAST_DAYS)]
         usgs_data = fetch_usgs_telemetry(site) 
@@ -1153,8 +1321,10 @@ class handler(BaseHTTPRequestHandler):
                 "site_name": usgs_data["site_name"], "site_id": site
             })
 
+        body = json.dumps(reports).encode('utf-8')
+        cache_put(cache_key, body)
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        self.wfile.write(json.dumps(reports).encode('utf-8'))
+        self.wfile.write(body)

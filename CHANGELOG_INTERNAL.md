@@ -3,6 +3,26 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 2.2 + 2.4 COMPLETE ✅: dynamic discovery + proxy hardening
+**2.2 dynamic radial discovery:** `fetch_nearby_stations` no longer depends on the curated
+gauge list. New `_discover_wdfn_locations()` queries `/monitoring-locations` for the STREAM
+sites in a ±0.6° bbox (probed: limit=1000 returns the box COMPLETE — 747 sites, no next
+link), keeps the closest 120 by real Haversine distance, then ONE `/latest-continuous`
+query returns their live values. The registry `discovery_pool` survives ONLY as a fallback
+when discovery fails. Result near Puyallup: **8 live gauges**, including White River sites
+the curated pool never had (`12101102`, `12100500`, `12100498`…). Also probed: **no API key
+is required** (200 without one), so the "server-side key" part of 2.2 is moot — a key stays
+an optional env var only.
+**2.4 proxy hardening:** `coords_ok()` bounds lat/lon to the covered region;
+`is_rate_limited()` is a per-client sliding window (40/60s → 429 + `Retry-After`) checked
+BEFORE any third-party fan-out; the water report is memoised 60s (capped dict). Verified:
+out-of-region nearby → **400**; 50-request burst → **429 after 40**; second identical
+report → `X-Cache: HIT` and **4.10s → 0.001s**. Caveat recorded: the limiter/cache are per
+serverless instance (no shared store) so they blunt bursts, not a global quota.
+STILL OPEN in Phase 2: **2.3** NOAA CO-OPS dynamic tide pairing (all waterbodies still use
+the registry default station) and **2.5** the interactive map. Sanity **78/78 GREEN**.
+
+
 ## 2026-09-28 — Phase 2.1 COMPLETE ✅: all 5 USGS call sites on WDFN
 Finished the migration off the dying `waterservices.usgs.gov` (decommissioned Q1 2027).
 Newly migrated this pass: (1) `fetch_dam_clarity` → `/daily` with a 14-day `datetime`

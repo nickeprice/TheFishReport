@@ -18,9 +18,10 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 
 - [x] **2.1** WDFN migration — all 5 call sites done (telemetry, nearby, clarity/dv,
       browser momentum PT4H, station search incl. `stateCd=wa`); legacy kept as fallback
-- [ ] **2.2** Two-step site discovery + optional server-side API key
-- [ ] **2.3** Proxy hardening (User-Agent, caching, rate-limit, SSRF validation)
-- [ ] **2.4** Interactive map — gauge picker + Level-A regulation panel + flow colour
+- [x] **2.2** Two-step site discovery — dynamic radial bbox discovery (registry pool now fallback only)
+- [ ] **2.3** NOAA CO-OPS dynamic tide-station pairing (currently the registry default for all)
+- [x] **2.4** Proxy hardening — coord bounds, 429 rate limit, 60s report cache
+- [ ] **2.5** Interactive map — gauge picker + Level-A regulation panel + flow colour
 
 ## Deferred / follow-ups
 

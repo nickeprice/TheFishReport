@@ -352,18 +352,32 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     same outlook). sanity **78/78 GREEN** + 1.3/1.5 regressions green.
   - Note: no API key is required (verified 200 without one); a key only raises the
     rate limit, so it stays an optional server-side env var.
-- [ ] **2.2 Two-step site discovery + server-side API key.**
-  - Files: `api/water_report.py`; env var for the key (server only).
-  - Potential bug: key must never reach client files or the digest.
-  - Verify: `/api/nearby_stations?lat=&lon=` returns region-correct gauges sorted by distance.
+- [x] **2.2 Two-step site discovery + server-side API key.** ✅ COMPLETE
+  - Result: `fetch_nearby_stations` no longer relies on the curated gauge list. New
+    `_discover_wdfn_locations()` asks `/monitoring-locations` for the STREAM sites in a
+    bbox (±0.6°), keeps the closest `NEARBY_CANDIDATES` (120) by real Haversine
+    distance, then one `/latest-continuous` query returns the live values for those ids.
+    The registry `discovery_pool` is kept ONLY as a fallback when discovery fails.
+  - Verified: near Puyallup it now finds **8 live gauges** including White River sites
+    the curated pool never had (`12101102`, `12100500`, `12100498`…), nearest first.
+  - **API key: not needed.** Probed live — the endpoint returns 200 without one; a key
+    only raises the rate limit, so it stays an optional server-side env var (never in
+    client files or the digest).
 - [ ] **2.3 NOAA CO-OPS dynamic tide-station pairing.**
   - Files: `api/water_report.py` (`fetch_noaa_tides_bulletproof`, `NOAA_STATION`).
   - Potential bug: non-tidal waterbodies must return no tide data, not the nearest coast gauge.
   - Verify: a coastal waterbody pairs its nearest gauge; an inland one shows no tides.
-- [ ] **2.4 Proxy hardening.**
-  - Files: `api/water_report.py` (headers, cache, validation).
-  - Potential bug: unvalidated lat/lon = open proxy.
-  - Verify: out-of-bounds coordinates rejected; repeated calls hit cache.
+- [x] **2.4 Proxy hardening.** ✅ COMPLETE
+  - Result: `coords_ok()` bounds lat/lon to the covered region; the rate limiter is a
+    per-client sliding window (40/60s → 429 + `Retry-After`) checked BEFORE any
+    fan-out; and the water report is memoised for 60s (LRU-capped) so repeat views are
+    free. Out-of-region `/api/nearby_stations` coords return 400; the report falls back
+    to the default coordinates instead of fanning out for an arbitrary point.
+  - Potential bug: unvalidated lat/lon = open proxy — now bounded.
+  - Verify: out-of-region → **400**; 50-request burst → **429 after 40**; second
+    identical report → `X-Cache: HIT`, **4.10s → 0.001s**.
+  - Caveat: the limiter/cache are **per serverless instance** (no shared store), so they
+    blunt bursts rather than enforcing a global quota. A durable store is a later item.
 - [ ] **2.5 Interactive map (Level A regs).**
   - Files: `src/features/map/`, `index.html`, `src/styles.css`, `sw.js`.
   - Potential bug: rendering all gauges at once tanks mobile; query viewport only.

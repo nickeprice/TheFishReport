@@ -66,6 +66,24 @@ instead of a silent `--`) · a legal-hours countdown widget · "which rig fits t
 an offline photo queue · a shareable location-free trip card · everything in Update 4.0's
 Private Season / Crews / photos / River Pulse (`docs/ROADMAP.md`).
 
+**Accuracy roadmap** — from the 2026-09-28 physics review. The Gear Sim is a *deterministic
+heuristic*, not a physics simulation, and these are the false truths that bound its output:
+
+- (a) **Drag is coded linear in velocity; physics demands v²** (`leaderDragPerFt` uses
+  `bottomVelocity / REF_VELOCITY`). A one-line fix — but it changes **every frozen baseline
+  number**, so treat it as a deliberate contract bump, not a tweak. Today the model
+  under-estimates drag ~30% at 2000 CFS and ~47% at 5000 CFS.
+- (b) Velocity is derived from discharge alone (`0.25·Q^0.4`), which is a **single-site
+  empirical fit**, not a law — `v = Q/A` needs channel geometry. Only right at that gauge.
+- (c) The strike zone is **folklore printed to two decimals** (fixed ±1.0/1.5/3.5" shifts),
+  and the empirical anchor that could have fixed it (community sonar) is dead code.
+- (d) **Yarn is modelled as lift** though synthetic yarn is ~neutrally buoyant; line
+  *density* (the reason fluoro gets down) is not modelled at all.
+
+Groundwork scaffolded: `docs/CONTRACT_TACKLE.md` (measurement protocol + template) →
+`src/data/tackle.json`. The model has **never been validated against a measured presentation
+height** — that feedback loop is the single highest-value missing piece.
+
 **Future tests / experiments** (validate later): a second region, to prove the multi-region
 abstraction is real · technique + species expansion with rig presets · native packaging
 (Capacitor) · extending the `vm` runtime-test pattern to

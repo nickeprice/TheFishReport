@@ -4,6 +4,30 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — docs/CONTRACT_TACKLE.md: measurement protocol + data template
+Added the tackle-spec contract: how to measure every physical property of a tackle item
+(mass, buoyancy, volume, density, diameters, projected area) plus an editable JSON template
+with a worked example and 15 pre-seeded blank entries.
+
+Purpose: the Gear Sim currently runs on **unitless calibration constants** (`lift = 0.90`,
+`DRAG_REF = 7.5`, `hookSink = 0.35`) tuned so one reference rig lands at 8". Filling this in
+lets the drag equation `F = ½·ρ·C_d·A·v²` carry **real units**, which is what makes the model
+extrapolate instead of only working at the reference flow.
+
+The core method is **Archimedes in one setup**: tare a cup of water on the scale, then
+suspend the item submerged on a thread — the scale reads buoyant lift directly for floating
+*and* sinking items, and `volume = B/ρ` and `density = m/V` follow. Notable guidance: line
+diameter must be measured by **wrap-and-divide** (a micrometer crushes nylon and reads low),
+yarn must be measured **saturated** (it absorbs water), and a line's drag coefficient is
+*not* a static measurement — it needs a drop test or the field validation loop.
+
+Not yet wired into the app, deliberately: `src/data/tackle.json` is the intended
+machine-readable form once the values exist, so the repo does not carry data without a
+consumer. Verified: all 3 JSON blocks in the file parse (5 keys / 11 keys / 15 items);
+sanity **101/101 GREEN**.
+- Key files: `docs/CONTRACT_TACKLE.md` (new).
+
+
 ## 2026-09-28 — Hygiene sprint H1–H3: module-list parity guard, `schema.sql` removed
 A full repo-structure review surfaced one real bug class plus some drift, so the safe cleanups
 went first; the feature ideas and architecture bets were parked rather than built.

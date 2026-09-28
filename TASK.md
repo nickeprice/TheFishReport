@@ -34,6 +34,8 @@ STATUS: **Phases 1 + 2 COMPLETE**; Phase 3.2 (idempotency) done. Next: 3.1 Index
 ## Deferred / follow-ups
 
 - [ ] **1.4b** Technique/Species picker in both tabs + `GEAR_STYLES`/`GEAR_SPECIES`
+- [ ] **Update 4.0 §3.1** OAuth sign-in (Google + Apple) — mechanism, setup and the
+      App Store 4.8 gotcha are captured in `UPDATE_4.0.md`; not started by design
 - [ ] Propose `.clinerules` / `AGENTS.md` refinements (UPDATE_3.0.md §4.2) — show before applying
 
 ## Verification (whole phase)

@@ -54,6 +54,38 @@ cross-device sync and crews.
 - Files: `supabase/migrations/<ts>_profiles_and_friend_tier.sql`,
   `src/services/supabase.js`, `src/features/auth/`.
 
+#### Mechanism: OAuth, not passwords (decided 2026-09-28)
+
+Accounts are **Google + Sign in with Apple**. No email/password to store, no password
+reset to build, no credential database to leak.
+
+- **Upgrade in place — do NOT replace the session.** A signed-in anonymous angler is
+  linked with `auth.linkIdentity({ provider })`, so the **same `user_id` persists** and
+  their already-synced private catches stay theirs under RLS. A first-time visitor (no
+  session yet) falls back to `auth.signInWithOAuth({ provider })`. Replacing the session
+  instead would silently orphan every row the anon user had written.
+- **Google setup (free):** Google Cloud project → OAuth consent screen → *Web* OAuth
+  client. Authorized JavaScript origin = the app origin; Authorized redirect URI =
+  `https://pztcfsqifbfkjvosygcy.supabase.co/auth/v1/callback`. Paste Client ID + secret
+  into Supabase → Authentication → Providers → Google.
+- **Apple setup:** requires Apple Developer Program membership (**$99/yr**) — create a
+  **Services ID** with "Sign in with Apple", a `.p8` signing key, and the same Supabase
+  callback. Paste Service ID + Team ID + Key ID + key into Supabase.
+- **Always** add the app's public URL to Supabase → Authentication → URL Configuration →
+  Redirect URLs, or the round-trip cannot complete.
+- **App Store Guideline 4.8:** on iOS, offering Google sign-in **requires** also offering
+  Sign in with Apple — ship them together for the native build, not one then the other.
+- **Frontend (~4 small files):** `Supa.linkOAuth(provider)` in `src/services/supabase.js`
+  (+ export); extend the `getSession()` display-name fallback to OAuth metadata
+  (`display_name || full_name || name || email local-part || recallName()` — OAuth users
+  have no `display_name`); two buttons in the signed-out block of `index.html` +
+  `src/features/auth/auth.js`. `initAuth()` already restores the session on load, so the
+  OAuth return needs no extra handler.
+- **Native (later):** needs deep links (universal links / app links) plus
+  `@capacitor/browser`.
+- **Privacy unchanged:** linking *upgrades* the anonymous identity in place; it adds no
+  tracking and leaves RLS, the 4-column public feed and the no-GPS/tackle invariant as-is.
+
 ### 3.2 Private Season (the retention star)
 
 Personal dashboard: trips count, streaks, milestones ("first Chinook of the season",

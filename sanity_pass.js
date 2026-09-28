@@ -302,13 +302,20 @@ async function httpChecks() {
   }
 
   // /api/nearby_stations — the server-side USGS lookup for the GPS flow.
-  const near = await httpGet('/api/nearby_stations?lat=47.2&lon=-122.31');
+  // USGS can be slow on a cold connection (the app retries once for the same reason
+  // in useGPS()), so allow ONE retry before failing rather than reporting a flake.
+  let near = await httpGet('/api/nearby_stations?lat=47.2&lon=-122.31');
+  let stations = [];
+  try { stations = JSON.parse(near.body).stations || []; } catch (e) {}
+  if (near.status === 200 && stations.length === 0) {
+    await new Promise((r) => setTimeout(r, 1500));
+    near = await httpGet('/api/nearby_stations?lat=47.2&lon=-122.31');
+    try { stations = JSON.parse(near.body).stations || []; } catch (e) { stations = []; }
+  }
   if (near.status === 200) {
-    let stations = [];
-    try { stations = JSON.parse(near.body).stations || []; } catch (e) {}
     stations.length >= 1
       ? ok('GET /api/nearby_stations returns nearest gauges', `${stations.length} station(s), closest=${stations[0] && stations[0].id}`)
-      : fail('GET /api/nearby_stations returns nearest gauges', '0 stations');
+      : fail('GET /api/nearby_stations returns nearest gauges', '0 stations (retried once)');
   } else {
     fail('GET /api/nearby_stations → 200', `got ${near.status}`);
   }
@@ -368,7 +375,7 @@ function behaviorChecks(done) {
     }
     return depth === 0 ? src.slice(idx, end) : null;
   }
-  const need = ['debounce', 'showToast', 'switchTab', 'applyTabDeepLink', 'renderWaterReportEmptyState', 'setCatchScope'];
+  const need = ['debounce', 'showToast', 'switchTab', 'applyTabDeepLink', 'renderWaterReportEmptyState', 'setCatchScope', 'legalHoursLabel'];
   let code = '';
   // Bring in the top-level var showToast depends on
   {
@@ -389,6 +396,23 @@ function behaviorChecks(done) {
     code += e + '\n';
   }
   eval(code);
+
+  // --- legal hours (UPDATE 3.0 Phase 1.5) ------------------------------------
+  // The rule -> wording mapping must never fabricate a window: a 24hr river is
+  // "Open all day" and an unverified one says so instead of inventing times.
+  try {
+    const l24 = legalHoursLabel('24hr', '12:00 AM', '11:59 PM');
+    const lDay = legalHoursLabel('daylight', '6:30 AM', '8:00 PM');
+    const lUnk = legalHoursLabel('unknown', '--:--', '--:--');
+    const lCus = legalHoursLabel('custom', '--:--', '--:--');
+    (l24 === 'Legal Hours: Open all day' && lDay === 'Legal Hours: 6:30 AM \u2013 8:00 PM' &&
+     lUnk.indexOf('check the regulations') !== -1 && lUnk.indexOf('--:--') === -1 &&
+     lCus.indexOf('check the regulations') !== -1)
+      ? ok('legal-hours labels never fabricate a window', 'daylight / 24hr / unknown / custom')
+      : fail('legal-hours labels never fabricate a window', `${l24} | ${lDay} | ${lUnk} | ${lCus}`);
+  } catch (e) {
+    fail('legal-hours labels never fabricate a window', String(e.message).split('\n')[0]);
+  }
 
   // --- Gear Sim physics regression -------------------------------------------
   // The deterministic solver must NOT drift when it is refactored into the

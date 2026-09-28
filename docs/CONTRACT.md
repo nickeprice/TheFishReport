@@ -22,7 +22,8 @@ Verify against live output with `scripts/smoke.sh`.
 | `cloud_pct` | number\|null | daily mean cloud % | twilight UV/overcast |
 | `sunrise`/`sunset` | string | 12h display | twilight calc |
 | `civil_in`/`civil_out` | string | ±35 min | (legacy) |
-| `lines_in`/`lines_out` | string | ±1h legal lines | `build_dynamic_timeline` |
+| `lines_in`/`lines_out` | string\|**null** | legal window (string) — **null** unless `legal_hours` is `daylight`/`24hr` | hero `legalHoursLabel()` |
+| `legal_hours` | string | `daylight`\|`24hr`\|`custom`\|`unknown` — per-waterbody FACT from the region registry (UPDATE 3.0 Phase 1.5) | `legalHoursLabel()` |
 | `moon_upper`/`moon_lower` | string\|"--" | tidal moon times | solunar |
 | `net_status` | string | "NETS IN…" / "River Open…" — Puyallup/White/Carbon only | status display |
 | `is_netting` | bool | `weekday ∈ NETTING_DAYS && site ∈ NETTING_SITES` | gates transit "BLOCKED" |

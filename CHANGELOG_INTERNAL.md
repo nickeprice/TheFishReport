@@ -3,6 +3,22 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 1.5 COMPLETE ✅: legal hours are registry-driven
+`api/water_report.py` gains `legal_hours_for_site(site)` and reports `lines_in`/`lines_out`
+ONLY for `daylight` (sunrise ±1h) and `24hr` ("12:00 AM"/"11:59 PM") — every other rule
+reports **null**, so a legal window is never fabricated. Each day now carries a
+`legal_hours` field. The **quality** `windows` timeline keeps its sunlight window (it is a
+fishing-quality model, not a legal claim), so `peak` and the hero are unchanged. Frontend:
+new pure `legalHoursLabel(rule, in, out)` in `daynav.js` is the single rule→wording mapping
+(`24hr` → "Open all day", `unknown`/`custom` → "not verified — check the regulations"), and
+the local solar fallback now runs ONLY for `daylight` so a client can never invent a window.
+Phase 1 (de-hardcode & modularize) is now COMPLETE except the deferred 1.4b picker.
+Verified: `sanity_pass.js` → **78/78 GREEN** (new 4-rule label assertion); live API on
+`12101500` (daylight: real times + non-zero peak) and `12113000` (unknown: null window,
+timeline/peak intact). `sw.js` VERSION → `v2.01.03`. Contracts updated
+(`docs/CONTRACT.md` + `docs/CONTRACT_REGIONS.md`).
+
+
 ## 2026-09-28 — Phase 1.4a COMPLETE ✅: Gear Sim technique registry (behaviour frozen)
 Split the deterministic solver out of `sim.js` into a REGISTRY-DRIVEN technique:
 `techniques/drift.js` owns the logic as `DRIFT_TECHNIQUE.compute(rig, env)` (flossing is a

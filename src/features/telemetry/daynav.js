@@ -1,7 +1,7 @@
 /**
  * src/features/telemetry/daynav.js - forecast-day navigation + empty state.
  * public: activeDateOffset, reportsData, stepDate(), showDay(),
- *         updateActiveDateUI(), renderWaterReportEmptyState()
+ *         updateActiveDateUI(), renderWaterReportEmptyState(), legalHoursLabel()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 var activeDateOffset = 0;
@@ -27,6 +27,21 @@ function showDay(dayId) {
 // truth whenever the telemetry API is reachable. The local NOAA/Meeus
 // calculation is the offline fallback only, so the hero and the day cards
 // can never disagree by 1-3 min on a fresh load.
+/**
+ * The one-line legal-hours label for the hero (UPDATE 3.0 Phase 1.5).
+ * Pure so it is directly testable - and so the rule -> wording mapping lives in
+ * exactly one place:
+ *   'daylight'         -> "Legal Hours: 6:30 AM - 8:00 PM"
+ *   '24hr'             -> "Legal Hours: Open all day"
+ *   'custom'/'unknown' -> "Legal Hours: not verified - check the regulations"
+ */
+function legalHoursLabel(rule, legalIn, legalOut) {
+    if (rule === '24hr') return 'Legal Hours: Open all day';
+    if (rule !== 'daylight') return 'Legal Hours: not verified \u2014 check the regulations';
+    return 'Legal Hours: ' + legalIn + ' \u2013 ' + legalOut;
+}
+
+
 function updateActiveDateUI() {
     var d = new Date();
     d.setDate(d.getDate() + activeDateOffset);
@@ -103,12 +118,16 @@ function updateActiveDateUI() {
     var stLon = activeStation ? activeStation.lon : -122.3020;
     var rep = (activeDateOffset >= 0 && activeDateOffset < reportsData.length) ? reportsData[activeDateOffset] : null;
     var legalIn = "--:--", legalOut = "--:--";
+    // The waterbody's hours RULE comes from the region registry. Only a `daylight`
+    // river may use the local solar approximation - a 24hr/unknown window is never
+    // invented client-side (UPDATE 3.0 Phase 1.5).
+    var legalRule = (rep && rep.legal_hours) ? rep.legal_hours : 'daylight';
 
-    // Primary: backend solar times (exact Open-Meteo sunrise/sunset for this date).
+    // Primary: backend legal window (already computed from the registry rule).
     if (rep && rep.lines_in && rep.lines_out && !rep.api_offline) {
         legalIn = rep.lines_in;
         legalOut = rep.lines_out;
-    } else if (typeof calculateSolarHours === 'function') {
+    } else if (legalRule === 'daylight' && typeof calculateSolarHours === 'function') {
         // Offline fallback: local approximation for the active station coords.
         var solar = calculateSolarHours(d, stLat, stLon);
         if (solar && solar.lines_in && solar.lines_out && solar.lines_in !== '--') {
@@ -126,7 +145,7 @@ function updateActiveDateUI() {
 
     var heroHours = document.getElementById('hero-legal-hours');
     if (heroHours) {
-        heroHours.innerText = 'Legal Hours: ' + legalIn + ' \u2013 ' + legalOut;
+        heroHours.innerText = legalHoursLabel(legalRule, legalIn, legalOut);
     }
 
     // 5. Toggle active day card

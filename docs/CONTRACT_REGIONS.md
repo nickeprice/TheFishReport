@@ -73,8 +73,12 @@ legacy literals in `api/water_report.py` so the default river still serves.
 
 ### Enum notes
 
-- `legal_hours: "unknown"` is the **honest default** — never invent a window. Phase 1.5
-  resolves real values from the WDFW rules data (`unknown` renders "check regulations").
+- `legal_hours: "unknown"` is the **honest default** — never invent a window. It is
+  consumed in Phase 1.5: the API reports `lines_in`/`lines_out` as `null` unless the
+  rule is `daylight` or `24hr`, and the UI renders `24hr` as "Open all day" and
+  `unknown`/`custom` as "not verified — check the regulations". Filling in the real
+  per-river values from the WDFW rules data is still outstanding (the quality
+  `windows` timeline is a separate sunlight-based model and is unaffected).
 - `netting_sites` is a subset of the state's `netting_days` basin — only the
   Puyallup/White/Carbon basin has tribal gillnet sets; off-basin rivers must be `null`.
 - `stocks` is `null` unless the baselines genuinely belong to that waterbody. Today only

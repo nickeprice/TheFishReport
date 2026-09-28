@@ -12,7 +12,7 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 - [x] **1.3** Region-aware `api/water_report.py` (constants at lines 12–24, 286, 677)
 - [x] **1.4a** Technique registry + `drift.compute()` + `solver.js` split (behavior pinned)
 - [ ] **1.4b** Technique/Species picker in both tabs + `GEAR_STYLES`/`GEAR_SPECIES` (deferred)
-- [ ] **1.5** Legal hours from `waterbody.legal_hours` (daylight/24hr/custom/unknown)
+- [x] **1.5** Legal hours from `waterbody.legal_hours` (daylight/24hr/custom/unknown)
 
 ## Known follow-ups (non-blocking)
 

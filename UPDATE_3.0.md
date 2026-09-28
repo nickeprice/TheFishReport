@@ -307,10 +307,24 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     `src/styles.css`, `src/features/gear-sim/debounce.js`.
   - Potential bug: the picker must not desync the duplicated Gear Sim / Catch Log fields.
   - Verify: both tabs change together; styles visibly change the leader/weight bias.
-- [ ] **1.5 Legal hours from `waterbody.legal_hours`.**
-  - Files: `api/water_report.py` (report loop), `src/app.js` legal-hours UI.
-  - Potential bug: `24hr` rivers must not render a sunrise/sunset bar.
-  - Verify: a `24hr` waterbody shows "Open all day"; `unknown` shows "check regulations".
+- [x] **1.5 Legal hours from `waterbody.legal_hours`.** ✅ COMPLETE
+  - Result: `api/water_report.py` computes `legal_rule = legal_hours_for_site(site)` and
+    reports `lines_in`/`lines_out` **only** for `daylight` (sunrise ±1h) and `24hr`
+    ("12:00 AM"/"11:59 PM"); every other rule reports **null**. New `legal_hours` field
+    on each day. The **quality** `windows` timeline keeps its sunlight window (a separate
+    fishing-quality model), so `peak`/hero scoring is unchanged.
+  - Frontend: `legalHoursLabel(rule, in, out)` (pure, in `daynav.js`) is the single
+    rule→wording mapping; the local solar fallback now runs **only** for `daylight`, so a
+    24hr/unknown river can never have a window invented client-side.
+  - Potential bug: `24hr` rivers must not render a sunrise/sunset bar — they render
+    "Open all day"; `unknown` renders "not verified — check the regulations".
+  - Verify: `node sanity_pass.js` → **78/78 GREEN** (new `legal-hours labels never
+    fabricate a window` assertion covering all four rules). Live API: `12101500` →
+    `legal_hours: 'daylight'` + real times + non-zero peak; `12113000` → `legal_hours:
+    'unknown'`, `lines_in`/`lines_out` **null**, timeline + peak intact. ✅
+  - Outstanding (not blocking): no WA waterbody is marked `24hr` yet, so that branch is
+    covered by the label assertion rather than a live river; real per-river values still
+    come from the WDFW rules data.
 
 ### Phase 2 — USGS migration + radial telemetry
 

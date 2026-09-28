@@ -69,6 +69,15 @@ def stocks_for_site(site_id):
     return {_s["species"]: _s for _s in _wb["stocks"]}
 
 
+def legal_hours_for_site(site_id):
+    """The waterbody's fishing-hours rule: daylight | 24hr | custom | unknown.
+
+    "unknown" is the honest default - a legal window is never invented (UPDATE 3.0
+    Phase 1.5). The frontend renders "check the regulations" for it."""
+    _wb = _WB_BY_SITE.get(str(site_id))
+    return ((_wb or {}).get("legal_hours") or "unknown")
+
+
 USGS_SITE = _WA.get("default_site") or "12101500"
 NOAA_STATION = _WA.get("default_tide_station") or "9446484"
 _coords = _WA.get("default_coords") or {}
@@ -841,7 +850,25 @@ class handler(BaseHTTPRequestHandler):
             env_score, flow_mult, push_status = calculate_macro_environment(flow_index, press_curr_inHg, press_prev_inHg, rain_in, lunar_val, is_netting_day)
             
             civil_in, civil_out = sunrise_dt - timedelta(minutes=35), sunset_dt + timedelta(minutes=35)
-            lines_in, lines_out = sunrise_dt - timedelta(hours=1), sunset_dt + timedelta(hours=1)
+            # --- Legal fishing hours (registry-driven; NEVER fabricated) ------------
+            # `legal_hours` is a per-waterbody FACT from the region registry. The
+            # QUALITY timeline below is a separate sunlight-based fishing model and
+            # keeps its original window, so the hero/peak scoring is unchanged.
+            legal_rule = legal_hours_for_site(site)
+            timeline_in, timeline_out = sunrise_dt - timedelta(hours=1), sunset_dt + timedelta(hours=1)
+            if legal_rule == "24hr":
+                # Night fishing allowed: the day is open end to end.
+                timeline_in = dt.replace(hour=0, minute=0, second=0)
+                timeline_out = dt.replace(hour=23, minute=59, second=0)
+                lines_in_str, lines_out_str = "12:00 AM", "11:59 PM"
+            elif legal_rule == "daylight":
+                lines_in_str = (sunrise_dt - timedelta(hours=1)).strftime('%-I:%M %p')
+                lines_out_str = (sunset_dt + timedelta(hours=1)).strftime('%-I:%M %p')
+            else:
+                # custom (none configured yet) / unknown -> no verified window, so we
+                # report null and the UI says "check the regulations".
+                legal_rule = "unknown" if legal_rule != "custom" else "custom"
+                lines_in_str, lines_out_str = None, None
             
             upper_dt, lower_dt = None, None
             if moonrise_str and moonset_str:
@@ -874,7 +901,7 @@ class handler(BaseHTTPRequestHandler):
 
             species_calendar = build_species_calendar(dt, site)
 
-            timeline_windows = build_dynamic_timeline(lines_in, lines_out, sunrise_dt, sunset_dt, cloud_pct, arrivals, stock_base, env_score, flow_mult, angler_mult)
+            timeline_windows = build_dynamic_timeline(timeline_in, timeline_out, sunrise_dt, sunset_dt, cloud_pct, arrivals, stock_base, env_score, flow_mult, angler_mult)
             peak_potential = max([w["score"] for w in timeline_windows]) if timeline_windows else 0
 
             reports.append({
@@ -891,7 +918,8 @@ class handler(BaseHTTPRequestHandler):
                 "sunrise": sunrise_dt.strftime('%-I:%M %p'), "sunset": sunset_dt.strftime('%-I:%M %p'),
                 "civil_in": civil_in.strftime('%-I:%M %p'), "civil_out": civil_out.strftime('%-I:%M %p'),
                 "moon_upper": moon_upper_str, "moon_lower": moon_lower_str,
-                "lines_in": lines_in.strftime('%-I:%M %p'), "lines_out": lines_out.strftime('%-I:%M %p'),
+                "lines_in": lines_in_str, "lines_out": lines_out_str,
+                "legal_hours": legal_rule,
                 "net_status": net_status, "angler_desc": angler_desc,
                 "push_status": push_status, "transit_state": transit_state, "transit_time": transit_time,
                 "clarity_outlook": clarity_outlook,

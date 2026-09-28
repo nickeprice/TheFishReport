@@ -29,6 +29,19 @@ let QUIET = process.argv.includes('--quiet');
 function ok(name, detail) { passes++; if (!QUIET) console.log(`  ✓ ${name}${detail ? ' — ' + detail : ''}`); }
 function fail(name, detail) { failures.push(name); console.log(`  ✗ ${name}${detail ? ' — ' + detail : ''}`); }
 function describe(name) { if (!QUIET) console.log('\n## ' + name); }
+// The classic scripts share ONE global scope and app.js is no longer a monolith,
+// so source-level checks must read EVERY local script in the index.html load order.
+function localScriptPaths() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  return [...html.matchAll(/<script src="([^"]+)"/g)]
+    .map((m) => m[1])
+    .filter((s) => !/^https?:/i.test(s));
+}
+function readAllScripts() {
+  return localScriptPaths().map((s) => fs.readFileSync(path.join(ROOT, s), 'utf8')).join('\n');
+}
+
+
 
 // Start the dev server
 function startServer() {
@@ -174,7 +187,7 @@ function staticIntegrity() {
     ? ok('honest fallback when no :updated_at stamp exists', 'never a fake date')
     : fail('honest fallback when no :updated_at stamp exists', 'fallback wording missing');
 
-  const appSrc = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
+  const appSrc = readAllScripts();
   (!appSrc.includes('hero-lbl') && appSrc.includes('[ FISHING OUTLOOK ]') &&
    appSrc.includes('Forecast &amp; Hatchery Report') && appSrc.includes('data-esc-updated'))
     ? ok('hero uses a real section header + renamed counts fold', 'no in-pill label')
@@ -196,9 +209,7 @@ async function httpChecks() {
     ['/index.html', 'text/html'],
     ['/manifest.json', 'application/json'],
     ['/src/styles.css', 'text/css'],
-    ['/src/app.js', 'text/javascript'],
-    ['/src/services/supabase.js', 'text/javascript'],
-    ['/src/services/water.js', 'text/javascript']
+    ...localScriptPaths().map((s) => ['/' + s, 'text/javascript'])
   ]) {
     const r = await httpGet(p);
     r.status === 200 ? ok(`GET ${p} → 200`, r.type) : fail(`GET ${p} → 200`, `got ${r.status}`);
@@ -308,8 +319,8 @@ function behaviorChecks(done) {
   global.localStorage = { getItem: () => null, setItem: () => {} };
   global.logDebug = () => {};
 
-  // Extract just the functions we exercise from the real app.js
-  const src = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
+  // Extract the functions we exercise from the combined classic-script source.
+  const src = readAllScripts();
   function extract(fnName) {
     const idx = src.indexOf('function ' + fnName + '(');
     if (idx === -1) return null;
@@ -413,7 +424,7 @@ async function main() {
 
   describe('Syntax');
   try {
-    const jsFiles = ['src/app.js', 'src/services/supabase.js', 'src/services/water.js', 'src/utils/regulations.js', 'sw.js'];
+    const jsFiles = localScriptPaths().concat('sw.js');
     for (const f of jsFiles) execFileSync('node', ['--check', f], { cwd: ROOT, stdio: 'pipe' });
     ok('node --check on JS + sw.js', jsFiles.join(', '));
   } catch (e) {

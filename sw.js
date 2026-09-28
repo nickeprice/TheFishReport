@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.00.12';
+const VERSION = 'v2.01.00';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -37,6 +37,20 @@ const SHELL_FILES = [
     '/index.html',
     '/manifest.json',
     '/src/styles.css',
+    '/src/shared/debug.js',
+    '/src/shared/ui.js',
+    '/src/shared/nav.js',
+    '/src/shared/format.js',
+    '/src/shared/forms.js',
+    '/src/features/auth/auth.js',
+    '/src/features/telemetry/tide.js',
+    '/src/features/telemetry/hero.js',
+    '/src/features/telemetry/daynav.js',
+    '/src/features/telemetry/report.js',
+    '/src/features/gear-sim/inputs.js',
+    '/src/features/gear-sim/physics.js',
+    '/src/features/gear-sim/sonar.js',
+    '/src/features/gear-sim/zone.js',
     '/src/app.js',
     '/src/services/supabase.js',
     '/src/services/water.js',

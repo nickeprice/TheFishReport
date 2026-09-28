@@ -3,6 +3,40 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 1.1 (partial): app.js split, 2,460 → 880 lines ✅ verified
+Extracted the classic-script monolith into feature modules (all still classic scripts,
+one global scope, loaded in `index.html` order, `app.js` LAST). New: `src/shared/`
+`debug.js`(logDebug) `ui.js`(debounce/showToast) `nav.js`(switchTab/resetToToday)
+`format.js`(normalizeFeedRow/formatCatchTime) `forms.js`(rod/material/field sync);
+`src/features/auth/auth.js`(guest session + pending-catch flush); `src/features/telemetry/`
+`tide.js` `hero.js` `daynav.js` `report.js`(loadWaterReport); `src/features/gear-sim/`
+`inputs.js` `physics.js`(Cd locked 1.0) `sonar.js` `zone.js`. Mechanics: deterministic
+line-range slice per batch with a "slices tile the original byte-for-byte" assertion (no
+hand transcription); `sw.js` SHELL_FILES + `VERSION` → `v2.01.00`. **`sanity_pass.js` is
+now self-maintaining**: it reads the local script list from `index.html` for the syntax
+check, HTTP checks, and the source-level checks (it used to hardcode `src/app.js`, which
+broke the hero assertion until fixed). Verified: `node --check` on all 19 scripts +
+`node sanity_pass.js` → **60/60 GREEN**. REMAINING in 1.1: catch-log, gear-sim rig/sim,
+station, refresh/pwa → leave app.js as bootstrap only. NOT committed.
+
+
+## 2026-09-28 — UPDATE 3.0 / 4.0 blueprints written (planning only; no code yet)
+Split the roadmap into TWO files. `UPDATE_3.0.md` (ACTIVE): de-hardcode via a
+`state → waterbody` region registry (replaces `USGS_SITE`/`NOAA_STATION`/`LAT,LON`/
+`STOCK_BASELINES`/`NETTING_SITES`/`nearbyStationIds` etc.), USGS **WDFN OGC migration**
+(hard deadline Q1 2027 — `waterservices.usgs.gov` is being decommissioned), per-river
+`legal_hours` (daylight/24hr/custom/unknown — fixes night-fishing rivers), flow
+**percentile-of-record** scoring (absolute CFS doesn't scale), IndexedDB outbox +
+**idempotency** (`ON CONFLICT DO NOTHING` — fixes the dead-zone double-log bug),
+interactive Leaflet map (gauge picker + Level-A reg panel), technique/style/species
+registries (drift only; flossing = a drift *style*), and a Token Efficiency Protocol
+(`SYMBOLS.md`, file headers, contracts). 26 `- [ ]` items across 5 phases.
+`UPDATE_4.0.md` (ROADMAP): accounts + RLS "summary vs details" friend tier, Private
+Season, Crews leaderboard, location-free brag board + EXIF-stripped photos, River Pulse,
+technique/species expansion, regulation polygons, Capacitor native shipping.
+NO code files changed — only the two new docs. Next: sync `TASK.md` to Update 3.0.
+
+
 ## 2026-09-18 — Phase 2.4.1 complete ✅ (timezone + scroll/bar + hero/pills/gear rows)
 TIMEZONE: `api/water_report.py` now derives `now` from
 `ZoneInfo('America/Los_Angeles')` (Vercel runs UTC), so the 4 cards, the TODAY tag

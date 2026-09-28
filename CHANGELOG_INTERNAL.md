@@ -3,6 +3,22 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 3.3 COMPLETE ✅: outbox reconciliation on online / resume / focus
+New `src/features/catch-log/reconcile.js`. The outbox was durable, but it only reached
+Supabase when a session started; this arms the three moments the field actually produces:
+`online` (connectivity restored), `visibilitychange` → visible (mobile "resume"), and
+`focus`. Each calls `syncPendingCatches()`. Guarded exactly as planned: a single IN-FLIGHT
+LOCK (overlapping flushes are ignored) plus a 15 s minimum interval; `online` passes
+`force` because connectivity returning is the strongest signal; a signed-out client
+short-circuits since RLS needs `user_id = auth.uid()`. The module records that the lock is
+about WASTED REQUESTS, not safety — the write is already idempotent (clientId →
+ON CONFLICT DO NOTHING), so even a double-send could not duplicate a catch. Armed from the
+`app.js` bootstrap; `sw.js` precaches it and VERSION → `v2.03.02`. Verified: sanity
+**87/87 GREEN** (new guard checks the three listeners, the lock, and that
+`initCatchReconcile()` is actually called) + a 12-assertion functional test (in-flight lock,
+interval throttle, force bypass, signed-out short-circuit, live listener registration).
+
+
 ## 2026-09-28 — Dead-code cleanup pass (before Phase 3.3)
 Repo-wide sweep for dead code / dormant mechanisms. REMOVED: `src/data/riverRegulations.js`
 (503 lines, loaded by NOTHING — `index.html` never included it, yet sw.js was precaching it;

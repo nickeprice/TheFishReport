@@ -469,10 +469,22 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     by one of them (`Nick` / Coho / Puyallup River, 2026-09-18) which correctly surfaces in
     `public_catch_feed` as 4 columns only. (An earlier note in this file wrongly claimed
     sign-ins were disabled — that came from a stale code comment, now fixed.)
-- [ ] **3.3 In-app reconciliation.**
-  - Files: `src/features/catch-log/outbox.js`, `src/app.js` (online/focus/resume hooks).
-  - Potential bug: concurrent flushes can double-send — guard with a single in-flight lock.
-  - Verify: reconnect flushes the queue once; no duplicates in the live DB.
+- [x] **3.3 In-app reconciliation.** ✅ COMPLETE
+  - Result: new `src/features/catch-log/reconcile.js` arms three moments the field
+    actually produces — **`online`** (connectivity restored), **`visibilitychange`
+    → visible** (mobile "resume"), and **`focus`** — and each calls
+    `syncPendingCatches()`. Armed from the `app.js` bootstrap.
+  - Guarded exactly as the plan required: a **single in-flight lock** (overlapping flushes
+    are ignored) plus a 15 s minimum interval. `online` passes `force`, since connectivity
+    returning is the strongest signal. A signed-out client short-circuits, because RLS
+    needs `user_id = auth.uid()`.
+  - Note recorded in the module: the lock is about *wasted requests*, not safety — the
+    write is already idempotent (`clientId` → `ON CONFLICT DO NOTHING`), so even a
+    double-send could not duplicate a catch.
+  - Verify: sanity **87/87 GREEN** (new guard asserts the three listeners, the in-flight
+    lock, and that `initCatchReconcile()` is actually called) plus a 12-assertion
+    functional test covering the lock, the throttle, the force bypass, the signed-out
+    short-circuit and live listener registration.
 - [ ] **3.4 Optimistic UI + pending-sync badge.**
   - Files: `src/features/catch-log/*`, `src/styles.css`.
   - Verify: an offline catch shows instantly with the badge; badge clears on confirm.

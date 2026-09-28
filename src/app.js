@@ -26,6 +26,8 @@ window.onload = async function() {
 
     getGPS();
     initAuth();
+    // Flush the outbox when the network returns / the app is resumed (Phase 3.3).
+    if (typeof initCatchReconcile === 'function') initCatchReconcile();
     if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);
     loadWaterReport();
 };

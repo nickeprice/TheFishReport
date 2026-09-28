@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.01';
+const VERSION = 'v2.03.02';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -44,6 +44,7 @@ const SHELL_FILES = [
     '/src/shared/forms.js',
     '/src/shared/idb.js',
     '/src/features/catch-log/outbox.js',
+    '/src/features/catch-log/reconcile.js',
     '/src/features/auth/auth.js',
     '/src/features/telemetry/tide.js',
     '/src/features/telemetry/hero.js',

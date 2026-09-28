@@ -217,6 +217,17 @@ function staticIntegrity() {
     ? ok('catch storage goes through the outbox', 'no direct catch_db access outside outbox.js')
     : fail('catch storage goes through the outbox', catchDbOffenders.join(', '));
 
+  // Phase 3.3: the outbox must be flushed when the network/app comes BACK, not only at
+  // sign-in — and the flush must be guarded so overlapping events cannot double-send.
+  const reconcileSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'reconcile.js'), 'utf8');
+  const appSrcReconcile = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
+  (/addEventListener\('online'/.test(reconcileSrc) &&
+   /addEventListener\('visibilitychange'/.test(reconcileSrc) &&
+   /_reconcileInFlight/.test(reconcileSrc) &&
+   /initCatchReconcile\(\)/.test(appSrcReconcile))
+    ? ok('the catch outbox reconciles on online / resume / focus', 'guarded by an in-flight lock')
+    : fail('the catch outbox reconciles on online / resume / focus', 'listener(s) or lock missing');
+
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
   (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)

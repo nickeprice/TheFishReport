@@ -28,7 +28,7 @@ STATUS: **Phases 1 + 2 COMPLETE**; Phase 3.2 (idempotency) done. Next: 3.1 Index
 
 - [x] **3.2** Idempotency — client `clientId` → `ON CONFLICT (id) DO NOTHING` (no migration needed)
 - [x] **3.1** IndexedDB outbox (in-memory mirror + write-through, legacy `catch_db` imported)
-- [ ] **3.3** In-app reconciliation on `online` / `focus` / `resume`
+- [x] **3.3** Reconciliation on `online` / `visibilitychange` / `focus` (in-flight lock + 15s throttle)
 - [ ] **3.4** Optimistic UI + pending-sync indicator
 
 ## Cleanup pass (2026-09-28, before 3.3)

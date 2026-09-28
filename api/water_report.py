@@ -409,11 +409,84 @@ def fetch_usgs_telemetry_legacy(site_id=USGS_SITE):
 
     return data_dict
 
+def _clarity_series_wdfn():
+    """WDFN /daily version of the clarity series. None when the API is unusable."""
+    end = datetime.now(ZoneInfo('America/Los_Angeles'))
+    start = end - timedelta(days=14)
+    url = (f"{WDFN_BASE}/daily/items"
+           f"?monitoring_location_id=USGS-12098500,USGS-12098000"
+           f"&parameter_code=00060,62614"
+           f"&datetime={start:%Y-%m-%d}/{end:%Y-%m-%d}&limit=500")
+    try:
+        d = _wdfn_get(url, timeout=10)
+    except Exception:
+        return None
+    feats = d.get("features")
+    if feats is None:
+        return None
+    series = {}
+    for f in feats:
+        try:
+            p = f.get("properties") or {}
+            code = str(p.get("parameter_code") or "")
+            if code not in ('00060', '62614'):
+                continue
+            val = float(p.get("value"))
+            if val < -900000:
+                continue
+            day = datetime.fromisoformat(str(p.get("time"))).date()
+            series.setdefault(code, []).append((day, val))
+        except Exception:
+            continue
+    for pairs in series.values():
+        pairs.sort(key=lambda pr: pr[0])
+    return series
+
+
+def _clarity_series_legacy():
+    """LEGACY nwis/dv version — decommissioned in Q1 2027."""
+    end = datetime.now()
+    start = end - timedelta(days=14)
+    url = ("https://waterservices.usgs.gov/nwis/dv/?format=json"
+           f"&sites=12098500,12098000&parameterCd=00060,62614"
+           f"&startDT={start:%Y-%m-%d}&endDT={end:%Y-%m-%d}")
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    try:
+        with urllib.request.urlopen(req, timeout=10, context=SSL_CONTEXT) as res:
+            data = json.loads(res.read().decode('utf-8'))
+    except Exception:
+        return {}
+    series = {}
+    for ts in (data.get('value', {}).get('timeSeries', []) or []):
+        code = ts['variable']['variableCode'][0]['value']
+        records = (ts.get('values') or [{}])[0].get('value') or []
+        try:
+            pairs = sorted(
+                ((datetime.fromisoformat(r['dateTime']).date(), float(r['value']))
+                 for r in records
+                 if r.get('value') not in (None, '') and float(r['value']) > -900000),
+                key=lambda p: p[0]
+            )
+        except Exception:
+            continue
+        if pairs:
+            series[code] = pairs
+    return series
+
+
+def _clarity_series():
+    """Real per-day series {parameter_code: [(date, value), ...]}, WDFN first."""
+    series = _clarity_series_wdfn()
+    if series is None:
+        series = _clarity_series_legacy()
+    return series
+
+
 def fetch_dam_clarity():
     """White River / Mud Mountain Dam clarity signal (Puyallup basin only).
 
-    Reads TWO USGS sites via the DAILY-VALUES (dv) endpoint — one value per day
-    gives an honest multi-day TREND, which the instantaneous (iv) feed lacks
+    Reads TWO USGS sites via the daily collection (WDFN /daily; legacy nwis/dv as a
+    fallback) — one value per day gives an honest multi-day TREND, which the instantaneous (iv) feed lacks
     (it only returns the last few hours, and White River near Buckley 00060 is
     currently dormant). Parameters:
       12098500 — White River near Buckley (00060 streamflow, cfs)
@@ -430,35 +503,7 @@ def fetch_dam_clarity():
     Returns a short string or None. Never throws; the caller gates this on
     Puyallup-basin sites only.
     """
-    end = datetime.now()
-    start = end - timedelta(days=14)
-    url = ("https://waterservices.usgs.gov/nwis/dv/?format=json"
-           f"&sites=12098500,12098000&parameterCd=00060,62614"
-           f"&startDT={start:%Y-%m-%d}&endDT={end:%Y-%m-%d}")
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    try:
-        with urllib.request.urlopen(req, timeout=10, context=SSL_CONTEXT) as res:
-            data = json.loads(res.read().decode('utf-8'))
-    except Exception:
-        return None
-
-    # Collect a real daily series per parameter, sorted by date.
-    series = {}
-    for ts in (data.get('value', {}).get('timeSeries', []) or []):
-        code = ts['variable']['variableCode'][0]['value']
-        records = (ts.get('values') or [{}])[0].get('value') or []
-        try:
-            pairs = sorted(
-                ((datetime.fromisoformat(r['dateTime']).date(), float(r['value']))
-                 for r in records
-                 if r.get('value') not in (None, '') and float(r['value']) > -900000),
-                key=lambda p: p[0]
-            )
-        except Exception:
-            continue
-        if pairs:
-            series[code] = pairs
-
+    series = _clarity_series()
     if not series:
         return None
 

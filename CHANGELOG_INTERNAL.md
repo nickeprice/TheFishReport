@@ -3,6 +3,23 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 2.1 COMPLETE ✅: all 5 USGS call sites on WDFN
+Finished the migration off the dying `waterservices.usgs.gov` (decommissioned Q1 2027).
+Newly migrated this pass: (1) `fetch_dam_clarity` → `/daily` with a 14-day `datetime`
+window (probed first: the collection returns the FULL period of record, so the window is
+mandatory); (2) `fetchCFSMomentum` in the BROWSER → `/continuous` with a 4-hour window
+(same lookback the legacy `period=PT4H` gave, so the delta stays comparable; refactored
+into `fetchCfsReadingsWdfn`/`fetchCfsReadingsLegacy` returning a source-agnostic
+`[{t,v}]`); (3) `station/search.js` → `/monitoring-locations` by id, and by NAME via
+**CQL2 `LIKE`** (plain `monitoring_location_name=` proved to be exact-match only) plus a
+second `/latest-continuous` step that keeps only gauges with live readings. De-hardcoding
+bonus: `stateCd=wa` → the registry's `state_name`, so adding a state no longer touches
+this file. VERIFIED: clarity series has **exact parity** with legacy (14 days, same latest
+date/value 2026-09-27 / 917.12, same outlook "Dam releasing (reservoir dropping)");
+`nearby_stations` returns 11 stations; 1.3/1.5 API regressions green; sanity **78/78**.
+`sw.js` VERSION → `v2.01.04` (water.js + search.js changed).
+
+
 ## 2026-09-28 — Phase 2.1 (partial) ✅: USGS WDFN migration — 2 of 5 call sites
 `waterservices.usgs.gov` is decommissioned in Q1 2027, so the two main backend readers now
 prefer the modernized **WDFN OGC API** (`api.waterdata.usgs.gov/ogcapi/v1/collections`),

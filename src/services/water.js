@@ -8,22 +8,58 @@
  *
  * Loaded as a classic script before src/app.js; all names are global.
  */
+// USGS CFS readings for the momentum calc. WDFN (the modern source — waterservices
+// /nwis is decommissioned in Q1 2027) returns GeoJSON; the legacy reader is kept as a
+// fallback. Both return a plain [{t: epochMs, v: cfs}] list so the trend logic below
+// is source-agnostic.
+const WDFN_CONTINUOUS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items';
+
+async function fetchCfsReadingsWdfn(siteId) {
+    // Same 4-hour lookback the legacy `period=PT4H` gave, so the delta is comparable.
+    const end = new Date();
+    const start = new Date(end.getTime() - 4 * 3600 * 1000);
+    const iso = function (d) { return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); };
+    const url = WDFN_CONTINUOUS
+        + '?monitoring_location_id=USGS-' + encodeURIComponent(siteId)
+        + '&parameter_code=00060&datetime=' + iso(start) + '/' + iso(end) + '&limit=200';
+    const res = await fetch(url);
+    const data = await res.json();
+    const feats = data && data.features;
+    if (!feats) return null;                    // unrecognizable -> let the caller fall back
+    return feats.map(function (f) {
+        const p = f.properties || {};
+        return { t: new Date(p.time).getTime(), v: parseFloat(p.value) };
+    }).filter(function (r) { return isFinite(r.t) && isFinite(r.v) && r.v > -900000; });
+}
+
+// LEGACY fallback: waterservices.usgs.gov/nwis/iv — decommissioned in Q1 2027.
+async function fetchCfsReadingsLegacy(siteId) {
+    const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${siteId}&parameterCd=00060&period=PT4H&siteStatus=all`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const series = data && data.value ? data.value.timeSeries : null;
+    const readings = (series && series[0] && series[0].values && series[0].values[0]) ? series[0].values[0].value : null;
+    if (!readings) return [];
+    return readings.map(function (r) {
+        return { t: new Date(r.dateTime).getTime(), v: parseFloat(r.value) };
+    }).filter(function (r) { return isFinite(r.t) && isFinite(r.v) && r.v > -900000; });
+}
+
 async function fetchCFSMomentum(siteId) {
     if (!siteId) return;
     try {
-        const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${siteId}&parameterCd=00060&period=PT4H&siteStatus=all`;
-        const response = await fetch(url);
-        const data = await response.json();
-        const series = data && data.value ? data.value.timeSeries : null;
-        const readings = (series && series[0] && series[0].values && series[0].values[0]) ? series[0].values[0].value : null;
+        // WDFN first; legacy nwis/iv only when the modern endpoint is unusable.
+        let readings = null;
+        try { readings = await fetchCfsReadingsWdfn(siteId); } catch (e) { readings = null; }
+        if (!readings || !readings.length) {
+            try { readings = await fetchCfsReadingsLegacy(siteId); } catch (e) { readings = []; }
+        }
         if (!readings || readings.length < 2) return;
 
         // Sort chronologically so the 4-hour delta never depends on USGS return order.
-        const sorted = readings.slice().sort(function (a, b) {
-            return new Date(a.dateTime) - new Date(b.dateTime);
-        });
-        const oldest = parseFloat(sorted[0].value);
-        const latest = parseFloat(sorted[sorted.length - 1].value);
+        const sorted = readings.slice().sort(function (a, b) { return a.t - b.t; });
+        const oldest = sorted[0].v;
+        const latest = sorted[sorted.length - 1].v;
         if (isNaN(oldest) || isNaN(latest)) return;
         const delta = latest - oldest;
 

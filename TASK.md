@@ -16,9 +16,8 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 
 ## Phase 2 — USGS WDFN migration (Q1 2027 deadline)
 
-- [~] **2.1** WDFN migration — *partial*: `fetch_usgs_telemetry` + `fetch_nearby_stations`
-      done (exact parity vs legacy, sanity 78/78). REMAINING: `fetch_dam_clarity` (dv),
-      `fetchCFSMomentum` (browser, PT4H), `station/search.js` (2 calls incl. `stateCd=wa`)
+- [x] **2.1** WDFN migration — all 5 call sites done (telemetry, nearby, clarity/dv,
+      browser momentum PT4H, station search incl. `stateCd=wa`); legacy kept as fallback
 - [ ] **2.2** Two-step site discovery + optional server-side API key
 - [ ] **2.3** Proxy hardening (User-Agent, caching, rate-limit, SSRF validation)
 - [ ] **2.4** Interactive map — gauge picker + Level-A regulation panel + flow colour

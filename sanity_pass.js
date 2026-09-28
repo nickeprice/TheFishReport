@@ -274,6 +274,11 @@ async function httpChecks() {
     (tpts.length > 1 && /([AP]M)$/.test((tpts[0] || {}).t || ''))
       ? ok('API returns real hourly tide_points with 12-hour times', `${tpts.length} points, e.g. ${(tpts[0] || {}).t}`)
       : fail('API returns real hourly tide_points with 12-hour times', `points=${tpts.length}`);
+    // Phase 2.3: each day names the CO-OPS station its tides were paired with, so the
+    // panel/UI can attribute them (and null means "this river has no tide influence").
+    Object.prototype.hasOwnProperty.call(day0, 'tide_station')
+      ? ok('API exposes the paired tide_station', `station=${day0.tide_station}`)
+      : fail('API exposes the paired tide_station', 'field missing');
     const firstSpc = (day0.species_calendar || [])[0] || {};
     (firstSpc.progress !== undefined && firstSpc.peak_frac !== undefined)
       ? ok('species calendar carries run progress + peak geometry', `progress=${firstSpc.progress} peak_frac=${firstSpc.peak_frac}`)

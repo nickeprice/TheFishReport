@@ -115,7 +115,7 @@ async function refreshStationMap(center) {
             .addTo(_stationMarkers);
     });
     logDebug('Station map: ' + stations.length + ' gauge(s) plotted', 'MAP');
-    return stations.length;
+    return { count: stations.length, note: (data && data.note) || '' };
 }
 
 async function showStationMap() {
@@ -145,11 +145,11 @@ async function showStationMap() {
     setTimeout(function () { if (_stationMap) _stationMap.invalidateSize(); }, 200);
 
     try {
-        var n = await refreshStationMap(center);
+        var out = await refreshStationMap(center);
         if (note) {
-            note.textContent = n
-                ? n + ' nearest gauge(s) \u2014 grey = dormant, green = live. Tap a pin to fish it.'
-                : 'No live gauges found nearby.';
+            if (out.note) note.textContent = out.note;
+            else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live. Tap a pin to fish it.';
+            else note.textContent = 'No live gauges found nearby.';
         }
     } catch (e) {
         logDebug('Station map feed failed: ' + e.message, 'MAP');

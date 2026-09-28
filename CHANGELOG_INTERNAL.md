@@ -3,6 +3,28 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 2.3 COMPLETE ✅: dynamic NOAA tide-station pairing
+Each waterbody now pairs with its NEAREST CO-OPS tide station instead of one shared
+station. `tide_station_candidates_for_site()` ranks stations within 40 mi and the handler
+WALKS up to 4 of them, because some stations in the tideprediction list do not actually
+serve MLLW predictions (verified live: 9446248 Des Moines → "No Predictions data was
+found"). Day payloads now carry `tide_station`. Result: Puyallup/Carbon/White → Tacoma;
+Nisqually → Dupont Wharf; Skagit → Swinomish Channel; Snoqualmie/Skykomish/Snohomish →
+Everett; Stillaguamish → Stanwood; Cowlitz/Toutle/Kalama → Longview; and **Lewis River →
+NO tides** (nearest gauge >40 mi) where the old code showed it Puget Sound tides — simply
+wrong. Real USGS coordinates for ALL 15 waterbodies (+ pool entries) were collected ONCE
+offline from the legacy nwis/site service (config population, not a runtime dependency), so
+pairing needs no network. TWO HONESTY BUGS FOUND WHILE TESTING: (1) a WDFN **HTTP 429** was
+swallowed, so a throttle got reported as "this river has no tides" — `_gauge_coords` now
+returns (coords, resolved) and a FAILED lookup falls back to the default station instead of
+claiming no tides; (2) `fetch_nearby_stations` returned an empty list when BOTH upstreams
+were down, reading as the fact "no gauges here" — it now returns None and the endpoint adds
+a `note` ("USGS gauges could not be reached") that the map displays. Added optional
+`USGS_API_KEY` env support (raises WDFN's rate limit; never sent to the client). Verified:
+sanity **80/80 GREEN** + live checks (12101500 tides, 12113000 walks past the broken
+station, 14236000 zero tide points/curve with 4 days still returned).
+
+
 ## 2026-09-28 — Phase 2.5 COMPLETE ✅: interactive Leaflet station map
 New `src/features/map/map.js` + a "Show Nearest Rivers on a Map" button in the station
 modal. Leaflet loads LAZILY from a CDN; pins come from `/api/nearby_stations` (the 2.2

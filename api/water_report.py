@@ -79,7 +79,7 @@ def legal_hours_for_site(site_id):
 
 
 USGS_SITE = _WA.get("default_site") or "12101500"
-NOAA_STATION = _WA.get("default_tide_station") or "9446484"
+NOAA_STATION = _WA.get("default_tide_station") or "9446484"   # fallback only; see tide_station_for_site()
 _coords = _WA.get("default_coords") or {}
 LAT = _coords.get("lat", 47.1950)
 LON = _coords.get("lon", -122.3020)
@@ -174,8 +174,19 @@ WDFN_PARAMS = "00060,00065,00010,63680"   # discharge, gage height, water temp, 
 WDFN_TIMEOUT = 8
 
 
+# Optional: the API works without a key but throttles per IP (HTTP 429). Set
+# USGS_API_KEY in the server env to raise the limit. Never expose it to the client.
+WDFN_API_KEY = os.environ.get("USGS_API_KEY", "").strip()
+
+
 def _wdfn_get(url, timeout=WDFN_TIMEOUT):
-    """GET + JSON-decode a WDFN OGC API url. Raises on any failure."""
+    """GET + JSON-decode a WDFN OGC API url. Raises on any failure.
+
+    A raised 429 is TRANSIENT (rate limiting), NOT "there is no data" — callers must
+    never collapse the two, or a throttle gets reported to the angler as an empty river.
+    """
+    if WDFN_API_KEY and url.startswith(WDFN_BASE) and "api_key=" not in url:
+        url = url + "&api_key=" + WDFN_API_KEY
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req, timeout=timeout, context=SSL_CONTEXT) as res:
         return json.loads(res.read().decode('utf-8'))
@@ -554,6 +565,10 @@ def fetch_nearby_stations(lat, lon):
     stations = _nearby_from_wdfn(lat_f, lon_f)
     if stations is None:
         stations = _nearby_from_legacy(lat_f, lon_f)
+    if stations is None:
+        # BOTH sources unreachable: return None, never an empty list. An empty list
+        # would be read as the FACT "no gauges here" when we simply could not ask.
+        return None
     return sorted(stations.values(), key=lambda s: s['distance_mi'])
 
 
@@ -702,7 +717,7 @@ def _nearby_from_legacy(lat_f, lon_f):
         with urllib.request.urlopen(req, timeout=10, context=SSL_CONTEXT) as res:
             data = json.loads(res.read().decode('utf-8'))
     except Exception:
-        return {}
+        return None          # unreachable (unlike {} which means "asked, nothing fresh")
     KNOWN_COORDS = {
         "12101500": (47.195, -122.302), "12093500": (47.1005, -122.2133),
         "12094000": (47.0177, -122.0197), "12113000": (47.3115, -122.2265),
@@ -745,11 +760,125 @@ def _nearby_from_legacy(lat_f, lon_f):
             continue
     return stations
 
-def fetch_noaa_tides_bulletproof(start_date, days):
+# ==================================================================================
+# NOAA CO-OPS tide-station pairing (UPDATE 3.0 Phase 2.3)
+# Previously every river used ONE hardcoded station. Now each waterbody is paired with
+# the CLOSEST tide-prediction station to its own coordinates — resolved from the region
+# registry, or from the gauge's coordinates via WDFN when the registry has none. A
+# waterbody with no station within TIDE_PAIRING_MAX_MI genuinely has no tide influence,
+# so it reports NO tide data instead of borrowing a far-away coast gauge.
+# ==================================================================================
+COOPS_STATIONS_URL = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions"
+TIDE_PAIRING_MAX_MI = 40.0
+_coops_stations = None
+_gauge_coords_cache = {}
+_tide_pair_cache = {}
+
+
+def _coops_tide_stations():
+    """All NOAA CO-OPS tide-prediction stations (cached for the warm instance).
+
+    The API ignores state filters and returns ~2 MB, but it is fetched once per instance
+    and only on a request that actually needs tides."""
+    global _coops_stations
+    if _coops_stations is None:
+        _coops_stations = []
+        try:
+            req = urllib.request.Request(COOPS_STATIONS_URL, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=12, context=SSL_CONTEXT) as res:
+                data = json.loads(res.read().decode('utf-8'))
+            for st in (data.get('stations') or []):
+                try:
+                    _coops_stations.append({'id': str(st['id']), 'name': st.get('name') or str(st['id']),
+                                            'lat': float(st['lat']), 'lon': float(st['lng'])})
+                except Exception:
+                    continue
+        except Exception:
+            _coops_stations = []
+    return _coops_stations
+
+
+def _gauge_coords(site_id):
+    """Resolve (lat, lon) for a USGS gauge -> ((lat, lon)|None, resolved: bool).
+
+    `resolved=False` means a lookup FAILED (throttled/unreachable) as opposed to
+    genuinely finding no coordinates. The distinction is load-bearing: reporting a
+    throttle as "this river has no tide influence" would silently strip tides from
+    every river, which is exactly the bug this signature prevents.
+    """
+    sid = str(site_id)
+    cached = _gauge_coords_cache.get(sid)
+    if cached is not None:
+        return cached
+    wb = _WB_BY_SITE.get(sid) or {}
+    if wb.get("coords"):
+        out = ((wb["coords"]["lat"], wb["coords"]["lon"]), True)
+        _gauge_coords_cache[sid] = out
+        return out
+    try:
+        d = _wdfn_get(WDFN_BASE + "/monitoring-locations/items?id=USGS-" + sid + "&limit=1", timeout=8)
+    except Exception:
+        return (None, False)          # transient -> do NOT cache, so a retry can succeed
+    coords = None
+    feats = d.get("features") or []
+    if feats:
+        c = (feats[0].get("geometry") or {}).get("coordinates") or []
+        if len(c) >= 2:
+            coords = (float(c[1]), float(c[0]))
+    out = (coords, True)
+    _gauge_coords_cache[sid] = out
+    return out
+
+
+TIDE_CANDIDATES = 4          # how many nearest stations to try before giving up
+
+
+def tide_station_candidates_for_site(site_id):
+    """CO-OPS stations to try for this waterbody, NEAREST FIRST (possibly empty).
+
+    Returning several matters: the tide-prediction list includes stations that do not
+    actually serve MLLW predictions (verified: 9446248 Des Moines -> "No Predictions
+    data was found"), so the caller walks the list rather than trusting the nearest one.
+
+    An empty list means "no tides here" — the coordinates WERE resolved and nothing is
+    within TIDE_PAIRING_MAX_MI. A FAILED coordinate lookup instead yields the registry
+    default, so a throttle can never strip tides from a river.
+    """
+    sid = str(site_id)
+    cached = _tide_pair_cache.get(sid)
+    if cached is not None:
+        return cached
+    wb = _WB_BY_SITE.get(sid) or {}
+    override = wb.get("tide_station")
+    if override:
+        result = [{'id': str(override), 'name': None, 'distance_mi': None}]
+        _tide_pair_cache[sid] = result
+        return result
+
+    coords, resolved = _gauge_coords(sid)
+    if not resolved:
+        return [{'id': NOAA_STATION, 'name': None, 'distance_mi': None, 'fallback': True}]
+    if not coords:
+        _tide_pair_cache[sid] = []
+        return []
+
+    ranked = []
+    for st in _coops_tide_stations():
+        d = _haversine_mi(coords[0], coords[1], st['lat'], st['lon'])
+        if d <= TIDE_PAIRING_MAX_MI:
+            ranked.append({'id': st['id'], 'name': st['name'], 'lat': st['lat'], 'lon': st['lon'],
+                           'distance_mi': round(d, 1)})
+    ranked.sort(key=lambda s: s['distance_mi'])
+    result = ranked[:TIDE_CANDIDATES]
+    _tide_pair_cache[sid] = result
+    return result
+
+
+def fetch_noaa_tides_bulletproof(start_date, days, station=None):
     fetch_start = start_date - timedelta(days=2)
     date_str = fetch_start.strftime('%Y%m%d')
     total_hours = (days + 2) * 24
-    url = f"https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={date_str}&range={total_hours}&station={NOAA_STATION}&product=predictions&datum=MLLW&time_zone=lst_ldt&units=english&format=json"
+    url = f"https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={date_str}&range={total_hours}&station={station or NOAA_STATION}&product=predictions&datum=MLLW&time_zone=lst_ldt&units=english&format=json"
     curve, extremes = [], []
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -1081,7 +1210,12 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(body)
                 return
             stations = fetch_nearby_stations(lat, lon) if (lat and lon) else []
-            body = json.dumps({'stations': stations}).encode('utf-8')
+            payload = {'stations': stations or []}
+            if stations is None:
+                # Surface the degradation instead of letting an empty list read as the
+                # fact "no gauges exist here" when both upstreams were unreachable.
+                payload['note'] = 'USGS gauges could not be reached (throttled or offline)'
+            body = json.dumps(payload).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -1121,7 +1255,16 @@ class handler(BaseHTTPRequestHandler):
         # Mud Mountain dam + White River trend (off-basin rivers get None -> UI hides).
         clarity_outlook = fetch_dam_clarity() if site in NETTING_SITES else None
         met_data = fetch_meteorological_data(req_lat, req_lon)
-        all_tides_curve, all_tides_extremes = fetch_noaa_tides_bulletproof(now, FORECAST_DAYS)
+        # Tides: pair THIS waterbody with its nearest CO-OPS gauge (Phase 2.3). Walk the
+        # nearest few because some listed stations do not actually serve MLLW
+        # predictions; no candidate at all -> the river has no tide influence here.
+        tide_pair = None
+        all_tides_curve, all_tides_extremes = [], []
+        for _cand in tide_station_candidates_for_site(site):
+            _curve, _extremes = fetch_noaa_tides_bulletproof(now, FORECAST_DAYS, _cand['id'])
+            if _curve and _extremes:
+                tide_pair, all_tides_curve, all_tides_extremes = _cand, _curve, _extremes
+                break
 
         arrivals = []
         if all_tides_curve and all_tides_extremes:
@@ -1318,6 +1461,7 @@ class handler(BaseHTTPRequestHandler):
                 "net_status": net_status, "angler_desc": angler_desc,
                 "push_status": push_status, "transit_state": transit_state, "transit_time": transit_time,
                 "clarity_outlook": clarity_outlook,
+                "tide_station": tide_pair['id'] if tide_pair else None,
                 "tide_chart": tide_chart_str, "tide_curve": tide_curve,
                 "tide_points": tide_points,
                 "species_calendar": species_calendar, "windows": timeline_windows, "is_netting": is_netting_day,

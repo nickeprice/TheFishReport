@@ -363,10 +363,33 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
   - **API key: not needed.** Probed live — the endpoint returns 200 without one; a key
     only raises the rate limit, so it stays an optional server-side env var (never in
     client files or the digest).
-- [ ] **2.3 NOAA CO-OPS dynamic tide-station pairing.**
-  - Files: `api/water_report.py` (`fetch_noaa_tides_bulletproof`, `NOAA_STATION`).
-  - Potential bug: non-tidal waterbodies must return no tide data, not the nearest coast gauge.
-  - Verify: a coastal waterbody pairs its nearest gauge; an inland one shows no tides.
+- [x] **2.3 NOAA CO-OPS dynamic tide-station pairing.** ✅ COMPLETE
+  - Result: every waterbody is now paired with its **nearest CO-OPS tide station** to its
+    own coordinates instead of one shared station. `tide_station_candidates_for_site()`
+    ranks stations within 40 mi and the handler **walks up to 4 candidates**, because some
+    listed stations do not actually serve MLLW predictions (verified: `9446248` Des Moines
+    → "No Predictions data was found"). The report now carries a `tide_station` field.
+  - Pairings: Puyallup/Carbon/White → Tacoma (9446484); Nisqually → Dupont Wharf;
+    Skagit → Swinomish Channel; Snoqualmie/Skykomish/Snohomish → Everett;
+    Stillaguamish → Stanwood; Cowlitz/Toutle/Kalama → Longview. **Lewis River → NO tides**
+    (its nearest gauge is >40 mi away) — the old code showed it Puget Sound tides, which
+    was simply wrong.
+  - Registry: real USGS coordinates for **all 15** waterbodies + pool entries were
+    collected ONCE, offline, from the legacy `nwis/site` service (still alive until 2027)
+    — config population, not a runtime dependency. The pairing therefore needs no network.
+  - **Two honesty bugs found and fixed while testing:** (1) a WDFN **HTTP 429** was being
+    swallowed so a throttle was reported as "this river has no tides" — coordinate
+    resolution now distinguishes *failed lookup* (→ fall back to the default station) from
+    *genuinely no coords*; (2) `fetch_nearby_stations` returned an empty list when BOTH
+    upstreams were unreachable, which reads as the fact "no gauges here" — it now returns
+    `None` and the endpoint adds a `note` so the map says "USGS gauges could not be
+    reached" instead of inventing emptiness.
+  - Optional `USGS_API_KEY` env var added (the key raises WDFN's rate limit; it is never
+    sent to the client).
+  - Verify: sanity **80/80 GREEN** (new `API exposes the paired tide_station` assertion).
+    Live: `12101500` → 9446484 + tide points; `12113000` → walks past the broken Des Moines
+    station and still gets tides; `14236000` (Lewis) → `tide_station: null`, **0 tide
+    points/curve**, 4 days still returned.
 - [x] **2.4 Proxy hardening.** ✅ COMPLETE
   - Result: `coords_ok()` bounds lat/lon to the covered region; the rate limiter is a
     per-client sliding window (40/60s → 429 + `Retry-After`) checked BEFORE any

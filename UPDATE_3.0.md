@@ -245,18 +245,21 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
 
 ### Phase 1 — De-hardcode & modularize
 
-- [ ] **1.1 Split `src/app.js` (2,460 lines) into feature modules.** *IN PROGRESS*
-  - **DONE (verified, sanity 60/60):** `src/shared/{debug,ui,nav,format,forms}.js`;
-    `src/features/auth/auth.js`; `src/features/telemetry/{tide,hero,daynav,report}.js`;
-    `src/features/gear-sim/{inputs,physics,sonar,zone}.js`. **`src/app.js` 2,460 → 880 lines.**
-  - **REMAINING:** `src/features/catch-log/{board,mycatches,log}.js`,
-    `src/features/gear-sim/{rig,sim}.js`, `src/features/station/station.js`,
-    `src/shared/{refresh,pwa}.js`; leave `src/app.js` as bootstrap only.
+- [x] **1.1 Split `src/app.js` (2,460 lines) into feature modules.** ✅ COMPLETE
+  - Result: **`src/app.js` 2,460 → 24 lines (bootstrap only)** + 22 classic-script modules:
+    `src/shared/{debug,ui,nav,format,forms,refresh,pwa}.js`; `src/features/auth/auth.js`;
+    `src/features/telemetry/{tide,hero,daynav,report}.js`;
+    `src/features/gear-sim/{inputs,physics,sonar,zone,rig,sim,debounce}.js`;
+    `src/features/catch-log/{board,mycatches,log}.js`;
+    `src/features/station/{picker,search}.js`.
   - Files: `src/features/*`, `src/shared/*`, `index.html` (script tags), `sw.js`
-    (`SHELL_FILES` + `VERSION`), `sanity_pass.js` (now reads the load order from `index.html`).
-  - Potential bug: script load order / global name collisions — preserve every global
-    name and load order (AGENTS.md).
-  - Verify: `find src -name '*.js' -print0 | xargs -0 -n1 node --check`; `node sanity_pass.js` green.
+    (`SHELL_FILES` + `VERSION` → `v2.01.00`), `sanity_pass.js` (reads load order from `index.html`).
+  - Potential bug: script load order / global name collisions — every global name and the
+    load order preserved; `app.js` still loads LAST and still wires `window.onload`.
+  - Verify: `find src -name '*.js' -print0 | xargs -0 -n1 node --check`;
+    `node sanity_pass.js` → **70/70 GREEN**. ✅
+  - Follow-up (not blocking): `telemetry/report.js` (294) and `gear-sim/sim.js` (162) are
+    single large functions — split internally later.
 - [ ] **1.2 Region registry — `src/data/regions/washington.js` + schema.**
   - Files: `src/data/regions/washington.js`, `docs/CONTRACT_REGIONS.md` (§4.2).
   - Potential bug: a waterbody missing from the registry silently falls back to Puyallup.

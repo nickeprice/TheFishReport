@@ -3,6 +3,19 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 1.1 COMPLETE ✅: app.js 2,460 → 24 lines (bootstrap only)
+Finished the monolith split (batches 3–6). New: `src/features/catch-log/`
+`board.js`(scope toggle + list) `mycatches.js`(private log) `log.js`(logData +
+deriveRiverName); `src/features/gear-sim/` `rig.js`(save/restore) `sim.js`(runSim)
+`debounce.js`; `src/features/station/` `picker.js`(modal/GPS) `search.js`(USGS search);
+`src/shared/` `refresh.js`(auto-refresh) `pwa.js`(SW + deep link). **22 modules total**,
+all classic scripts in `index.html` load order, `app.js` LAST (now just `window.onload`;
+its stale "application core" header rewritten to say BOOTSTRAP). Every move was a
+line-range slice guarded by a byte-for-byte tiling assertion. Verified: `node --check` on
+29 scripts + `node sanity_pass.js` → **70/70 GREEN**. Two large single functions left as
+non-blocking follow-ups: `telemetry/report.js` (294) and `gear-sim/sim.js` (162).
+
+
 ## 2026-09-28 — Phase 1.1 (partial): app.js split, 2,460 → 880 lines ✅ verified
 Extracted the classic-script monolith into feature modules (all still classic scripts,
 one global scope, loaded in `index.html` order, `app.js` LAST). New: `src/shared/`

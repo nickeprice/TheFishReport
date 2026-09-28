@@ -6,7 +6,7 @@
  *     id, user_id, created_at, angler_name, catch_time, flow, species,
  *     latitude, longitude, weight, leader_lb, leader_length, leader_material,
  *     hook_size, yarn, foam, corky_size, bead_material, bead_size,
- *     barometer, hook_location, gauge_height
+ *     barometer, gauge_height
  *   public.public_catch_feed columns: id, name, time, flow (NO fish column)
  *   RPC get_global_calibration(p_flow int, p_species text) -> [] (exists, empty)
  */
@@ -133,8 +133,8 @@ async function getSession() {
 // ------------------------------------------------------------ DATABASE ---
 
 // Local payload -> LIVE public.catches columns. Only live columns are sent:
-// name/time/flow/spc -> angler_name/catch_time/flow/species, loc -> hook_location,
-// GPS "lat, lon" split -> latitude/longitude, weight -> weight,
+// name/time/flow/spc -> angler_name/catch_time/flow/species, GPS "lat, lon" split ->
+// latitude/longitude, weight -> weight,
 // ldLen/ldMat/ldLb -> leader_length/leader_material/leader_lb,
 // hook -> hook_size, yarn -> yarn, foam -> foam (+corky_size mirror),
 // bdMat/bdSz -> bead_material/bead_size.
@@ -159,7 +159,6 @@ function toCatchRow(payload) {
         flow: payload.flow,
         species: payload.spc,
         river_name: payload.river || null,
-        hook_location: null,
         latitude: lat,
         longitude: lon,
         weight: (payload.weight !== undefined && payload.weight !== null) ? payload.weight : null,
@@ -173,7 +172,6 @@ function toCatchRow(payload) {
         bead_material: payload.bdMat || null,
         bead_size: payload.bdSz,
         rod_ft: (payload.rodFt !== undefined && payload.rodFt !== null) ? payload.rodFt : null,
-        cast_distance_ft: null,   // placement distance is no longer collected
         mainline_mat: payload.mlMat || null,
         mainline_lb: (payload.mlLb !== undefined && payload.mlLb !== null) ? payload.mlLb : null,
         gauge_height: (payload.gauge !== undefined && payload.gauge !== null) ? payload.gauge : null,
@@ -290,11 +288,18 @@ async function fetchPublicFeed(limit) {
 }
 
 /**
- * Community telemetry for the physics engine. NOTE: the live RPC currently
- * returns [] (empty table, and its return shape is unverified), so runSim()
- * always falls back to the local buffer. The mapper below accepts both the
- * aspirational shape and any future live shape; unknown shapes pass through
- * only when they carry usable leader/flow fields.
+ * Community telemetry for the physics engine.
+ *
+ * STATUS (verified live 2026-09-28): the RPC is live and DOES return real rows — it
+ * returned the single stored catch. The earlier "returns []" note here was stale.
+ *
+ * CAVEAT — the consumer is still inert: `communitySonar()` in gear-sim/sonar.js skips any
+ * row whose `loc !== 'Fair'`, and nothing has ever populated that field (`hook_location`
+ * was always NULL and was dropped on 2026-09-28). So every returned row is filtered out
+ * and the strike zone keeps using its baseline. Fixing it CHANGES the Gear Sim's zone, so
+ * it is a deliberate product decision, not a cleanup (see UPDATE_4.0 §3.2).
+ *
+ * The mapper stays shape-tolerant so any future RPC shape still maps cleanly.
  */
 async function fetchGlobalCalibration(flow, species) {
     var client = getClient();
@@ -306,7 +311,7 @@ async function fetchGlobalCalibration(flow, species) {
             return {
                 flow: (r.cfs !== undefined) ? r.cfs : r.flow,
                 spc: (r.species !== undefined) ? r.species : (r.spc || species),
-                loc: (r.hook_loc !== undefined) ? r.hook_loc : r.hook_location,
+                loc: null,   // `hook_location` was dropped 2026-09-28 (always NULL); see UPDATE_4.0 §3.2
                 ldLen: (r.leader_len_ft !== undefined) ? r.leader_len_ft : r.leader_length,
                 ldMat: (r.leader_material !== undefined) ? r.leader_material : (r.ldMat || null),
                 ldLb: (r.leader_lb !== undefined) ? r.leader_lb : null,
@@ -319,7 +324,7 @@ async function fetchGlobalCalibration(flow, species) {
                 bdMat: (r.bead_mat !== undefined) ? r.bead_mat : r.bead_material,
                 bdSz: (r.bead_size !== undefined) ? r.bead_size : null,
                 rodFt: (r.rod_ft !== undefined) ? r.rod_ft : null,
-                dist: (r.cast_distance_ft !== undefined) ? r.cast_distance_ft : null,
+                dist: null,  // `cast_distance_ft` was dropped 2026-09-28 (always NULL)
                 waterTempF: (r.water_temp_f !== undefined) ? r.water_temp_f : null,
                 windSpeedMph: (r.wind_speed_mph !== undefined) ? r.wind_speed_mph : null,
                 windDirCompass: (r.wind_dir_compass !== undefined) ? r.wind_dir_compass : null,

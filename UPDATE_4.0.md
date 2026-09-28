@@ -94,6 +94,12 @@ feature built from *your own* logged flow/tide/weather/gear data.
 
 - Fully private; no competition, no fabrication incentive.
 - Consumes the IndexedDB outbox + per-waterbody snapshot from Update 3.0.
+- **Re-enable the inert sonar filter (carried over from 3.0).** `communitySonar()` skips
+  any row whose `loc !== 'Fair'`, but nothing has ever populated that field
+  (`hook_location` was always NULL and was dropped 2026-09-28), so **every calibration row
+  is discarded** and the strike zone always uses its baseline. Decide whether to derive
+  "mouth-hooked" some other way or drop the filter — it CHANGES the Gear Sim's zone, which
+  is why it is a product decision rather than a cleanup.
 - Files: `src/features/season/`.
 
 ### 3.3 Crews + friends leaderboard

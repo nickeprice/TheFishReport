@@ -1,38 +1,21 @@
 # Copilot Instructions
 
-This repository is the Puyallup River Companion, a no-build, mobile-first PWA. Read `AGENTS.md` and `.clinerules` before making changes.
+**Read [`AGENTS.md`](AGENTS.md) and [`.clinerules`](.clinerules) before making changes —
+they are the single source of truth for this repo's architecture, working rules and
+validation commands.**
 
-## Architecture
+This file exists only so GitHub Copilot picks that pointer up automatically. It
+deliberately duplicates nothing, because a second copy of the rules drifts: an earlier
+version of this file still described the pre-3.0 `app.js` monolith and a script order
+that included the now-deleted `riverRegulations.js`.
 
-- Use plain HTML/CSS/classic JavaScript. Do not add a framework, bundler, package manager, or ES-module imports without an explicit request.
-- Preserve the script order in `index.html`: Supabase SDK, regulations utilities/data, `src/services/supabase.js`, `src/services/water.js`, then `src/app.js` last.
-- Keep shared state and functions compatible with the existing global-scope design.
-- Keep Gear Sim and Catch Log duplicate controls synchronized.
-- Preserve PWA behavior in `sw.js`, including network-first navigation/API behavior, stale-while-revalidate static assets, tap-to-apply updates, and offline catch buffering.
+Quick pointers:
 
-## Safety and privacy
-
-- Supabase is optional at runtime. Preserve local/offline fallbacks when remote services fail.
-- Keep GPS, tackle details, user IDs, and private catch rows out of public feed responses and debug output.
-- Keep RLS enabled on `public.catches`. Add schema changes only as idempotent migrations under `supabase/migrations/`.
-- Never commit service-role credentials or access tokens. The browser Supabase key is publishable configuration, not a reason to add more credentials.
-- Use DOM APIs or `textContent` for external/user-controlled strings; avoid unsanitized `innerHTML`.
-
-## Validation
-
-There is no build step or committed test runner. For JavaScript changes run:
-
-```bash
-find src -name '*.js' -print0 | xargs -0 -n1 node --check
-node --check sw.js
-```
-
-For Python changes run:
-
-```bash
-python3 -m py_compile api/water_report.py scripts/dev_server.py scripts/scrape_wdfw.py
-```
-
-For browser-facing changes, start `python3 scripts/dev_server.py 8000` and check `http://127.0.0.1:8000/index.html`, including the affected tab, page errors, accessibility behavior, and offline behavior when relevant.
-
-Keep edits small, preserve existing user changes, and do not rewrite unrelated files.
+- **Stack:** plain HTML/CSS/classic JavaScript. No framework, bundler, package manager or
+  ES modules. `src/app.js` is **bootstrap-only** and must load **last**.
+- **Layout:** features in `src/features/*`, shared primitives in `src/shared/*`, region
+  data in `src/data/regions/`.
+- **Contracts:** `docs/CONTRACT.md` (API), `docs/CONTRACT_REGIONS.md` (region registry),
+  `docs/CONTRACT_TECHNIQUE.md` (gear-sim techniques).
+- **Check:** `node sanity_pass.js` — it derives the script list from `index.html`, so a
+  newly added file is automatically syntax- and HTTP-checked.

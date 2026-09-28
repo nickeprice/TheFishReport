@@ -3,6 +3,35 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Dead-code cleanup pass (before Phase 3.3)
+Repo-wide sweep for dead code / dormant mechanisms. REMOVED: `src/data/riverRegulations.js`
+(503 lines, loaded by NOTHING — `index.html` never included it, yet sw.js was precaching it;
+its globals were superseded by `src/utils/regulations.js` long ago) + its SHELL_FILES entry;
+and four dead API fields with zero consumers anywhere (`push_status`, `angler_desc`,
+`civil_in`, `civil_out`) whose computations and payload keys are gone from
+`api/water_report.py` and documented under "Removed (do not resurrect)" in
+`docs/CONTRACT.md`. MIGRATION `20260928000100_drop_dead_columns` (authored, applied via
+`npx supabase db push`, verified live): dropped `cast_distance_ft` + `hook_location`. Those
+two were ALWAYS NULL — but `get_global_calibration` SELECTed both, so the RPC had to be
+recreated without them (a RETURNS TABLE signature cannot be altered in place, 42P13) and its
+ACL re-issued; verified live that the ACL is byte-identical (anon, authenticated,
+service_role), the columns are gone, and the RPC still EXECUTES and returns the row.
+`src/services/schema.sql` was ALSO stale (still listed `corky_size`, and an RPC missing the
+env columns) and is now aligned with the live schema. Retired the stale
+`.kilo/worktrees/clumsy-college` git worktree (it was polluting every repo-wide search).
+Docs: `README.md` refreshed to the modular layout; `ARCHITECTURE.md` (a pre-3.0 snapshot) and
+`copilot-instructions.md` reduced to POINTERS — both were stale second copies of the rules,
+and the copilot file had actively misled (it still described the `app.js` monolith).
+**⚠️ ONE DORMANT MECHANISM LEFT, AND IT IS NOT CLEANUP:** `communitySonar()` in
+`gear-sim/sonar.js` skips any row whose `loc !== 'Fair'`, but NOTHING has ever populated
+that field — so every calibration row is discarded and the strike zone always uses its
+baseline. Fixing it changes the Gear Sim's zone, so it is recorded as a product decision in
+TASK.md + UPDATE_4.0 §3.2. (Also corrected the stale "the RPC returns []" comment: the RPC
+is live and DOES return rows.) Verified: sanity **85/85 GREEN**, all syntax checks, the
+removed fields confirmed ABSENT from the live payload with every kept field present, and the
+1.3/1.5/2.3 API regressions still green. `sw.js` → `v2.03.01`.
+
+
 ## 2026-09-28 — Phase 3.1 COMPLETE ✅: durable IndexedDB outbox (localStorage retired)
 New `src/shared/idb.js` (minimal promise wrapper: `idbOpen/idbGetAll/idbPutAll/idbDelete`)
 and `src/features/catch-log/outbox.js`, which keeps an IN-MEMORY MIRROR of the catch list and

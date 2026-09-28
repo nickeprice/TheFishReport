@@ -31,6 +31,23 @@ STATUS: **Phases 1 + 2 COMPLETE**; Phase 3.2 (idempotency) done. Next: 3.1 Index
 - [ ] **3.3** In-app reconciliation on `online` / `focus` / `resume`
 - [ ] **3.4** Optimistic UI + pending-sync indicator
 
+## Cleanup pass (2026-09-28, before 3.3)
+
+- [x] Removed `src/data/riverRegulations.js` (loaded nowhere; the service worker was
+      precaching it) + its `sw.js` `SHELL_FILES` entry
+- [x] Dropped 4 dead API fields — `push_status`, `angler_desc`, `civil_in`, `civil_out`
+      (computed and shipped, zero consumers) + `docs/CONTRACT.md` updated
+- [x] Migration `20260928000100_drop_dead_columns`: dropped `cast_distance_ft` +
+      `hook_location` and recreated `get_global_calibration` without them (its ACL was
+      re-issued and verified identical; the RPC was then called live and returned the row)
+- [x] Retired the stale `.kilo/worktrees/clumsy-college` git worktree
+- [x] Refreshed `README.md`; `ARCHITECTURE.md` + `copilot-instructions.md` reduced to
+      pointers (both were stale second copies of the rules)
+- [ ] **OPEN DECISION (not cleanup):** `communitySonar()` skips any row whose
+      `loc !== 'Fair'`, and nothing has ever populated that field — so the whole
+      community-sonar path is inert. Fixing it CHANGES the Gear Sim's strike zone, so it
+      needs a product call. See UPDATE_4.0 §3.2.
+
 ## Deferred / follow-ups
 
 - [ ] **1.4b** Technique/Species picker in both tabs + `GEAR_STYLES`/`GEAR_SPECIES`

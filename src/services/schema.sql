@@ -45,8 +45,8 @@ create table if not exists public.catches (
     flow             integer,
     species          text,
 
-    -- private: location
-    hook_location    text,
+    -- private: location — raw coords only; the coarse river_name is what the public
+    -- view exposes. (`hook_location` was dropped 2026-09-28: always NULL, nothing read it.)
     latitude         numeric,
     longitude        numeric,
 
@@ -57,7 +57,6 @@ create table if not exists public.catches (
     hook_size        text,
     yarn             numeric,
     foam             text,
-    corky_size       text,
     bead_material    text,
     bead_size        numeric,
     weight           numeric,          -- lead weight, oz
@@ -69,7 +68,6 @@ create table if not exists public.catches (
 
 -- --- columns the deployed table does not have yet (nullable: safe to add) ---
 alter table public.catches add column if not exists rod_ft           numeric;
-alter table public.catches add column if not exists cast_distance_ft numeric;
 alter table public.catches add column if not exists mainline_mat     text;
 alter table public.catches add column if not exists mainline_lb      numeric;
 alter table public.catches add column if not exists line_height_in   numeric;
@@ -125,7 +123,6 @@ create function public.get_global_calibration(p_flow integer, p_species text)
 returns table (
     flow            integer,
     species         text,
-    hook_location   text,
     leader_length   text,
     leader_material text,
     leader_lb       text,
@@ -138,7 +135,10 @@ returns table (
     bead_material   text,
     bead_size       text,
     rod_ft          text,
-    cast_distance_ft text
+    water_temp_f    numeric,
+    wind_speed_mph  numeric,
+    wind_dir_compass text,
+    moon_phase      text
 )
 language sql
 stable
@@ -148,7 +148,6 @@ as $$
     select
         c.flow::integer,
         c.species::text,
-        c.hook_location::text,
         c.leader_length::text,
         c.leader_material::text,
         c.leader_lb::text,
@@ -161,7 +160,10 @@ as $$
         c.bead_material::text,
         c.bead_size::text,
         c.rod_ft::text,
-        c.cast_distance_ft::text
+        c.water_temp_f,
+        c.wind_speed_mph,
+        c.wind_dir_compass,
+        c.moon_phase
     from public.catches c
     where c.leader_length is not null
       and c.flow is not null

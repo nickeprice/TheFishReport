@@ -18,45 +18,65 @@ classic (non-module) scripts sharing one global scope, loaded in dependency
 order at the end of `<body>`.
 
 ```
-index.html                  markup only (~265 lines)
+index.html                  markup only (tabs, forms, ARIA labels, script tags)
 manifest.json               PWA manifest (icons, shortcuts, theme)
 sw.js                       service worker (offline + caching strategy)
 icons/                      generated app icons (any + maskable)
 src/
   styles.css                all styling, incl. toasts / empty states / focus rings
-  app.js                    application core: UI state, navigation, guest auth,
-                            fluid dynamics engine, Gear Sim, Brag Board,
-                            station selector, bootstrap
+  app.js                    BOOTSTRAP ONLY (~30 lines): window.onload + the outbox load
+  shared/                   reusable primitives (classic scripts, one global scope)
+    debug.js                logDebug + the double-tap debug matrix
+    ui.js                   debounce + the toast stack
+    nav.js                  switchTab / resetToToday
+    format.js               feed-row normalise, time format, escaping, newUuid
+    forms.js                rod/line/material/field sync (shared by BOTH tabs)
+    idb.js                  tiny promise wrapper over IndexedDB
+    refresh.js / pwa.js     auto-refresh; service-worker registration + deep links
+  features/
+    auth/                   anonymous guest session + pending-catch flush
+    telemetry/              tide, hero, day-nav, the water-report pipeline
+    gear-sim/               inputs, physics (Cd locked 1.0), sonar, zone, rig,
+                            solver, sim, techniques/drift.js, registry
+    catch-log/              outbox (durable), board, mycatches, log
+    station/                picker (modal/GPS) + search (USGS by id/name)
+    map/                    Leaflet station map (lazy-loaded enhancement)
+  data/
+    regions/washington.js   the WA region registry (strict JSON payload; read by
+                            BOTH the frontend and api/water_report.py)
+    wdfw_rules.json         fetched WDFW rules cache
   services/
     supabase.js             Supabase client: anonymous auth, catch writes,
                             public feed, calibration RPC
-    water.js                telemetry data layer: USGS NWIS, Open-Meteo,
+    water.js                telemetry data layer: USGS WDFN, Open-Meteo,
                             WDFW Socrata escapement
   utils/regulations.js      WDFW regulations engine + local NOAA/Meeus solar calc
-  data/riverRegulations.js  static regulation seed data
-  data/wdfw_rules.json      fetched WDFW rules cache
 api/
   water_report.py           Python serverless function: /api/water_report
 supabase/
   migrations/               idempotent schema + RLS migrations
   README.md                 how to link / push / verify
-scripts/scrape_wdfw.py      WDFW rules scraper
+scripts/                    dev_server.py, scrape_wdfw.py, refresh_wdfw_forecast.py
 ```
 
 ### Script load order
 
-`supabase-js` (CDN) → `regulations.js` → `riverRegulations.js` →
-`supabase.js` → `water.js` → `app.js`.
+`supabase-js` (CDN) → `data/regions/washington.js` → `utils/regulations.js` →
+`services/*` → `shared/*` → `features/*` → **`app.js` last**.
 
-`app.js` must load last: it calls into the other modules and wires
-`window.onload`.
+`app.js` must load last: it wires `window.onload`, and the module graph above it
+depends on being fully defined first. `sanity_pass.js` derives this list from
+`index.html`, so a newly added file is automatically syntax- and HTTP-checked.
 
 ## Backend
 
 `/api/water_report?site=&lat=&lon=` is a Python `BaseHTTPRequestHandler`
 (`api/water_report.py`), which is the shape Vercel expects for a Python
 serverless function — no `vercel.json` or adapter is required. It aggregates
-USGS NWIS, Open-Meteo and NOAA tides into a 4-day forecast, typically in 4–6 s.
+**USGS WDFN** (`api.waterdata.usgs.gov`; the legacy `waterservices` reader is a
+fallback only, retired by USGS in Q1 2027), Open-Meteo and NOAA tides into a 4-day
+forecast, typically in 4–6 s. Responses are memoised briefly and the endpoint is
+rate-limited and coordinate-bounded (see UPDATE_3.0 §2.4).
 
 The database is Supabase. Schema and RLS are managed as migrations in
 `supabase/` — see [`supabase/README.md`](supabase/README.md) for how to apply
@@ -73,9 +93,13 @@ them.
 - **Physics is locked** at drag coefficient 1.0. Every simulation output is a
   pure function of the form inputs plus the catch log, so identical inputs
   always return identical numbers.
-- **Offline-first writes**: a logged catch is buffered in `localStorage` first,
-  then pushed to Supabase. Rows that fail to reach the server are flagged
-  `pendingSync` and retried on the next session.
+- **Offline-first writes**: a logged catch goes into a durable **IndexedDB outbox**
+  (`src/features/catch-log/outbox.js`) first, then is pushed to Supabase. Each row carries
+  a client-generated `clientId`, and the write is an upsert with `ignoreDuplicates`, so a
+  retry after a response lost in a dead zone is **deduped instead of double-logging**.
+  Rows that fail to reach the server are flagged `pendingSync` and retried on the next
+  session. If IndexedDB is unavailable (private browsing) the outbox degrades to the
+  legacy `localStorage` buffer rather than losing the catch.
 
 ## PWA
 

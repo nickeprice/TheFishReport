@@ -48,6 +48,22 @@ Verify against live output with `scripts/smoke.sh`.
 
 ## Removed (do not resurrect)
 - `active_fish` — fake Gaussian count; deleted in 2.1a. NEVER re-add (AGENTS.md no-fabricate).
+- `push_status` — macro-env string, never a fish-moving label. Shipped for back-compat, but
+  had **zero** consumers; removed 2026-09-28.
+- `angler_desc` — "High (Weekend)" / "Low (Weekday)" label. Never consumed; removed 2026-09-28.
+- `civil_in` / `civil_out` — legacy ±35 min twilight times. Superseded by `lines_in`/`lines_out`;
+  removed 2026-09-28.
+- `lines_in`/`lines_out` are **not** removed, but note they are `null` unless `legal_hours`
+  is `daylight`/`24hr`.
+
+## Removed DB columns (2026-09-28 migration `drop_dead_columns`)
+- `cast_distance_ft` — the placement-distance input was removed; the client hardcoded NULL.
+- `hook_location` — always NULL (the client hardcoded NULL). Dropped for hygiene: it is
+  spot-adjacent data that should not sit in the table unused.
+- `corky_size` — dropped earlier; `foam` is the source of truth.
+- The **`get_global_calibration` RPC was recreated** in the same migration (its
+  `RETURNS TABLE` listed both columns). Its ACL (anon, authenticated, service_role) was
+  re-issued and verified identical.
 
 ## Constants worth remembering
 - `NETTING_DAYS = [6,0,1]` (Sun/Mon/Tue); `NETTING_SITES = {12101500, 12093500, 12094000}`

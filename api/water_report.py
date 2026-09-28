@@ -1381,13 +1381,16 @@ class handler(BaseHTTPRequestHandler):
 
             is_netting_day = dt.weekday() in NETTING_DAYS and site in NETTING_SITES
             net_status = "NETS IN (Severe Migration Block)" if is_netting_day else "River Open (Nets Out)"
-            angler_desc, angler_mult = ("High (Weekend)", 0.80) if dt.weekday() in [5, 6] else ("Low/Moderate (Weekday)", 1.0)
-            
+            # `angler_mult` still feeds the timeline; the descriptive `angler_desc` string
+            # was never consumed and was removed in the 3.0 cleanup (see docs/CONTRACT.md).
+            angler_mult = 0.80 if dt.weekday() in [5, 6] else 1.0
+
             transit_time, transit_state, flow_index, transit_hrs = calculate_transit_time_and_flow(usgs_data["cfs"], is_netting_day)
             stock_base = calculate_stock_base_score(dt, site)
-            env_score, flow_mult, push_status = calculate_macro_environment(flow_index, press_curr_inHg, press_prev_inHg, rain_in, lunar_val, is_netting_day)
+            # `push_status` (a macro-env string, never a fish-moving label) was unused and
+            # was removed in the 3.0 cleanup.
+            env_score, flow_mult, _ = calculate_macro_environment(flow_index, press_curr_inHg, press_prev_inHg, rain_in, lunar_val, is_netting_day)
             
-            civil_in, civil_out = sunrise_dt - timedelta(minutes=35), sunset_dt + timedelta(minutes=35)
             # --- Legal fishing hours (registry-driven; NEVER fabricated) ------------
             # `legal_hours` is a per-waterbody FACT from the region registry. The
             # QUALITY timeline below is a separate sunlight-based fishing model and
@@ -1454,12 +1457,11 @@ class handler(BaseHTTPRequestHandler):
                 "precip_phase": precip_phase_key, "precip_start_text": precip_start_text, "precip_end_text": precip_end_text,
                 "lunar_icon": lunar_icon, "cloud_pct": cloud_pct,
                 "sunrise": sunrise_dt.strftime('%-I:%M %p'), "sunset": sunset_dt.strftime('%-I:%M %p'),
-                "civil_in": civil_in.strftime('%-I:%M %p'), "civil_out": civil_out.strftime('%-I:%M %p'),
                 "moon_upper": moon_upper_str, "moon_lower": moon_lower_str,
                 "lines_in": lines_in_str, "lines_out": lines_out_str,
                 "legal_hours": legal_rule,
-                "net_status": net_status, "angler_desc": angler_desc,
-                "push_status": push_status, "transit_state": transit_state, "transit_time": transit_time,
+                "net_status": net_status,
+                "transit_state": transit_state, "transit_time": transit_time,
                 "clarity_outlook": clarity_outlook,
                 "tide_station": tide_pair['id'] if tide_pair else None,
                 "tide_chart": tide_chart_str, "tide_curve": tide_curve,

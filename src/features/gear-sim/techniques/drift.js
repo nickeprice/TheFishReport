@@ -6,7 +6,7 @@
  * weight-to-depth tuning), not a separate technique - same physics, same solver.
  *
  * public: DRIFT_TECHNIQUE  { id, label, waterbody_types, compute(rig, env) }
- *   env = { flow, species, dbArray }
+ *   env = { flow, species, dbArray, siteId }
  *   returns { velocity, dragPerFt, lift, hgt, blownOut, sonar, zone, score, suggestions }
  *
  * Determinism: drag coefficient stays LOCKED at 1.0, so identical rig + env always
@@ -32,7 +32,7 @@ var DRIFT_TECHNIQUE = {
         // 2. Fluid dynamics (LOCKED: drag coefficient is always 1.0) -------------------
         // Every component counts: leader diameter (sqrt lb x material), coupled
         // mainline, bead sphere + material sink, hook mass/gap, yarn skirt.
-        var velocity = hydraulicVelocity(flow);
+        var velocity = hydraulicVelocity(flow, env.siteId);
         var dragPerFt = totalDragPerFt(velocity.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz);
         // Foam 1 + Foam 2 both contribute buoyancy (two corkies lift more).
         var lift = rigLift(foam.lift + foam2.lift, yarn, hook, bdMat, bdSz);
@@ -40,7 +40,7 @@ var DRIFT_TECHNIQUE = {
         var blownOut = (velocity.bottom > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------
-        var sonar = communitySonar(dbArray, flow, species);
+        var sonar = communitySonar(dbArray, flow, species, env.siteId);
         var zone = computeStrikeZone(sonar);
         var score = 5.0;
         if (blownOut) {
@@ -59,7 +59,10 @@ var DRIFT_TECHNIQUE = {
         var best = bestZoneRig(zone, velocity.bottom, ldLb, ldMat, mlLb, mlMat, foam.key, weightOz, ldLen, yarn, hook, bdMat, bdSz, foam2.lift);
 
         if (blownOut) {
-            suggestions.push('BLOWN OUT: the bed is running ' + velocity.bottom.toFixed(1) + ' ft/s with only ' + weightOz + ' oz of lead. Step up to 3/4 oz or 1 oz, or fish a slower seam.');
+            // Report the true measured ft/s when we have it, matching the HUD (the solver's
+            // own scale is internal calibration units, not something to quote at an angler).
+            var shownBed = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
+            suggestions.push('BLOWN OUT: the bed is running ' + shownBed.toFixed(1) + ' ft/s with only ' + weightOz + ' oz of lead. Step up to 3/4 oz or 1 oz, or fish a slower seam.');
         } else if (hgt < zone.min) {
             var lowWhy = (sonar && sonar.center !== null && sonar.center > (zone.min + zone.max) / 2)
                 ? 'Weather and recent catches show fish holding higher in the column'

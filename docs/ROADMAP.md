@@ -161,6 +161,46 @@ The web output is wrapped, not replaced. The PWA path stays.
 - **Store shipping** — iOS signing/icons/splash/permissions → TestFlight; Android
   keystore/splash → `.aab` for Play Console.
 
+### 3.9 Model accuracy — the measurement-free path
+
+The Gear Sim is a deterministic heuristic, and its accuracy ceiling is set by **data +
+physics, not hardware**: velocity came from one empirical fit (`0.25 · Q^0.4`) applied to
+every river, which overstated the Puyallup's mean velocity ~2.3× and under-predicted how
+fast it rises with flow.
+
+**Layer 1 — gauge velocity from the USGS's own measurements. ✅ SHIPPED (2026-09-28).**
+USGS crews wade/boat each gauge several times a year and measure discharge, width,
+cross-section area **and** mean velocity by hand. `scripts/fetch_channel_measurements.py`
+pulls those from the Water Data OGC API `channel-measurements` collection (with a `Q = v·A`
+continuity gate that discards bad rows), least-squares-fits `v = a · Q^b` per gauge, and
+writes `src/data/channel_measurements.js`. `hydraulicVelocity(flow, siteId)` now uses the
+measured **shape**, anchored to the locked reference so `DRAG_REF` / the strike zone keep
+their calibration. Result: every gauge carries its own response, up to **+22% bed velocity
+at 10,000 CFS** versus the old one-size fit — i.e. it now matters most at blown-out flows.
+
+**Layer 2 — "near you" via continuity (IN PROGRESS).** The gap is local *width*: the USGS
+measurements give the width at the gauge, but the angler's own spot needs its own. That proved
+harder than expected — **NAIP/NDWI fails on every river in this basin** (glacial silt
+backscatters NIR, and NAIP has no SWIR band, so the turbid-water index MNDWI cannot be
+computed): it returned **4 ft where the truth is 215 ft**. Width is therefore a **dual-method
+pipeline with a router** (`scripts/extract_river_widths.py`) — NAIP-NDWI plus a colour-blind
+3DEP-elevation method (`scripts/width_elevation.py`) — where a method is trusted **only if it
+reproduces the USGS field width at that gauge**. The generated `src/data/river_widths.js`
+currently validates the DEM at Puyallup only (202 vs 215 ft) and falls back to the measured
+USGS width elsewhere. What remains is the app-side estimator:
+`v_spot ≈ v_gauge × (width_gauge / width_spot)`, using the routed gauge width and the spot's
+DEM ratio over the same reach.
+
+**Layer 3 — validate + re-anchor the rest.** The measured fits already reproduce real
+measurements inside ~6%. Still tuned against the *old* inflated velocity and therefore
+worth revisiting as one deliberate contract bump (it re-pins the frozen baselines):
+the `blownOut` threshold (`bottom > 3.5`), and the drag law being linear in velocity where
+physics wants `v²`.
+
+**The honest boundary that survives all of this.** Even a perfect `v = Q/A` gives the
+cross-section *average* velocity at that gauge — never the velocity in one specific seam.
+Without a local measurement that last ~±30% is unknowable, and the UI must keep saying so.
+
 ## 4. Suggested phasing within 4.0
 
 1. **Accounts + RLS tier** (unblocks everything social).

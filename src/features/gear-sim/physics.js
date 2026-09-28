@@ -57,7 +57,10 @@ var MAINLINE_COUPLING = 0.25;
 
 function mainlineDragPerFt(bottomVelocity, mlLb, mlMat) {
     if (!mlLb) return 0;
-    var velocityScale = bottomVelocity / REF_VELOCITY;
+    // Drag goes as v^2 (F = 1/2 rho Cd A v^2), not linearly. Anchored so the scale is
+    // exactly 1 at the reference flow, so the reference rig is unchanged and only the
+    // RESPONSE to discharge moves.
+    var velocityScale = Math.pow(bottomVelocity / REF_VELOCITY, 2);
     return DRAG_REF * velocityScale * lineDiameterScale(mlLb, mlMat || 'braid') * MAINLINE_COUPLING;
 }
 
@@ -65,7 +68,7 @@ function mainlineDragPerFt(bottomVelocity, mlLb, mlMat) {
 // diameter (sqrt of lb test x material factor) and how hard the lead pins the
 // leader down. Heavier lead sweeps the leader flatter, so height falls.
 function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat) {
-    var velocityScale = bottomVelocity / REF_VELOCITY;
+    var velocityScale = Math.pow(bottomVelocity / REF_VELOCITY, 2);   // v^2, see mainlineDragPerFt
     var diameterScale = lineDiameterScale(lbTest, ldMat || 'copoly');
     var anchorScale = 0.7 + (0.6 * weightOz);   // heavier lead sweeps the leader flatter
     var drag = DRAG_REF * velocityScale * diameterScale * anchorScale * dragCoeff;

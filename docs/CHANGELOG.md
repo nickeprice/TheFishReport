@@ -4,6 +4,102 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Temporal audit, honest velocity display, near-you continuity, and the v^2 drag bump
+Four connected changes, all prompted by one fair question: *are we mixing dates and calling it
+"now"?* We were, so it was measured rather than assumed.
+
+**Temporal audit (the finding).** The velocity fit pools the whole coherent record — which turned
+out to be **1977–2026**, not the 90 years assumed (the `Q = v·A` gate had already dropped older
+rows lacking width/area). Re-fitting per window shows the *level* barely moves: the Puyallup —
+the flagship and the only DEM-validated river — is stable to **<1%** across the whole span, and
+Carbon/Nisqually/Green drift ±6–15% (the exponent stays ~0.45–0.5 everywhere, so the *shape* we
+shipped was sound). The real finding is the **White River: one field measurement since 2010**, so
+its curve is effectively pre-2010. `channel_measurements.js` now carries `first_yr`/`last_yr`/
+`recent_n`/`thin_recent`, and the HUD says "thin recent data" instead of looking timeless.
+`river_widths.js` records `dem_vintage: "unknown"` — the DEM tile exposes no collection date, and
+that gap is stated rather than papered over.
+
+**A — honest velocity display.** `hydraulicVelocity()` also returns the **true measured ft/s**
+(`trueMean`/`trueBottom`) alongside its internal anchored calibration values, so BOTTOM CURRENT now
+shows reality (1.35 ft/s at 1650 cfs) while the drag/strike-zone math keeps using the anchored
+scale. Showing truth can no longer silently move the physics.
+
+**B3 — "near you" continuity, honestly bounded.** New `src/features/gear-sim/continuity.js`
+(`gaugeWidthFt`, `spotWidthRatio`, `velocityAtSpot`) plus `src/data/river_widths.js` now in the
+shell, and the HUD appends the gauge's measured channel width. There is still **no spot-width
+source** (NAIP fails on these glacial rivers), so the ratio is 1.0 and labelled as a same-reach
+estimate with a ±20% spread — not a fabricated spot number. B1 (dated 3DEP endpoint) can drop into
+`spotWidthRatio()` later without touching callers.
+
+**C — drag is now v² (deliberate contract bump).** `mainlineDragPerFt`/`leaderDragPerFt` scale with
+`(v / REF_VELOCITY)²` instead of linearly, matching `F = ½ρCdAv²`. `REF_VELOCITY` became the exact
+reference bed velocity rather than a rounded 2.45. Effect: drag **+41% at 2500 cfs**, **−19% at
+600**, and the 1040 reference shifts only +0.28% (from the rounding fix, not the v² change). The
+four frozen baselines and the drift-technique values were re-pinned with that rationale recorded
+inline. `sw.js` VERSION → `v2.03.06`.
+
+Verified: `sanity_pass.js` **106/106 GREEN** (was 104 — two new module checks), `python3 -m
+py_compile` on all three scripts, and `node --check` on both generated data files.
+- Key files: `src/features/gear-sim/{inputs,physics,continuity,solver,techniques/drift}.js`,
+  `src/data/{channel_measurements,river_widths}.js` (generated), `scripts/fetch_channel_measurements.py`,
+  `scripts/extract_river_widths.py`, `index.html`, `sw.js`, `sanity_pass.js`, `docs/SYMBOLS.md`.
+
+## 2026-09-28 — Width: NAIP fails on every river here; dual-method extractor + truth-validated router
+The width work was about to be built on NAIP imagery alone. Measuring it against the USGS
+field widths showed that method is **unusable on all five gauges** — the Puyallup, White,
+Carbon and Nisqually are glacial/silt-laden, so suspended sediment backscatters near-infrared
+and the green−NIR contrast collapses: NAIP returned **4 ft where the truth is 215 ft** (White
+0 vs 119, Carbon 10 vs 63, Green 14 vs 128, Nisqually 0 vs 176). NAIP has no SWIR band, so the
+index that would fix turbid water (MNDWI) cannot be computed from it.
+
+So width became a **dual-method pipeline with a router** (`scripts/extract_river_widths.py`):
+NAIP-NDWI kept as one provider, plus a new `scripts/width_elevation.py` that reads the 3DEP
+DEM from AWS Terrain Tiles (terrarium z15, ~3.25 m ground resolution, colour-blind) and measures
+the channel trough along the across-gradient axis. Crucially, **clarity is never guessed from a
+turbidity number** — a method earns trust only by reproducing the USGS field width at that gauge
+(≤25%). The DEM also self-reports a `truncated` flag when the trough runs off the window, which
+correctly disqualifies the steep-canyon gauges.
+
+Result (`src/data/river_widths.js`, generated): the DEM validates at **Puyallup only**
+(202 vs 215 ft); White/Carbon/Nisqually are truncated and Green's estimate misses by 83%, so all
+four fall back to the USGS measured width. That is the honest outcome — one method is right for
+one reach, and the router says so instead of pretending.
+
+`src/data/river_widths.js` is deliberately **not** added to `index.html`/`SHELL_FILES` yet:
+nothing consumes it until the app-side continuity estimator lands, and the repo's rule is that an
+unread data file should not ship in the offline shell. `sw.js` VERSION unchanged.
+
+Verified: `sanity_pass.js` **104/104 GREEN**; `river_widths.js` passes `node --check`; the
+extractor is deterministic (a re-run reproduces byte-identical numbers).
+- Key files: `scripts/width_elevation.py` (new), `scripts/extract_river_widths.py`,
+  `src/data/river_widths.js` (new, not yet shell-loaded), `docs/ROADMAP.md` §3.9.
+
+## 2026-09-28 — Measured gauge velocity: USGS field measurements replace the one-size fit
+The Gear Sim derived velocity from a single `0.25 · Q^0.4` fit applied to every river. That fit
+overstated the Puyallup's mean velocity **~2.3×** and — because its exponent was too low (0.4 vs
+~0.47) — *under*-predicted how fast velocity rises with flow, worst exactly at blown-out levels.
+The USGS already answers this: its field crews wade/boat each gauge several times a year and
+measure discharge, width, cross-section area **and** mean velocity by hand. New
+`scripts/fetch_channel_measurements.py` pulls those rows from the Water Data OGC API
+`channel-measurements` collection (the legacy NWISWeb RDB endpoints are mid-decommission), gates
+each row on continuity (`Q = v·A`, 5% — the published data is not clean: a Nisqually row carries a
+trailing-zero area, 37 rows dropped in all), least-squares-fits `v = a·Q^b` per gauge, and writes
+`src/data/channel_measurements.js` (deterministic, no timestamp, precached in the shell).
+
+`hydraulicVelocity(flow, siteId)` now uses the measured **shape**, ANCHORED to the locked reference
+(`shape(1040) === 1`) so `DRAG_REF` and the strike zone keep their calibration and only the
+flow-response moves; a gauge with no measurements falls back to the old estimate byte-for-byte.
+`env.siteId` threads `sim.js` → `drift.js` → `sonar.js`, and the HUD appends "• USGS-measured"
+rather than implying the number is exact. `sw.js` VERSION → `v2.03.05`.
+
+Verified: `sanity_pass.js` **104/104 GREEN** — the frozen-baseline and drift-technique tests are
+byte-identical (the anchoring held), and a new assertion proves the published fit reproduces a real
+measurement: Puyallup 2026-07-30, 1650 cfs @ 2.09 ft/s → the fit gives 2.22. Flow sweep: 1.000× at
+the 1040 CFS anchor, +22% (Puyallup) / +14% (Carbon) bed velocity at 10,000 CFS.
+- Key files: `scripts/fetch_channel_measurements.py` (new), `src/data/channel_measurements.js`
+  (new), `src/features/gear-sim/{inputs,sim,solver,sonar,techniques/drift}.js`, `index.html`,
+  `sw.js`, `sanity_pass.js`, `docs/SYMBOLS.md`, `docs/ROADMAP.md` §3.9, `memory-bank/*`.
+
 ## 2026-09-28 — Tackle spec: CSV entry surface + validator (supersedes the md template)
 Split the tackle-spec deliverable into two files with different lifecycles, because a cheat
 sheet does not change when data does:

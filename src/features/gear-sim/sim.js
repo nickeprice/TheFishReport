@@ -28,7 +28,9 @@ async function runSim() {
 
     // 3-4. Solve + score through the registered technique. Only `drift` ships today;
     // its compute() owns the locked-Cd physics, the strike zone and the suggestions.
-    var out = gearTechnique().compute(rig, { flow: rig.flow, species: rig.species, dbArray: dbArray });
+    // The active station's own USGS-measured velocity curve shapes the response.
+    var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
+    var out = gearTechnique().compute(rig, { flow: rig.flow, species: rig.species, dbArray: dbArray, siteId: siteId });
 
     // 5. Persist the rig + paint the HUD.
     currentStats = buildSimStats(rig, out);

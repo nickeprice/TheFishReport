@@ -13,12 +13,25 @@ this file**, or the pass fails.
 | --- | --- | --- |
 | 0 | `@supabase/supabase-js` (CDN) | the SDK, lazily awaited by `services/supabase.js` |
 | 1 | `src/data/regions/washington.js` | `window.REGIONS.WA` (strict JSON; schema `CONTRACT_REGIONS.md`) |
-| 2 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
-| 3 | `src/services/supabase.js` | auth, catch writes, public feed, calibration RPC |
-| 4 | `src/services/water.js` | USGS WDFN / Open-Meteo / WDFW Socrata data layer |
-| 5 | `src/shared/*` | debug, ui, nav, format, forms, idb, refresh, pwa |
-| 6 | `src/features/*` | auth, telemetry, gear-sim, catch-log, station, map |
-| 7 | `src/app.js` | **bootstrap only** — `window.onload` |
+| 2 | `src/data/channel_measurements.js` | `window.CHANNEL_MEASUREMENTS` — USGS field-measurement velocity fits (generated) |
+| 3 | `src/data/river_widths.js` | `window.RIVER_WIDTHS` — routed channel widths (generated) |
+| 4 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
+| 5 | `src/services/supabase.js` | auth, catch writes, public feed, calibration RPC |
+| 6 | `src/services/water.js` | USGS WDFN / Open-Meteo / WDFW Socrata data layer |
+| 7 | `src/shared/*` | debug, ui, nav, format, forms, idb, refresh, pwa |
+| 8 | `src/features/*` | auth, telemetry, gear-sim, catch-log, station, map |
+| 9 | `src/app.js` | **bootstrap only** — `window.onload` |
+
+## src/data — measured gauge velocity & width
+
+`channel_measurements.js` and `river_widths.js` are GENERATED; never hand-edit.
+- `channel_measurements.js` (`scripts/fetch_channel_measurements.py`) — one USGS field-measurement
+  fit per gauge, `fit = { a, b, r2 }` for `v = a * Q^b`, plus `first_yr`/`last_yr`/`recent_n`/
+  `thin_recent` and the underlying `points[]`. `hydraulicVelocity(flow, siteId)` uses the measured
+  **shape**, anchored to the locked reference so `DRAG_REF` and the strike zone keep their calibration.
+- `river_widths.js` (`scripts/extract_river_widths.py`) — per-gauge `width_ft` + the `method` that
+  produced it (`elevation` / `naip` / `usgs`), validated against the USGS field width. `dem_vintage`
+  is `"unknown"` (the DEM tile exposes no collection date).
 
 ## src/utils — regulations.js
 `loadRules(customPath)` · `setRulesCache(rules)` / `getRulesCache()` ·
@@ -64,10 +77,14 @@ this file**, or the pass fails.
 
 ## src/features/gear-sim
 - **inputs.js** — `currentStats`, `BASE_ZONE_MIN`/`BASE_ZONE_MAX`, `getNum`/`getStr`/`getGPS`,
-  `FOAM_TABLE`, `parseFoam`/`hookLabel`/`hookSink`, `hydraulicVelocity()`, `rigLift()`
+  `FOAM_TABLE`, `parseFoam`/`hookLabel`/`hookSink`, `hydraulicVelocity(flow, siteId)`,
+  `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`
+- **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
+  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (same-reach estimate + spread)
 - **physics.js** — `lineDiameterScale`, `beadDrag`/`beadSink`, `hookDrag`, `yarnDrag`,
   `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `presentationHeightInches()`
-- **sonar.js** — `envMatchWeight()`, `communitySonar()`, `getActiveReport()`, `getCurrentFlow()`
+- **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
+  `getActiveReport()`, `getCurrentFlow()`
 - **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `computeStrikeZone()`,
   `refreshZonePreview()`, `bestZoneRig()`
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`

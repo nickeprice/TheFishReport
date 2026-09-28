@@ -17,6 +17,20 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-28 — Temporal audit answered "are we mixing dates?": yes, but measured — the record is
+  1977–2026 and the Puyallup is stable to <1% (**the White is the find: 1 measurement since 2010,
+  now flagged**). Then shipped honest velocity display (true ft/s beside the anchored scale),
+  near-you continuity (`continuity.js`, same-reach ±20% — no spot width exists yet), and the **v²
+  drag law** (contract bump; baselines re-pinned). 106/106 green.
+- 2026-09-28 — Width: measured NAIP-NDWI against the USGS field widths and proved it fails on
+  **all five** rivers here (4 ft vs 215 ft at the Puyallup — glacial silt kills the green−NIR
+  index). Replaced it with a dual-method extractor + a router that trusts a method only if it
+  reproduces the USGS width (`scripts/width_elevation.py` reads the 3DEP DEM from AWS Terrain
+  Tiles); the DEM validates at Puyallup only and the rest fall back to the measured truth.
+- 2026-09-28 — Measured gauge velocity: the one-size `0.25 · Q^0.4` fit (which overstated the
+  Puyallup ~2.3×) is replaced by per-gauge `v = a·Q^b` fitted from **USGS field measurements**,
+  pulled by a new `scripts/fetch_channel_measurements.py` and anchored to the locked reference so
+  `DRAG_REF`/strike zone keep their calibration (104/104 green).
 - 2026-09-28 — Hygiene sprint H1–H3: `sw.js` `SHELL_FILES` ↔ `index.html` parity guard
   (kills a silent offline-cache drift bug), orphaned `src/services/schema.sql` deleted,
   over-target files recorded (101/101).

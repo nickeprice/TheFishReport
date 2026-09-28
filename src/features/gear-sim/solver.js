@@ -86,12 +86,29 @@ function paintSimHud(rig, out, stats) {
     eHgt.innerText = hgt.toFixed(1) + '"';
     eHgt.style.color = color;
 
+    // BOTTOM CURRENT shows the TRUE measured ft/s when the gauge has USGS field
+    // measurements. The solver keeps its own anchored calibration scale internally
+    // (velocity.bottom), so displaying truth can never move the physics.
+    var shownBottom = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
     var eVel = document.getElementById('hud-vel');
-    eVel.innerText = velocity.bottom.toFixed(1);
+    eVel.innerText = shownBottom.toFixed(1);
     eVel.style.color = blownOut ? 'var(--accent-red)' : color;
 
+    // Provenance, honest limits, and the continuity caveat: this is the GAUGE's velocity
+    // applied to the angler's reach (no spot-width source exists yet), so it is labelled as
+    // the gauge value plus the gauge's measured channel width - not a fabricated spot number.
+    var velNote;
+    if (velocity.source === 'measured') {
+        velNote = velocity.thinRecent ? 'USGS curve - thin recent data' : 'USGS-measured ft/s';
+        if (velocity.station) {
+            var wFt = gaugeWidthFt(velocity.station);
+            if (wFt) velNote += ' \u2022 ' + Math.round(wFt) + ' ft channel';
+        }
+    } else {
+        velNote = 'estimated ft/s';
+    }
     document.getElementById('target-hgt').innerText = 'Zone: ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
-    document.getElementById('vel-target').innerText = blownOut ? 'BLOWN OUT' : 'Target: < 3.5 ft/s';
+    document.getElementById('vel-target').innerText = blownOut ? 'BLOWN OUT' : velNote;
 
     var msg = blownOut ? 'BLOWN OUT - no presentation control'
         : ((hgt >= zone.min && hgt <= zone.max) ? 'Inside the strike zone' : 'Outside the strike zone');
@@ -107,6 +124,15 @@ function paintSimHud(rig, out, stats) {
 
     var simBtn = document.getElementById('btn-sim');
     if (simBtn) { simBtn.innerText = 'RUN SIMULATION'; simBtn.disabled = false; }
-    logDebug('Sim: height ' + hgt.toFixed(2) + '", bed velocity ' + velocity.bottom.toFixed(2) +
-        ' ft/s, zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) + '", score ' + score.toFixed(2), 'SIM');
+    // Continuity record: log the gauge value WITH the (currently unmeasured) spot ratio, so
+    // the trail shows exactly what was assumed instead of an unexplained single number.
+    var near = (typeof velocityAtSpot === 'function')
+        ? velocityAtSpot(rig.flow, velocity.station || null) : null;
+    logDebug('Sim: height ' + hgt.toFixed(2) + '", bed velocity ' + shownBottom.toFixed(2) +
+        ' ft/s (' + velocity.source + (typeof velocity.trueBottom === 'number'
+            ? ', true ft/s' : ', calibration scale') + ')' +
+        (near ? '; spot x' + near.ratio + ' measured=' + near.ratioMeasured +
+            ' \u00b1' + Math.round(near.uncertainty * 100) + '%' : '') +
+        ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
+        '", score ' + score.toFixed(2), 'SIM');
 }

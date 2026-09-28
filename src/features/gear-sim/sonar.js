@@ -51,7 +51,7 @@ function envMatchWeight(row, rep) {
     return 0.25 + ((score / dims) * 0.75);   // 0.25 (poor) .. 1.0 (exact)
 }
 
-function communitySonar(dbArray, flow, species) {
+function communitySonar(dbArray, flow, species, siteId) {
     if (!dbArray || !dbArray.length) return { center: null, samples: 0, note: 'no community data yet' };
     var rep = getActiveReport();
     // Deterministic: newest catches first, so the 8-sample window is stable
@@ -88,7 +88,7 @@ function communitySonar(dbArray, flow, species) {
         var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ? Number(row.hook) : 2;
         if (isNaN(hookNum)) hookNum = 2;
         var lift = rigLift(foam.lift + foam2.lift, row.yarn || 0, hookNum, bdMat, bdSzRaw);
-        var bedVel = hydraulicVelocity(row.flow).bottom;
+        var bedVel = hydraulicVelocity(row.flow, siteId).bottom;
         var lb = row.ldLb || row.leader_lb || REF_LB_TEST;
         var ldMat = row.ldMat || row.leader_material || 'copoly';
         var wt = (row.weight !== undefined && row.weight !== null) ? row.weight : 0.5;

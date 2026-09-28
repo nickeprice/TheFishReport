@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.04';
+const VERSION = 'v2.03.06';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -52,6 +52,7 @@ const SHELL_FILES = [
     '/src/features/telemetry/daynav.js',
     '/src/features/telemetry/report.js',
     '/src/features/gear-sim/inputs.js',
+    '/src/features/gear-sim/continuity.js',
     '/src/features/gear-sim/physics.js',
     '/src/features/gear-sim/sonar.js',
     '/src/features/gear-sim/zone.js',
@@ -73,6 +74,8 @@ const SHELL_FILES = [
     '/src/services/supabase.js',
     '/src/services/water.js',
     '/src/utils/regulations.js',
+    '/src/data/channel_measurements.js',
+    '/src/data/river_widths.js',
     '/src/data/regions/washington.js',
     '/src/data/wdfw_rules.json',
     '/src/data/wdfw_forecasts.json',

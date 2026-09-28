@@ -5,7 +5,7 @@
 - This is a mobile-first, installable PWA for Washington river conditions and fishing logs.
 - The frontend is plain HTML, CSS, and classic JavaScript. There is no package manifest, build step, bundler, framework, or module system.
 - `index.html` owns markup. Scripts are loaded in dependency order and share the global scope; `src/app.js` must remain last.
-- `src/app.js` owns UI state, navigation, the deterministic Gear Sim, guest auth, catch-log behavior, and bootstrap.
+- `src/app.js` is the LAST classic script and owns ONLY the `window.onload` bootstrap. Feature code lives in `src/features/{telemetry,gear-sim,catch-log,station,auth}/`; shared primitives in `src/shared/`.
 - `src/services/water.js` owns live telemetry reads and related DOM updates.
 - `src/services/supabase.js` owns optional anonymous auth, private catch writes, public feed reads, and calibration RPC calls.
 - `src/utils/regulations.js` and `src/data/` provide local WDFW regulation data and date/GPS calculations.

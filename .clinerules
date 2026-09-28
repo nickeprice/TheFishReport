@@ -12,6 +12,26 @@
 - Act mode: read TASK.md's ACTIVE phase only; execute unchecked items in order;
   mark `- [x]` only after the Verification Step passes.
 
+# Frontend module layout (UPDATE 3.0)
+- `src/app.js` is the LAST classic script and owns ONLY the `window.onload`
+  bootstrap. Features live in `src/features/{telemetry,gear-sim,catch-log,station,auth}/`;
+  shared primitives in `src/shared/`. Classic scripts, one global scope.
+- Target <150 lines for feature/component files; data/type/contract files
+  (`src/data/*`, `docs/CONTRACT*.md`) are EXEMPT.
+- Every feature file opens with `// public: a(), b() — purpose`.
+- Moving/splitting a big classic-script file: slice by exact line ranges with a
+  byte-for-byte tiling assertion (never hand-transcribe), then add the new files to
+  BOTH `index.html` (load order, `app.js` last) AND `sw.js` SHELL_FILES, and bump VERSION.
+
+# Reading discipline
+- Never whole-read `src/data/*.json` (`wdfw_rules.json` is thousands of lines):
+  grep the key, then read ±30 lines.
+- One feature boundary per Act prompt (not a rigid "max 2 files" rule).
+
+# Verification
+- After frontend changes run `node sanity_pass.js` — it derives the script list from
+  `index.html`, so newly added modules are auto syntax/HTTP-checked.
+
 # Database (standing instruction from user)
 - ALWAYS author DB changes as an idempotent timestamped migration under
   `supabase/migrations/`, then APPLY IT YOURSELF with
@@ -27,6 +47,8 @@
 - NEVER run the same failing command more than twice consecutively; then STOP and
   summarize the error + ask for guidance.
 - No blocking foreground servers in the tool window (background + redirect to /tmp).
+- Do NOT write files via shell heredocs: they can mangle and exit 1 WITHOUT executing.
+  Use the editor to write a temp file, then `cp` it into place.
 
 # Memory
 - Append a concise 1-2 line entry to CHANGELOG_INTERNAL.md at each feature/phase end.

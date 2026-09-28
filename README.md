@@ -24,7 +24,7 @@ sw.js                       service worker (offline + caching strategy)
 icons/                      generated app icons (any + maskable)
 src/
   styles.css                all styling, incl. toasts / empty states / focus rings
-  app.js                    BOOTSTRAP ONLY (~30 lines): window.onload + the outbox load
+  app.js                    BOOTSTRAP ONLY (33 lines): window.onload + the outbox load
   shared/                   reusable primitives (classic scripts, one global scope)
     debug.js                logDebug + the double-tap debug matrix
     ui.js                   debounce + the toast stack
@@ -68,6 +68,18 @@ scripts/                    dev_server.py, scrape_wdfw.py, refresh_wdfw_forecast
 depends on being fully defined first. `sanity_pass.js` derives this list from
 `index.html`, so a newly added file is automatically syntax- and HTTP-checked.
 
+## Repo docs
+
+| Where | What |
+| --- | --- |
+| `memory-bank/` | the six-file front page — project brief, product context, **current work focus**, system patterns, tech context, progress |
+| `AGENTS.md` + `.clinerules` | working rules and the plan/act workflow |
+| `docs/SYMBOLS.md` | file → public API index (find a function without opening files) |
+| `docs/CONTRACT*.md` | API, region, technique and catch contracts |
+| `docs/ROADMAP.md` | forward plan (Update 4.0) |
+| `docs/ARCHIVE_UPDATE_3.0.md`, `docs/ARCHIVE.md`, `docs/CHANGELOG.md` | how the current code got here |
+
+
 ## Backend
 
 `/api/water_report?site=&lat=&lon=` is a Python `BaseHTTPRequestHandler`
@@ -76,7 +88,7 @@ serverless function — no `vercel.json` or adapter is required. It aggregates
 **USGS WDFN** (`api.waterdata.usgs.gov`; the legacy `waterservices` reader is a
 fallback only, retired by USGS in Q1 2027), Open-Meteo and NOAA tides into a 4-day
 forecast, typically in 4–6 s. Responses are memoised briefly and the endpoint is
-rate-limited and coordinate-bounded (see UPDATE_3.0 §2.4).
+rate-limited and coordinate-bounded (see `docs/ARCHIVE_UPDATE_3.0.md` §2.4).
 
 The database is Supabase. Schema and RLS are managed as migrations in
 `supabase/` — see [`supabase/README.md`](supabase/README.md) for how to apply

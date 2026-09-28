@@ -11,7 +11,7 @@ curl -s "http://127.0.0.1:${PORT}/api/water_report?site=${SITE}" \
 import json, sys
 d = json.load(sys.stdin)
 r = d[0]
-keys = ["cfs","gage","flow_idx","transit_time","transit_state","push_status","is_netting","net_status","pressure","rain","lunar_icon","species_calendar","tide_points","water_temp_f","turbidity_fnu"]
+keys = ["cfs","gage","flow_idx","transit_time","transit_state","is_netting","net_status","pressure","rain","lunar_icon","species_calendar","tide_points","water_temp_f","turbidity_fnu"]
 print("site:", r.get("site_id"), r.get("site_name"))
 print("is_netting:", r.get("is_netting"), "| net_status:", r.get("net_status"))
 print("transit:", r.get("transit_time"), r.get("transit_state"))

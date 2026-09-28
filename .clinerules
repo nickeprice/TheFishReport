@@ -7,10 +7,11 @@
 - Batch independent reads/searches/edits into one tool call.
 
 # Workflow
-- Plan mode: explore the minimum, record a TASK.md with `- [ ]` boxes, file paths,
-  one-line Potential Bugs, and a concrete Verification Step. Present plan, then wait.
-- Act mode: read TASK.md's ACTIVE phase only; execute unchecked items in order;
-  mark `- [x]` only after the Verification Step passes.
+- Plan mode: explore the minimum, record the plan as `- [ ]` boxes in
+  `memory-bank/activeContext.md` with file paths, one-line Potential Bugs, and a
+  concrete Verification Step. Present plan, then wait.
+- Act mode: read `memory-bank/activeContext.md` ACTIVE items only; execute unchecked
+  items in order; mark `- [x]` only after the Verification Step passes.
 
 # Frontend module layout (UPDATE 3.0)
 - `src/app.js` is the LAST classic script and owns ONLY the `window.onload`
@@ -50,10 +51,20 @@
 - Do NOT write files via shell heredocs: they can mangle and exit 1 WITHOUT executing.
   Use the editor to write a temp file, then `cp` it into place.
 
-# Memory
-- Append a concise 1-2 line entry to CHANGELOG_INTERNAL.md at each feature/phase end.
-- New chat: read only the last ~20 lines of CHANGELOG_INTERNAL.md + the active
-  TASK.md phase (not full history).
+# Memory (memory-bank/)
+- `memory-bank/` is the front page: projectbrief, productContext, activeContext,
+  systemPatterns, techContext, progress. A fact lives there ONCE and points at the
+  deep doc — never fork the same fact into two files (that is how docs go stale).
+- Append a concise 1-2 line entry to `docs/CHANGELOG.md` at each feature/phase end.
+- New chat: read `memory-bank/activeContext.md` (ACTIVE items) + `memory-bank/progress.md`
+  + the last ~20 lines of `docs/CHANGELOG.md`. Not full history.
+
+# Docs map
+- `memory-bank/*` = orientation · `AGENTS.md` + `.clinerules` = rules
+- `docs/SYMBOLS.md` = file -> public API index (find a function without opening files)
+- `docs/CONTRACT.md` / `_REGIONS` / `_TECHNIQUE` / `_CATCH` = data + API contracts
+- `docs/ROADMAP.md` (Update 4.0) · `docs/ARCHIVE_UPDATE_3.0.md` (completed blueprint)
+- `docs/ARCHIVE.md` + `docs/CHANGELOG.md` = history / audit trail
 
 # Continuous improvement
 - On a style/architecture/tool correction: ask to persist it to .clinerules.

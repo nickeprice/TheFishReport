@@ -1,5 +1,15 @@
 # Puyallup River Companion Agent Guide
 
+## Where to look first
+
+- `memory-bank/` — the six-file front page: project brief, product context, **current work
+  focus** (`activeContext.md`), system patterns, tech context, progress.
+- `docs/SYMBOLS.md` — file → public API index. Locate a function without opening files.
+- `docs/CONTRACT.md` / `_REGIONS` / `_TECHNIQUE` / `_CATCH` — data + API contracts.
+- `docs/ROADMAP.md` — forward plan (Update 4.0). `docs/ARCHIVE*.md` + `docs/CHANGELOG.md`
+  — history.
+
+
 ## Project shape
 
 - This is a mobile-first, installable PWA for Washington river conditions and fishing logs.
@@ -57,4 +67,6 @@ There is no committed test runner. The README describes the expected browser val
 
 ## Existing workflow
 
-`.clinerules` contains the repository’s plan/act workflow, including `TASK.md` requirements when the user asks for planning and the guard against repeated failing commands. Follow it alongside this guide.
+`.clinerules` contains the repository’s plan/act workflow — the working plan lives in
+`memory-bank/activeContext.md` — plus the guard against repeated failing commands. Follow it
+alongside this guide.

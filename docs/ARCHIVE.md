@@ -1,6 +1,6 @@
 # Archived plan — Phases A through H (completed)
 
-Full per-step detail for phases already shipped on main. Kept losslessly so git log + this file are the audit trail; the live TASK.md is lean and active-work-only.
+Full per-step detail for phases already shipped on main. Kept losslessly so git log + this file are the audit trail; `memory-bank/activeContext.md` stays lean and active-work-only.
 
 # Phase A — Correctness & Safety (P0)
 

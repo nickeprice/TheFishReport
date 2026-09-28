@@ -27,14 +27,11 @@ Verify against live output with `scripts/smoke.sh`.
 | `lunar_icon` | string\|null | emoji + phase name | moon pill + catch env |
 | `cloud_pct` | number\|null | daily mean cloud % | twilight UV/overcast |
 | `sunrise`/`sunset` | string | 12h display | twilight calc |
-| `civil_in`/`civil_out` | string | ±35 min | (legacy) |
 | `lines_in`/`lines_out` | string\|**null** | legal window (string) — **null** unless `legal_hours` is `daylight`/`24hr` | hero `legalHoursLabel()` |
 | `legal_hours` | string | `daylight`\|`24hr`\|`custom`\|`unknown` — per-waterbody FACT from the region registry (UPDATE 3.0 Phase 1.5) | `legalHoursLabel()` |
 | `moon_upper`/`moon_lower` | string\|"--" | tidal moon times | solunar |
 | `net_status` | string | "NETS IN…" / "River Open…" — Puyallup/White/Carbon only | status display |
 | `is_netting` | bool | `weekday ∈ NETTING_DAYS && site ∈ NETTING_SITES` | gates transit "BLOCKED" |
-| `angler_desc` | string | High (Weekend)/Low (Weekday) | not used in 2.1 |
-| `push_status` | string | macro-env string (pressure/rain/lunar) — **NOT a fish-moving label** | keep for back-compat only |
 | `transit_state` | string | "High Velocity Push"/"Steady Migration"/"Bay Staging…"/"Bank Hugging…"/"RIVER CORKED" | MOVEMENT INDEX (2.1b) |
 | `transit_time` | string\|"BLOCKED" | "15 to 17 hrs" etc (6.0 mi at modeled speed) | MOVEMENT INDEX (2.1b) |
 | `tide_chart` | string | "High: 4:15 AM (11.2 ft) | Low: …" | tide pills fallback |

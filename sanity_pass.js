@@ -270,6 +270,42 @@ function staticIntegrity() {
 
 
 }
+// Docs index — every module loaded by index.html must be listed in docs/SYMBOLS.md.
+// This is what keeps the index from silently going stale as files move or get renamed:
+// add a script to index.html without indexing it and the pass fails.
+function symbolsIndex() {
+  describe('Docs index');
+  try {
+    const scripts = localScriptPaths();
+    const idx = fs.readFileSync(path.join(ROOT, 'docs', 'SYMBOLS.md'), 'utf8');
+    const missing = scripts.map((p) => path.basename(p)).filter((b) => !idx.includes(b));
+    missing.length === 0
+      ? ok('docs/SYMBOLS.md covers every loaded module', `${scripts.length} scripts indexed`)
+      : fail('docs/SYMBOLS.md covers every loaded module', 'missing: ' + missing.join(', '));
+  } catch (e) {
+    fail('docs/SYMBOLS.md covers every loaded module', String(e.message).split('\n')[0]);
+  }
+  try {
+    const contracts = ['CONTRACT.md', 'CONTRACT_REGIONS.md', 'CONTRACT_TECHNIQUE.md', 'CONTRACT_CATCH.md'];
+    const absent = contracts.filter((c) => !fs.existsSync(path.join(ROOT, 'docs', c)));
+    absent.length === 0
+      ? ok('contract docs present', contracts.join(', '))
+      : fail('contract docs present', 'missing: ' + absent.join(', '));
+  } catch (e) {
+    fail('contract docs present', String(e.message).split('\n')[0]);
+  }
+  try {
+    const mb = ['projectbrief', 'productContext', 'activeContext', 'systemPatterns', 'techContext', 'progress'];
+    const absent = mb.filter((f) => !fs.existsSync(path.join(ROOT, 'memory-bank', f + '.md')));
+    absent.length === 0
+      ? ok('memory-bank/ complete', mb.join(', '))
+      : fail('memory-bank/ complete', 'missing: ' + absent.join(', '));
+  } catch (e) {
+    fail('memory-bank/ complete', String(e.message).split('\n')[0]);
+  }
+}
+
+
 
 // HTTP and API checks
 async function httpChecks() {
@@ -607,6 +643,7 @@ async function main() {
   }
 
   staticIntegrity();
+  symbolsIndex();
 
   // Resolve a free port, then start the server on it.
   if (!PORT) {

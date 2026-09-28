@@ -3,7 +3,7 @@
  * public: AuthState, applyAuthState(), initAuth(), startFishing(),
  *         stopFishing(), syncPendingCatches()
  * Classic script (global scope). Loaded BEFORE src/app.js.
- * NOTE: syncPendingCatches() moves to the IndexedDB outbox in UPDATE 3.0 Phase 3.
+ * syncPendingCatches() drains the durable IndexedDB outbox (see catch-log/outbox.js).
  */
 // --- AUTH (anonymous guest session) ---
 var AuthState = { signedIn: false, name: '', offline: false };

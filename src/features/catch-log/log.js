@@ -3,7 +3,6 @@
  * to Supabase. deriveRiverName() supplies the coarse (coordinate-free) river name.
  * public: deriveRiverName(), logData()
  * Classic script (global scope). Loaded BEFORE src/app.js.
- * NOTE: the localStorage buffer becomes the IndexedDB outbox in UPDATE 3.0 Phase 3.
  */
 // Derive a coarse river name from the active station (e.g. "Puyallup River",
 // "Carbon River", "Green River", "Nisqually River", "White River"). Falls back

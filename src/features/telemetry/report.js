@@ -3,7 +3,8 @@
  * silent refresh). Depends on the tide/hero/daynav renderers + water.js.
  * public: loadWaterReport(silent)
  * Classic script (global scope). Loaded BEFORE src/app.js.
- * NOTE: still ~285 lines (one large function) — split further in a follow-up.
+ * NOTE: 294 lines, one large function — over the <150-line target. Tracked as a
+ * follow-up split in memory-bank/activeContext.md.
  */
 // Loads (or silently refreshes) the water report. When `silent` is true this is
 // a background auto-refresh: it must NOT overwrite a Gear Sim CFS the angler

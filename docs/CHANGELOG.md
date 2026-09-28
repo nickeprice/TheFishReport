@@ -1,7 +1,37 @@
 # Internal Change Log
 
-Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
-context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
+Keep this LEAN by design: a fresh chat reads only the LAST entries to restore context.
+`memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
+Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
+
+## 2026-09-28 — Docs consolidation into memory-bank/ + token-efficiency pass
+Reorganized the docs into a cohesive `memory-bank/` front page (projectbrief, productContext,
+activeContext, systemPatterns, techContext, progress) and moved the long-form docs under
+`docs/`: `UPDATE_3.0.md` → `docs/ARCHIVE_UPDATE_3.0.md` (now correctly marked ARCHIVED —
+built; it still claimed "nothing built yet"), `UPDATE_4.0.md` → `docs/ROADMAP.md`,
+`CHANGELOG_INTERNAL.md` → `docs/CHANGELOG.md`; deleted the pure-pointer files
+`ARCHITECTURE.md` and `copilot-instructions.md` (AGENTS.md already covers both).
+`.clinerules` + `AGENTS.md` now point at `memory-bank/activeContext.md`, and the Memory rule
+is explicit: a fact lives in ONE file and points at the deep doc — never forked. New
+`docs/SYMBOLS.md` (file → public API index) and `docs/CONTRACT_CATCH.md` (payload → column
+map, every column verified against the live DB via information_schema). A new
+`sanity_pass.js` "Docs index" guard asserts every module in `index.html` is listed in
+SYMBOLS.md, that all four contracts exist, and that `memory-bank/` is complete — the index
+can no longer go stale silently.
+
+Also fixed five stale-comment traps found during the pass: `src/services/supabase.js` listed
+the dropped `corky_size` (and omitted 11 real columns) and claimed the calibration RPC
+"returns []"; `docs/CONTRACT.md` still tabled `push_status`/`angler_desc`/`civil_in`/
+`civil_out` as live fields; `scripts/smoke.sh` printed `push_status`; `auth.js` + `log.js`
+carried "moves in UPDATE 3.0 Phase 3" TODOs for work already shipped; `report.js` had drifted
+from "~285 lines" (now accurate at 294, and tracked in activeContext.md). Removed the stale
+`.kilo/worktrees/chill-column` worktree. `sw.js` VERSION → `v2.03.03`.
+Verified: sanity **90/90 GREEN** (was 87).
+- Key files: `memory-bank/*`, `docs/SYMBOLS.md`, `docs/CONTRACT_CATCH.md`, `.clinerules`,
+  `AGENTS.md`, `README.md`, `sanity_pass.js`, `sw.js`, `src/services/supabase.js`,
+  `src/features/{auth/auth.js,catch-log/log.js,catch-log/reconcile.js,telemetry/report.js}`,
+  `scripts/smoke.sh`, `docs/CONTRACT.md`.
+
 
 ## 2026-09-28 — Phase 3.3 COMPLETE ✅: outbox reconciliation on online / resume / focus
 New `src/features/catch-log/reconcile.js`. The outbox was durable, but it only reached

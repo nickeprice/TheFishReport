@@ -24,7 +24,7 @@ var _reconcileInFlight = false;
 var _reconcileLastAt = 0;
 
 async function reconcileCatches(force) {
-    if (_reconcileInFlight) return 0;                 // one flush at a time
+    if (_reconcileInFlight) return 0;
     if (typeof syncPendingCatches !== 'function') return 0;
     // Nothing to upload without a session: RLS requires user_id = auth.uid().
     if (typeof AuthState !== 'undefined' && !AuthState.signedIn) return 0;

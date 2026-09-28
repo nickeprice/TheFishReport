@@ -1,7 +1,7 @@
 # UPDATE 4.0 — Engagement & Native
 
 STATUS: **ROADMAP** (not started). Gated behind Update 3.0 completion.
-Companion file: [UPDATE_3.0.md](UPDATE_3.0.md) (scaling + trust core, built first).
+Companion file: [ARCHIVE_UPDATE_3.0.md](ARCHIVE_UPDATE_3.0.md) (scaling + trust core, built first).
 
 ## 1. Purpose
 

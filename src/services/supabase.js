@@ -1,14 +1,17 @@
 /**
  * Supabase service layer: anonymous auth, private catch writes, public reads.
  *
- * LIVE BACKEND (probed 2026-09-16 — code below matches this exactly)
- *   public.catches columns:
- *     id, user_id, created_at, angler_name, catch_time, flow, species,
- *     latitude, longitude, weight, leader_lb, leader_length, leader_material,
- *     hook_size, yarn, foam, corky_size, bead_material, bead_size,
- *     barometer, gauge_height
- *   public.public_catch_feed columns: id, name, time, flow (NO fish column)
- *   RPC get_global_calibration(p_flow int, p_species text) -> [] (exists, empty)
+ * public: isConfigured(), ensureSdk(), getClient(), rememberName(name), recallName(),
+ *         signInGuest(name), signOut(), getSession(), toCatchRow(payload),
+ *         insertCatch(payload), fetchMyCatches(), updateMyCatch(id, patch),
+ *         deleteMyCatch(id), fetchPublicFeed(limit), fetchGlobalCalibration(flow, species)
+ *
+ * Classic script (global scope). Loaded BEFORE src/app.js.
+ *
+ * The catch payload -> `public.catches` column map is the contract in
+ * `docs/CONTRACT_CATCH.md` — read that instead of re-deriving it here, and verify with the
+ * `information_schema` query it gives. Anonymous (guest) sign-ins are ENABLED on this
+ * project; `insertCatch` is idempotent on the client-generated `id`.
  */
 
 // --- CONFIG: paste the values from Supabase > Project Settings > API ---
@@ -297,7 +300,7 @@ async function fetchPublicFeed(limit) {
  * row whose `loc !== 'Fair'`, and nothing has ever populated that field (`hook_location`
  * was always NULL and was dropped on 2026-09-28). So every returned row is filtered out
  * and the strike zone keeps using its baseline. Fixing it CHANGES the Gear Sim's zone, so
- * it is a deliberate product decision, not a cleanup (see UPDATE_4.0 §3.2).
+ * it is a deliberate product decision, not a cleanup (see docs/ROADMAP.md §3.2).
  *
  * The mapper stays shape-tolerant so any future RPC shape still maps cleanly.
  */
@@ -311,7 +314,7 @@ async function fetchGlobalCalibration(flow, species) {
             return {
                 flow: (r.cfs !== undefined) ? r.cfs : r.flow,
                 spc: (r.species !== undefined) ? r.species : (r.spc || species),
-                loc: null,   // `hook_location` was dropped 2026-09-28 (always NULL); see UPDATE_4.0 §3.2
+                loc: null,   // `hook_location` was dropped 2026-09-28 (always NULL); see docs/ROADMAP.md §3.2
                 ldLen: (r.leader_len_ft !== undefined) ? r.leader_len_ft : r.leader_length,
                 ldMat: (r.leader_material !== undefined) ? r.leader_material : (r.ldMat || null),
                 ldLb: (r.leader_lb !== undefined) ? r.leader_lb : null,

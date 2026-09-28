@@ -1,7 +1,9 @@
 # UPDATE 3.0 — Scale the Core & Fix What's Urgent
 
-STATUS: **PLANNED** (blueprint) — nothing in this file is built yet.
-Companion file: [UPDATE_4.0.md](UPDATE_4.0.md) (engagement + native, future).
+STATUS: **ARCHIVED — built.** Phases 1 and 2 are fully shipped, and Phase 3 is complete
+except item 3.4. Kept as the audit trail of the scaling work: the live plan is
+`memory-bank/activeContext.md`, the forward scope is [ROADMAP.md](ROADMAP.md), and the
+per-step history is [CHANGELOG.md](CHANGELOG.md) + [ARCHIVE.md](ARCHIVE.md).
 
 ## 1. Scope
 
@@ -532,5 +534,5 @@ Update 3.0 deliberately leaves these seams so Update 4.0 never forces a redo:
 - IndexedDB outbox + per-waterbody snapshot → **Private Season** + offline brag board storage.
 - Legal-hours + regulation panel → **regulation-zone polygons** (Level B).
 
-See [UPDATE_4.0.md](UPDATE_4.0.md) for the future scope.
+See [ROADMAP.md](ROADMAP.md) for the future scope.
 

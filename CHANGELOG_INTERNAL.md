@@ -3,6 +3,26 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 1.2 COMPLETE ✅: region registry (data + contract)
+Authored `docs/CONTRACT_REGIONS.md` (schema + "what it replaces" table) and
+`src/data/regions/washington.js` — `window.REGIONS.WA`: **15 waterbodies** (Puyallup,
+Carbon, White, Green, Nisqually, Skagit, Snoqualmie, Skykomish, Snohomish,
+Stillaguamish, Cowlitz, Toutle, Lewis, Kalama, Cedar), the 15-gauge `discovery_pool`
+(was `nearbyStationIds`), `default_site`/`default_coords`/`default_tide_station`/
+`default_species`/`netting_days`, and per-waterbody `gauge`/`related_gauges`/`coords`/
+`legal_hours`/`netting_sites`/`stocks`/`capabilities`. **Data-only — no reader wired yet**
+(1.3 backend, 1.4/1.5 frontend). Honesty rules: `legal_hours` = `daylight` only for
+Puyallup (mirrors the current ±1h behaviour), the other 14 stay `unknown` (filled from
+WDFW rules in 1.5); `stocks` only on Puyallup; White River carries
+`capabilities.dam_clarity` replacing the `site in NETTING_SITES` gate. Wired into
+`index.html` (first local script) + `sw.js` SHELL_FILES, `VERSION` → `v2.01.01`.
+NEW GUARD: `sanity_pass.js` asserts the registry stays in lockstep with the legacy
+`water_report.py` constants (nearbyStationIds / NETTING_SITES / NETTING_DAYS / USGS_SITE /
+NOAA_STATION / LAT,LON / STOCK_BASELINES) + the `index.html` presets and `#species`
+options → **72/72 GREEN**. Also recorded: Step 4 (report.js/sim.js internal splits) is
+folded into Phases 1.3/1.4 rather than done standalone.
+
+
 ## 2026-09-28 — TASK.md trimmed to ACTIVE-only (460 → 33 lines)
 UPDATE 3.0 Phase 4.4 (doc hygiene) pulled forward. Moved the completed phases (2.1–2.4.1,
 460 lines) out of `TASK.md` into `docs/ARCHIVE.md` (now 714 lines) with an "already

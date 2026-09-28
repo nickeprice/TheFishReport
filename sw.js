@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.01.00';
+const VERSION = 'v2.01.01';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -66,6 +66,7 @@ const SHELL_FILES = [
     '/src/services/water.js',
     '/src/utils/regulations.js',
     '/src/data/riverRegulations.js',
+    '/src/data/regions/washington.js',
     '/src/data/wdfw_rules.json',
     '/src/data/wdfw_forecasts.json',
     '/icons/icon-192.png',

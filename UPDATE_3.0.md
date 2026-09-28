@@ -260,10 +260,20 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
     `node sanity_pass.js` → **70/70 GREEN**. ✅
   - Follow-up (not blocking): `telemetry/report.js` (294) and `gear-sim/sim.js` (162) are
     single large functions — split internally later.
-- [ ] **1.2 Region registry — `src/data/regions/washington.js` + schema.**
-  - Files: `src/data/regions/washington.js`, `docs/CONTRACT_REGIONS.md` (§4.2).
-  - Potential bug: a waterbody missing from the registry silently falls back to Puyallup.
-  - Verify: every constant in §5.2 is present in the registry and matches its current value.
+- [x] **1.2 Region registry — `src/data/regions/washington.js` + schema.** ✅ COMPLETE
+  - Result: `docs/CONTRACT_REGIONS.md` (schema + "what it replaces" table) and
+    `src/data/regions/washington.js` — `window.REGIONS.WA` with 15 waterbodies, the
+    15-gauge `discovery_pool`, `default_site`/`default_coords`/`default_tide_station`/
+    `default_species`/`netting_days`, and per-waterbody `gauge`/`related_gauges`/
+    `coords`/`legal_hours`/`netting_sites`/`stocks`/`capabilities`.
+  - Loaded in `index.html` (first local script) + `sw.js` SHELL_FILES; `VERSION` → `v2.01.01`.
+  - Honesty: `legal_hours` is `"daylight"` only for Puyallup (mirrors current ±1h
+    behaviour); the other 14 are `"unknown"`. `stocks` only on Puyallup.
+  - Verify: a new `sanity_pass.js` assertion (`region registry matches legacy WA constants`,
+    72/72 green) cross-checks the registry against `api/water_report.py`
+    (`nearbyStationIds`, `NETTING_SITES`, `NETTING_DAYS`, `USGS_SITE`, `NOAA_STATION`,
+    `LAT/LON`, `STOCK_BASELINES`) and the `index.html` presets/`#species` options.
+  - Still data-only: nothing reads the registry yet (1.3 backend, 1.4/1.5 frontend).
 - [ ] **1.3 Make `api/water_report.py` region-aware.**
   - Files: `api/water_report.py` (constants at lines 12–24, 286, 677).
   - Potential bug: reading config per request without caching adds latency; cache it.

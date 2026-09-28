@@ -200,6 +200,38 @@ function staticIntegrity() {
   (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)
     : fail('both gear forms use 6 resting rows each', `${gearRows} rows found`);
+  // Region registry (UPDATE 3.0 Phase 1.2). window.REGIONS must stay in lockstep with
+  // the legacy constants in api/water_report.py while both coexist during the 1.2->1.3
+  // transition, so a silent divergence is caught here rather than in the river cards.
+  try {
+    const py = fs.readFileSync(path.join(ROOT, 'api', 'water_report.py'), 'utf8');
+    const regSrc = fs.readFileSync(path.join(ROOT, 'src', 'data', 'regions', 'washington.js'), 'utf8');
+    const stub = {};
+    new Function('window', regSrc)(stub);
+    const WA = stub.REGIONS && stub.REGIONS.WA;
+    const poolBlock = (py.match(/nearbyStationIds = \[([\s\S]*?)\n\]/) || [, ''])[1];
+    const poolIds = [...poolBlock.matchAll(/"(\d{8})"/g)].map((m) => m[1]);
+    const netBlock = (py.match(/NETTING_SITES = \{([^}]*)\}/) || [, ''])[1];
+    const netSites = [...netBlock.matchAll(/"(\d{8})"/g)].map((m) => m[1]).sort();
+    const okReg = !!WA &&
+      WA.default_site === '12101500' &&
+      WA.default_tide_station === '9446484' &&
+      WA.default_coords.lat === 47.1950 && WA.default_coords.lon === -122.3020 &&
+      JSON.stringify(WA.netting_days) === '[6,0,1]' &&
+      JSON.stringify(WA.discovery_pool.map((s) => s.site_id)) === JSON.stringify(poolIds) &&
+      JSON.stringify(WA.waterbodies.flatMap((w) => w.netting_sites || []).sort()) === JSON.stringify(netSites) &&
+      WA.waterbodies.length === 15 &&
+      WA.waterbodies.every((w) => w.gauge && ['daylight', '24hr', 'custom', 'unknown'].includes(w.legal_hours)) &&
+      WA.waterbodies.filter((w) => w.legal_hours === 'daylight').map((w) => w.id).join() === 'puyallup' &&
+      WA.waterbodies.filter((w) => w.stocks).map((w) => w.id).join() === 'puyallup';
+    okReg
+      ? ok('region registry matches legacy WA constants', `${WA.waterbodies.length} waterbodies, pool=${poolIds.length}`)
+      : fail('region registry matches legacy WA constants', 'registry and water_report.py are out of sync');
+  } catch (e) {
+    fail('region registry matches legacy WA constants', String(e.message).split('\n')[0]);
+  }
+
+
 }
 
 // HTTP and API checks

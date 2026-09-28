@@ -3,6 +3,16 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — TASK.md trimmed to ACTIVE-only (460 → 33 lines)
+UPDATE 3.0 Phase 4.4 (doc hygiene) pulled forward. Moved the completed phases (2.1–2.4.1,
+460 lines) out of `TASK.md` into `docs/ARCHIVE.md` (now 714 lines) with an "already
+archived" guard so a re-run is a no-op; content preserved verbatim (verified by grep for
+`Phase 2.4.1 — Timezone fix` and `Commit 2.1f`). `TASK.md` now points at **UPDATE 3.0
+Phase 1** as ACTIVE (1.1 ✅) and lists the non-blocking follow-ups. NOTE: a shell heredoc
+mangled the first write attempt and exited 1 **without executing** — `TASK.md` was left
+intact; redone via editor temp-file + `cp`.
+
+
 ## 2026-09-28 — Phase 1.1 COMPLETE ✅: app.js 2,460 → 24 lines (bootstrap only)
 Finished the monolith split (batches 3–6). New: `src/features/catch-log/`
 `board.js`(scope toggle + list) `mycatches.js`(private log) `log.js`(logData +

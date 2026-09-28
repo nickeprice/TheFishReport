@@ -1,9 +1,10 @@
-# ACTIVE — UPDATE 3.0 Phase 1: de-hardcode & modularize
+# ACTIVE — UPDATE 3.0 Phase 3: offline outbox
 
 Blueprint: [UPDATE_3.0.md](UPDATE_3.0.md) (executable) · [UPDATE_4.0.md](UPDATE_4.0.md) (roadmap).
 Completed history (Phases A–H and 2.1–2.4.1) lives in [docs/ARCHIVE.md](docs/ARCHIVE.md).
 
-STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 region registry**.
+STATUS: **Phases 1 + 2 COMPLETE**; Phase 3.2 (idempotency) done. Next: 3.1 IndexedDB outbox.
+`sanity_pass.js` **82/82 GREEN** · `sw.js` `v2.02.01`.
 
 ## Phase 1 items (detail + file paths in UPDATE_3.0.md §13)
 
@@ -22,6 +23,13 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 - [x] **2.3** NOAA CO-OPS dynamic tide pairing — nearest-station walk; Lewis River correctly shows no tides
 - [x] **2.4** Proxy hardening — coord bounds, 429 rate limit, 60s report cache
 - [x] **2.5** Interactive map — Leaflet gauge picker + legal-hours panel (tap-test outstanding)
+
+## Phase 3 — Offline outbox
+
+- [x] **3.2** Idempotency — client `clientId` → `ON CONFLICT (id) DO NOTHING` (no migration needed)
+- [ ] **3.1** IndexedDB outbox + per-waterbody telemetry snapshot (replaces `localStorage`)
+- [ ] **3.3** In-app reconciliation on `online` / `focus` / `resume`
+- [ ] **3.4** Optimistic UI + pending-sync indicator
 
 ## Deferred / follow-ups
 

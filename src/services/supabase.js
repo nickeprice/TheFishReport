@@ -148,6 +148,8 @@ function toCatchRow(payload) {
         }
     }
     return {
+        // The client-generated id makes the write idempotent (see insertCatch).
+        id: (payload.clientId !== undefined && payload.clientId !== null) ? payload.clientId : undefined,
         user_id: (payload.user_id !== undefined && payload.user_id !== null) ? payload.user_id : undefined,
         angler_name: payload.name,
         catch_time: t.toISOString(),
@@ -184,15 +186,27 @@ function toCatchRow(payload) {
     };
 }
 
-/** Private write: the full tackle profile and GPS go up, nothing comes back. */
+/** Private write: the full tackle profile and GPS go up, nothing comes back.
+ *
+ * IDEMPOTENT (UPDATE 3.0 Phase 3.2). The row carries the client-generated id
+ * (`payload.clientId` -> `id`) and we upsert with `ignoreDuplicates`, so a retry after
+ * a response lost in a dead zone conflicts on the primary key and is DISCARDED rather
+ * than inserting a second copy of the catch. No DB change was needed: `public.catches`
+ * already has `PRIMARY KEY (id)`.
+ */
 async function insertCatch(payload) {
     var client = getClient();
     if (!client) return { ok: false, offline: true, error: 'Supabase not configured or offline' };
     try {
-        var res = await client.from('catches').insert(toCatchRow(payload)).select('id');
+        var res = await client
+            .from('catches')
+            .upsert(toCatchRow(payload), { onConflict: 'id', ignoreDuplicates: true })
+            .select('id');
         if (res.error) return { ok: false, error: res.error.message };
         var row = (res.data && res.data.length) ? res.data[0] : null;
-        return { ok: true, id: row ? row.id : null };
+        // No row returned simply means it was ALREADY stored — the intended outcome of a
+        // retry, so it counts as success rather than as a failure to retry forever.
+        return { ok: true, id: row ? row.id : (payload.clientId || null), deduped: !row };
     } catch (e) {
         return { ok: false, error: e.message };
     }

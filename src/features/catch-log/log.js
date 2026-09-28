@@ -54,6 +54,9 @@ async function logData() {
     var flowValue = (simFlow != null) ? simFlow : getCurrentFlow();
     var hookValue = (currentStats && currentStats.hook != null) ? currentStats.hook : (parseFloat(getStr('hook')) || 2);
     var payload = {
+        // Client-generated id -> becomes the row's primary key, so a retry that follows a
+        // lost response is deduped instead of logging the fish twice (Phase 3.2).
+        clientId: newUuid(),
         name: AuthState.name || 'Anonymous',
         time: getStr('log-datetime'),
         gps: (window.userGPSCoords && window.userGPSCoords.lat != null && window.userGPSCoords.lon != null)

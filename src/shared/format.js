@@ -1,9 +1,23 @@
 /**
  * src/shared/format.js - feed-row normalisation, time formatting + text escaping.
  * public: normalizeFeedRow(row), formatCatchTime(value),
- *         escapeHtml(value), escapeJsString(value)
+ *         escapeHtml(value), escapeJsString(value), newUuid()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
+// Client-generated id for a logged catch. Sending it makes the write IDEMPOTENT: a
+// retry after a lost response conflicts on the primary key and is ignored rather than
+// inserting a second copy of the same fish.
+function newUuid() {
+    try {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    } catch (e) {}
+    // RFC 4122 v4 fallback for older WebViews without crypto.randomUUID.
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (Math.random() * 16) | 0;
+        var v = c === 'x' ? r : ((r & 0x3) | 0x8);
+        return v.toString(16);
+    });
+}
 // Third-party text (USGS station names, WDFW strings) must never be interpolated into
 // an HTML string raw — AGENTS.md forbids unsanitised HTML interpolation.
 function escapeHtml(value) {

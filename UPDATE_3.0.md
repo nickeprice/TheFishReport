@@ -430,12 +430,25 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
   - Files: new `src/features/catch-log/outbox.js`, `src/shared/idb.js`.
   - Potential bug: must migrate any existing `localStorage` `catch_db` rows on first run.
   - Verify: logging offline persists across reload; snapshot replays per waterbody.
-- [ ] **3.2 Idempotency migration (`ON CONFLICT (id) DO NOTHING`).**
-  - Files: `supabase/migrations/<ts>_catch_idempotency.sql`, `src/services/supabase.js`
-    (`toCatchRow`, `insertCatch`).
-  - Potential bug: changing the `id` default or unique constraint must not break RLS.
-  - Verify: `npx supabase db push --yes < /dev/null`, then read-only live query confirms
-    the constraint exists; a replayed insert does not duplicate.
+- [x] **3.2 Idempotency (`ON CONFLICT (id) DO NOTHING`).** ✅ COMPLETE — **no migration needed**
+  - Finding: **the fix was purely client-side.** A read-only live query confirmed
+    `public.catches` already has `catches_pkey PRIMARY KEY (id)`, so the conflict target
+    needed no schema change. The bug was only that the client never sent an `id`, so the
+    server minted a fresh one on every retry.
+  - Result: `src/shared/format.js` gains `newUuid()` (with a v4 fallback for older
+    WebViews); `logData()` stamps `clientId` when it buffers a catch; `toCatchRow()` maps
+    `clientId` → `id`; `insertCatch()` now uses
+    `upsert(row, { onConflict: 'id', ignoreDuplicates: true })`. A retry after a response
+    lost in a dead zone conflicts on the PK and is discarded instead of double-logging.
+  - Important: a **deduped** write (0 rows back) is treated as SUCCESS, not failure —
+    otherwise the outbox would retry forever.
+  - Verify: live read-only query confirmed the PK; a 6-assertion functional test proves
+    the row carries the id and the call is an upsert with `ignoreDuplicates` (a plain
+    `insert()` throws in the harness); two new `sanity_pass.js` guards → **82/82 GREEN**.
+  - Caveat: an end-to-end double-insert against the live DB was **not possible** —
+    anonymous sign-ins are disabled on the project, so no session can be minted here to
+    satisfy the RLS `with check (user_id = auth.uid())`. The path is verified by
+    construction, not by a live replay.
 - [ ] **3.3 In-app reconciliation.**
   - Files: `src/features/catch-log/outbox.js`, `src/app.js` (online/focus/resume hooks).
   - Potential bug: concurrent flushes can double-send — guard with a single in-flight lock.

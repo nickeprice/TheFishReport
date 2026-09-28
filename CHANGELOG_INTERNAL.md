@@ -3,6 +3,23 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 3.2 COMPLETE ✅: idempotent catch writes (no migration needed)
+The dead-zone double-log bug is fixed CLIENT-SIDE. A read-only LIVE query confirmed
+`public.catches` already has `catches_pkey PRIMARY KEY (id)`, so the conflict target needed
+no schema change — the bug was simply that the client never sent an `id`, letting the server
+mint a fresh one on every retry. Added `newUuid()` to `src/shared/format.js` (with an RFC
+4122 v4 fallback for older WebViews); `logData()` stamps `clientId` at buffer time;
+`toCatchRow()` maps `clientId` → `id`; `insertCatch()` now calls
+`upsert(row, { onConflict: 'id', ignoreDuplicates: true })`. CRUCIAL DETAIL: a deduped write
+(0 rows returned) is treated as SUCCESS — otherwise the outbox would retry a stored catch
+forever. Verified: 6-assertion functional test (the row carries the id; the call is an
+upsert with ignoreDuplicates; a plain `insert()` throws in the harness) + two new
+sanity_pass guards → **82/82 GREEN**. CAVEAT: an end-to-end double-insert against the live
+DB was not possible — **anonymous sign-ins are disabled** on the project, so no session can
+be minted to satisfy RLS `with check (user_id = auth.uid())`; verified by construction.
+Phase 3 continues: 3.1 IndexedDB outbox, 3.3 reconciliation, 3.4 optimistic UI.
+
+
 ## 2026-09-28 — Phase 2.3 COMPLETE ✅: dynamic NOAA tide-station pairing
 Each waterbody now pairs with its NEAREST CO-OPS tide station instead of one shared
 station. `tide_station_candidates_for_site()` ranks stations within 40 mi and the handler

@@ -196,6 +196,18 @@ function staticIntegrity() {
     ? ok('run cards carry no peak day-counter', 'peak date label only')
     : fail('run cards carry no peak day-counter', 'peakLine / .run-footer remnants');
 
+  // Phase 3.2: the catch write MUST be idempotent, or a retry after a response lost in
+  // a dead zone inserts a second copy of the same fish.
+  const supabaseSrc = fs.readFileSync(path.join(ROOT, 'src', 'services', 'supabase.js'), 'utf8');
+  (/onConflict:\s*'id'/.test(supabaseSrc) && /ignoreDuplicates:\s*true/.test(supabaseSrc) &&
+   /id:\s*\(payload\.clientId/.test(supabaseSrc))
+    ? ok('catch writes are idempotent', 'clientId -> ON CONFLICT (id) DO NOTHING')
+    : fail('catch writes are idempotent', 'missing clientId / ignoreDuplicates');
+  const logSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'log.js'), 'utf8');
+  /clientId:\s*newUuid\(\)/.test(logSrc)
+    ? ok('logged catches carry a client-generated id', 'newUuid() at buffer time')
+    : fail('logged catches carry a client-generated id', 'clientId missing from the buffered payload');
+
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
   (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)

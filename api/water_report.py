@@ -2,7 +2,7 @@ import json
 import math
 import os
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from zoneinfo import ZoneInfo
@@ -159,7 +159,140 @@ def compass_from_deg(deg):
     idx = int(round((((float(deg) % 360) + 360) % 360) / 22.5)) % 16
     return dirs[idx]
 
+# ==================================================================================
+# USGS WDFN OGC API (UPDATE 3.0 Phase 2.1)
+# waterservices.usgs.gov (nwis/iv) is DECOMMISSIONED in Q1 2027. The modernized
+# replacement is the OGC API at api.waterdata.usgs.gov, which:
+#   * needs NO api key (a key only raises the rate limit -> optional),
+#   * takes a "USGS-"-prefixed location id,
+#   * returns GeoJSON features (properties.value / .time) not NWIS timeSeries.
+# The legacy reader is kept as fetch_usgs_telemetry_legacy() and is used only when
+# the modern endpoint is unreachable/unparseable, so the app cannot regress.
+# ==================================================================================
+WDFN_BASE = "https://api.waterdata.usgs.gov/ogcapi/v1/collections"
+WDFN_PARAMS = "00060,00065,00010,63680"   # discharge, gage height, water temp, turbidity
+WDFN_TIMEOUT = 8
+
+
+def _wdfn_get(url, timeout=WDFN_TIMEOUT):
+    """GET + JSON-decode a WDFN OGC API url. Raises on any failure."""
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req, timeout=timeout, context=SSL_CONTEXT) as res:
+        return json.loads(res.read().decode('utf-8'))
+
+
+def format_site_name(site_raw):
+    """Title-case a USGS station name exactly as the legacy nwis/iv parser did."""
+    if not site_raw:
+        return None
+    if site_raw.isupper():
+        parts = site_raw.title().rsplit(', ', 1)
+        formatted = f"{parts[0]}, {parts[1].upper()}" if (len(parts) == 2 and len(parts[1]) == 2) else site_raw.title()
+        return formatted.replace(" At ", " at ").replace(" Near ", " near ")
+    return site_raw
+
+
+def fetch_wdfn_site_name(site_id):
+    """Station name from the monitoring-locations collection (None when unavailable)."""
+    try:
+        d = _wdfn_get(f"{WDFN_BASE}/monitoring-locations/items?id=USGS-{site_id}&limit=1")
+        feats = d.get("features") or []
+        if feats:
+            return format_site_name(feats[0].get("properties", {}).get("monitoring_location_name"))
+    except Exception:
+        pass
+    return None
+
+def fetch_usgs_telemetry_wdfn(site_id):
+    """USGS WDFN OGC API telemetry — same dict shape as the legacy reader.
+
+    Returns None (so the caller falls back to legacy nwis/iv) only when the endpoint
+    is unreachable or the response shape is unrecognizable. A valid-but-empty
+    FeatureCollection is NOT a fallback: it honestly means "no fresh readings here".
+    """
+    default_name = "Puyallup River at Puyallup, WA" if site_id == USGS_SITE else f"USGS Station {site_id}"
+    out = {"site_name": default_name, "cfs": None, "gage": None,
+           "water_temp_f": None, "turbidity_fnu": None,
+           "is_active": False, "updated_time": "Updated: Telemetry Offline", "api_offline": True}
+    try:
+        d = _wdfn_get(f"{WDFN_BASE}/latest-continuous/items"
+                      f"?monitoring_location_id=USGS-{site_id}"
+                      f"&parameter_code={WDFN_PARAMS}&limit=50")
+    except Exception:
+        return None
+    feats = d.get("features")
+    if feats is None:
+        return None                       # shape changed -> let the legacy reader try
+
+    name = fetch_wdfn_site_name(site_id)
+    if name:
+        out["site_name"] = name
+    # Live response parsed — clear the offline fallback so the frontend can tell
+    # "USGS unreachable" apart from "station seasonal".
+    out["api_offline"] = False
+
+    now_aware = datetime.now(timezone.utc)
+    latest_dt = None
+    latest_for = {}
+    for f in feats:
+        p = f.get("properties") or {}
+        code = str(p.get("parameter_code") or "")
+        if code not in ("00060", "00065", "00010", "63680"):
+            continue
+        try:
+            val = float(p.get("value"))
+        except (TypeError, ValueError):
+            continue
+        if val < -900000:                 # NWIS missing/error sentinel
+            continue
+        try:
+            reading_dt = datetime.fromisoformat(str(p.get("time")))
+        except Exception:
+            continue
+        if reading_dt.tzinfo is None:
+            reading_dt = reading_dt.replace(tzinfo=timezone.utc)
+        if (now_aware - reading_dt).total_seconds() > 24 * 3600:
+            continue                      # stale (>24h) -> never reported as current
+        if code not in latest_for or reading_dt > latest_for[code][0]:
+            latest_for[code] = (reading_dt, val)
+        if latest_dt is None or reading_dt > latest_dt:
+            latest_dt = reading_dt
+
+    if "00060" in latest_for:
+        out["cfs"] = latest_for["00060"][1]
+    if "00065" in latest_for:
+        out["gage"] = latest_for["00065"][1]
+    if "00010" in latest_for:
+        # Own-gauge water temperature: Celsius -> Fahrenheit, exactly once.
+        out["water_temp_f"] = round((latest_for["00010"][1] * 9.0 / 5.0) + 32.0, 1)
+    if "63680" in latest_for:
+        out["turbidity_fnu"] = round(latest_for["63680"][1], 1)
+
+    if latest_dt and ("00060" in latest_for or "00065" in latest_for):
+        out["is_active"] = True
+        # WDFN times are UTC; display them in Pacific like the rest of the report.
+        pacific = latest_dt.astimezone(ZoneInfo('America/Los_Angeles'))
+        today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
+        day_prefix = "Today at " if pacific.date() == today else pacific.strftime("%A at ")
+        out["updated_time"] = f"Updated: {day_prefix}{pacific.strftime('%-I:%M %p')} {pacific.strftime('%Z')}"
+    return out
+
 def fetch_usgs_telemetry(site_id=USGS_SITE):
+    """Prefer the modernized WDFN OGC API; fall back to legacy nwis/iv.
+
+    The fallback is TEMPORARY by design: waterservices.usgs.gov goes away in Q1 2027,
+    so by then the modern branch must be the only one still exercised.
+    """
+    if not site_id or site_id == "12096500":
+        site_id = USGS_SITE
+    modern = fetch_usgs_telemetry_wdfn(site_id)
+    if modern is not None:
+        return modern
+    return fetch_usgs_telemetry_legacy(site_id)
+
+
+def fetch_usgs_telemetry_legacy(site_id=USGS_SITE):
+    # LEGACY fallback: waterservices.usgs.gov/nwis/iv — decommissioned in Q1 2027.
     # Puyallup River defaults strictly to USGS 12101500 (Puyallup River at Puyallup)
     if not site_id or site_id == "12096500":
         site_id = USGS_SITE
@@ -361,53 +494,113 @@ nearbyStationIds = [s["site_id"] for s in _WA.get("discovery_pool", [])] or [USG
 def fetch_nearby_stations(lat, lon):
     """Server-side USGS lookup for the 'Use My GPS' flow.
 
-    The browser used to call waterservices.usgs.gov directly (bbox query), which is
-    flaky on mobile and heavy server-side. This queries our curated list of WA river
-    gauges via the reliable multi-site endpoint, then returns them sorted by distance
-    from the request point.
+    Prefers the modernized WDFN OGC API: ONE multi-location query returns each
+    gauge's value AND its coordinates, so no hardcoded coordinate map is needed.
+    Falls back to the legacy nwis/iv multi-site endpoint while it still exists.
 
     Returns a list of { id, name, lat, lon, distance_mi, cfs, gage } with only
-    stations that have a fresh (<=24h) reading.
+    stations that have a fresh (<=24h) reading, sorted by distance.
     """
     try:
         lat_f = float(lat)
         lon_f = float(lon)
     except (TypeError, ValueError):
         return []
+    stations = _nearby_from_wdfn(lat_f, lon_f)
+    if stations is None:
+        stations = _nearby_from_legacy(lat_f, lon_f)
+    return sorted(stations.values(), key=lambda s: s['distance_mi'])
+
+
+def _haversine_mi(lat1, lon1, lat2, lon2):
+    import math
+    R = 3958.8
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dlat = p2 - p1
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlon / 2) ** 2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _station_add(stations, code, name, s_lat, s_lon, lat_f, lon_f, param, val):
+    if code not in stations:
+        stations[code] = {'id': code, 'name': name, 'lat': s_lat, 'lon': s_lon,
+                          'distance_mi': round(_haversine_mi(lat_f, lon_f, s_lat, s_lon), 1)}
+    if param == '00060':
+        stations[code]['cfs'] = int(round(val))
+    elif param == '00065':
+        stations[code]['gage'] = round(val, 2)
+
+
+# Display names for the curated discovery gauges (from the region registry, so the
+# list reads in title case like the rest of the app instead of NWIS ALL CAPS).
+_POOL_NAMES = {s["site_id"]: s["name"] for s in _WA.get("discovery_pool", []) if s.get("name")}
+
+
+def _nearby_from_wdfn(lat_f, lon_f):
+    """Latest WDFN values + coordinates for the discovery pool.
+
+    Returns None (so the caller falls back to legacy) when the API is unusable;
+    an empty dict is a valid "nothing fresh right now" answer.
+    """
+    site_ids = ",".join("USGS-" + s for s in nearbyStationIds)
+    try:
+        d = _wdfn_get(f"{WDFN_BASE}/latest-continuous/items"
+                      f"?monitoring_location_id={site_ids}"
+                      f"&parameter_code=00060,00065&limit=200", timeout=10)
+    except Exception:
+        return None
+    feats = d.get("features")
+    if feats is None:
+        return None
+    now_aware = datetime.now(timezone.utc)
+    stations = {}
+    for f in feats:
+        try:
+            p = f.get("properties") or {}
+            code = str(p.get("monitoring_location_id") or "").replace("USGS-", "", 1)
+            param = str(p.get("parameter_code") or "")
+            if not code or param not in ('00060', '00065'):
+                continue
+            val = float(p.get("value"))
+            if val < -900000:
+                continue
+            reading_dt = datetime.fromisoformat(str(p.get("time")))
+            if reading_dt.tzinfo is None:
+                reading_dt = reading_dt.replace(tzinfo=timezone.utc)
+            if (now_aware - reading_dt).total_seconds() > 24 * 3600:
+                continue
+            coords = (f.get("geometry") or {}).get("coordinates") or []
+            if len(coords) < 2:
+                continue
+            s_lon, s_lat = float(coords[0]), float(coords[1])
+            _station_add(stations, code, _POOL_NAMES.get(code, code), s_lat, s_lon, lat_f, lon_f, param, val)
+        except Exception:
+            continue
+    return stations
+
+
+def _nearby_from_legacy(lat_f, lon_f):
+    """LEGACY nwis/iv multi-site lookup — decommissioned in Q1 2027."""
     url = ("https://waterservices.usgs.gov/nwis/iv/"
            f"?format=json&sites={','.join(nearbyStationIds)}&parameterCd=00060,00065&siteStatus=all")
-    try:
-        from datetime import timezone
-        now_aware = datetime.now(timezone.utc)
-    except Exception:
-        now_aware = None
+    now_aware = datetime.now(timezone.utc)
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10, context=SSL_CONTEXT) as res:
             data = json.loads(res.read().decode('utf-8'))
     except Exception:
-        return []
-    # Known coordinates for gauges that don't carry geoLocation in the sites response.
+        return {}
     KNOWN_COORDS = {
-        "12101500": (47.195, -122.302),
-        "12093500": (47.1005, -122.2133),
-        "12094000": (47.0177, -122.0197),
-        "12113000": (47.3115, -122.2265),
-        "12089500": (46.9365, -122.5483),
-        "12200500": (48.4086, -122.3049),
-        "12150800": (47.5396, -121.8252),
-        "12134500": (47.8031, -121.6600),
-        "12155300": (47.8595, -122.0810),
-        "12167000": (48.1804, -122.1268),
-        "14242500": (46.2800, -122.9150),
-        "14240500": (46.3370, -122.7500),
-        "14236000": (45.8570, -122.6380),
-        "14241000": (46.0780, -122.7580),
+        "12101500": (47.195, -122.302), "12093500": (47.1005, -122.2133),
+        "12094000": (47.0177, -122.0197), "12113000": (47.3115, -122.2265),
+        "12089500": (46.9365, -122.5483), "12200500": (48.4086, -122.3049),
+        "12150800": (47.5396, -121.8252), "12134500": (47.8031, -121.6600),
+        "12155300": (47.8595, -122.0810), "12167000": (48.1804, -122.1268),
+        "14242500": (46.2800, -122.9150), "14240500": (46.3370, -122.7500),
+        "14236000": (45.8570, -122.6380), "14241000": (46.0780, -122.7580),
         "12115000": (47.4730, -122.2080),
     }
-    import math
-    R = 3958.8
-    lat1 = math.radians(lat_f)
     stations = {}
     for ts in (data.get('value', {}).get('timeSeries', []) or []):
         try:
@@ -424,36 +617,21 @@ def fetch_nearby_stations(lat, lon):
             val = float(latest['value'])
             if val < -900000:
                 continue
-            if now_aware is not None:
-                try:
-                    reading_dt = datetime.fromisoformat(latest['dateTime'])
-                    if (now_aware - reading_dt).total_seconds() > 24 * 3600:
-                        continue
-                except Exception:
-                    pass
-            # Coordinates: prefer geoLocation if present, else the known map.
+            try:
+                reading_dt = datetime.fromisoformat(latest['dateTime'])
+                if (now_aware - reading_dt).total_seconds() > 24 * 3600:
+                    continue
+            except Exception:
+                pass
             try:
                 geog = info['geoLocation']['geogLocation']
-                s_lat = float(geog['latitude'])
-                s_lon = float(geog['longitude'])
+                s_lat, s_lon = float(geog['latitude']), float(geog['longitude'])
             except Exception:
                 s_lat, s_lon = KNOWN_COORDS.get(code, (lat_f, lon_f))
-            if code not in stations:
-                lat2 = math.radians(s_lat)
-                dlat = lat2 - lat1
-                dlon = math.radians(s_lon - lon_f)
-                a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-                dist = R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-                stations[code] = {'id': code, 'name': name, 'lat': s_lat, 'lon': s_lon,
-                                  'distance_mi': round(dist, 1)}
-            if param == '00060':
-                stations[code]['cfs'] = int(round(val))
-            elif param == '00065':
-                stations[code]['gage'] = round(val, 2)
+            _station_add(stations, code, name, s_lat, s_lon, lat_f, lon_f, param, val)
         except Exception:
             continue
-    out = sorted(stations.values(), key=lambda s: s['distance_mi'])
-    return out
+    return stations
 
 def fetch_noaa_tides_bulletproof(start_date, days):
     fetch_start = start_date - timedelta(days=2)

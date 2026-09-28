@@ -14,11 +14,19 @@ STATUS: **1.1 complete** (app.js 2,460 → 24 lines, sanity 70/70). Next: **1.2 
 - [ ] **1.4b** Technique/Species picker in both tabs + `GEAR_STYLES`/`GEAR_SPECIES` (deferred)
 - [x] **1.5** Legal hours from `waterbody.legal_hours` (daylight/24hr/custom/unknown)
 
-## Known follow-ups (non-blocking)
+## Phase 2 — USGS WDFN migration (Q1 2027 deadline)
 
-- [ ] `src/features/telemetry/report.js` (294) and `src/features/gear-sim/sim.js` (162)
-      are single large functions — split internally later.
-- [ ] Propose `.clinerules` / `AGENTS.md` refinements (UPDATE_3.0.md §4.2) — show before applying.
+- [~] **2.1** WDFN migration — *partial*: `fetch_usgs_telemetry` + `fetch_nearby_stations`
+      done (exact parity vs legacy, sanity 78/78). REMAINING: `fetch_dam_clarity` (dv),
+      `fetchCFSMomentum` (browser, PT4H), `station/search.js` (2 calls incl. `stateCd=wa`)
+- [ ] **2.2** Two-step site discovery + optional server-side API key
+- [ ] **2.3** Proxy hardening (User-Agent, caching, rate-limit, SSRF validation)
+- [ ] **2.4** Interactive map — gauge picker + Level-A regulation panel + flow colour
+
+## Deferred / follow-ups
+
+- [ ] **1.4b** Technique/Species picker in both tabs + `GEAR_STYLES`/`GEAR_SPECIES`
+- [ ] Propose `.clinerules` / `AGENTS.md` refinements (UPDATE_3.0.md §4.2) — show before applying
 
 ## Verification (whole phase)
 

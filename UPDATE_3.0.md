@@ -328,12 +328,25 @@ step, per `.clinerules`. Mark `- [x]` only after the verification step passes.
 
 ### Phase 2 — USGS migration + radial telemetry
 
-- [ ] **2.1 Migrate to USGS WDFN OGC API.**
-  - Files: `api/water_report.py` (`fetch_usgs_telemetry`, `fetch_nearby_stations`),
-    `src/services/water.js` (`fetchCFSMomentum`, line 14).
-  - Potential bug: response shape differs from NWIS; parser must handle absent values
-    as `null` (never fabricate).
-  - Verify: live CFS/gage match the legacy endpoint for `12101500` during overlap.
+- [~] **2.1 Migrate to USGS WDFN OGC API.** *PARTIAL (2 of 5 call sites done)*
+  - **DONE ✅:** `fetch_usgs_telemetry` (`nwis/iv` → `/latest-continuous` + `/monitoring-locations`
+    for the site name) and `fetch_nearby_stations` (`nwis/iv` multi-site → one
+    `/latest-continuous` multi-location query). Both keep the legacy reader as a
+    fallback used ONLY when the modern endpoint is unreachable/unparseable.
+    Bonus: the new API returns coordinates, so `KNOWN_COORDS` is gone from the WDFN
+    path, and station names now come from the registry (title case, not NWIS caps).
+  - Verified: **exact parity** for `12101500` — WDFN vs legacy give identical
+    `cfs 959`, `gage 10.08`, `is_active`, `site_name`, and even the same
+    `updated_time` ("Today at 8:45 AM PDT"). `nearby_stations` returns 11 stations.
+  - **REMAINING (still legacy — will break in 2027):**
+    - `api/water_report.py` `fetch_dam_clarity()` → `nwis/dv` (`/daily`).
+    - `src/services/water.js` `fetchCFSMomentum()` → `nwis/iv?period=PT4H`
+      (needs the historical `/continuous` collection; CORS on the new API is `*`,
+      so a browser-side call is viable — or move it into the proxy, §2.3).
+    - `src/features/station/{search}.js` → two calls incl. the WA-hardcoded
+      `stateCd=wa` (that one is also a 2.2 de-hardcoding item).
+  - Note: no API key is required (verified 200 without one); a key only raises the
+    rate limit, so it stays an optional server-side env var.
 - [ ] **2.2 Two-step site discovery + server-side API key.**
   - Files: `api/water_report.py`; env var for the key (server only).
   - Potential bug: key must never reach client files or the digest.

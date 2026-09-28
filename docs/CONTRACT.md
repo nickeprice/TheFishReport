@@ -4,6 +4,12 @@ Canonical field map for the per-day report object (one per forecast day, 4 days)
 Read this instead of re-grepping `api/water_report.py` when wiring the frontend.
 Verify against live output with `scripts/smoke.sh`.
 
+> **Telemetry source (UPDATE 3.0 Phase 2.1):** USGS **WDFN OGC API**
+> (`api.waterdata.usgs.gov/ogcapi/v1/…`, `/latest-continuous` + `/monitoring-locations`),
+> no API key required. The legacy `waterservices.usgs.gov/nwis/iv` reader is kept as a
+> fallback only — it is decommissioned in Q1 2027. WDFN ids carry a `USGS-` prefix
+> internally; the `site_id` reported to the frontend stays unprefixed (`12101500`).
+
 ## Per-day object keys
 
 | key | type | meaning | consumer (frontend) |

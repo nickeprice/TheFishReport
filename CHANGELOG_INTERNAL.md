@@ -3,6 +3,26 @@
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore
 context. Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Phase 2.1 (partial) ✅: USGS WDFN migration — 2 of 5 call sites
+`waterservices.usgs.gov` is decommissioned in Q1 2027, so the two main backend readers now
+prefer the modernized **WDFN OGC API** (`api.waterdata.usgs.gov/ogcapi/v1/collections`),
+with the legacy reader kept ONLY as a fallback used when the modern endpoint is
+unreachable/unparseable. Migrated: `fetch_usgs_telemetry` (`nwis/iv` →
+`/latest-continuous` + `/monitoring-locations` for the station name) and
+`fetch_nearby_stations` (multi-site `nwis/iv` → ONE multi-location `/latest-continuous`
+query). Live-probed the API first: **no API key needed** (200 without one; a key only
+raises the rate limit), ids take a `USGS-` prefix, values are GeoJSON
+`properties.value/.time`, and CORS is `*`. **Exact parity verified** for `12101500`: WDFN
+and legacy return identical `cfs 959`, `gage 10.08`, `is_active`, `site_name`, and even the
+same `updated_time` ("Today at 8:45 AM PDT" — the UTC→Pacific conversion matches the legacy
+offset check). Bonus: WDFN returns coordinates, so `KNOWN_COORDS` is gone from the modern
+path, and nearby station names now come from the registry (title case, not NWIS caps).
+REMAINING legacy sites (tracked in TASK.md §2): `fetch_dam_clarity` (nwis/dv),
+`fetchCFSMomentum` (browser PT4H — needs `/continuous`), `station/search.js` (×2, incl.
+the WA-hardcoded `stateCd=wa`). Verified: sanity **78/78 GREEN** + the 1.3/1.5 API
+regressions stay green.
+
+
 ## 2026-09-28 — Phase 1.5 COMPLETE ✅: legal hours are registry-driven
 `api/water_report.py` gains `legal_hours_for_site(site)` and reports `lines_in`/`lines_out`
 ONLY for `daylight` (sunrise ±1h) and `24hr` ("12:00 AM"/"11:59 PM") — every other rule

@@ -98,20 +98,23 @@ rig does not move), with the old proxy as the fallback. Commit `b14a805`, sanity
 Measured movement vs the proxy: braid 20 **+4.8%**, copoly 10 **+5.1%**, fluoro 17 **+5.3%**,
 braid 40 +3.1%, fluoro 12 −1.4%, reference rig −0.03%.
 
-**TWO GAPS FOUND — read these before touching the physics again:**
+**TWO GAPS FOUND — gap 2 is now CLOSED, gap 1 is still open:**
 
-1. **The picked BRAND never reaches the sim.** `totalDragPerFt`/`leaderDragPerFt`/
+1. **STILL OPEN — the picked BRAND never reaches the sim.** `totalDragPerFt`/`leaderDragPerFt`/
    `mainlineDragPerFt` take `(lbTest, mat)` only, so `lineDiameterScale()` resolves to the
    **generic** row for that size. The brand picker is currently display/persistence only. To
    consume brand-specific diameters, thread the diameter (or the line id) through those three
    functions from `readRigFromForm()`/`sonar.js`/`drift.js`/`zone.js` **and** update the
-   `totalDragPerFt` call sites inside `sanity_pass.js` (lines ~683-712) — that is the real
+   `totalDragPerFt` call sites inside `sanity_pass.js` (lines ~689-696) — that is the real
    baseline-touching edit the user asked to review.
-2. **The suite cannot see P3a at all.** `sanity_pass.js`'s vm runs WITHOUT `TACKLE` loaded, so it
-   takes the proxy fallback and the frozen baselines stay green regardless of the real change.
-   Fix by injecting `src/data/tackle.json` into the vm sandbox (read the file, set
-   `sandbox.TACKLE`) so the baselines exercise the real path — then re-pin whatever moves, with the
-   rationale inline. **Without this, a wrong number would pass the suite.**
+2. **CLOSED 2026-09-28 (commit `07f5e89`).** The frozen-baseline block now evals
+   `src/shared/tackle.js` and loads `src/data/tackle.json`, so it exercises the MEASURED path
+   instead of the proxy fallback. Evidence that this is real coverage: with the library loaded
+   and the pre-P3 expected values still in place, sanity FAILED 2 checks (8 frozen values +
+   the drift-technique pair) — which is exactly the drift that was previously invisible.
+   Removing the load would make it pass again, so the load is what makes the coverage real.
+   All 10 values were re-pinned with the rationale inline, and a drift now prints
+   paste-ready `flow[i]=value` entries.
 
 **Still unconsumed measured data** (each is a small, contained edit): yarn `buoyancy_per_inch_g`
 0.01/in vs the hardcoded `yarnInches * 0.15` in `rigLift()` (~15x high); `BEAD_DENSITY.soft = 0.55`

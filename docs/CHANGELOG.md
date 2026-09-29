@@ -4,6 +4,20 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Weight drag areas derived from geometry (P1b) — the sheet is complete
+The 60 weight rows had no `area_cm2`/`cd`, so the drag half of a lead/tungsten weight was invisible.
+Rather than guess, the volumes come **exactly** from each row's own `mass_g` ÷ metal density, and the
+only assumption is the shape's aspect ratio (slinky 5, pencil 3, teardrop 2, barrel 1, cannonball =
+sphere) plus a 0.8 mm rubber wall on the sleeved variants. Everything else is physics.
+
+Two real findings fell out: a **slinky's density is the shot-packed effective 7.26 g/cm³**
+(0.64 × 11.34 — random close packing), not solid lead, so the density column was corrected; and a
+**tungsten weight is ~30% smaller than the same-oz lead one**, so it drags less — exactly the effect
+the weight rows exist to capture. `python3 scripts/tackle_csv_to_json.py --check` now reports **zero
+incomplete items** for the first time (185/185).
+
+- Key files: `docs/tackle_measurements.csv`, `src/data/tackle.json`, `docs/CONTRACT_TACKLE.md`.
+
 ## 2026-09-28 — Gear Sim line + weight pickers are live (P2)
 Approach B shipped: the four material/lb dropdowns per pair of forms are gone, replaced by **one
 brand-specific picker per line** (Mainline, Leader), populated at boot from `src/data/tackle.json` —

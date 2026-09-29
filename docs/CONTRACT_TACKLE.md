@@ -5,10 +5,21 @@ diameters + the weight library. The Gear Sim still runs on unitless calibration 
 (`lift = 0.90`, `DRAG_REF = 7.5`, `hookSink = 0.35`); this file is the data that will replace
 them with real grams, millimetres and cm² so `F = ½·ρ·C_d·A·v²` gets real numbers in it.
 
-**Still missing:** `area_cm2` + `cd` for the 60 weight rows (the drag half of a lead/tungsten
-weight) — `python3 scripts/tackle_csv_to_json.py --check` lists exactly those. Anything whose
-`notes` say DERIVED or ESTIMATED was not directly measured: either the item is below the
-0.01 g scale's resolution, or the value is a standard material constant.
+**No row is incomplete any more** — `--check` lists none. The 60 weight rows' `area_cm2` + `cd` are
+**ESTIMATED from geometry**, not from calipers: the volume comes *exactly* from the row's own
+`mass_g` ÷ metal density, and the only assumption is each shape's aspect ratio (length/diameter) —
+slinky 5, pencil 3, teardrop 2, barrel 1, cannonball = a sphere — plus a 0.8 mm rubber wall on the
+sleeved variants. Three consequences worth knowing:
+
+- A **slinky's density is the shot-packed effective value**: 0.64 × 11.34 = **7.26 g/cm³** (random
+  close packing of equal spheres), because its tube is mostly void space, not solid lead.
+- A **tungsten weight is ~30% smaller than the same-oz lead one**, so it displaces less and drags
+  less — that is the density effect the weight rows exist to capture.
+- A rubber sleeve adds a real tube of volume and mass, so a sleeved row's density is the *combined*
+  value (~7.7–8.8), not the bare lead's.
+
+Anything whose `notes` say DERIVED or ESTIMATED was not directly measured: either the item is below
+the 0.01 g scale's resolution, or the value is a standard material constant.
 
 The whole thing rests on **one setup (Archimedes)** — weigh the item in air, then weigh it
 submerged. That pair gives you mass, buoyancy, volume and density all at once. Everything

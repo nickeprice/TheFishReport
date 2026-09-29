@@ -1392,8 +1392,10 @@
       "material": "lead",
       "mass_g": 28.35,
       "density_g_cm3": 11.34,
+      "area_cm2": 2.164,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Lead Barrel"
     },
     {
@@ -1403,8 +1405,10 @@
       "material": "lead",
       "mass_g": 14.17,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.363,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Lead Barrel"
     },
     {
@@ -1414,8 +1418,10 @@
       "material": "lead",
       "mass_g": 7.09,
       "density_g_cm3": 11.34,
+      "area_cm2": 0.859,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Lead Barrel"
     },
     {
@@ -1425,8 +1431,10 @@
       "material": "lead",
       "mass_g": 21.26,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.786,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Lead Barrel"
     },
     {
@@ -1436,8 +1444,10 @@
       "material": "lead",
       "mass_g": 10.63,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.125,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Lead Barrel"
     },
     {
@@ -1447,8 +1457,10 @@
       "material": "lead",
       "mass_g": 17.72,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.582,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Lead Barrel"
     },
     {
@@ -1458,8 +1470,10 @@
       "material": "lead",
       "mass_g": 28.35,
       "density_g_cm3": 11.34,
+      "area_cm2": 2.227,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)",
       "shape_label": "Lead Cannonball"
     },
     {
@@ -1469,8 +1483,10 @@
       "material": "lead",
       "mass_g": 14.17,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.403,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)",
       "shape_label": "Lead Cannonball"
     },
     {
@@ -1480,8 +1496,10 @@
       "material": "lead",
       "mass_g": 7.09,
       "density_g_cm3": 11.34,
+      "area_cm2": 0.884,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)",
       "shape_label": "Lead Cannonball"
     },
     {
@@ -1491,8 +1509,10 @@
       "material": "lead",
       "mass_g": 21.26,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.838,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)",
       "shape_label": "Lead Cannonball"
     },
     {
@@ -1502,8 +1522,10 @@
       "material": "lead",
       "mass_g": 10.63,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.158,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)",
       "shape_label": "Lead Cannonball"
     },
     {
@@ -1513,8 +1535,10 @@
       "material": "lead",
       "mass_g": 17.72,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.628,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)",
       "shape_label": "Lead Cannonball"
     },
     {
@@ -1522,10 +1546,12 @@
       "type": "weight",
       "label": "Lead Cannonball (rubber sleeve) 1 oz",
       "material": "lead",
-      "mass_g": 28.35,
-      "density_g_cm3": 11.34,
+      "mass_g": 30.23,
+      "density_g_cm3": 7.18,
+      "area_cm2": 3.154,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)",
       "shape_label": "Lead Cannonball (rubber sleeve)"
     },
     {
@@ -1533,10 +1559,12 @@
       "type": "weight",
       "label": "Lead Cannonball (rubber sleeve) 1/2 oz",
       "material": "lead",
-      "mass_g": 14.17,
-      "density_g_cm3": 11.34,
+      "mass_g": 15.42,
+      "density_g_cm3": 6.48,
+      "area_cm2": 2.156,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)",
       "shape_label": "Lead Cannonball (rubber sleeve)"
     },
     {
@@ -1544,10 +1572,12 @@
       "type": "weight",
       "label": "Lead Cannonball (rubber sleeve) 1/4 oz",
       "material": "lead",
-      "mass_g": 7.09,
-      "density_g_cm3": 11.34,
+      "mass_g": 7.92,
+      "density_g_cm3": 5.74,
+      "area_cm2": 1.497,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)",
       "shape_label": "Lead Cannonball (rubber sleeve)"
     },
     {
@@ -1555,10 +1585,12 @@
       "type": "weight",
       "label": "Lead Cannonball (rubber sleeve) 3/4 oz",
       "material": "lead",
-      "mass_g": 21.26,
-      "density_g_cm3": 11.34,
+      "mass_g": 22.85,
+      "density_g_cm3": 6.89,
+      "area_cm2": 2.687,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)",
       "shape_label": "Lead Cannonball (rubber sleeve)"
     },
     {
@@ -1566,10 +1598,12 @@
       "type": "weight",
       "label": "Lead Cannonball (rubber sleeve) 3/8 oz",
       "material": "lead",
-      "mass_g": 10.63,
-      "density_g_cm3": 11.34,
+      "mass_g": 11.68,
+      "density_g_cm3": 6.17,
+      "area_cm2": 1.849,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)",
       "shape_label": "Lead Cannonball (rubber sleeve)"
     },
     {
@@ -1577,10 +1611,12 @@
       "type": "weight",
       "label": "Lead Cannonball (rubber sleeve) 5/8 oz",
       "material": "lead",
-      "mass_g": 17.72,
-      "density_g_cm3": 11.34,
+      "mass_g": 19.14,
+      "density_g_cm3": 6.7,
+      "area_cm2": 2.433,
       "shape": "cannonball",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.47,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)",
       "shape_label": "Lead Cannonball (rubber sleeve)"
     },
     {
@@ -1590,8 +1626,10 @@
       "material": "lead",
       "mass_g": 28.35,
       "density_g_cm3": 11.34,
+      "area_cm2": 3.121,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)",
       "shape_label": "Lead Pencil"
     },
     {
@@ -1601,8 +1639,10 @@
       "material": "lead",
       "mass_g": 14.17,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.966,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)",
       "shape_label": "Lead Pencil"
     },
     {
@@ -1612,8 +1652,10 @@
       "material": "lead",
       "mass_g": 7.09,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.239,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)",
       "shape_label": "Lead Pencil"
     },
     {
@@ -1623,8 +1665,10 @@
       "material": "lead",
       "mass_g": 21.26,
       "density_g_cm3": 11.34,
+      "area_cm2": 2.576,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)",
       "shape_label": "Lead Pencil"
     },
     {
@@ -1634,8 +1678,10 @@
       "material": "lead",
       "mass_g": 10.63,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.623,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)",
       "shape_label": "Lead Pencil"
     },
     {
@@ -1645,8 +1691,10 @@
       "material": "lead",
       "mass_g": 17.72,
       "density_g_cm3": 11.34,
+      "area_cm2": 2.281,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)",
       "shape_label": "Lead Pencil"
     },
     {
@@ -1654,10 +1702,12 @@
       "type": "weight",
       "label": "Lead Pencil (rubber sleeve) 1 oz",
       "material": "lead",
-      "mass_g": 28.35,
-      "density_g_cm3": 11.34,
+      "mass_g": 30.4,
+      "density_g_cm3": 6.96,
+      "area_cm2": 4.33,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)",
       "shape_label": "Lead Pencil (rubber sleeve)"
     },
     {
@@ -1665,10 +1715,12 @@
       "type": "weight",
       "label": "Lead Pencil (rubber sleeve) 1/2 oz",
       "material": "lead",
-      "mass_g": 14.17,
-      "density_g_cm3": 11.34,
+      "mass_g": 15.52,
+      "density_g_cm3": 6.27,
+      "area_cm2": 2.938,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)",
       "shape_label": "Lead Pencil (rubber sleeve)"
     },
     {
@@ -1676,10 +1728,12 @@
       "type": "weight",
       "label": "Lead Pencil (rubber sleeve) 1/4 oz",
       "material": "lead",
-      "mass_g": 7.09,
-      "density_g_cm3": 11.34,
+      "mass_g": 7.99,
+      "density_g_cm3": 5.55,
+      "area_cm2": 2.025,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)",
       "shape_label": "Lead Pencil (rubber sleeve)"
     },
     {
@@ -1687,10 +1741,12 @@
       "type": "weight",
       "label": "Lead Pencil (rubber sleeve) 3/4 oz",
       "material": "lead",
-      "mass_g": 21.26,
-      "density_g_cm3": 11.34,
+      "mass_g": 22.98,
+      "density_g_cm3": 6.68,
+      "area_cm2": 3.679,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)",
       "shape_label": "Lead Pencil (rubber sleeve)"
     },
     {
@@ -1698,10 +1754,12 @@
       "type": "weight",
       "label": "Lead Pencil (rubber sleeve) 3/8 oz",
       "material": "lead",
-      "mass_g": 10.63,
-      "density_g_cm3": 11.34,
+      "mass_g": 11.77,
+      "density_g_cm3": 5.97,
+      "area_cm2": 2.512,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)",
       "shape_label": "Lead Pencil (rubber sleeve)"
     },
     {
@@ -1709,10 +1767,12 @@
       "type": "weight",
       "label": "Lead Pencil (rubber sleeve) 5/8 oz",
       "material": "lead",
-      "mass_g": 17.72,
-      "density_g_cm3": 11.34,
+      "mass_g": 19.26,
+      "density_g_cm3": 6.5,
+      "area_cm2": 3.325,
       "shape": "pencil",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)",
       "shape_label": "Lead Pencil (rubber sleeve)"
     },
     {
@@ -1721,9 +1781,11 @@
       "label": "Lead Slinky (shot in tubing) 1 oz",
       "material": "lead",
       "mass_g": 28.35,
-      "density_g_cm3": 11.34,
+      "density_g_cm3": 4.65,
+      "area_cm2": 6.707,
       "shape": "slinky",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)",
       "shape_label": "Lead Slinky (shot in tubing)"
     },
     {
@@ -1732,9 +1794,11 @@
       "label": "Lead Slinky (shot in tubing) 1/2 oz",
       "material": "lead",
       "mass_g": 14.17,
-      "density_g_cm3": 11.34,
+      "density_g_cm3": 4.65,
+      "area_cm2": 4.224,
       "shape": "slinky",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)",
       "shape_label": "Lead Slinky (shot in tubing)"
     },
     {
@@ -1743,9 +1807,11 @@
       "label": "Lead Slinky (shot in tubing) 1/4 oz",
       "material": "lead",
       "mass_g": 7.09,
-      "density_g_cm3": 11.34,
+      "density_g_cm3": 4.65,
+      "area_cm2": 2.662,
       "shape": "slinky",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)",
       "shape_label": "Lead Slinky (shot in tubing)"
     },
     {
@@ -1754,9 +1820,11 @@
       "label": "Lead Slinky (shot in tubing) 3/4 oz",
       "material": "lead",
       "mass_g": 21.26,
-      "density_g_cm3": 11.34,
+      "density_g_cm3": 4.65,
+      "area_cm2": 5.536,
       "shape": "slinky",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)",
       "shape_label": "Lead Slinky (shot in tubing)"
     },
     {
@@ -1765,9 +1833,11 @@
       "label": "Lead Slinky (shot in tubing) 3/8 oz",
       "material": "lead",
       "mass_g": 10.63,
-      "density_g_cm3": 11.34,
+      "density_g_cm3": 4.65,
+      "area_cm2": 3.488,
       "shape": "slinky",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)",
       "shape_label": "Lead Slinky (shot in tubing)"
     },
     {
@@ -1776,9 +1846,11 @@
       "label": "Lead Slinky (shot in tubing) 5/8 oz",
       "material": "lead",
       "mass_g": 17.72,
-      "density_g_cm3": 11.34,
+      "density_g_cm3": 4.65,
+      "area_cm2": 4.903,
       "shape": "slinky",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 1.0,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)",
       "shape_label": "Lead Slinky (shot in tubing)"
     },
     {
@@ -1788,8 +1860,10 @@
       "material": "lead",
       "mass_g": 28.35,
       "density_g_cm3": 11.34,
+      "area_cm2": 2.726,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Lead Teardrop"
     },
     {
@@ -1799,8 +1873,10 @@
       "material": "lead",
       "mass_g": 14.17,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.717,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Lead Teardrop"
     },
     {
@@ -1810,8 +1886,10 @@
       "material": "lead",
       "mass_g": 7.09,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.082,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Lead Teardrop"
     },
     {
@@ -1821,8 +1899,10 @@
       "material": "lead",
       "mass_g": 21.26,
       "density_g_cm3": 11.34,
+      "area_cm2": 2.25,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Lead Teardrop"
     },
     {
@@ -1832,8 +1912,10 @@
       "material": "lead",
       "mass_g": 10.63,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.418,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Lead Teardrop"
     },
     {
@@ -1843,8 +1925,10 @@
       "material": "lead",
       "mass_g": 17.72,
       "density_g_cm3": 11.34,
+      "area_cm2": 1.993,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Lead Teardrop"
     },
     {
@@ -1852,10 +1936,12 @@
       "type": "weight",
       "label": "Lead Teardrop (rubber sleeve) 1 oz",
       "material": "lead",
-      "mass_g": 28.35,
-      "density_g_cm3": 11.34,
+      "mass_g": 30.11,
+      "density_g_cm3": 7.35,
+      "area_cm2": 3.643,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)",
       "shape_label": "Lead Teardrop (rubber sleeve)"
     },
     {
@@ -1863,10 +1949,12 @@
       "type": "weight",
       "label": "Lead Teardrop (rubber sleeve) 1/2 oz",
       "material": "lead",
-      "mass_g": 14.17,
-      "density_g_cm3": 11.34,
+      "mass_g": 15.32,
+      "density_g_cm3": 6.68,
+      "area_cm2": 2.453,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)",
       "shape_label": "Lead Teardrop (rubber sleeve)"
     },
     {
@@ -1874,10 +1962,12 @@
       "type": "weight",
       "label": "Lead Teardrop (rubber sleeve) 1/4 oz",
       "material": "lead",
-      "mass_g": 7.09,
-      "density_g_cm3": 11.34,
+      "mass_g": 7.85,
+      "density_g_cm3": 5.97,
+      "area_cm2": 1.675,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)",
       "shape_label": "Lead Teardrop (rubber sleeve)"
     },
     {
@@ -1885,10 +1975,12 @@
       "type": "weight",
       "label": "Lead Teardrop (rubber sleeve) 3/4 oz",
       "material": "lead",
-      "mass_g": 21.26,
-      "density_g_cm3": 11.34,
+      "mass_g": 22.73,
+      "density_g_cm3": 7.08,
+      "area_cm2": 3.087,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)",
       "shape_label": "Lead Teardrop (rubber sleeve)"
     },
     {
@@ -1896,10 +1988,12 @@
       "type": "weight",
       "label": "Lead Teardrop (rubber sleeve) 3/8 oz",
       "material": "lead",
-      "mass_g": 10.63,
-      "density_g_cm3": 11.34,
+      "mass_g": 11.6,
+      "density_g_cm3": 6.39,
+      "area_cm2": 2.091,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)",
       "shape_label": "Lead Teardrop (rubber sleeve)"
     },
     {
@@ -1907,10 +2001,12 @@
       "type": "weight",
       "label": "Lead Teardrop (rubber sleeve) 5/8 oz",
       "material": "lead",
-      "mass_g": 17.72,
-      "density_g_cm3": 11.34,
+      "mass_g": 19.04,
+      "density_g_cm3": 6.9,
+      "area_cm2": 2.782,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)",
       "shape_label": "Lead Teardrop (rubber sleeve)"
     },
     {
@@ -1920,8 +2016,10 @@
       "material": "tungsten",
       "mass_g": 28.35,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.518,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Tungsten Barrel"
     },
     {
@@ -1931,8 +2029,10 @@
       "material": "tungsten",
       "mass_g": 14.17,
       "density_g_cm3": 19.3,
+      "area_cm2": 0.956,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Tungsten Barrel"
     },
     {
@@ -1942,8 +2042,10 @@
       "material": "tungsten",
       "mass_g": 7.09,
       "density_g_cm3": 19.3,
+      "area_cm2": 0.603,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Tungsten Barrel"
     },
     {
@@ -1953,8 +2055,10 @@
       "material": "tungsten",
       "mass_g": 21.26,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.253,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Tungsten Barrel"
     },
     {
@@ -1964,8 +2068,10 @@
       "material": "tungsten",
       "mass_g": 10.63,
       "density_g_cm3": 19.3,
+      "area_cm2": 0.789,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Tungsten Barrel"
     },
     {
@@ -1975,8 +2081,10 @@
       "material": "tungsten",
       "mass_g": 17.72,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.11,
       "shape": "barrel",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.9,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)",
       "shape_label": "Tungsten Barrel"
     },
     {
@@ -1986,8 +2094,10 @@
       "material": "tungsten",
       "mass_g": 28.35,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.913,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Tungsten Teardrop"
     },
     {
@@ -1997,8 +2107,10 @@
       "material": "tungsten",
       "mass_g": 14.17,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.205,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Tungsten Teardrop"
     },
     {
@@ -2008,8 +2120,10 @@
       "material": "tungsten",
       "mass_g": 7.09,
       "density_g_cm3": 19.3,
+      "area_cm2": 0.759,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Tungsten Teardrop"
     },
     {
@@ -2019,8 +2133,10 @@
       "material": "tungsten",
       "mass_g": 21.26,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.579,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Tungsten Teardrop"
     },
     {
@@ -2030,8 +2146,10 @@
       "material": "tungsten",
       "mass_g": 10.63,
       "density_g_cm3": 19.3,
+      "area_cm2": 0.994,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Tungsten Teardrop"
     },
     {
@@ -2041,8 +2159,10 @@
       "material": "tungsten",
       "mass_g": 17.72,
       "density_g_cm3": 19.3,
+      "area_cm2": 1.398,
       "shape": "teardrop",
-      "notes": "nominal mass from oz label; area + cd not yet measured",
+      "cd": 0.5,
+      "notes": "STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)",
       "shape_label": "Tungsten Teardrop"
     },
     {

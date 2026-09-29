@@ -857,11 +857,13 @@ function behaviorChecks(done) {
       }
     };
     ctx.window = ctx;
-    ctx.getStr = (id) => (selects[id] ? selects[id].value : '');
+    ctx.getStr = (id) => (selects[id] ? selects[id].value
+      : (inputs[id] ? inputs[id].value : ''));
     ctx.setFieldValue = (id, v) => { ctx.document.getElementById(id).value = v; };
     vm.createContext(ctx);
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'src', 'shared', 'forms.js'), 'utf8') + '\n' +
-      fs.readFileSync(path.join(ROOT, 'src', 'shared', 'tackle.js'), 'utf8'), ctx);
+      fs.readFileSync(path.join(ROOT, 'src', 'shared', 'tackle.js'), 'utf8') + '\n' +
+      fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'rig.js'), 'utf8'), ctx);
     // The static <option> list index.html ships is the NO-LIBRARY fallback, so it has to be
     // the same union the library builds for a blank parent - otherwise an offline first run
     // offers values the library would never accept (or too few to log at all).
@@ -944,6 +946,43 @@ function behaviorChecks(done) {
       ? ok('static gear options are the library union (offline fallback)',
            'material / weight oz / bead size lists')
       : fail('static gear options are the library union (offline fallback)', staticBad.join(' '));
+
+    // --- restore: a saved rig has to come back THROUGH the cascade ---------------
+    // Parents before children is the whole trick: restoring an amount whose type is not set
+    // yet is silently dropped, and a rig saved before the cascade (or by an older installed
+    // client) carries no brand at all - it only has material + lb test.
+    const saved = { v: null };
+    ctx.localStorage = {
+      getItem: () => saved.v,
+      setItem: (k, v) => { saved.v = v; }
+    };
+    const bad2 = [];
+    const eq2 = (label, got, want) => { if (got !== want) bad2.push(`${label}=[${got}] want [${want}]`); };
+    const genericMono12 = lib.items.filter((i) => i.material === 'mono' &&
+      i.lb_test === 12 && /^generic/i.test(i.brand))[0];
+    saved.v = JSON.stringify({ mlMat: 'mono', mlLb: 12, ldMat: 'mono', ldLb: 12, ldLen: '8',
+      weight: '0.5', weightShape: 'Lead Pencil (rubber sleeve)', hook: '2', yarn: '0',
+      foam: '10', foam2: '0', bdMat: 'hard', bdSz: '6' });
+    ctx.restoreRig();
+    eq2('old rig resolves', inputs['ml-line'].value, genericMono12.id);
+    eq2('old rig recovers brand', [selects['ml-brand'].value, selects['ml-mat-log'].value,
+      selects['ml-lb-log'].value].join('|'), [genericMono12.brand, 'mono', '12'].join('|'));
+    saved.v = JSON.stringify({ mlMat: 'braid', mlBrand: 'Sufix 832 Advanced Superline',
+      mlLb: '30', ldMat: 'fluoro', ldBrand: 'Seaguar Blue Label Leader', ldLb: '12',
+      weightShape: 'Lead Slinky (shot in tubing)', weight: '0.5', bdMat: 'soft', bdSz: '8' });
+    ctx.restoreRig();
+    eq2('cascade rig resolves', inputs['ml-line'].value, 'braid-sufix-832-30');
+    eq2('children survive', [selects['ml-lb'].value, selects['weight'].value,
+      selects['bd-sz'].value, inputs['ld-line'].value].join('|'),
+      ['30', '0.5', '8', 'fluoro-seaguar-blue-label-12'].join('|'));
+    ctx.saveRig();
+    const stored = JSON.parse(saved.v);
+    eq2('saveRig parts', [stored.mlMat, stored.mlBrand, stored.mlLb, stored.bdMat].join('|'),
+      'braid|Sufix 832 Advanced Superline|30|soft');
+    bad2.length === 0
+      ? ok('a saved rig restores through the cascade (parents first)',
+           'an older material+lb rig recovers its brand; the saved lb / amount / bead size survive')
+      : fail('a saved rig restores through the cascade (parents first)', bad2.join(' '));
   } catch (e) {
     fail('tackle cascade drives the gear form (both tabs)', String(e.message).split('\n')[0]);
   }

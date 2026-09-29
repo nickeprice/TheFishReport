@@ -25,7 +25,8 @@
   parent = the union, so nothing is invented and the short static `<option>` lists (the no-library
   fallback) are provably that union. A stale pick (a braid brand under mono) is dropped and takes
   the id with it; `RIG_REQUIRED` now names the 14 visible fields. New recording-DOM assertion
-  drives the real cascade against the real `tackle.json`. `sw.js` `v2.03.16`, **113/113**.
+  drives the real cascade (and `restoreRig()`/`saveRig()`) against the real `tackle.json`.
+  `sw.js` `v2.03.16`, **114/114**.
 
 - 2026-09-29 — GitHub issues #1/#3 first pass: **WS-1** `useGPS()` no longer auto-falls-back
   and closes the station modal on failure (keeps it open with a retry hint, logs the real

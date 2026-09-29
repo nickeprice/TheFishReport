@@ -20,7 +20,7 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
 WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded Line Height
 + suggestions, no score / no BOTTOM CURRENT / no bottom box) shipped in `3e7259b`. WS-3
 (both tabs → the 7-row / 15-field material→brand→lb-test cascade) is DONE and verified:
-`node sanity_pass.js --quiet` → **113/113**; `sw.js` `v2.03.16`. Touched: `index.html`,
+`node sanity_pass.js --quiet` → **114/114**; `sw.js` `v2.03.16`. Touched: `index.html`,
 `src/shared/tackle.js`, `src/features/gear-sim/{rig,zone}.js`, `src/styles.css`,
 `sanity_pass.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`, `sw.js`, `memory-bank/*`.
 NEXT: **WS-4** (per-day weather, issue #2). Then WS-5 (private favourite spots + migration).
@@ -76,13 +76,16 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       (`sanity_pass.js:359`) → the 15 ids above; `zone.js` `RIG_REQUIRED` ids must match the new
       VISIBLE selects or the sim blocks forever (currently lists `ml-line`/`ld-line`). `.gear-row`
       is a 2-col grid → add a `.gear-row-3` variant for row 1.
-      Verified (DONE 2026-09-29, sanity **113/113**, `sw.js` `v2.03.16`): the 3 moved/updated
-      guards (3-up CSS rule + 2 forms, 14 rows / 7 each, 15 ids in the instructed order) PLUS 2
+      Verified (DONE 2026-09-29, sanity **114/114**, `sw.js` `v2.03.16`): the 3 moved/updated
+      guards (3-up CSS rule + 2 forms, 14 rows / 7 each, 15 ids in the instructed order) PLUS 3
       new assertions — a recording-DOM harness that drives the real `cascadeLine()` /
       `onWeightShapeChange()` / `onBeadMatChange()` against the real `tackle.json` (braid → 7
       brands → 20/30/40 → id `braid-sufix-832-30`; a material switch clears the stale brand AND
-      the id; soft → 6/8mm, none → 0; the -log twin always matches), and "the static `<option>`
-      lists are the library union" (the offline fallback cannot drift). Implementation notes:
+      the id; soft → 6/8mm, none → 0; the -log twin always matches), "the static `<option>`
+      lists are the library union" (the offline fallback cannot drift), and "a saved rig restores
+      through the cascade (parents first)" (`restoreRig()` on a legacy material+lb-only rig
+      recovers the generic brand + id, on a cascade rig the saved lb / amount / bead size survive,
+      and `saveRig()` writes the parts). Implementation notes:
       ONE cascade rule (a child list = what its parent allows; a blank parent = the union),
       `fillBothSelects()` is the only writer of an option list so both tabs can never disagree,
       weight amounts come from each row's own `1/4 oz` label (NOT from mass — the sleeve rows

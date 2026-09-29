@@ -90,13 +90,39 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
 
 ## Handoff — 2026-09-28 (end of session; context exhausted, nothing half-built)
 
-**Objective:** land the measured-tackle library into the Gear Sim (P1 + P2 done, P3/P4 open).
-**Last completed step:** P2 — data-driven line + weight-shape pickers, committed `9c0838c`,
-sanity 108/108, pushed. `src/data/tackle.json` is now committed and service-worker cached.
-**Immediate next step:** **P3** — swap the diameter PROXY for the real measured diameters and
-re-pin the frozen baselines (deliberate contract bump), then the rest of the measured units, then
-P4's migration. Nothing is mid-flight: tree clean, app runs, physics untouched so the baselines
-still hold.
+**Objective:** land the measured-tackle library into the Gear Sim. P1 + P2 DONE; P3 PARTIAL; P4 open.
+
+**Last completed step:** P3a — `lineDiameterScale()` now uses the **measured** diameters
+(`diameter_mm / REF_DIAMETER_MM`, anchored at 0.34 mm = generic mono 12 lb so the locked reference
+rig does not move), with the old proxy as the fallback. Commit `b14a805`, sanity 108/108, pushed.
+Measured movement vs the proxy: braid 20 **+4.8%**, copoly 10 **+5.1%**, fluoro 17 **+5.3%**,
+braid 40 +3.1%, fluoro 12 −1.4%, reference rig −0.03%.
+
+**TWO GAPS FOUND — read these before touching the physics again:**
+
+1. **The picked BRAND never reaches the sim.** `totalDragPerFt`/`leaderDragPerFt`/
+   `mainlineDragPerFt` take `(lbTest, mat)` only, so `lineDiameterScale()` resolves to the
+   **generic** row for that size. The brand picker is currently display/persistence only. To
+   consume brand-specific diameters, thread the diameter (or the line id) through those three
+   functions from `readRigFromForm()`/`sonar.js`/`drift.js`/`zone.js` **and** update the
+   `totalDragPerFt` call sites inside `sanity_pass.js` (lines ~683-712) — that is the real
+   baseline-touching edit the user asked to review.
+2. **The suite cannot see P3a at all.** `sanity_pass.js`'s vm runs WITHOUT `TACKLE` loaded, so it
+   takes the proxy fallback and the frozen baselines stay green regardless of the real change.
+   Fix by injecting `src/data/tackle.json` into the vm sandbox (read the file, set
+   `sandbox.TACKLE`) so the baselines exercise the real path — then re-pin whatever moves, with the
+   rationale inline. **Without this, a wrong number would pass the suite.**
+
+**Still unconsumed measured data** (each is a small, contained edit): yarn `buoyancy_per_inch_g`
+0.01/in vs the hardcoded `yarnInches * 0.15` in `rigLift()` (~15x high); `BEAD_DENSITY.soft = 0.55`
+(measured ≈1.0 — the soft/hard difference is drag, not lift); hook `mass_g` (only size 2 moved,
+0.12 → 0.16); the weight shape/density (`anchorScale = 0.7 + 0.6*oz` is still a mass-only fudge —
+the weight `area_cm2`/`cd` are also still unmeasured, which is P1b).
+
+**Immediate next step:** gap 2 first (make the suite see the real path), then gap 1 (thread the
+brand/diameter), then the remaining units above, then **P4** (migration for the line ids + weight
+shape). Nothing is mid-flight: tree clean, app runs, sanity green.
+
 
 
 

@@ -105,16 +105,54 @@ function turbidityTerm() {
 }
 
 // Light term from the reference hour block. Low light (dawn / dusk / dark) lets fish
-// feed up in the column; high overhead sun pins them down. The midday window is the
-// only "bright" bracket here - the crepuscular CURVE (a real low-light peak around
-// sunrise/sunset) is WS-8b and needs its own product confirm, so this stays a
-// three-way bracket rather than a fake curve.
+// feed up in the column; high overhead sun pins them down.
+//
+// WS-8b(b1): the brackets are ANCHORED TO THE DAY'S OWN SUNRISE/SUNSET instead of to fixed
+// clock hours. The old `h < 7 || h >= 19` / `h in 10..16` version was only right by
+// accident of season: a December 4-5 PM block (real dusk) got NO term, and a July 9 AM
+// block (full sun) got none either. Sunrise/sunset are in the payload per day
+// ("6:30 AM" strings), so the brackets move with the season for free. Still a three-way
+// bracket - a fitted crepuscular CURVE remains WS-8b and was declined (we have no local
+// catch data to fit an amplitude against, so a curve would only look more precise).
+//
+// A day whose payload carries no solar times falls back to the fixed clock brackets,
+// because a missing sunrise must degrade rather than silently delete the term.
 var LIGHT_LOW_SHIFT = 1.00;
 var LIGHT_BRIGHT_SHIFT = -0.75;
+var LIGHT_EDGE_MINUTES = 90;     // within 1.5 h of sunrise/sunset = low light
+var LIGHT_CORE_MINUTES = 180;    // >= 3 h inside the solar day = high sun
 
-function lightTerm(hour) {
-    if (hour === null || hour === undefined || isNaN(hour)) return null;
-    var h = Number(hour);
+// '6:30 AM' -> 390 (minutes past midnight). null when unparseable.
+function parseClockMinutes(text) {
+    if (!text) return null;
+    var m = /(\d{1,2}):(\d{2})\s*([AP]M)/i.exec(String(text));
+    if (!m) return null;
+    var h = Number(m[1]) % 12;
+    if (m[3].toUpperCase() === 'PM') h += 12;
+    return (h * 60) + Number(m[2]);
+}
+
+// `block` = {hour, label} from refHourBlock(); `rep` = that day's report (sunrise/sunset).
+function lightTerm(block, rep) {
+    if (!block || block.hour === null || block.hour === undefined || isNaN(block.hour)) return null;
+    var h = Number(block.hour);
+    var mid = (h + 0.5) * 60;                       // the block's midpoint, in minutes
+    var sunrise = parseClockMinutes(rep && rep.sunrise);
+    var sunset = parseClockMinutes(rep && rep.sunset);
+
+    if (sunrise !== null && sunset !== null && sunset > sunrise) {
+        var sinceSunrise = mid - sunrise;
+        var untilSunset = sunset - mid;
+        if (sinceSunrise <= LIGHT_EDGE_MINUTES || untilSunset <= LIGHT_EDGE_MINUTES) {
+            return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish feed up in the column.' };
+        }
+        if (sinceSunrise >= LIGHT_CORE_MINUTES && untilSunset >= LIGHT_CORE_MINUTES) {
+            return { shift: LIGHT_BRIGHT_SHIFT, label: 'high sun', note: 'fish hold deep and tight.' };
+        }
+        return null;                                 // the twilight shoulder: no term
+    }
+
+    // No solar times on this day -> the fixed brackets (previous behaviour).
     if (h < 7 || h >= 19) {
         return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish feed up in the column.' };
     }
@@ -190,9 +228,10 @@ function computeStrikeZone(sonar) {
             turb.fnu.toFixed(1) + ' FNU): ' + turb.note);
     }
 
-    // Light at the hour the report describes (its REFERENCE HOUR block, see refHourBlock()).
+    // Light at the hour the report describes (its REFERENCE HOUR block, see refHourBlock()),
+    // bracketed against THAT day's sunrise/sunset.
     var block = refHourBlock();
-    var light = block ? lightTerm(block.hour) : null;
+    var light = block ? lightTerm(block, rep) : null;
     if (light) {
         zone.shift += light.shift;
         var when = block.label ? ' (' + block.label + ')' : '';
@@ -343,7 +382,7 @@ function whereToFish(zone, hgt) {
             (turb.shift > 0 ? 'shallower, closer to cover' : 'deeper and tighter'));
     }
     var block = refHourBlock();
-    var light = block ? lightTerm(block.hour) : null;
+    var light = block ? lightTerm(block, getActiveReport()) : null;
     if (light) parts.push(light.label + ' at ' + (block.label || 'this hour') + ' keeps them ' +
         (light.shift > 0 ? 'up' : 'deep'));
 

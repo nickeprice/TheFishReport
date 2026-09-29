@@ -17,6 +17,20 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **WS-8b (b1) + Phase 4 decisions**: the Gear Sim's light term now brackets the
+  reference hour against **that day's own sunrise/sunset** (`parseClockMinutes()`,
+  `LIGHT_EDGE_MINUTES`/`LIGHT_CORE_MINUTES`) instead of fixed clock hours — the old version gave a
+  December 4–5 PM block (real dusk) no term at all and a July 9 AM block none either; the twilight
+  shoulder is neutral and a day without solar times falls back to the old brackets. `sw.js`
+  `v2.03.24`, **134/134**. Three decisions recorded as deliberate non-builds (with the evidence):
+  **b2** a fitted crepuscular curve (no local data to fit), **c2** finer lie buckets (would
+  over-claim from a gauge-only velocity), **d3** the community sonar stays off (the `loc` gate has
+  no data source and the live table holds 1 row while the sonar needs ≥2). **(a)** is still open
+  pending a1-vs-a2: USGS *does* publish NAVD88 `/altitude (3.49 ft, ±0.03)` so a1's datum
+  "blocker" was overstated, but the terrarium z15 section (~3.25 m/px) matches the USGS width on
+  only 1 of 5 rivers (+52% Nisqually, 4× Carbon/White) — a2 (report the measured depth band) is
+  recommended, with a dated 1 m 3DEP source as the real path to a DEM section.
+
 - 2026-09-29 — **WS-5 private favourite spots** (issue #3b): `public.favorite_spots` is live with
   **RLS enabled in the same transaction** and one owner-scoped policy per command
   (`user_id = auth.uid()`, defaulted by the DB, **never** client-sent — `toSpotRow()` is asserted

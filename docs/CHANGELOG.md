@@ -4,6 +4,52 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — WS-8b (b1): the light term rides the day's sunrise/sunset (+ Phase 4 decisions)
+Product decisions taken on the Phase 4 bundle, then the one piece of code they cleared.
+
+**b1 — SHIPPED. The light brackets are anchored to the day's own sunrise/sunset.** The old
+`h < 7 || h >= 19` / `h in 10..16` version was only right by accident of season: a **December
+4–5 PM** block is real dusk and got **no** term, and a July 9 AM block (full sun) got none
+either. Sunrise/sunset are already in the per-day payload (`"6:30 AM"` strings), so `zone.js` now
+derives `parseClockMinutes()` + `LIGHT_EDGE_MINUTES` (within 1.5 h of sunrise/sunset → low light
+`+1.0"`) and `LIGHT_CORE_MINUTES` (≥3 h inside the solar day → high sun `−0.75"`), with the
+twilight shoulder in between carrying no term. A day whose payload has no solar times falls back
+to the fixed clock brackets, because a missing sunrise must degrade rather than delete the term.
+Still a three-way bracket, never a fitted curve. `sw.js` `v2.03.24`. **134/134 GREEN** — a new
+assertion pins `parseClockMinutes` ('6:30 AM'→390, '12:05 PM'→725, '12:30 AM'→30, '6:55 PM'→1135,
+garbage→null) and the seasonal behaviour: December 4–5 PM = **low light**, the SAME hour in
+September = **neutral shoulder**, July noon = **high sun**.
+
+**b2 — DECLINED.** A fitted crepuscular curve would imply a precision we cannot support: there is
+no local catch dataset to fit an amplitude against (1 row live), so it would be literature shape
+presented as a model.
+
+**c2 — DECLINED (kept at 3 buckets).** The lie call in "where to fish" reads the *gauge's* bed
+velocity multiplied by a spot ratio that is still `1.0`. More buckets would make more specific
+claims from the same single number — knowledge about the gauge reach dressed as knowledge about
+the angler's water. Revisit once a spot-relative velocity exists.
+
+**d3 — DECLINED (community sonar stays off).** The `loc !== 'Fair'` gate has no data source
+(`hook_location` was dropped as always-NULL), and the live table held **1 row / 1 owner** while
+`communitySonar()` needs **≥2** heights to do anything — so flipping it is invisible today and
+would then start counting foul-hooked fish, which is exactly what the gate excluded. Recorded in
+`docs/ROADMAP.md` §3.2 with the revisit path (`d2` = a real hooking-location field + column + RPC
+return). Verified en route that the RPC already returns everything the replay needs: heights are
+RECOMPUTED by `presentationHeightInches`, so no `line_height_in` column is required.
+
+**a1 vs a2 — a1's blocker was overstated; the recommendation still stands.** USGS *does* publish a
+surveyed site altitude (`monitoring-locations`: `altitude 3.49 ft`, `vertical_datum NAVD88`,
+`altitude_accuracy 0.03`), so a DEM↔NAVD88↔gage-height chain is constructible. The case against
+a1 is the DEM's quality in the one property it would be used for: the terrarium z15 profile
+(≈3.25 m/px) reproduces the USGS width on **1 of 5** rivers (Puyallup 202.3 vs 215 ft) and is
+**+52 %** on the Nisqually (267.6 vs 176) and **4×** on the Carbon/White (256.4 vs 63; 479.7 vs
+119) — and the Carbon at 63 ft is only ~6 pixels wide. On 4 of 5 rivers a1 would *replace*
+hand-measured, datum-free cross-sections with a section that is 1.5–4× wrong, i.e. the
+angler-visible number would likely get worse than today's ±20–32 %. a2 (report the measured depth
+band, ~10 lines, no new data) is still the recommendation; a real DEM/lidar section waits for a
+**dated 1 m 3DEP source**, which `river_widths.js` already recommends in its header.
+- Key files: `src/features/gear-sim/zone.js`, `sanity_pass.js`, `sw.js`, `docs/ROADMAP.md`.
+
 ## 2026-09-29 — WS-5: PRIVATE favourite spots (map "save this spot" + a star layer)
 Issue #3b, second half. The angler can now save the water they are standing on — "Blue Creek
 run" — and re-open it days later to plan: the spot is **private by construction**, never

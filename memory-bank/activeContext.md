@@ -15,21 +15,21 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1/2/3/5/6/7 + Phases 1–3 committed; **Phase 4 / WS-8b are NEXT**)
+## HANDOFF — 2026-09-29 (WS-1/2/3/5/6/7 + Phases 1–3 + WS-8b(b1); **“a” is the only open call**)
 
 Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-6 (HUD
 polish), WS-7 (HUD v2 + label addendum), **Phase 1** (gradient on the estimate only + one bullet
 style, `37fb1ed`), **Phase 2** (WS-4 per-day reference-hour weather + wind direction text +
 tappable 24-hour popup, `880753d`), **Phase 3** (WS-8a: thermal-optimum curve, own-gauge colour,
-reference-hour light, demoted barometer, measured `A/W` gauge depth, the "where to fish" row) and
+reference-hour light, demoted barometer, measured `A/W` gauge depth, the "where to fish" row),
 **WS-5** (private favourite spots: `favorite_spots` + RLS default-deny, client CRUD, the modal
-list, the map star layer). Current state: sanity **133/133**, `sw.js` `v2.03.23`, `origin/main`
-clean.
+list, the map star layer) and **WS-8b b1** (light brackets anchored to the day's sunrise/sunset).
+Current state: sanity **134/134**, `sw.js` `v2.03.24`, `origin/main` clean.
 
-**NEXT = Phase 4 / WS-8b — but it needs a separate product confirm before any code** (DEM
-cross-section → a real spot depth instead of the same-reach estimate, the crepuscular light curve,
-finer velocity-lie buckets, re-enabling the community-sonar calibrator). Every other approved
-workstream in issues #1–#3 is now shipped; what remains is that confirm.
+**NEXT = the `a` decision** (see PHASE 4 DECISIONS below): the user asked for the a1-vs-a2 case and
+has not picked yet. Recommendation on file is **a2** (report the measured depth BAND instead of a
+single median — ~10 lines, no new data source). Everything else in issues #1–#3 is shipped, and
+b2 / c2 / d3 are recorded as DECLINED-by-design so nobody re-opens them by accident.
 
 Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
 per-day weather by the live API + sanity, the popup CSS by rule, the where-to-fish row and the
@@ -286,6 +286,49 @@ change.
 - [ ] Phase 4 — deferred (separate confirm): WS-8b (persist the DEM width@height cross-section →
   real spot depth; crepuscular light curve; velocity lie buckets; re-enable the community-sonar
   calibrator — a product decision).
+
+## PHASE 4 DECISIONS — 2026-09-29 (user call, Act mode)
+
+The user was given the four sub-items with their evidence and chose: **b1 yes, c2 no, d3 no, and
+asked for the a1-vs-a2 case before picking a.** Recorded here because these are deliberate
+NON-builds, not oversights.
+
+- [x] **b1 — SHIPPED: the light term rides the day's own sunrise/sunset** (`zone.js`
+      `parseClockMinutes()` + `LIGHT_EDGE_MINUTES`/`LIGHT_CORE_MINUTES`, `lightTerm(block, rep)`;
+      both call sites updated). Fixes the seasonal defect: a December 4–5 PM block (real dusk)
+      used to get NO term and a July 9 AM block (full sun) none either. The twilight shoulder
+      carries no term; a day with no solar times falls back to the fixed clock brackets. `sw.js`
+      `v2.03.24`, sanity **134/134** (new assertion pins the parser AND the December-vs-September
+      contrast at the same clock hour).
+- [x] **b2 — DECLINED (user).** A fitted crepuscular curve implies an amplitude we cannot fit
+      (no local catch dataset: 1 row live). Recorded as declined-by-design; the b1 bracket is the
+      honest ceiling until there is data to fit against.
+- [x] **c2 — DECLINED (user): the lie call stays at 3 buckets** (1.5 / 3.0 ft/s). The number it
+      reads is the GAUGE's bed velocity times a spot ratio still stuck at 1.0, so finer buckets
+      would only make more specific claims from the same single figure. Revisit when a
+      spot-relative velocity exists (needs a real spot width — see B1 in the roadmap).
+- [x] **d3 — DECLINED (user): the community sonar stays off.** The `loc !== 'Fair'` gate has no
+      data source (`hook_location` dropped as always-NULL) and the live table held **1 row /
+      1 owner** while `communitySonar()` needs **≥2** heights to shift anything — so flipping it
+      is invisible today and would then count foul-hooked fish, which is exactly what the gate
+      excluded. Written up in `docs/ROADMAP.md` §3.2 with the revisit path (`d2` = a real
+      hooking-location field + column + RPC return). Verified en route: the RPC already returns
+      everything the replay needs, because heights are RECOMPUTED by `presentationHeightInches()`
+      — no `line_height_in` column is required.
+- [ ] **a — PENDING the user's pick (a1 vs a2).** The a1-vs-a2 case was delivered 2026-09-29:
+      **a1's datum "blocker" was WRONG** — USGS publishes a surveyed site altitude
+      (`monitoring-locations`: `altitude 3.49`, `vertical_datum NAVD88`, `altitude_accuracy
+      0.03`), so a DEM↔NAVD88↔gage-height chain is constructible. The case against a1 is the DEM
+      itself: the terrarium z15 profile (~3.25 m/px) reproduces the USGS width on **1 of 5**
+      rivers (Puyallup 202.3 vs 215 ft), is **+52%** on the Nisqually (267.6 vs 176) and **4×** on
+      the Carbon/White (256.4 vs 63; 479.7 vs 119) — and the Carbon is only ~6 pixels wide at that
+      resolution. So a1 would REPLACE hand-measured, datum-free `A/W` with a section that is
+      1.5–4× wrong on 4 of 5 rivers, likely making the published number worse than today's
+      ±20–32%. Recommendation: **a2** (report the measured depth BAND — e.g. Nisqually @1040 =
+      2.1–4.1 ft — ~10 lines in `continuity.js`, no new data source), and park a real DEM/lidar
+      section until a DATED 1 m 3DEP source (which `river_widths.js`'s own header recommends).
+      ⚠ If a1 is chosen anyway, it must NOT be presented as a measured spot depth, and the
+      uncertainty must grow rather than shrink.
 - [ ] Still queued: nothing from issues #1–#3 — WS-5 shipped 2026-09-29 (`favorite_spots` + RLS
   default-deny + the modal list + the map star layer). Phase 4 / WS-8b is the only open item and
   it needs a product confirm.

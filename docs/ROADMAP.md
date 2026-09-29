@@ -100,6 +100,16 @@ feature built from *your own* logged flow/tide/weather/gear data.
   is discarded** and the strike zone always uses its baseline. Decide whether to derive
   "mouth-hooked" some other way or drop the filter — it CHANGES the Gear Sim's zone, which
   is why it is a product decision rather than a cleanup.
+  - **DECIDED 2026-09-29 — leave it off for now (`d3`).** Live evidence at decision time:
+    `public.catches` held **1 row, 1 owner** (2026-09-17) and `communitySonar()` needs **≥2**
+    heights in the window before it shifts anything, so turning the filter off would be
+    invisible and then governed by a rule with no dataset. The gate also means something real
+    ("mouth-hooked fish only" — a tail-hooked rig height says nothing about feeding depth), so
+    dropping it would silently start counting foul-hooked fish. Revisit when there is catch
+    volume AND a populated hooking-location field (`d2`: a real form field + column + RPC
+    return; the old always-NULL `hook_location` is why this is a reversal, not a cleanup).
+    The RPC already returns everything the replay needs (heights are RECOMPUTED by
+    `presentationHeightInches`, so no `line_height_in` column is required).
 - Files: `src/features/season/`.
 
 ### 3.3 Crews + friends leaderboard

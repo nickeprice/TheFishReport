@@ -980,8 +980,35 @@ function behaviorChecks(done) {
       : fail('zone terms: demoted barometer, own-gauge colour, reference-hour light',
              `hot=${wzHot.shift} cold=${wzCold.shift} bare=${wzBare.shift} colour=${wzColour.shift} ` +
              `max=${wzMax.shift} ratio=${zoneTrend(wzMax).ratio} | ${wzBareNotes}`);
+
+    // WS-8b (b1): the light brackets ride the DAY'S OWN sunrise/sunset, so the same clock
+    // hour means different things in December and July. The old fixed brackets were only
+    // right by accident of season: a December 4-5 PM block is real dusk and got no term.
+    const clockOk = parseClockMinutes('6:30 AM') === 390 && parseClockMinutes('12:05 PM') === 725 &&
+      parseClockMinutes('12:30 AM') === 30 && parseClockMinutes('6:55 PM') === 1135 &&
+      parseClockMinutes('--') === null && parseClockMinutes(null) === null;
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '7:45 AM', sunset: '4:20 PM',
+      weather_hour: { iso: '2026-12-10T16:00', label: '4-5 PM' } }];
+    const wzDusk = computeStrikeZone();
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '7:00 AM', sunset: '6:55 PM',
+      weather_hour: { iso: '2026-09-30T16:00', label: '4-5 PM' } }];
+    const wzShoulder = computeStrikeZone();
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '5:20 AM', sunset: '9:00 PM',
+      weather_hour: { iso: '2026-07-10T12:00', label: '12-1 PM' } }];
+    const wzNoon = computeStrikeZone();
+    const wzLightOk = clockOk && Math.abs(wzDusk.shift - 1.0) < 1e-9 &&
+      /Low light \(4-5 PM\): fish feed up in the column/.test(wzDusk.notes.join(' | ')) &&
+      wzShoulder.shift === 0 && wzShoulder.notes.join(' | ').indexOf('light') === -1 &&
+      Math.abs(wzNoon.shift + 0.75) < 1e-9 &&
+      /High sun \(12-1 PM\): fish hold deep and tight/.test(wzNoon.notes.join(' | '));
+    wzLightOk
+      ? ok('light brackets ride the day\'s sunrise/sunset, not the clock',
+           'December 4-5 PM = low light (+1.0"), September 4-5 PM = neutral shoulder, July noon = high sun (-0.75"); unparseable solar -> fallback')
+      : fail('light brackets ride the day\'s sunrise/sunset, not the clock',
+             `clock=${clockOk} dusk=${wzDusk.shift} shoulder=${wzShoulder.shift} noon=${wzNoon.shift} | ${wzShoulder.notes.join(' | ')}`);
   } catch (e) {
     fail('zone terms: demoted barometer, own-gauge colour, reference-hour light', String(e.message).split('\n')[0]);
+    fail('light brackets ride the day\'s sunrise/sunset, not the clock', String(e.message).split('\n')[0]);
   }
 
 

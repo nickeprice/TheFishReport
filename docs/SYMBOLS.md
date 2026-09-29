@@ -106,7 +106,8 @@ this file**, or the pass fails.
   `whereToFish(zone, hgt)`, `paintZoneHud(zone, where)`, `refreshZonePreview()`, `bestZoneRig()` —
   the HUD zone panel (one bullet per reason + the "where to fish" row; the community note is
   filtered out) and the colour grade shared with line height. The report terms are the WS-8a set:
-  demoted barometer ±1.2", thermal curve, own-gauge colour, reference-hour light.
+  demoted barometer ±1.2", thermal curve, own-gauge colour, and a light term bracketed against
+  THAT DAY's sunrise/sunset (`parseClockMinutes()`, `lightTerm(block, rep)` — WS-8b b1).
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

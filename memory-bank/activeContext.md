@@ -78,13 +78,14 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
       `app.js` (await `tackleLoad()` BEFORE `restoreRig()` or the pickers are empty), `sw.js`
       (+`/src/data/tackle.json` in SHELL_FILES, VERSION bump), commit `src/data/tackle.json`.
 
-      **BLOCKER — needs a user decision (found 2026-09-28):** the approved "Weight = 2 controls
-      (oz + shape)" cannot carry metal x shape x rubber, because the metal and the rubber sleeve
-      exist only inside the row `label`. Options: (a) the converter emits a derived `shape_label`
-      per weight row (`"Lead Pencil (rubber sleeve)"`) so (shape_label, oz) identifies exactly one
-      row - recommended, no schema change; (b) add a real `variant` column (schema change in 3
-      places); (c) collapse Weight to ONE unified picker like the lines. The converter would need
-      a small `shape_label` addition for (a).
+      **RESOLVED 2026-09-28 — user chose (a):** the converter now derives `shape_label` per weight
+      row (`Lead Pencil (rubber sleeve) 1/4 oz` → `Lead Pencil (rubber sleeve)`), so the weight
+      picker offers `(shape_label, oz)` pairs and the metal + sleeve ride along in one option
+      without giving `shape` a second job. Chosen over (b) a `variant` column and (c) a single
+      unified weight picker.
+      Verified: 10 distinct `shape_label`s, every one present at all 6 oz, all 60
+      `(shape_label, mass_g)` pairs unique (so the pair identifies exactly one row), and no
+      non-weight row carries the field. `py_compile` clean; JSON regenerated then removed.
 - [ ] **P4. DB** — timestamped idempotent migration adding the line ids + weight shape to
       `public.catches`, applied by me with `npx supabase db push --yes`, then verified with a
       read-only query, preserving RLS and the public-feed privacy boundary.

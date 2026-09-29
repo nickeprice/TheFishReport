@@ -20,6 +20,7 @@ Usage:
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -40,6 +41,11 @@ TYPES = {"foam", "line", "bead", "hook", "yarn", "weight"}
 SHAPES = {"sphere", "plate", "other", "egg", "slinky", "pencil", "barrel",
           "teardrop", "cannonball"}
 TEXT_COLS = ("brand", "material", "shape", "notes")
+
+# Weight rows only: the UI picks a weight as (shape_label, oz) so it can offer the
+# metal and the rubber sleeve as one option without a `variant` column. The metal
+# and the sleeve live in `label`, so strip the trailing " 1/4 oz" back off it.
+OZ_SUFFIX = re.compile(r"\s+\d+(?:/\d+)?\s+oz$")
 
 # What each type must have before it can drive real physics.
 REQUIRED = {
@@ -136,6 +142,13 @@ def main() -> int:
             item["volume_cm3"] = round(item["buoyancy_g"] / args.water_density, 4)
             if item.get("mass_g") is not None and item["volume_cm3"]:
                 item["density_g_cm3"] = round(item["mass_g"] / item["volume_cm3"], 4)
+
+        # Weights: emit the picker option label (metal + shape + sleeve, no oz) so a
+        # UI can pair it with the oz value. Falls back to the full label if a row's
+        # label does not end in "NN oz" rather than emitting something empty.
+        if item["type"] == "weight":
+            label = item.get("label", "")
+            item["shape_label"] = OZ_SUFFIX.sub("", label).strip() or label
 
         absent = [c for c in REQUIRED[cells["type"]] if c not in item]
         if absent:

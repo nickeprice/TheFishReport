@@ -127,6 +127,12 @@ The converter derives `volume_cm3` and `density_g_cm3` from `mass_g` + `buoyancy
 loudly on a malformed row (a miscounted comma is caught, never silently shifted), and lists
 which items are still incomplete — so it doubles as the progress tracker.
 
+For `weight` rows it also derives **`shape_label`** — the item's label with the trailing oz
+stripped, e.g. `Lead Pencil (rubber sleeve) 1/4 oz` → `Lead Pencil (rubber sleeve)`. The Gear
+Sim's weight picker offers `(shape_label, oz)` pairs, which is what lets a rubber sleeve and the
+metal show up as one option without giving `shape` a second job; every `shape_label` exists at
+every oz, so the pair identifies exactly one row.
+
 ---
 
 ## Minimum viable set (80/20 — do this first)

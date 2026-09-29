@@ -57,13 +57,10 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
 - The `gearRows === 12` assertion (`sanity_pass.js:344`) WILL change — update it deliberately,
   and keep the `!html.includes('gear-grid')` assertion.
 
-- [ ] **P2. UI (Approach B)** — `index.html` (both tabs), `rig.js` (`mlId`/`ldId` replacing
-      mat+lb), `solver.js`, `sonar.js`, `src/shared/forms.js` + `syncSelect`, then `sw.js`
-      SHELL_FILES + VERSION bump.
-      Potential bug: community catch rows only carry mat+lb, so the replay path MUST keep a
-      generic-line fallback or old rows resolve to nothing.
-      Verified: `sanity_pass.js` green after the row-count update; picker populated while
-      offline; both tabs stay in sync.
+- [x] **P2. UI (Approach B) — DONE 2026-09-28, commit `9c0838c`, sanity 108/108.** Shipped as
+      scoped: 2 brand pickers per pair of forms (Mainline, Leader) + a weight-shape picker, all
+      data-driven from `src/data/tackle.json`; each pick resolves into the hidden mat/lb fields so
+      the physics and baselines are untouched. `tackle.json` is committed and SW-cached.
 
       **DECOMPOSITION (found 2026-09-28 while starting this — use it, it is the cheap path):**
       keep the picker's `value` as the tackle.json **id** but have the plumbing resolve
@@ -93,13 +90,13 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
 
 ## Handoff — 2026-09-28 (end of session; context exhausted, nothing half-built)
 
-**Objective:** land the measured-tackle library into the Gear Sim (P1 done, P2-P4 open).
-**Last completed step:** P1 — 185-row CSV + schema, committed `ea1a02f`, sanity 107/107, pushed.
-**Immediate next step:** decide the Weight-control question above, then execute P2 using the
-decomposition above (pickers + id->mat/lb plumbing ONLY, physics untouched), commit it, and only
-then do P3 (proxy -> real diameters + re-pin the frozen baselines) and P4 (the migration).
-Nothing is mid-flight: the working tree is clean, the app runs, and `src/data/tackle.json` is
-deliberately absent (it ships with P3).
+**Objective:** land the measured-tackle library into the Gear Sim (P1 + P2 done, P3/P4 open).
+**Last completed step:** P2 — data-driven line + weight-shape pickers, committed `9c0838c`,
+sanity 108/108, pushed. `src/data/tackle.json` is now committed and service-worker cached.
+**Immediate next step:** **P3** — swap the diameter PROXY for the real measured diameters and
+re-pin the frozen baselines (deliberate contract bump), then the rest of the measured units, then
+P4's migration. Nothing is mid-flight: tree clean, app runs, physics untouched so the baselines
+still hold.
 
 
 

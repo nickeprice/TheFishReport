@@ -4,6 +4,25 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Gear Sim line + weight pickers are live (P2)
+Approach B shipped: the four material/lb dropdowns per pair of forms are gone, replaced by **one
+brand-specific picker per line** (Mainline, Leader), populated at boot from `src/data/tackle.json` —
+110 lines grouped by material, `generic` as the fallback. `Weight` gains a **shape picker** built
+from the rows' derived `shape_label`, so metal, rubber sleeve and shape are all selectable-in-one;
+with oz that identifies exactly one weight row.
+
+The picker only **CHOOSES**: each pick resolves into hidden `ml-mat`/`ml-lb`/`ld-mat`/`ld-lb`, so
+the rig model, solver, catch row and DB all stay material+lb — which means the **physics is
+untouched and the frozen baselines do not move** (P3 does the real-diameter swap). A pre-picker rig
+in localStorage still restores, via `tackleLineByMatLb()`.
+
+Files: `index.html`, new `src/shared/tackle.js`, `rig.js`, `forms.js` (dead LB cascade deleted),
+`zone.js` (`RIG_REQUIRED`), `app.js` (loads the library before `restoreRig()`), `sw.js`
+(`SHELL_FILES` + VERSION `v2.03.12`), `sanity_pass.js`, `docs/SYMBOLS.md`. **`src/data/tackle.json`
+is now committed** — the pickers are its consumer, which is what the contract was waiting for.
+Verified: sanity 108/108 (the a11y check now skips `type="hidden"`, which is not user-reachable);
+`tackle.json` serves 200 with 185 items + 10 shape labels; all 6 pickers present in the served HTML.
+
 ## 2026-09-28 — Tackle library expanded to 185 measured rows (P1)
 `docs/tackle_measurements.csv` went 38 → **185 rows** so the Gear Sim can stop running on
 unitless fudges: **110 lines** (brand-expanded, role-agnostic ids `{material}-{brand}-{lb}`,

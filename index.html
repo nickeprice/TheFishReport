@@ -42,6 +42,19 @@
         </button>
         <div id="station-map" class="station-map" hidden></div>
         <div id="station-map-note" class="station-map-note" hidden></div>
+
+        <!-- PRIVATE SAVED SPOTS (WS-5, issue #3b). Private by design: RLS on
+             public.favorite_spots keeps every spot visible only to the session that saved
+             it, and nothing here ever reaches the public feed or a telemetry payload. -->
+        <h3 class="modal-subtitle" style="margin-top: 25px;">My Saved Spots (private)</h3>
+        <div id="spot-save-row" hidden>
+            <div class="search-row">
+                <input type="text" id="spot-label" aria-label="Name this fishing spot" maxlength="60" placeholder="Name this spot (e.g. Blue Creek run)" style="min-height: 44px;">
+                <button onclick="saveCurrentSpot()" style="min-height: 44px; padding: 10px 15px;">Save this spot</button>
+            </div>
+        </div>
+        <div id="spot-status" class="spot-status" hidden></div>
+        <div id="favorite-spots" class="favorite-spots"></div>
         
         <h3 class="modal-subtitle" style="margin-top: 25px;">Quick Regional Presets</h3>
         <div class="preset-list">
@@ -449,6 +462,8 @@
 <script src="src/features/station/search.js"></script>
 <script src="src/shared/refresh.js"></script>
 <script src="src/shared/pwa.js"></script>
+<script src="src/features/map/spots.js"></script>
+<script src="src/features/map/spots-map.js"></script>
 <script src="src/features/map/map.js"></script>
 <script src="src/shared/tackle.js"></script>
 <script src="src/app.js"></script>

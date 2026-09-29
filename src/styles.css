@@ -533,3 +533,49 @@ td.empty-state { padding: 30px 10px; }
 .leaflet-popup-content a { color: var(--accent-blue); font-weight: bold; }
 .leaflet-container { background: #111; }
 
+/* --- WS-5 private saved spots (station modal; the data itself is RLS-protected) --- */
+.spot-status {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 6px 2px 0;
+    line-height: 1.4;
+}
+.favorite-spots { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.spot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 6px 8px;
+    background: #161618;
+}
+/* The label block opens the spot; the star reads as "this one is mine". */
+.spot-open {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    background: none;
+    border: none;
+    color: #e5e7eb;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 0;
+    cursor: pointer;
+}
+.spot-open::before { content: '\2605 '; color: var(--accent-yellow); }
+.spot-meta { display: block; font-weight: 500; color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+.spot-pin { background: none; border: none; }
+.spot-pin-dot {
+    display: block;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--accent-yellow);
+    text-shadow: 0 0 3px #000;
+}
+.spot-empty { font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px 2px; }
+

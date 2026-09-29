@@ -17,6 +17,7 @@ can both be built from the same source of truth.
 | --- | --- |
 | `20260917000000_init_schema.sql` | Creates `public.catches`, the `public_catch_feed` view, and the `get_global_calibration()` RPC. Every statement is `IF NOT EXISTS` / `CREATE OR REPLACE`, so it is a no-op against the existing live database. |
 | `20260917000100_normalize_rls.sql` | Replaces the five overlapping legacy RLS policies on `catches` with one canonical policy per command (select / insert / update / delete). Behaviour-preserving — see the header comment in that file for the role-by-role proof. |
+| `20260929190000_favorite_spots.sql` | Adds `public.favorite_spots` — the PRIVATE saved fishing spots (WS-5): RLS enabled in the same transaction, one owner-scoped policy per command (`user_id = auth.uid()`), `user_id` defaulted by the database, no view and no RPC over it. Applied live 2026-09-29. |
 
 The migrations were authored from the **live catalog** (introspected via
 `pg_attribute`, `pg_indexes`, `pg_get_viewdef()` and `pg_get_functiondef()`), so

@@ -4,6 +4,54 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — WS-5: PRIVATE favourite spots (map "save this spot" + a star layer)
+Issue #3b, second half. The angler can now save the water they are standing on — "Blue Creek
+run" — and re-open it days later to plan: the spot is **private by construction**, never
+published.
+
+**DB.** New `supabase/migrations/20260929190000_favorite_spots.sql` creates
+`public.favorite_spots` (`id` / `user_id` / `label` / `station_id` / `river_name` /
+`latitude` / `longitude` / `notes` / `created_at` / `updated_at`). RLS is enabled in the SAME
+transaction as the table, because anon/authenticated hold the grants (same privilege set as
+`catches`) and RLS is the only thing protecting coordinates. One canonical policy per command,
+**all five predicates owner-scoped** (`user_id = auth.uid()`), and `user_id` defaults to
+`auth.uid()` — the client NEVER sends it, so a payload cannot claim another angler's row
+(`toSpotRow()` is asserted to omit it). The `id` is the primary key and client-generated, so a
+re-save is an EDIT and a retry cannot duplicate. Applied with `npx supabase db push --yes` and
+verified live: RLS on, 4 policies, `user_id` default `auth.uid()`, PK on `id`, grants matching
+`catches`, and **0 rows visible without a JWT** (`user_id = auth.uid()` is NULL for a
+signed-out visitor). Then a live REST round-trip through two throwaway guest sessions (the same
+precedent used to verify catch writes): the EXACT `toSpotRow()` payload inserted (`201`, and the
+row's `user_id` came back as the JWT's owner while the payload never carried one), the owner read
+it back with the client's own select list, **a different session got `[]`**, a bare publishable
+key with no JWT got `[]`, a cross-session DELETE was a no-op, and the owner's delete cleaned the
+probe row up (table empty). There is **no view and no `SECURITY DEFINER` function** over the table and
+the public feed never references it — a sanity guard now fails the build if a future migration
+adds one, or mentions the table next to a view/definer/public-feed reference.
+
+**Client.** `services/supabase.js` gains `toSpotRow()`, `saveFavoriteSpot()` (upsert on the
+client id; rejects an unnamed spot or a NaN coordinate BEFORE the network),
+`fetchFavoriteSpots()` (`null` = unreachable vs `[]` = empty, the distinction the offline path
+needs) and `deleteFavoriteSpot()`. New `features/map/spots.js` owns the modal list: label +
+gauge + a delete button, rendered with `textContent` only; the local mirror
+(`favorite_spots_cache`) keeps the list usable offline and the status line says when the server
+was unreachable; saving needs a session (`AuthState`) and otherwise just explains itself. New
+`features/map/spots-map.js` (split out to keep each file one concern) draws the **star layer**
+and its popup — "Fish this spot" runs the SAME `selectPreset()` path as a gauge pin, so the
+per-day report answers "conditions at my spot tomorrow", and the existing day nav does the rest.
+`index.html` gains the "My Saved Spots (private)" block in the station modal; `auth.js` repaints
+the list on every auth change and `picker.js` on modal open; `map.js` plots the stars from local
+state (so they survive an `/api/nearby_stations` outage) and `styles.css` gets the row/star CSS.
+`sw.js` `v2.03.23` (both new modules are in `SHELL_FILES`). **133/133 GREEN** — 5 new assertions:
+the migration's RLS/policy shape + leak scan, the real `toSpotRow()` (never a `user_id`, NaN
+coords → null), the real list renderer against a recording DOM (signed-out explanation, 2 rows
+as text, offline note), the signed-out save that must not touch the network, and GPS hygiene
+(no coordinate ever reaches `logDebug`).
+- Key files: `supabase/migrations/20260929190000_favorite_spots.sql`, `src/services/supabase.js`,
+  `src/features/map/{spots,spots-map,map}.js`, `src/features/{auth,station/picker}.js`,
+  `index.html`, `src/styles.css`, `sw.js`, `sanity_pass.js`,
+  `docs/{CONTRACT,SYMBOLS}.md`, `supabase/README.md`.
+
 ## 2026-09-29 — WS-8a: the scientific model (thermal curve, gauge depth, colour/light, "where to fish")
 The Gear Sim's environment model is rebuilt around the physics that actually moves fish. The old
 temperature rule was ONE line — "`>= 55F` and they rise" — and it had it backwards above the

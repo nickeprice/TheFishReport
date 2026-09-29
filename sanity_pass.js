@@ -1032,6 +1032,164 @@ function behaviorChecks(done) {
     fail('the where-to-fish row is painted, and the frozen suggestion count did not move', String(e.message).split('\n')[0]);
   }
 
+  // --- WS-5: private favourite spots (issue #3b) -------------------------------
+  // The privacy boundary is the whole feature: a spot must be invisible to every other
+  // session. Three things are asserted, and only the middle one is a regex:
+  //   1. the MIGRATION's shape (RLS on, four owner-scoped policies, user_id defaulted by
+  //      the database) and that the file defines no view/RPC that could expose it;
+  //   2. the real `toSpotRow()` — it must never set `user_id`, so a payload cannot claim
+  //      someone else's identity, and a bad coordinate must leave the table alone;
+  //   3. the real list renderer against the recording DOM, plus the signed-out guard that
+  //      must stop the save BEFORE any network call.
+  try {
+    const spotsMigration = path.join(ROOT, 'supabase', 'migrations', '20260929190000_favorite_spots.sql');
+    const migOk = fs.existsSync(spotsMigration);
+    const mig = migOk ? fs.readFileSync(spotsMigration, 'utf8') : '';
+    const migSql = mig.replace(/--[^\n]*/g, '');   // DDL only: a comment can never grant a row
+    const policies = (migSql.match(/create policy "favorite_spots_\w+" on public\.favorite_spots/g) || []).length;
+    // select/update/delete carry USING, insert/update carry WITH CHECK — all five owner-scoped.
+    const usingOwn = (migSql.match(/using \(user_id = auth\.uid\(\)\)/g) || []).length;
+    const checkOwn = (migSql.match(/with check \(user_id = auth\.uid\(\)\)/g) || []).length;
+    const migShapeOk = migOk &&
+      /create table if not exists public\.favorite_spots/.test(migSql) &&
+      /user_id\s+uuid\s+not null default auth\.uid\(\)/.test(migSql) &&
+      /alter table public\.favorite_spots enable row level security/.test(migSql) &&
+      /grant select, insert, update, delete on public\.favorite_spots/.test(migSql) &&
+      policies === 4 && usingOwn === 3 && checkOwn === 2 &&
+      !/create (or replace )?view/i.test(migSql) && !/security definer/i.test(migSql);
+    // No view, no SECURITY DEFINER function and no public-feed reference anywhere in the
+    // migrations can expose these rows to another angler.
+    const migDir = path.join(ROOT, 'supabase', 'migrations');
+    const leaky = fs.readdirSync(migDir).filter((f) => {
+      // Comments cannot leak anything, so strip them first: the check is about real DDL.
+      const src = fs.readFileSync(path.join(migDir, f), 'utf8').replace(/--[^\n]*/g, '');
+      if (!/favorite_spots/.test(src)) return false;
+      return /create (or replace )?view/i.test(src) || /security definer/i.test(src) || /public_catch_feed/.test(src);
+    });
+    const migPrivacyOk = leaky.length === 0;
+    migShapeOk && migPrivacyOk
+      ? ok('favorite_spots is RLS default-deny, owner-scoped, and never exposed',
+           'RLS on + 4 policies (auth.uid()), user_id default auth.uid(), no view / no definer fn, absent from the public schema')
+      : fail('favorite_spots is RLS default-deny, owner-scoped, and never exposed',
+             `exists=${migOk} policies=${policies} using=${usingOwn} check=${checkOwn} privacy=${migPrivacyOk} leaky=${leaky.join(',')}`);
+
+    // 2. The real payload -> row mapper.
+    const spotFn = extract('toSpotRow');
+    if (!spotFn) {
+      fail('a spot payload cannot claim another angler\'s row', 'toSpotRow() not found');
+      fail('the saved-spot list renders my own spots only', 'toSpotRow() not found');
+    } else {
+      eval(spotFn);
+      const mapped = toSpotRow({
+        clientId: '11111111-2222-3333-4444-555555555555', label: '  Blue Creek run  ',
+        stationId: '12101500', riverName: 'Puyallup River at Puyallup, WA',
+        latitude: '47.195', longitude: '-122.302', notes: 'fish the seam'
+      });
+      const spoof = toSpotRow({ label: 'x', latitude: 47, longitude: -122, user_id: 'someone-else' });
+      const bad = toSpotRow({ label: 'no position', latitude: 'nope', longitude: null });
+      const mapOk = Object.prototype.hasOwnProperty.call(mapped, 'user_id') === false &&
+        Object.prototype.hasOwnProperty.call(spoof, 'user_id') === false &&
+        mapped.label === 'Blue Creek run' && mapped.station_id === '12101500' &&
+        mapped.latitude === 47.195 && mapped.longitude === -122.302 &&
+        typeof mapped.updated_at === 'string' && bad.latitude === null && bad.longitude === null;
+      mapOk
+        ? ok('a spot payload cannot claim another angler\'s row',
+             'toSpotRow() never emits user_id (the DB default fills auth.uid()), trims the label, NaN coords -> null')
+        : fail('a spot payload cannot claim another angler\'s row',
+               `user_id=${mapped.user_id} spoof=${spoof.user_id} label="${mapped.label}" lat=${mapped.latitude} bad=${bad.latitude}`);
+    }
+  } catch (e) {
+    fail('favorite_spots is RLS default-deny, owner-scoped, and never exposed', String(e.message).split('\n')[0]);
+    fail('a spot payload cannot claim another angler\'s row', String(e.message).split('\n')[0]);
+  }
+
+  // WS-5 runtime: the real list renderer + the signed-out save guard, against a recording
+  // DOM. spots.js is not loaded by any other harness block, so eval the real file.
+  try {
+    const recEls = {};
+    const recGetById = (id) => {
+      if (!recEls[id]) {
+        recEls[id] = {
+          id, children: [], innerHTML: '', textContent: '', hidden: false, className: '',
+          appendChild(c) { this.children.push(c); }
+        };
+      }
+      return recEls[id];
+    };
+    const realGetById2 = global.document.getElementById;
+    const realCreate = global.document.createElement;
+    const realAuth = global.AuthState;
+    const realSupa = global.Supa;
+    // showToast/logDebug: logDebug is the harness's global stub, but showToast is a LOCAL
+    // declaration (the earlier block evaluates app.js's real one), so the local wins.
+    const realToast = showToast;
+    const realLogDebug = global.logDebug;
+    global.document.getElementById = recGetById;
+    global.document.createElement = (tag) => ({
+      tag, children: [], className: '', textContent: '', type: '',
+      appendChild(c) { this.children.push(c); }
+    });
+    const toasts = [];
+    showToast = (m) => { toasts.push(String(m)); };
+    const logs = [];
+    global.logDebug = (m) => { logs.push(String(m)); };
+
+    eval(fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'spots.js'), 'utf8'));
+
+    // (a) signed out: no list, no save row, an explanation — and the save must not touch
+    // the network. saveCurrentSpot() returns before its first await, so this is sync.
+    global.AuthState = { signedIn: false, name: '' };
+    let wrote = 0;
+    global.Supa = { saveFavoriteSpot: () => { wrote++; return { ok: true }; } };
+    renderFavoriteSpots();
+    const signedOutOk = recEls['spot-save-row'].hidden === true &&
+      /^Start a session/.test(recEls['spot-status'].textContent) &&
+      recEls['favorite-spots'].children.length === 0;
+    saveCurrentSpot();
+    const guardOk = wrote === 0 && toasts.length === 1 && /Start a session/.test(toasts[0]);
+
+    // (b) signed in with two rows: one .spot-row each, labels as TEXT (never innerHTML),
+    // and the offline note when the server could not be reached.
+    global.AuthState = { signedIn: true, name: 'Nick' };
+    spotsState.rows = [
+      { id: 'a1', label: 'Blue Creek run', station_id: '12101500', river_name: 'Puyallup River at Puyallup, WA' },
+      { id: 'b2', label: 'Lower Nisqually', station_id: '12089500', river_name: 'Nisqually River at McKenna' }
+    ];
+    spotsState.loaded = true;
+    spotsState.offline = true;
+    renderFavoriteSpots();
+    const rows = recEls['favorite-spots'].children;
+    const labels = rows.map((r) => r.children[0] && r.children[0].textContent);
+    const metas = rows.map((r) => {
+      const span = r.children[0] && r.children[0].children[0];
+      return span ? span.textContent : '';
+    });
+    const listOk = recEls['spot-save-row'].hidden === false && rows.length === 2 &&
+      rows[0].className === 'spot-row' && labels[0] === 'Blue Creek run' && labels[1] === 'Lower Nisqually' &&
+      /USGS 12101500/.test(metas[0]) && /USGS 12089500/.test(metas[1]) &&
+      recEls['favorite-spots'].innerHTML === '' &&
+      /could not be reached/.test(recEls['spot-status'].textContent);
+
+    // (c) GPS hygiene: the debug trail carries labels, never coordinates.
+    const loggedCoords = logs.filter((l) => /\d+\.\d+\s*,\s*-?\d+\.\d+/.test(l) || /lat\b|lon\b/i.test(l));
+
+    global.document.getElementById = realGetById2;
+    global.document.createElement = realCreate;
+    showToast = realToast;
+    global.logDebug = realLogDebug;
+    if (realAuth === undefined) delete global.AuthState; else global.AuthState = realAuth;
+    if (realSupa === undefined) delete global.Supa; else global.Supa = realSupa;
+
+    (signedOutOk && guardOk && listOk && loggedCoords.length === 0)
+      ? ok('the saved-spot list shows my spots only, and never leaks coordinates',
+           'signed out -> hidden save row + explanation + no write; 2 rows rendered as text with their gauge; no lat/lon in the log')
+      : fail('the saved-spot list shows my spots only, and never leaks coordinates',
+             `signedOut=${signedOutOk} guard=${guardOk} wrote=${wrote} list=${listOk} ` +
+             `rows=${rows.length} labels=[${labels.join(' | ')}] metas=[${metas.join(' | ')}] coords=${loggedCoords.join(';')}`);
+  } catch (e) {
+    fail('the saved-spot list shows my spots only, and never leaks coordinates', String(e.message).split('\n')[0]);
+  }
+
   // --- P4b: the PICKED brand must reach the ROW -------------------------------
   // The three identity columns are only worth their migration if the client writes them, so
   // assert the real toCatchRow() mapping (not a regex): ids present -> columns set, ids absent

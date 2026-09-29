@@ -114,6 +114,17 @@ async function refreshStationMap(center) {
             .bindPopup(stationPopupHtml(s))
             .addTo(_stationMarkers);
     });
+    // WS-5: the angler's OWN saved spots, as a star layer. Plotted from local state, so
+    // the layer appears even when /api/nearby_stations is unreachable. Private data:
+    // these coordinates are never sent anywhere by this plot.
+    if (typeof spotsState !== 'undefined' && spotsState.rows.length && typeof savedSpotIcon === 'function') {
+        spotsState.rows.forEach(function (sp) {
+            if (sp.latitude == null || sp.longitude == null) return;
+            window.L.marker([Number(sp.latitude), Number(sp.longitude)], { icon: savedSpotIcon(), title: sp.label })
+                .bindPopup(savedSpotPopupHtml(sp))
+                .addTo(_stationMarkers);
+        });
+    }
     logDebug('Station map: ' + stations.length + ' gauge(s) plotted', 'MAP');
     return { count: stations.length, note: (data && data.note) || '' };
 }
@@ -133,6 +144,8 @@ async function showStationMap() {
     }
 
     var center = mapCenter();
+    // WS-5: refresh the private spot list first, so the star layer below is current.
+    if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     if (!_stationMap) {
         _stationMap = window.L.map(box).setView(center, MAP_START_ZOOM);
         window.L.tileLayer(LEAFLET_TILES_URL, { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(_stationMap);
@@ -147,9 +160,11 @@ async function showStationMap() {
     try {
         var out = await refreshStationMap(center);
         if (note) {
+            var spotsN = (typeof spotsState !== 'undefined' && spotsState.rows.length)
+                ? ' \u00b7 ' + spotsState.rows.length + ' saved spot(s) (star).' : '';
             if (out.note) note.textContent = out.note;
-            else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live. Tap a pin to fish it.';
-            else note.textContent = 'No live gauges found nearby.';
+            else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live.' + spotsN + ' Tap a pin to fish it.';
+            else note.textContent = 'No live gauges found nearby.' + spotsN;
         }
     } catch (e) {
         logDebug('Station map feed failed: ' + e.message, 'MAP');

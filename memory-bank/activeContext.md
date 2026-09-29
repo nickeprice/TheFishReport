@@ -15,23 +15,25 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1/2/3/6/7 + Phases 1–3 committed; **Phase 4 / WS-5 are NEXT**)
+## HANDOFF — 2026-09-29 (WS-1/2/3/5/6/7 + Phases 1–3 committed; **Phase 4 / WS-8b are NEXT**)
 
 Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-6 (HUD
 polish), WS-7 (HUD v2 + label addendum), **Phase 1** (gradient on the estimate only + one bullet
 style, `37fb1ed`), **Phase 2** (WS-4 per-day reference-hour weather + wind direction text +
-tappable 24-hour popup, `880753d`) and **Phase 3** (WS-8a: thermal-optimum curve, own-gauge colour,
-reference-hour light, demoted barometer, measured `A/W` gauge depth, the "where to fish" row).
-Current state: sanity **128/128**, `sw.js` `v2.03.22`, `origin/main` clean.
+tappable 24-hour popup, `880753d`), **Phase 3** (WS-8a: thermal-optimum curve, own-gauge colour,
+reference-hour light, demoted barometer, measured `A/W` gauge depth, the "where to fish" row) and
+**WS-5** (private favourite spots: `favorite_spots` + RLS default-deny, client CRUD, the modal
+list, the map star layer). Current state: sanity **133/133**, `sw.js` `v2.03.23`, `origin/main`
+clean.
 
 **NEXT = Phase 4 / WS-8b — but it needs a separate product confirm before any code** (DEM
 cross-section → a real spot depth instead of the same-reach estimate, the crepuscular light curve,
-finer velocity-lie buckets, re-enabling the community-sonar calibrator). **WS-5** (private
-favourite spots + `favorite_spots` migration, RLS default-deny) needs no confirm and can go first.
+finer velocity-lie buckets, re-enabling the community-sonar calibrator). Every other approved
+workstream in issues #1–#3 is now shipped; what remains is that confirm.
 
 Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
-per-day weather by the live API + sanity, the popup CSS by rule, the new where-to-fish row only by
-the recording `<ul>` — none by eye).
+per-day weather by the live API + sanity, the popup CSS by rule, the where-to-fish row and the
+saved-spot list only by the recording DOM, the star layer not at all — none by eye).
 
 ## Instruction ledger — chat asks persisted to `.clinerules`
 - [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`
@@ -113,12 +115,33 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       Verify: `python3 -m py_compile api/water_report.py`; `node sanity_pass.js --quiet`.
 
 ### WS-5 — Private favourite spots + map (issue #3b)
-- [ ] `supabase/migrations/*` (new), `services/supabase.js`, `features/map/map.js`,
-      `index.html`, `src/styles.css`, `sw.js` — idempotent timestamped `favorite_spots` table
-      with RLS scoped to the owning anonymous user; client CRUD; map "save this spot" + a saved
-      layer. Never in the public feed.
+- [x] `supabase/migrations/20260929190000_favorite_spots.sql` (new),
+      `services/supabase.js` (`toSpotRow`/`saveFavoriteSpot`/`fetchFavoriteSpots`/
+      `deleteFavoriteSpot`), `features/map/spots.js` + `features/map/spots-map.js` (new),
+      `features/map/map.js` (star layer), `index.html` (modal block + 2 script tags),
+      `src/styles.css`, `sw.js` (SHELL_FILES + `v2.03.23`), `auth.js`/`picker.js` hooks —
+      `favorite_spots` table, RLS enabled with the table, one owner-scoped policy per command
+      (`user_id = auth.uid()`, defaulted by the DB and never client-sent); client CRUD; the
+      modal list, the star layer, and "Fish this spot" through the SAME `selectPreset()` path.
+      Never in the public feed (no view, no `SECURITY DEFINER`, not referenced by it).
       Potential bug: RLS must default-deny — a spot must be invisible to another session.
       Verify: `npx supabase db push --yes < /dev/null`, then a read-only live-DB query.
+      Verified: migration APPLIED (`Applying migration 20260929190000_favorite_spots.sql...
+      Finished`) and live-verified read-only — `relrowsecurity=true`, 4 owner-scoped policies
+      (3 USING + 2 WITH CHECK), `user_id` default `auth.uid()`, `favorite_spots_pkey PRIMARY
+      KEY (id)`, grants identical to `catches`, and **0 rows visible without a JWT**
+      (`user_id = auth.uid()` → NULL). PLUS a live REST round-trip with two throwaway guest
+      sessions: the exact `toSpotRow()` payload → 201 with `user_id` stamped from the JWT, the
+      owner read it back with the client's select list, **another session saw `[]`** (and a
+      cross-session DELETE was a no-op), a bare publishable key saw `[]`, and the probe row was
+      deleted by its owner (table back to 0 rows). Sanity **133/133** with 5 new assertions
+      (migration shape + a migration-wide leak scan, the real `toSpotRow()` never emitting
+      `user_id`, the real list renderer on a recording DOM, the signed-out save that must not
+      reach the network, and GPS hygiene: no coordinate in `logDebug`).
+      Scope calls: `spots-map.js` was split out of `spots.js` (Leaflet concern) so each file
+      stays one topic — both are OVER the 150-line target (`spots.js` 195, `map.js` 173,
+      `supabase.js` 457), recorded here rather than mangled. No outbox for spots (planning
+      data, not a catch): a failed save tells the angler instead of queueing.
 
 ### WS-6 — Gear Sim HUD polish (chat ask 2026-09-29, same session as WS-3)
 - [x] Four asks, all shipped: (1) the strike-zone and line-height panels are CENTRED — label,
@@ -258,8 +281,9 @@ change.
 - [ ] Phase 4 — deferred (separate confirm): WS-8b (persist the DEM width@height cross-section →
   real spot depth; crepuscular light curve; velocity lie buckets; re-enable the community-sonar
   calibrator — a product decision).
-- [ ] Still queued: **WS-5** private favourite spots + map (`favorite_spots` migration, RLS
-  default-deny).
+- [ ] Still queued: nothing from issues #1–#3 — WS-5 shipped 2026-09-29 (`favorite_spots` + RLS
+  default-deny + the modal list + the map star layer). Phase 4 / WS-8b is the only open item and
+  it needs a product confirm.
 - Guardrails for every wire: own-gauge only · `null` → `--` · estimates carry provenance +
   uncertainty · never a fabricated spot number · `textContent` for user/data text.
 

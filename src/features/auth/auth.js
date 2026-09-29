@@ -30,6 +30,9 @@ function applyAuthState(signedIn, name) {
         }
     }
     logDebug('Auth: ' + (signedIn ? ('guest session for ' + AuthState.name) : 'signed out'), 'AUTH');
+    // WS-5: the private spot list is session-scoped, so it repaints on every auth change
+    // (and re-fetches once a session exists).
+    if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
 }
 
 async function initAuth() {

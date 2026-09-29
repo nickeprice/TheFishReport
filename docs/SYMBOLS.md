@@ -45,7 +45,10 @@ this file**, or the pass fails.
 - **supabase.js** — `isConfigured()`, `ensureSdk()`, `getClient()`, `rememberName(name)`,
   `recallName()`, `signInGuest(name)`, `signOut()`, `getSession()`, `toCatchRow(payload)`,
   `insertCatch(payload)`, `fetchMyCatches()`, `updateMyCatch(id, patch)`,
-  `deleteMyCatch(id)`, `fetchPublicFeed(limit)`, `fetchGlobalCalibration(flow, species)`
+  `deleteMyCatch(id)`, `fetchPublicFeed(limit)`, `fetchGlobalCalibration(flow, species)`,
+  `toSpotRow(payload)`, `saveFavoriteSpot(payload)`, `fetchFavoriteSpots()`,
+  `deleteFavoriteSpot(id)` — the private favourite-spot CRUD (WS-5; `user_id` is never
+  client-supplied, the DB default owns it)
 - **water.js** — `fetchCFSMomentum(siteId)`, `fetchCfsReadingsWdfn(siteId)`,
   `fetchCfsReadingsLegacy(siteId)`, `applyOwnGaugeWaterQuality(waterTempF, turbidityFnu)`,
   `applyReportWeather(rep)`, `loadEscapementData(siteId)`, `refreshEscapement(siteId)`,
@@ -127,7 +130,13 @@ this file**, or the pass fails.
 - **search.js** — `searchStation()`
 
 ## src/features/map
-- **map.js** — `showStationMap()`, `loadLeaflet()`
+- **spots.js** — private favourite spots (WS-5): `SPOTS_CACHE_KEY`, `SPOT_LABEL_MAX`,
+  `spotsState`, `loadFavoriteSpots()`, `renderFavoriteSpots()`, `saveCurrentSpot()`,
+  `selectSavedSpot(id)`, `deleteSavedSpot(id)` — RLS-private planning data, cached locally
+- **spots-map.js** — `savedSpotIcon()`, `savedSpotPopupHtml(spot)` — the saved-spot star
+  layer (Leaflet half, split out of spots.js)
+- **map.js** — `showStationMap()`, `loadLeaflet()`, `refreshStationMap(center)`,
+  `mapCenter()`
 
 ## src/app.js
 Bootstrap only — no public API. It wires `window.onload` to the globals above.

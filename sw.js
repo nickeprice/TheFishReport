@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.22';
+const VERSION = 'v2.03.23';
 const SHELL_CACHE = 'tfr-shell-' + VERSION;
 const API_CACHE = 'tfr-api-' + VERSION;
 const ASSET_CACHE = 'tfr-assets-' + VERSION;
@@ -71,6 +71,8 @@ const SHELL_FILES = [
     '/src/features/station/search.js',
     '/src/shared/refresh.js',
     '/src/shared/pwa.js',
+    '/src/features/map/spots.js',
+    '/src/features/map/spots-map.js',
     '/src/features/map/map.js',
     '/src/app.js',
     '/src/services/supabase.js',

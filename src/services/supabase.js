@@ -4,7 +4,9 @@
  * public: isConfigured(), ensureSdk(), getClient(), rememberName(name), recallName(),
  *         signInGuest(name), signOut(), getSession(), toCatchRow(payload),
  *         insertCatch(payload), fetchMyCatches(), updateMyCatch(id, patch),
- *         deleteMyCatch(id), fetchPublicFeed(limit), fetchGlobalCalibration(flow, species)
+ *         deleteMyCatch(id), fetchPublicFeed(limit), fetchGlobalCalibration(flow, species),
+ *         toSpotRow(payload), saveFavoriteSpot(payload), fetchFavoriteSpots(),
+ *         deleteFavoriteSpot(id)
  *
  * Classic script (global scope). Loaded BEFORE src/app.js.
  *
@@ -265,6 +267,82 @@ async function deleteMyCatch(id) {
     }
 }
 
+// ------------------------------------------------ PRIVATE FAVOURITE SPOTS ---
+// WS-5 (issue #3b). A spot is PRIVATE planning data: the live RLS policies on
+// `public.favorite_spots` scope every command to `user_id = auth.uid()`, and
+// `user_id` is left to the DATABASE default (auth.uid()) — `toSpotRow()` deliberately
+// never sets it, so a payload cannot claim another angler's identity or read anybody
+// else's spots. Read the schema + privacy proof in
+// `supabase/migrations/20260929190000_favorite_spots.sql`. Nothing here is public.
+
+/** payload -> favorite_spots columns. NEVER sets user_id (the DB default owns it). */
+function toSpotRow(payload) {
+    var lat = parseFloat(payload.latitude);
+    var lon = parseFloat(payload.longitude);
+    return {
+        // Client-generated id: the same id on an edit, so an upsert cannot duplicate.
+        id: (payload.clientId !== undefined && payload.clientId !== null) ? payload.clientId : undefined,
+        label: String(payload.label || '').trim().slice(0, 60),
+        station_id: payload.stationId ? String(payload.stationId).slice(0, 20) : null,
+        river_name: payload.riverName ? String(payload.riverName).slice(0, 80) : null,
+        latitude: isNaN(lat) ? null : lat,
+        longitude: isNaN(lon) ? null : lon,
+        notes: payload.notes ? String(payload.notes).slice(0, 240) : null,
+        updated_at: new Date().toISOString()
+    };
+}
+
+/** Private write: save (or re-save, same id = edit) one of MY spots.
+ *
+ * Idempotent on the primary key, so a retry after a response lost in a dead zone
+ * updates the same row instead of planting a second spot. An unnamed spot or a
+ * non-numeric coordinate is rejected BEFORE the network — a bad row cannot land.
+ */
+async function saveFavoriteSpot(payload) {
+    var client = getClient();
+    if (!client) return { ok: false, offline: true, error: 'Supabase not configured or offline' };
+    var row = toSpotRow(payload);
+    if (!row.label || row.latitude === null || row.longitude === null) {
+        return { ok: false, error: 'A spot needs a name and a position.' };
+    }
+    try {
+        var res = await client.from('favorite_spots').upsert(row, { onConflict: 'id' }).select('id');
+        if (res.error) return { ok: false, error: res.error.message };
+        var saved = (res.data && res.data.length) ? res.data[0] : null;
+        return { ok: true, id: saved ? saved.id : (row.id || null) };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
+
+/** Private read: MY spots only (RLS guarantees ownership; no view, no RPC). */
+async function fetchFavoriteSpots() {
+    var client = getClient();
+    if (!client) return null;   // null = unreachable, [] = reachable and empty
+    try {
+        var res = await client.from('favorite_spots')
+            .select('id,label,station_id,river_name,latitude,longitude,notes,created_at')
+            .order('created_at', { ascending: true });
+        if (res.error) return null;
+        return res.data || [];
+    } catch (e) {
+        return null;
+    }
+}
+
+/** Private delete: remove one of MY spots. */
+async function deleteFavoriteSpot(id) {
+    var client = getClient();
+    if (!client) return { ok: false, error: 'Supabase not configured or offline' };
+    try {
+        var res = await client.from('favorite_spots').delete().eq('id', id);
+        if (res.error) return { ok: false, error: res.error.message };
+        return { ok: true };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
+
 /** Public read: the rebuilt view exposes name / time / river / fish.
  * Falls back gracefully when run against an older view (name,time[,river]). */
 async function fetchPublicFeed(limit) {
@@ -366,10 +444,15 @@ if (typeof window !== 'undefined') {
         fetchMyCatches: fetchMyCatches,
         updateMyCatch: updateMyCatch,
         deleteMyCatch: deleteMyCatch,
+        // private favourite spots (WS-5)
+        saveFavoriteSpot: saveFavoriteSpot,
+        fetchFavoriteSpots: fetchFavoriteSpots,
+        deleteFavoriteSpot: deleteFavoriteSpot,
         // support
         isConfigured: isConfigured,
         ensureSdk: ensureSdk,
         toCatchRow: toCatchRow,
+        toSpotRow: toSpotRow,
         SUPABASE_CDN: SUPABASE_CDN
     };
 }

@@ -53,6 +53,40 @@ Verify against live output with `scripts/smoke.sh`.
 - `lines_in`/`lines_out` are **not** removed, but note they are `null` unless `legal_hours`
   is `daylight`/`24hr`.
 
+## Private favourite spots (`public.favorite_spots`, WS-5)
+
+The angler's own saved water. **Private by construction** — read the header of
+`supabase/migrations/20260929190000_favorite_spots.sql` before touching it.
+
+| column | type | notes |
+|---|---|---|
+| `id` | uuid PK | client-generated (`newUuid()`), so a re-save of the same id is an EDIT, not a duplicate |
+| `user_id` | uuid NOT NULL default `auth.uid()` | **never sent by the client** — `toSpotRow()` omits it so a payload cannot claim another angler's row |
+| `label` | text NOT NULL | what the angler calls the spot; trimmed to 60 chars client-side |
+| `station_id` | text\|null | the USGS gauge the spot is anchored to (the report endpoint needs a site id) |
+| `river_name` | text\|null | display name of that gauge |
+| `latitude`/`longitude` | double precision NOT NULL | the saved position (the GPS fix when available, else the active station) |
+| `notes` | text\|null | optional, ≤240 chars |
+| `created_at`/`updated_at` | timestamptz NOT NULL default `timezone('utc', now())` | `updated_at` is written by the client on each upsert |
+
+Client payload -> row: `src/services/supabase.js` `toSpotRow()` / `saveFavoriteSpot()` /
+`fetchFavoriteSpots()` / `deleteFavoriteSpot()`; the UI is
+`src/features/map/spots.js` (+ `spots-map.js` for the Leaflet star layer). Tapping a saved
+spot calls the same `selectPreset()` path as a preset, so "conditions at my spot tomorrow"
+is answered by the per-day report.
+
+**RLS (the whole point):** enabled in the same transaction as the table; one policy per
+command, all `user_id = auth.uid()`. A signed-out visitor has a NULL `uid`, and
+`user_id = NULL` is never true, so `select count(*) from public.favorite_spots where
+user_id = auth.uid()` returns **0** without a JWT (verified live 2026-09-29). There is **no
+view and no `SECURITY DEFINER` function** over this table, and `public_catch_feed` never
+references it — there is no code path that can show one angler another's spots.
+
+Offline: the list falls back to a local mirror (`localStorage: favorite_spots_cache`) and
+says so; **saving** needs a live session (no outbox for spots — they are planning data, not
+a catch).
+
+
 ## Removed DB columns (2026-09-28 migration `drop_dead_columns`)
 - `cast_distance_ft` — the placement-distance input was removed; the client hardcoded NULL.
 - `hook_location` — always NULL (the client hardcoded NULL). Dropped for hygiene: it is

@@ -10,6 +10,8 @@ function openStationModal() {
     document.getElementById('gps-status').innerText = '';
     document.getElementById('search-results').style.display = 'none';
     document.getElementById('station-search').value = '';
+    // WS-5: paint the private saved-spot list (cache first, then the server if signed in).
+    if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
 }
 
 function closeStationModal() {

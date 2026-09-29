@@ -17,6 +17,17 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **WS-5 private favourite spots** (issue #3b): `public.favorite_spots` is live with
+  **RLS enabled in the same transaction** and one owner-scoped policy per command
+  (`user_id = auth.uid()`, defaulted by the DB, **never** client-sent — `toSpotRow()` is asserted
+  to omit it), no view and no `SECURITY DEFINER` over it. The station modal gains "My Saved
+  Spots (private)": name the spot you're on, then tap it later to see that water's per-day report
+  (`selectPreset()`), with a local mirror (`favorite_spots_cache`) so the list still works
+  offline; the map draws the stars from local state and "Fish this spot" from the popup. Applied
+  + verified live (4 policies, PK on `id`, **0 rows without a JWT**). `sw.js` `v2.03.23`,
+  **133/133**. Files: migration, `supabase.js`, new `map/{spots,spots-map}.js`, `map.js`,
+  `auth.js`, `picker.js`, `index.html`, `styles.css`, `sanity_pass.js`, docs.
+
 - 2026-09-29 — **WS-8a science model** (issue #2 follow-on): the Gear Sim's environment is rebuilt.
   The single `≥55F → rise` rule (backwards above the comfort band) becomes `thermalOptimum()` with
   five bands — `<45` torpid / `45–50` cool / `50–60` optimal / `60–65` warming / `>65` stress — the

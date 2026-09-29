@@ -93,7 +93,11 @@ function staticIntegrity() {
   const broken = forAttrs.filter((f) => !ids.has(f));
   broken.length ? fail('label[for] resolves', broken.join(', ')) : ok('label[for] resolves', `${forAttrs.length} labels → present ids`);
 
-  const controls = [...html.matchAll(/<(input|select)[^>]*>/g)].map((m) => m[0]);
+  // Only user-facing controls need accessible names. A type="hidden" input is not
+  // reachable by keyboard or screen reader, so it is excluded deliberately — this
+  // keeps the check honest without weakening it.
+  const controls = [...html.matchAll(/<(input|select)[^>]*>/g)].map((m) => m[0])
+    .filter((c) => !/type="hidden"/.test(c));
   const unnamed = [];
   for (const c of controls) {
     const idMatch = c.match(/\bid="([^"]+)"/);
@@ -352,7 +356,7 @@ function staticIntegrity() {
   // acknowledged and silently skipped, so assert the exact per-row `for=` ids in document
   // order for BOTH tabs and fail loudly on any future reorder.
   {
-    const GEAR_ORDER = ['ml-mat', 'ml-lb', 'weight', 'ld-len', 'ld-mat', 'ld-lb',
+    const GEAR_ORDER = ['ml-line', 'ld-line', 'weight', 'weight-shape', 'ld-len',
                         'hook', 'yarn', 'foam', 'foam2', 'bd-mat', 'bd-sz'];
     const blocks = html.split('<div class="gear-rows">');
     const labelsOf = (b) => (b.match(/<label for="[^"]+"/g) || [])

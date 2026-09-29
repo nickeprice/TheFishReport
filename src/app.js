@@ -12,6 +12,11 @@
 window.onload = async function() {
     var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('log-datetime').value = d.toISOString().slice(0,16);
+    // Load the tackle library BEFORE restoring the rig: the line + weight-shape
+    // pickers only have options once it lands, and restoreRig() selects into them.
+    if (typeof tackleLoad === 'function') {
+        try { await tackleLoad(); } catch (e) { logDebug('Tackle load failed: ' + e.message, 'DB'); }
+    }
     restoreRig();
     applyTabDeepLink();
     registerServiceWorker();

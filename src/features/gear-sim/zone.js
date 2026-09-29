@@ -10,11 +10,9 @@
 // Foam 2 is required too (pick "None" for a single-corky rig).
 var RIG_REQUIRED = [
     { id: 'weight', label: 'Weight' },
-    { id: 'ml-mat', label: 'Mainline Material' },
-    { id: 'ml-lb',  label: 'Mainline Lb Test' },
+    { id: 'ml-line', label: 'Mainline' },
+    { id: 'ld-line', label: 'Leader' },
     { id: 'ld-len', label: 'Leader Length (ft)' },
-    { id: 'ld-mat', label: 'Leader Material' },
-    { id: 'ld-lb',  label: 'Leader Lb Test' },
     { id: 'hook',   label: 'Hook Size' },
     { id: 'yarn',   label: 'Yarn' },
     { id: 'foam',   label: 'Foam 1' },

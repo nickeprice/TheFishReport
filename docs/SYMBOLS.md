@@ -57,8 +57,11 @@ this file**, or the pass fails.
 - **nav.js** — `switchTab(tabId)`, `resetToToday()`
 - **format.js** — `normalizeFeedRow(row)`, `formatCatchTime(value)`, `escapeHtml(value)`,
   `escapeJsString(value)`, `newUuid()`
-- **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`, `LB_OPTIONS`,
-  `updateLbOptions()`, `onLineMatChange()`
+- **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`
+- **tackle.js** — `tackleLoad()`, `tackleItems(type)`, `tackleLineById(id)`,
+  `tackleLineByMatLb(mat, lb)`, `populateTacklePickers()`, `onLinePickChange()`,
+  `onWeightShapeChange()`, `resolveLineFields(role)` — data-driven line + weight-shape
+  pickers from `src/data/tackle.json`
 - **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`,
   `idbDelete(store, key)`
 - **refresh.js** — `AUTO_REFRESH_MS`, `silenceableRefresh()`, `startAutoRefresh()`, `refreshNow()`

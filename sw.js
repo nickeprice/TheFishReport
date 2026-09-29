@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.11';
+const VERSION = 'v2.03.12';
 const SHELL_CACHE = 'tfr-shell-' + VERSION;
 const API_CACHE = 'tfr-api-' + VERSION;
 const ASSET_CACHE = 'tfr-assets-' + VERSION;
@@ -36,12 +36,14 @@ const SHELL_FILES = [
     '/',
     '/index.html',
     '/manifest.json',
+    '/src/data/tackle.json',
     '/src/styles.css',
     '/src/shared/debug.js',
     '/src/shared/ui.js',
     '/src/shared/nav.js',
     '/src/shared/format.js',
     '/src/shared/forms.js',
+    '/src/shared/tackle.js',
     '/src/shared/idb.js',
     '/src/features/catch-log/outbox.js',
     '/src/features/catch-log/pending.js',

@@ -119,41 +119,45 @@
              NO pre-selected defaults: values come from your last saved rig, and
              anything you have never entered stays blank and is required. -->
         <div class="gear-rows">
-            <!-- Row 1: Mainline Material + Mainline Lb Test -->
+            <!-- Row 1: Mainline + Leader LINE PICKERS (Approach B). ONE picker per line,
+                 brand-specific, populated at boot from src/data/tackle.json. The pick
+                 resolves into the hidden ml-mat/ml-lb/ld-mat/ld-lb fields, so the rig
+                 model, the catch row and the DB all stay material+lb. -->
             <div class="gear-row">
                 <div class="field">
-                    <label for="ml-mat">Mainline Material</label>
-                    <select id="ml-mat" onchange="onLineMatChange('ml-mat')"><option value="">—</option><option value="braid">Braid</option><option value="mono">Mono</option><option value="copoly">Copoly</option></select>
+                    <label for="ml-line">Mainline</label>
+                    <select id="ml-line" onchange="onLinePickChange('ml-line')"><option value="">—</option></select>
+                    <input type="hidden" id="ml-mat"><input type="hidden" id="ml-lb">
                 </div>
                 <div class="field">
-                    <label for="ml-lb">Mainline Lb Test</label>
-                    <select id="ml-lb" onchange="syncSelect('ml-lb')"><option value="">—</option><option value="20">20lb</option><option value="30">30lb</option><option value="40">40lb</option></select>
+                    <label for="ld-line">Leader</label>
+                    <select id="ld-line" onchange="onLinePickChange('ld-line')"><option value="">—</option></select>
+                    <input type="hidden" id="ld-mat"><input type="hidden" id="ld-lb">
                 </div>
             </div>
 
-            <!-- Row 2: Weight + Leader Length -->
+            <!-- Row 2: Weight (oz) + Weight Shape. The shape options are the weight rows'
+                 shape_label, so a rubber sleeve and tungsten get their own option; shape +
+                 oz identifies exactly one weight row. -->
             <div class="gear-row">
                 <div class="field">
                     <label for="weight">Weight</label>
                     <select id="weight" onchange="syncSelect('weight')"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
                 </div>
                 <div class="field">
+                    <label for="weight-shape">Weight Shape</label>
+                    <select id="weight-shape" onchange="onWeightShapeChange('weight-shape')"><option value="">—</option></select>
+                </div>
+            </div>
+
+            <!-- Row 3: Leader Length (moved up from row 2 to make room for Weight Shape). -->
+            <div class="gear-row">
+                <div class="field">
                     <label for="ld-len">Leader Length (ft)</label>
                     <input type="number" id="ld-len" min="1" max="20" step="1" onchange="syncSelect('ld-len')" placeholder="10">
                 </div>
             </div>
 
-            <!-- Row 3: Leader Material + Leader Lb Test -->
-            <div class="gear-row">
-                <div class="field">
-                    <label for="ld-mat">Leader Material</label>
-                    <select id="ld-mat" onchange="onLineMatChange('ld-mat')"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluoro</option></select>
-                </div>
-                <div class="field">
-                    <label for="ld-lb">Leader Lb Test</label>
-                    <select id="ld-lb" onchange="syncSelect('ld-lb')"><option value="">—</option><option value="10">10lb</option><option value="12">12lb</option><option value="15">15lb</option><option value="17">17lb</option></select>
-                </div>
-            </div>
             <!-- Row 4: Hook Size + Yarn -->
             <div class="gear-row">
                 <div class="field">
@@ -223,41 +227,39 @@
 
         <!-- DUPLICATED CONTROLS (kept in sync with the Gear Sim) — same ROW order. -->
         <div class="gear-rows">
-            <!-- Row 1: Mainline Material + Mainline Lb Test -->
+            <!-- Row 1: Mainline + Leader line pickers (mirrors the Gear Sim; the pick
+                 itself resolves into the canonical hidden mat/lb fields there). -->
             <div class="gear-row">
                 <div class="field">
-                    <label for="ml-mat-log">Mainline Material</label>
-                    <select id="ml-mat-log" onchange="onLineMatChange('ml-mat', true)"><option value="">—</option><option value="braid">Braid</option><option value="mono">Mono</option><option value="copoly">Copoly</option></select>
+                    <label for="ml-line-log">Mainline</label>
+                    <select id="ml-line-log" onchange="onLinePickChange('ml-line', true)"><option value="">—</option></select>
                 </div>
                 <div class="field">
-                    <label for="ml-lb-log">Mainline Lb Test</label>
-                    <select id="ml-lb-log" onchange="syncSelect('ml-lb', true)"><option value="">—</option><option value="20">20lb</option><option value="30">30lb</option><option value="40">40lb</option></select>
+                    <label for="ld-line-log">Leader</label>
+                    <select id="ld-line-log" onchange="onLinePickChange('ld-line', true)"><option value="">—</option></select>
                 </div>
             </div>
 
-            <!-- Row 2: Weight + Leader Length -->
+            <!-- Row 2: Weight (oz) + Weight Shape -->
             <div class="gear-row">
                 <div class="field">
                     <label for="weight-log">Weight</label>
                     <select id="weight-log" onchange="syncSelect('weight', true)"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
                 </div>
                 <div class="field">
+                    <label for="weight-shape-log">Weight Shape</label>
+                    <select id="weight-shape-log" onchange="onWeightShapeChange('weight-shape', true)"><option value="">—</option></select>
+                </div>
+            </div>
+
+            <!-- Row 3: Leader Length -->
+            <div class="gear-row">
+                <div class="field">
                     <label for="ld-len-log">Leader Length (ft)</label>
                     <input type="number" id="ld-len-log" min="1" max="20" step="1" onchange="syncSelect('ld-len', true)" placeholder="10">
                 </div>
             </div>
 
-            <!-- Row 3: Leader Material + Leader Lb Test -->
-            <div class="gear-row">
-                <div class="field">
-                    <label for="ld-mat-log">Leader Material</label>
-                    <select id="ld-mat-log" onchange="onLineMatChange('ld-mat', true)"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluoro</option></select>
-                </div>
-                <div class="field">
-                    <label for="ld-lb-log">Leader Lb Test</label>
-                    <select id="ld-lb-log" onchange="syncSelect('ld-lb', true)"><option value="">—</option><option value="10">10lb</option><option value="12">12lb</option><option value="15">15lb</option><option value="17">17lb</option></select>
-                </div>
-            </div>
             <!-- Row 4: Hook Size + Yarn -->
             <div class="gear-row">
                 <div class="field">
@@ -374,6 +376,7 @@
 <script src="src/shared/refresh.js"></script>
 <script src="src/shared/pwa.js"></script>
 <script src="src/features/map/map.js"></script>
+<script src="src/shared/tackle.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>

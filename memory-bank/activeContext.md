@@ -64,10 +64,42 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
       generic-line fallback or old rows resolve to nothing.
       Verified: `sanity_pass.js` green after the row-count update; picker populated while
       offline; both tabs stay in sync.
+
+      **DECOMPOSITION (found 2026-09-28 while starting this — use it, it is the cheap path):**
+      keep the picker's `value` as the tackle.json **id** but have the plumbing resolve
+      `id -> {material, lb_test}` and keep calling the existing physics untouched. Then P2 lands
+      with the frozen baselines UNCHANGED (sanity stays green) and the proxy->real-diameter swap
+      is a separate, reviewable P3 step. Do NOT mix the two.
+      Files: new `src/shared/tackle.js` (`tackleLoad()`, `tackleLineById()`,
+      `tackleLineByMatLb()` fallback, `populateTacklePickers()`), `index.html` (replace the 4 line
+      selects per pair of forms with 2 full-width pickers), `forms.js` (drop `LB_OPTIONS`/
+      `updateLbOptions`/`onLineMatChange`), `rig.js` (save/restore `mlLine`/`ldLine`, with
+      backward compat for rigs saved as mat+lb), `solver.js`/`sonar.js`/`drift.js` (read the id),
+      `app.js` (await `tackleLoad()` BEFORE `restoreRig()` or the pickers are empty), `sw.js`
+      (+`/src/data/tackle.json` in SHELL_FILES, VERSION bump), commit `src/data/tackle.json`.
+
+      **BLOCKER — needs a user decision (found 2026-09-28):** the approved "Weight = 2 controls
+      (oz + shape)" cannot carry metal x shape x rubber, because the metal and the rubber sleeve
+      exist only inside the row `label`. Options: (a) the converter emits a derived `shape_label`
+      per weight row (`"Lead Pencil (rubber sleeve)"`) so (shape_label, oz) identifies exactly one
+      row - recommended, no schema change; (b) add a real `variant` column (schema change in 3
+      places); (c) collapse Weight to ONE unified picker like the lines. The converter would need
+      a small `shape_label` addition for (a).
 - [ ] **P4. DB** — timestamped idempotent migration adding the line ids + weight shape to
       `public.catches`, applied by me with `npx supabase db push --yes`, then verified with a
       read-only query, preserving RLS and the public-feed privacy boundary.
       **USER REVIEW REQUESTED for this and for P3's baseline re-pin.**
+
+## Handoff — 2026-09-28 (end of session; context exhausted, nothing half-built)
+
+**Objective:** land the measured-tackle library into the Gear Sim (P1 done, P2-P4 open).
+**Last completed step:** P1 — 185-row CSV + schema, committed `ea1a02f`, sanity 107/107, pushed.
+**Immediate next step:** decide the Weight-control question above, then execute P2 using the
+decomposition above (pickers + id->mat/lb plumbing ONLY, physics untouched), commit it, and only
+then do P3 (proxy -> real diameters + re-pin the frozen baselines) and P4 (the migration).
+Nothing is mid-flight: the working tree is clean, the app runs, and `src/data/tackle.json` is
+deliberately absent (it ships with P3).
+
 
 
 - [ ] **P3. (next) Physics rewrite that consumes the JSON** — each measured field now has a

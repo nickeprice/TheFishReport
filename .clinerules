@@ -33,6 +33,14 @@
 - After frontend changes run `node sanity_pass.js` — it derives the script list from
   `index.html`, so newly added modules are auto syntax/HTTP-checked.
 
+# Instruction ledger (chat asks are not in the repo)
+- Any instruction that outlives the current turn gets a `- [ ]` box in
+  `memory-bank/activeContext.md` IN THAT TURN — act mode included, because act-mode asks
+  are the ones that evaporate (rod length was acknowledged twice and lost both times).
+- At phase end run `python3 scripts/session_instructions.py` (~11 KB, not the multi-MB
+  transcript) and reconcile every turn against what shipped. Unmatched items are either
+  done next or marked open-by-design. Never read the full transcript to hunt for misses.
+
 # Database (standing instruction from user)
 - ALWAYS author DB changes as an idempotent timestamped migration under
   `supabase/migrations/`, then APPLY IT YOURSELF with

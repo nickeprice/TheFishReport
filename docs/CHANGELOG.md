@@ -17,6 +17,14 @@ Re-ran the COMPLETE audit with it and reconciled all 108 turns: no further misse
 confirmed msg 39 ("lets delete the .kilo worktree") really was done — `.kilo` is now 4 KB with a
 single 0-byte marker and `git worktree list` shows only main — and that the remaining items are the
 documented open-by-design ones (OAuth → Update 4.0 §3.1, the `blownOut` contract bump, spot width).
+
+Extended the sweep to **all 28 sessions (534 turns, 65 KB)**: every miss in this project's history
+has the same shape — an ask answered in prose that evaporated when the chat pivoted — and beyond the
+three fixed here, **nothing further was dropped**. Spot-checked the loudest old complaints:
+`--quiet` exists (from "why did it say let me run sanity pass 10000 times"), one-screen forms landed
+(`b7b8f1d`), and the Safari GPS failure was fixed and verified on device (`docs/ARCHIVE.md`). The
+Sep-17 sessions share a forked history segment, so the ~65 KB has partial redundancy.
+`.clinerules` now carries the capture + audit rule.
 - Key files: `scripts/session_instructions.py`, `docs/CHANGELOG.md`.
 
 ## 2026-09-28 — Audit of the rod-length chat: three promised items had been dropped

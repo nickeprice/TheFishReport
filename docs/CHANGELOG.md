@@ -4,6 +4,16 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — Shipped: live deployment verified after the P4/P4b push
+`7f2d4fa` is on `main` and CI (`.github/workflows/sanity.yml`) is **success**. Vercel's git
+integration deployed it: the deployment status for that commit is `success` ("Deployment has
+completed", Production). The live app is `https://thefishreport.vercel.app` and serves the new
+shell — `sw.js` `v2.03.13`, `tackleRowLine()` in `tackle.js`, the three brand columns in
+`supabase.js`, `tackle.json` 200, `/api/water_report` → 4 days. Found and recorded while verifying:
+the repo's GitHub homepage metadata still points at `index-html-topaz-five.vercel.app`, which 404s
+(pre-rename alias); the deploy path itself is healthy.
+- Key files: `memory-bank/techContext.md` (deploy surface).
+
 ## 2026-09-29 — P4b: the picked brand now reaches the catch row and the replay
 The three P4 columns were write-only until now. `logData()` sends `ldLine` / `mlLine` /
 `weightShape` from the pickers, `toCatchRow()` maps them into `leader_line_id` /

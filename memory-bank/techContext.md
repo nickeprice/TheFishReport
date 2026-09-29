@@ -22,4 +22,12 @@ free port, cleans up after itself, and derives the script list from `index.html`
 added module is syntax- and HTTP-checked automatically. `.github/workflows/sanity.yml` runs
 it on every push/PR to `main`.
 
+**Ship** — Vercel git integration, keyed on the REPO (no `vercel.json` / `.vercel`), so a push to
+`main` is the deploy. **Production: `https://thefishreport.vercel.app`** (verified live 2026-09-29:
+`sw.js` served `v2.03.13`, `/api/water_report` → 4 days, `tackle.json` 200). The repo's GitHub
+homepage field still points at the pre-rename alias `index-html-topaz-five.vercel.app`, which
+**404s** — stale metadata, not a broken deploy; the Vercel project itself is still named
+`index-html` (team `pioneer-co`), and its immutable per-deployment URL is behind deployment
+protection.
+
 **Detail:** `README.md` (full layout, PWA caching table, the dev-server gotcha).

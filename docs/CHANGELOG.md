@@ -4,6 +4,20 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — Label fixes: bead fields lose "(Presentation)", Cheater float is "Cheater 10"
+Two direct user corrections. The bead labels are now plain **`Bead Material`** / **`Bead Size`**
+(both tabs) — the `(Presentation)` suffix came from the 2026-09-28 relabel that wanted to
+distinguish the presentation bead from the mainline stop bead, and the angler-facing form does not
+need it. The foam option **`Cheater 12` → `Cheater 10`**, and `FOAM_TABLE.c12.label` →
+`Cheater - Size 10` so the HUD's `Try this: …` advice names the float the same way the picker does.
+The `<option value>` stays **`c12`** and the measured lift (0.70) is untouched, so no physics
+moved; `parseFoam()`'s unread `size` field follows the name to 10 for consistency. The
+measurement record is deliberately NOT renamed: `docs/tackle_measurements.csv` keeps its own row
+`cheater-12` with the measured egg dimensions (13x9.5mm), noted inline in `inputs.js`. `sw.js`
+VERSION → `v2.03.19`. **120/120 GREEN** — one new assertion pins the plain labels, the four
+`Cheater 10` options and the matching `FOAM_TABLE` label.
+- Key files: `index.html`, `src/features/gear-sim/inputs.js`, `sanity_pass.js`.
+
 ## 2026-09-29 — HUD v2: bulleted reasons, a strike-zone trend line, "Generic" first
 Six product asks in one pass. **Brands:** the generic fallback row is now ALWAYS the first brand
 option and reads **"Generic"** — DISPLAY ONLY, the `<option>` value stays the library's

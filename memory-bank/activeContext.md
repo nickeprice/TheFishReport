@@ -22,8 +22,8 @@ WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded
 (both tabs → the 7-row / 15-field material→brand→lb-test cascade), WS-6 (HUD polish: centred
 panels, bulleted notes, "… Estimate:" caps, clearance above the first row) and WS-7 (HUD v2:
 "Generic" first, strike-zone trend line, one bullet per row, community note hidden, "On target"
-rows, trimmed rig bullets) are DONE and verified: `node sanity_pass.js` → **119/119**;
-`sw.js` `v2.03.18`. Touched: `index.html`, `src/styles.css`, `src/shared/tackle.js`,
+rows, trimmed rig bullets) are DONE and verified: `node sanity_pass.js` → **120/120**;
+`sw.js` `v2.03.19`. Touched: `index.html`, `src/styles.css`, `src/shared/tackle.js`,
 `src/features/gear-sim/{rig,zone,solver}.js`, `src/features/gear-sim/techniques/drift.js`,
 `sanity_pass.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`, `sw.js`, `memory-bank/*`.
 NEXT: **WS-4** (per-day weather, issue #2). Then WS-5 (private favourite spots + migration).
@@ -175,6 +175,12 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       position can only be judged visually), and the user's confirmation of the community
       interpretation above — if they meant the Catch Log's public board, that is a separate,
       much larger change (auth/board removal) and must NOT be started on this reading.
+- [x] **Addendum (same session, 2026-09-29):** bead fields lost the stray "(Presentation)"
+      suffix (both tabs) and the foam option `Cheater 12` → **`Cheater 10`**, with
+      `FOAM_TABLE.c12.label` changed to `Cheater - Size 10` so the HUD advice matches the picker.
+      Display-only: the option value stays `c12`, lift stays 0.70 (no physics moved), and
+      `docs/tackle_measurements.csv` deliberately keeps its `cheater-12` measurement row.
+      Verified: sanity **120/120** (`v2.03.19`) incl. a new assertion for all three facts.
 
 ## ACTIVE — measured tackle data → **P1 DONE 2026-09-28**
 

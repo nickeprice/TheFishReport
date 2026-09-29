@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.18';
+const VERSION = 'v2.03.19';
 const SHELL_CACHE = 'tfr-shell-' + VERSION;
 const API_CACHE = 'tfr-api-' + VERSION;
 const ASSET_CACHE = 'tfr-assets-' + VERSION;

@@ -25,7 +25,10 @@
   hidden** while the sonar still pulls the zone, **"On target"** is a single row, and the rig bullets
   are short rows (the `Targeting <species>…` line is gone). `zoneNotes()` + `paintZoneHud()` replace
   `zoneWhyText()`; both panels share `gradeColor()`. Frozen drift suggestion count deliberately
-  re-pinned 3 → 2. `sw.js` `v2.03.18`, **119/119**.
+  re-pinned 3 → 2. `sw.js` `v2.03.18`, **119/119**. Then two label fixes in the same session: the
+  bead fields dropped the stray `(Presentation)` and the foam option reads **`Cheater 10`**
+  (display-only — value still `c12`, lift 0.70, and the `cheater-12` measurement row untouched);
+  `sw.js` `v2.03.19`, **120/120**.
 
 - 2026-09-29 — Gear Sim HUD polish (chat ask, same session as WS-3): both panels are **centred**
   (label, number, notes) and both notes are **bulleted** (the left "why it moved" note was a plain

@@ -66,18 +66,21 @@ function getGPS() {
 // PURE FLUID DYNAMICS CORE - every helper below is a deterministic pure function
 // ==================================================================================
 
-// Buoyant lift by foam type. Bigger corky = more lift; cheater sits between 12 and 10.
+// Buoyant lift by foam type. Bigger corky = more lift; the cheater's measured lift sits
+// between the Corky 12 and the Corky 10. (The float is named "Cheater 10" for the angler -
+// the picker and this label agree - while docs/tackle_measurements.csv keeps its own
+// measurement row `cheater-12` with the measured egg dimensions.)
 var FOAM_TABLE = {
     '0':   { lift: 0.00, label: 'None' },
     '14':  { lift: 0.30, label: 'Corky - Size 14 (6mm)' },
     '12':  { lift: 0.60, label: 'Corky - Size 12 (8mm)' },
     '10':  { lift: 0.90, label: 'Corky - Size 10 (10mm)' },
-    'c12': { lift: 0.70, label: 'Cheater - Size 12' }
+    'c12': { lift: 0.70, label: 'Cheater - Size 10' }
 };
 
 function parseFoam(rawValue) {
     var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
-    if (key === 'c12') return { key: 'c12', size: 12, lift: FOAM_TABLE.c12.lift, label: FOAM_TABLE.c12.label };
+    if (key === 'c12') return { key: 'c12', size: 10, lift: FOAM_TABLE.c12.lift, label: FOAM_TABLE.c12.label };
     var size = parseFloat(key);
     if (!size) return { key: '0', size: 0, lift: 0, label: 'None' };
     var entry = FOAM_TABLE[String(size)] || { lift: 0.6 };

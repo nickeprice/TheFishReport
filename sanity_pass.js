@@ -213,6 +213,19 @@ function staticIntegrity() {
     ? ok('community-catch note is computed but hidden from the HUD',
          'zone.notes keeps it; zoneNotes() filters it out')
     : fail('community-catch note is computed but hidden from the HUD', 'filter missing');
+  // Bead labels read plainly (the "(Presentation)" suffix was a stray) and the Cheater float is
+  // named "Cheater 10" (direct user corrections). The option VALUE stays 'c12', so parseFoam()
+  // / FOAM_TABLE lifts - and therefore the frozen physics - are untouched.
+  {
+    const cheater = (html.match(/<option value="c12">Cheater 10<\/option>/g) || []).length;
+    const inSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'inputs.js'), 'utf8');
+    (!html.includes('Presentation') && cheater === 4 &&
+     /'c12': \{ lift: 0\.70, label: 'Cheater - Size 10' \}/.test(inSrc))
+      ? ok('bead labels are plain and the Cheater float reads "Cheater 10"',
+           'no "(Presentation)"; 4 Cheater 10 options; FOAM_TABLE label matches (value stays c12)')
+      : fail('bead labels are plain and the Cheater float reads "Cheater 10"',
+             `presentation=${html.includes('Presentation')} cheaterOptions=${cheater}`);
+  }
   (/\.hud-panel \{[^}]*text-align: center/.test(cssSrc) &&
    /\.hud-changes \{[^}]*list-style-position: inside/.test(cssSrc) &&
    /#tab-gear-sim #hud \+ \.bucket \{[^}]*padding-top: 1[0-9]px/.test(cssSrc))

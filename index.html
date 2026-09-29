@@ -122,51 +122,76 @@
 
     <div class="bucket">
         <!-- Resting gear ROWS — ONE gear group per line, field ORDER is the
-             user-specified 2-up flow (sanity asserts it):
-             Mainline → Weight + Leader Length → Leader → Hook+Yarn → Foam 1+2 → Beads.
+             user-specified CASCADE flow (sanity asserts it):
+             Mainline material → brand → lb test · Weight type → amount ·
+             Leader length → material → brand → lb test · Hook+Yarn · Foam 1+2 · Beads.
              NO pre-selected defaults: values come from your last saved rig, and
-             anything you have never entered stays blank and is required. -->
+             anything you have never entered stays blank and is required.
+             Each child list is filled from src/data/tackle.json by its parent pick
+             (material → brand → lb test): the three picks resolve into the HIDDEN
+             ml-line / ld-line id that the solver, the catch row and the DB read, so
+             nothing downstream changed. The static <option> lists are the no-library
+             fallback — tackle.js replaces them with the library's own values at boot. -->
         <div class="gear-rows">
-            <!-- Row 1: Mainline + Leader LINE PICKERS (Approach B). ONE picker per line,
-                 brand-specific, populated at boot from src/data/tackle.json. The pick
-                 resolves into the hidden ml-mat/ml-lb/ld-mat/ld-lb fields, so the rig
-                 model, the catch row and the DB all stay material+lb. -->
-            <div class="gear-row">
+            <!-- Row 1 (3-up): Mainline material → brand → lb test. The ONLY 3-up row: a
+                 3-part cascade in 2 columns would wrap the lb test onto its own line. -->
+            <div class="gear-row gear-row-3">
                 <div class="field">
-                    <label for="ml-line">Mainline</label>
-                    <select id="ml-line" onchange="onLinePickChange('ml-line')"><option value="">—</option></select>
-                    <input type="hidden" id="ml-mat"><input type="hidden" id="ml-lb">
+                    <label for="ml-mat">Mainline Material</label>
+                    <select id="ml-mat" onchange="onLinePartChange('ml-mat')"><option value="">—</option><option value="braid">Braid</option><option value="mono">Mono</option><option value="copoly">Copoly</option></select>
                 </div>
                 <div class="field">
-                    <label for="ld-line">Leader</label>
-                    <select id="ld-line" onchange="onLinePickChange('ld-line')"><option value="">—</option></select>
-                    <input type="hidden" id="ld-mat"><input type="hidden" id="ld-lb">
+                    <label for="ml-brand">Mainline Brand</label>
+                    <select id="ml-brand" onchange="onLinePartChange('ml-brand')"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ml-lb">Mainline LB Test</label>
+                    <select id="ml-lb" onchange="onLinePartChange('ml-lb')"><option value="">—</option></select>
+                    <input type="hidden" id="ml-line">
                 </div>
             </div>
 
-            <!-- Row 2: Weight (oz) + Weight Shape. The shape options are the weight rows'
-                 shape_label, so a rubber sleeve and tungsten get their own option; shape +
-                 oz identifies exactly one weight row. -->
+            <!-- Row 2: Weight type + Weight amount. The type options are the weight rows'
+                 shape_label, so a rubber sleeve and tungsten get their own option; the
+                 amount list is the nominal oz those rows carry. -->
             <div class="gear-row">
                 <div class="field">
-                    <label for="weight">Weight</label>
-                    <select id="weight" onchange="syncSelect('weight')"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
-                </div>
-                <div class="field">
-                    <label for="weight-shape">Weight Shape</label>
+                    <label for="weight-shape">Weight Type</label>
                     <select id="weight-shape" onchange="onWeightShapeChange('weight-shape')"><option value="">—</option></select>
                 </div>
+                <div class="field">
+                    <label for="weight">Weight Amount</label>
+                    <select id="weight" onchange="syncSelect('weight')"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
+                </div>
             </div>
 
-            <!-- Row 3: Leader Length (moved up from row 2 to make room for Weight Shape). -->
+            <!-- Row 3: Leader Length + Leader material (the leader cascade continues on
+                 the next row so the lb test still follows its brand). -->
             <div class="gear-row">
                 <div class="field">
                     <label for="ld-len">Leader Length (ft)</label>
                     <input type="number" id="ld-len" min="1" max="20" step="1" onchange="syncSelect('ld-len')" placeholder="10">
                 </div>
+                <div class="field">
+                    <label for="ld-mat">Leader Material</label>
+                    <select id="ld-mat" onchange="onLinePartChange('ld-mat')"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluorocarbon</option></select>
+                </div>
             </div>
 
-            <!-- Row 4: Hook Size + Yarn -->
+            <!-- Row 4: Leader brand → lb test (end of the leader cascade). -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="ld-brand">Leader Brand</label>
+                    <select id="ld-brand" onchange="onLinePartChange('ld-brand')"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ld-lb">Leader LB Test</label>
+                    <select id="ld-lb" onchange="onLinePartChange('ld-lb')"><option value="">—</option></select>
+                    <input type="hidden" id="ld-line">
+                </div>
+            </div>
+
+            <!-- Row 5: Hook Size + Yarn -->
             <div class="gear-row">
                 <div class="field">
                     <label for="hook">Hook Size</label>
@@ -178,7 +203,7 @@
                 </div>
             </div>
 
-            <!-- Row 5: Foam 1 + Foam 2 -->
+            <!-- Row 6: Foam 1 + Foam 2 -->
             <div class="gear-row">
                 <div class="field">
                     <label for="foam">Foam 1</label>
@@ -190,11 +215,12 @@
                 </div>
             </div>
 
-            <!-- Row 6: Bead Material + Bead Size -->
+            <!-- Row 7: Bead Material + Bead Size. The size list cascades off the
+                 material: hard 2/4/6/8mm, soft 6/8mm, None 0. -->
             <div class="gear-row">
                 <div class="field">
                     <label for="bd-mat">Bead Material (Presentation)</label>
-                    <select id="bd-mat" onchange="syncSelect('bd-mat')"><option value="">—</option><option value="none">None</option><option value="hard">Plastic</option><option value="soft">Soft</option></select>
+                    <select id="bd-mat" onchange="onBeadMatChange('bd-mat')"><option value="">—</option><option value="none">None</option><option value="hard">Plastic</option><option value="soft">Soft</option></select>
                 </div>
                 <div class="field">
                     <label for="bd-sz">Bead Size (Presentation)</label>
@@ -232,42 +258,64 @@
         <h2 class="purple-heading">Current Gear Details</h2>
         <p style="font-size:0.75rem; color:#aaa; margin:0 0 8px 0;">These match your Gear Sim automatically.</p>
 
-        <!-- DUPLICATED CONTROLS (kept in sync with the Gear Sim) — same ROW order. -->
+        <!-- DUPLICATED CONTROLS (kept in sync with the Gear Sim) — same ROW order and
+             the same cascade. Each parent pick here cascades BOTH tabs (they always share
+             one option set) and resolves the canonical HIDDEN ml-line / ld-line id in the
+             Gear Sim form, so the catch row is identical whichever tab you log from. -->
         <div class="gear-rows">
-            <!-- Row 1: Mainline + Leader line pickers (mirrors the Gear Sim; the pick
-                 itself resolves into the canonical hidden mat/lb fields there). -->
-            <div class="gear-row">
+            <!-- Row 1 (3-up): Mainline material → brand → lb test. -->
+            <div class="gear-row gear-row-3">
                 <div class="field">
-                    <label for="ml-line-log">Mainline</label>
-                    <select id="ml-line-log" onchange="onLinePickChange('ml-line', true)"><option value="">—</option></select>
+                    <label for="ml-mat-log">Mainline Material</label>
+                    <select id="ml-mat-log" onchange="onLinePartChange('ml-mat-log', true)"><option value="">—</option><option value="braid">Braid</option><option value="mono">Mono</option><option value="copoly">Copoly</option></select>
                 </div>
                 <div class="field">
-                    <label for="ld-line-log">Leader</label>
-                    <select id="ld-line-log" onchange="onLinePickChange('ld-line', true)"><option value="">—</option></select>
+                    <label for="ml-brand-log">Mainline Brand</label>
+                    <select id="ml-brand-log" onchange="onLinePartChange('ml-brand-log', true)"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ml-lb-log">Mainline LB Test</label>
+                    <select id="ml-lb-log" onchange="onLinePartChange('ml-lb-log', true)"><option value="">—</option></select>
                 </div>
             </div>
 
-            <!-- Row 2: Weight (oz) + Weight Shape -->
+            <!-- Row 2: Weight type + Weight amount -->
             <div class="gear-row">
                 <div class="field">
-                    <label for="weight-log">Weight</label>
-                    <select id="weight-log" onchange="syncSelect('weight', true)"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
-                </div>
-                <div class="field">
-                    <label for="weight-shape-log">Weight Shape</label>
+                    <label for="weight-shape-log">Weight Type</label>
                     <select id="weight-shape-log" onchange="onWeightShapeChange('weight-shape', true)"><option value="">—</option></select>
                 </div>
+                <div class="field">
+                    <label for="weight-log">Weight Amount</label>
+                    <select id="weight-log" onchange="syncSelect('weight', true)"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
+                </div>
             </div>
 
-            <!-- Row 3: Leader Length -->
+            <!-- Row 3: Leader Length + Leader material -->
             <div class="gear-row">
                 <div class="field">
                     <label for="ld-len-log">Leader Length (ft)</label>
                     <input type="number" id="ld-len-log" min="1" max="20" step="1" onchange="syncSelect('ld-len', true)" placeholder="10">
                 </div>
+                <div class="field">
+                    <label for="ld-mat-log">Leader Material</label>
+                    <select id="ld-mat-log" onchange="onLinePartChange('ld-mat-log', true)"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluorocarbon</option></select>
+                </div>
             </div>
 
-            <!-- Row 4: Hook Size + Yarn -->
+            <!-- Row 4: Leader brand → lb test -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="ld-brand-log">Leader Brand</label>
+                    <select id="ld-brand-log" onchange="onLinePartChange('ld-brand-log', true)"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ld-lb-log">Leader LB Test</label>
+                    <select id="ld-lb-log" onchange="onLinePartChange('ld-lb-log', true)"><option value="">—</option></select>
+                </div>
+            </div>
+
+            <!-- Row 5: Hook Size + Yarn -->
             <div class="gear-row">
                 <div class="field">
                     <label for="hook-log">Hook Size</label>
@@ -279,7 +327,7 @@
                 </div>
             </div>
 
-            <!-- Row 5: Foam 1 + Foam 2 -->
+            <!-- Row 6: Foam 1 + Foam 2 -->
             <div class="gear-row">
                 <div class="field">
                     <label for="foam-log">Foam 1</label>
@@ -291,11 +339,11 @@
                 </div>
             </div>
 
-            <!-- Row 6: Bead Material + Bead Size -->
+            <!-- Row 7: Bead Material + Bead Size -->
             <div class="gear-row">
                 <div class="field">
                     <label for="bd-mat-log">Bead Material (Presentation)</label>
-                    <select id="bd-mat-log" onchange="syncSelect('bd-mat', true)"><option value="">—</option><option value="none">None</option><option value="hard">Plastic</option><option value="soft">Soft</option></select>
+                    <select id="bd-mat-log" onchange="onBeadMatChange('bd-mat-log', true)"><option value="">—</option><option value="none">None</option><option value="hard">Plastic</option><option value="soft">Soft</option></select>
                 </div>
                 <div class="field">
                     <label for="bd-sz-log">Bead Size (Presentation)</label>

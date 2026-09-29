@@ -175,11 +175,16 @@ function staticIntegrity() {
 
   const cssSrc = fs.readFileSync(path.join(ROOT, 'src', 'styles.css'), 'utf8');
   // Phase 2.4.1: gear fields rest in explicit per-line rows (.gear-row) replacing the
-  // auto-flow 2-column grid. The 3-up leader variant (.gear-row-3) was retired when the
-  // rows were reordered to the user-specified 2-up flow, so it must NOT come back.
-  (cssSrc.includes('.gear-row {') && !cssSrc.includes('.gear-row-3'))
-    ? ok('resting gear rows present (.gear-row, no stale 3-up)', 'one gear group per line')
-    : fail('resting gear rows present (.gear-row, no stale 3-up)', 'missing .gear-row rules');
+  // auto-flow 2-column grid. WS-3 brought the 3-up variant BACK for exactly one row per
+  // form - row 1, the 3-part mainline cascade (material → brand → lb test), which would
+  // otherwise wrap the lb test onto its own line. Assert the rule exists and that no
+  // other row uses it, so a stray 3-up row cannot appear unnoticed.
+  const threeUp = (html.match(/class="gear-row gear-row-3"/g) || []).length;
+  (cssSrc.includes('.gear-row {') && cssSrc.includes('.gear-row-3 {') && threeUp === 2)
+    ? ok('resting gear rows present (.gear-row + one 3-up row per form)',
+         `${threeUp} 3-up rows (the 3-part mainline cascade)`)
+    : fail('resting gear rows present (.gear-row + one 3-up row per form)',
+           `css .gear-row-3=${cssSrc.includes('.gear-row-3 {')} 3-up rows=${threeUp}`);
   (!cssSrc.includes('gear-grid') && !cssSrc.includes('.run-footer'))
     ? ok('dead .gear-grid / .run-footer rules removed', 'no stale layout rules')
     : fail('dead .gear-grid / .run-footer rules removed', 'stale CSS found');
@@ -346,18 +351,20 @@ function staticIntegrity() {
   }
 
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
-  (gearRows === 12 && !html.includes('gear-grid'))
-    ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)
-    : fail('both gear forms use 6 resting rows each', `${gearRows} rows found`);
+  (gearRows === 14 && !html.includes('gear-grid'))
+    ? ok('both gear forms use 7 resting rows each', `${gearRows} rows total`)
+    : fail('both gear forms use 7 resting rows each', `${gearRows} rows found`);
 
   // The gear-box ORDER is a deliberate user instruction (session 1790604718924_nudti,
-  // msg 1477): with rod length removed the flow became Mainline → Weight + Leader Length
-  // → Leader → Hook/Yarn → Foam 1+2 → Beads, every row 2-up. The instruction was once
-  // acknowledged and silently skipped, so assert the exact per-row `for=` ids in document
-  // order for BOTH tabs and fail loudly on any future reorder.
+  // msg 1477 for the rows, WS-3/issue #1b for the cascades): Mainline material → brand →
+  // lb test · Weight type → amount · Leader length → material → brand → lb test ·
+  // Hook/Yarn · Foam 1+2 · Beads. The instruction was once acknowledged and silently
+  // skipped, so assert the exact per-row `for=` ids in document order for BOTH tabs and
+  // fail loudly on any future reorder.
   {
-    const GEAR_ORDER = ['ml-line', 'ld-line', 'weight', 'weight-shape', 'ld-len',
-                        'hook', 'yarn', 'foam', 'foam2', 'bd-mat', 'bd-sz'];
+    const GEAR_ORDER = ['ml-mat', 'ml-brand', 'ml-lb', 'weight-shape', 'weight',
+                        'ld-len', 'ld-mat', 'ld-brand', 'ld-lb', 'hook', 'yarn',
+                        'foam', 'foam2', 'bd-mat', 'bd-sz'];
     const blocks = html.split('<div class="gear-rows">');
     const labelsOf = (b) => (b.match(/<label for="[^"]+"/g) || [])
       .map((s) => s.match(/for="([^"]+)"/)[1]);
@@ -367,8 +374,8 @@ function staticIntegrity() {
     const wantSim = GEAR_ORDER.join(',');
     const wantLog = GEAR_ORDER.map((id) => `${id}-log`).join(',');
     (simOrder === wantSim && logOrder === wantLog)
-      ? ok('gear box order is the instructed 2-up flow (both tabs)', wantSim)
-      : fail('gear box order is the instructed 2-up flow (both tabs)',
+      ? ok('gear box order is the instructed cascade flow (both tabs)', wantSim)
+      : fail('gear box order is the instructed cascade flow (both tabs)',
              `sim=[${simOrder}] log=[${logOrder}]`);
   }
 
@@ -798,6 +805,147 @@ function behaviorChecks(done) {
     }
   } catch (e) {
     fail('catch row carries the picked brand', String(e.message).split('\n')[0]);
+  }
+
+  // --- WS-3: the tackle cascade (issue #1b) ------------------------------------
+  // The cascade is what turns three visible picks into the hidden line id, so exercise the
+  // REAL functions against the REAL library in a recording DOM: every select records its own
+  // option list and its value setter enforces the browser rule (assigning a value that is not
+  // on offer leaves the select EMPTY), which is exactly what drops a stale brand when the
+  // material changes. Without this the cascade could only be checked by hand in a browser.
+  try {
+    const vm = require('vm');   // same local-require pattern as the pending.js stub above
+    const lib = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'data', 'tackle.json'), 'utf8'));
+    const pageHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    const selects = {}, inputs = {};
+    function mkSel(id) {
+      const e = { id, options: [], tag: 'select', _v: '' };
+      Object.defineProperty(e, 'value', {
+        get() { return e._v; },
+        set(v) {
+          const s = (v === null || v === undefined) ? '' : String(v);
+          e._v = (s === '' || e.options.some((o) => o.value === s)) ? s : '';
+        }
+      });
+      Object.defineProperty(e, 'innerHTML', { get() { return ''; }, set() { e.options = []; } });
+      e.appendChild = (c) => {
+        if (!c) return;
+        if (c.frag) { c.children.forEach(e.appendChild); return; }
+        if (c.tag === 'option') e.options.push(c);
+      };
+      return e;
+    }
+    const ctx = {
+      logDebug: () => {},
+      document: {
+        getElementById: (id) => {
+          if (/-line$/.test(id)) return (inputs[id] = inputs[id] || { id, value: '' });
+          return (selects[id] = selects[id] || mkSel(id));
+        },
+        createElement: (tag) => {
+          const e = { tag, value: '', textContent: '', children: [] };
+          e.appendChild = (c) => {
+            if (c && c.frag) c.children.forEach(e.appendChild);
+            else if (c) e.children.push(c);
+          };
+          return e;
+        },
+        createDocumentFragment: () => ({
+          frag: true, children: [],
+          appendChild(c) { this.children.push(c); }
+        })
+      }
+    };
+    ctx.window = ctx;
+    ctx.getStr = (id) => (selects[id] ? selects[id].value : '');
+    ctx.setFieldValue = (id, v) => { ctx.document.getElementById(id).value = v; };
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'src', 'shared', 'forms.js'), 'utf8') + '\n' +
+      fs.readFileSync(path.join(ROOT, 'src', 'shared', 'tackle.js'), 'utf8'), ctx);
+    // The static <option> list index.html ships is the NO-LIBRARY fallback, so it has to be
+    // the same union the library builds for a blank parent - otherwise an offline first run
+    // offers values the library would never accept (or too few to log at all).
+    const staticVals = (id) => {
+      const m = pageHtml.match(new RegExp('id="' + id + '"[^>]*>([\\s\\S]*?)</select>'));
+      if (!m) return 'MISSING';
+      return (m[1].match(/<option value="([^"]*)"/g) || [])
+        .map((s) => s.match(/value="([^"]*)"/)[1]).join(',');
+    };
+    // Seed the controls with what the page ships, exactly like the browser does before any
+    // script runs: the mock must not accept a value the real form could not hold.
+    ['ml-mat', 'ml-brand', 'ml-lb', 'ld-mat', 'ld-brand', 'ld-lb', 'weight-shape', 'weight',
+      'bd-mat', 'bd-sz'].forEach((id) => {
+      const sel = ctx.document.getElementById(id);
+      sel.options = (staticVals(id) === 'MISSING' ? [] : staticVals(id).split(','))
+        .map((v) => ({ tag: 'option', value: v, textContent: v }));
+    });
+    ctx.TACKLE = lib;
+    ctx.populateTacklePickers();
+
+    const vals = (id) => selects[id].options.map((o) => o.value).join(',');
+    const texts = (id) => selects[id].options.map((o) => o.textContent).join(',');
+    const bad = [];
+    const eq = (label, got, want) => { if (got !== want) bad.push(`${label}=[${got}] want [${want}]`); };
+
+    eq('ml-mat boot', vals('ml-mat'), ',braid,mono,copoly');
+    eq('ld-mat boot', vals('ld-mat'), ',mono,copoly,fluoro');
+    eq('weight boot', vals('weight'), ',0.25,0.375,0.5,0.625,0.75,1');
+    eq('bd-sz boot', vals('bd-sz'), ',0,2,4,6,8');
+
+    // material -> brand -> lb test. The triple must resolve the LIBRARY row, and the
+    // Catch Log twin must hold the identical list and value.
+    selects['ml-mat'].value = 'braid';
+    ctx.onLinePartChange('ml-mat');
+    eq('braid brands', String(selects['ml-brand'].options.length - 1), '7');
+    eq('braid lb', vals('ml-lb'), ',20,30,40');
+    selects['ml-brand'].value = 'Sufix 832 Advanced Superline';
+    ctx.onLinePartChange('ml-brand');
+    selects['ml-lb'].value = '30';
+    ctx.onLinePartChange('ml-lb');
+    const picked = lib.items.filter((i) => i.id === inputs['ml-line'].value)[0];
+    eq('resolved id', String(!!picked && picked.material === 'braid' &&
+      picked.brand === 'Sufix 832 Advanced Superline' && picked.lb_test === 30), 'true');
+    eq('twin list', vals('ml-brand') + '|' + vals('ml-lb'), vals('ml-brand-log') + '|' + vals('ml-lb-log'));
+    eq('twin value', selects['ml-brand-log'].value, selects['ml-brand'].value);
+    // A new material DROPS the braid brand, its lb test and the resolved id: no stale
+    // pick may keep resolving a line the angler is no longer fishing.
+    selects['ml-mat'].value = 'mono';
+    ctx.onLinePartChange('ml-mat');
+    eq('material switch clears', selects['ml-brand'].value + '|' + inputs['ml-line'].value, '|');
+
+    // weight type -> amount (the nominal oz read from the row labels; the leading "—" is
+    // the blank option, so strip it before comparing the wording)
+    selects['weight-shape'].value = 'Lead Slinky (shot in tubing)';
+    ctx.onWeightShapeChange('weight-shape');
+    eq('slinky amounts', vals('weight'), ',0.25,0.375,0.5,0.625,0.75,1');
+    eq('slinky labels', texts('weight').replace('\u2014', ''),
+       ',1/4 oz,3/8 oz,1/2 oz,5/8 oz,3/4 oz,1 oz');
+    // bead material -> size
+    selects['bd-mat'].value = 'soft';
+    ctx.onBeadMatChange('bd-mat');
+    eq('soft bead sizes', vals('bd-sz'), ',6,8');
+    selects['bd-mat'].value = 'none';
+    ctx.onBeadMatChange('bd-mat');
+    eq('no bead size', vals('bd-sz'), ',0');
+
+    // the static fallback lists must equal the union the library builds
+    eq('static ml-mat', staticVals('ml-mat'), ',braid,mono,copoly');
+    eq('static ld-mat', staticVals('ld-mat'), ',mono,copoly,fluoro');
+    eq('static weight', staticVals('weight'), ',0.25,0.375,0.5,0.625,0.75,1');
+    eq('static bd-sz', staticVals('bd-sz'), ',0,2,4,6,8');
+
+    const cascadeBad = bad.filter((b) => !b.startsWith('static '));
+    const staticBad = bad.filter((b) => b.startsWith('static '));
+    cascadeBad.length === 0
+      ? ok('tackle cascade drives the gear form (both tabs)',
+           'material → brand → lb test resolves the library id; weight type → amount; bead material → size')
+      : fail('tackle cascade drives the gear form (both tabs)', cascadeBad.join(' '));
+    staticBad.length === 0
+      ? ok('static gear options are the library union (offline fallback)',
+           'material / weight oz / bead size lists')
+      : fail('static gear options are the library union (offline fallback)', staticBad.join(' '));
+  } catch (e) {
+    fail('tackle cascade drives the gear form (both tabs)', String(e.message).split('\n')[0]);
   }
 
   // --- P4b: the brand changes the community REPLAY ----------------------------

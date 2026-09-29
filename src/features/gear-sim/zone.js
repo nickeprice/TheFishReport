@@ -8,18 +8,25 @@
  */
 // Required gear fields — no defaults, so anything the angler has never entered
 // stays blank and blocks the sim/log with a precise "fill in X" message.
+// The LINE is a 3-part cascade (material → brand → lb test) and every part is
+// required: the triple is what resolves to ONE measured line, and a partial pick
+// deliberately resolves to no id at all (see src/shared/tackle.js).
 // Foam 2 is required too (pick "None" for a single-corky rig).
 var RIG_REQUIRED = [
-    { id: 'weight', label: 'Weight' },
-    { id: 'ml-line', label: 'Mainline' },
-    { id: 'ld-line', label: 'Leader' },
-    { id: 'ld-len', label: 'Leader Length (ft)' },
-    { id: 'hook',   label: 'Hook Size' },
-    { id: 'yarn',   label: 'Yarn' },
-    { id: 'foam',   label: 'Foam 1' },
-    { id: 'foam2',  label: 'Foam 2' },
-    { id: 'bd-mat', label: 'Bead Material' },
-    { id: 'bd-sz',  label: 'Bead Size' }
+    { id: 'ml-mat',   label: 'Mainline material' },
+    { id: 'ml-brand', label: 'Mainline brand' },
+    { id: 'ml-lb',    label: 'Mainline lb test' },
+    { id: 'weight',   label: 'Weight' },
+    { id: 'ld-len',   label: 'Leader length (ft)' },
+    { id: 'ld-mat',   label: 'Leader material' },
+    { id: 'ld-brand', label: 'Leader brand' },
+    { id: 'ld-lb',    label: 'Leader lb test' },
+    { id: 'hook',     label: 'Hook size' },
+    { id: 'yarn',     label: 'Yarn' },
+    { id: 'foam',     label: 'Foam 1' },
+    { id: 'foam2',    label: 'Foam 2' },
+    { id: 'bd-mat',   label: 'Bead material' },
+    { id: 'bd-sz',    label: 'Bead size' }
 ];
 
 function missingRigFields() {

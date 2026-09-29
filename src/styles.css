@@ -53,11 +53,14 @@ label { font-size: 0.65rem; color: #aaa; margin-bottom: 3px; text-transform: upp
 /* Resting gear rows shared by the Gear Sim and the Catch Log. Each .gear-row is
    ONE visible line of the form (so the order reads top-to-bottom) with breathing
    room between the fields instead of the old auto-flow 2-col squash. Every row is
-   2-up: the leader row's 3-up variant was dropped with the user-specified reorder —
-   Mainline → Weight + Leader Length → Leader → Hook/Yarn → Foam 1+2 → Beads
-   (sanity asserts the exact order, both tabs). */
+   2-up except the first, which carries the 3-part mainline cascade in three equal
+   columns (.gear-row-3) so the lb test cannot wrap onto its own line:
+   Mainline material+brand+lb → Weight type+amount → Leader Length+material →
+   Leader brand+lb → Hook/Yarn → Foam 1+2 → Beads
+   (sanity asserts the exact field order, both tabs). */
 .gear-rows { display: flex; flex-direction: column; gap: 11px; }
 .gear-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.gear-row-3 { grid-template-columns: repeat(3, 1fr); }
 .gear-row .field { display: flex; flex-direction: column; min-width: 0; }
 /* Paired feet / inches entry — REMOVED with rod length (2026-09-28): .dual-input had
    no other user, so the rule is gone rather than left as dead CSS. */

@@ -60,9 +60,12 @@ this file**, or the pass fails.
 - **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`
 - **tackle.js** — `tackleLoad()`, `tackleItems(type)`, `tackleLineById(id)`,
   `tackleLineByMatLb(mat, lb)`, `tackleRowLine(row, role)` (brand id -> else material+lb),
-  `populateTacklePickers()`, `onLinePickChange()`,
-  `onWeightShapeChange()`, `resolveLineFields(role)` — data-driven line + weight-shape
-  pickers from `src/data/tackle.json`
+  `populateTacklePickers()`, `tackleLineBrands(mat, role)`, `tackleLineLbs(mat, brand, role)`,
+  `tackleLineFind(mat, brand, lb)`, `cascadeLine(role)`, `resolveLineId(role)`,
+  `onLinePartChange(fieldId, fromLog)`, `onWeightShapeChange(baseId, fromLog)`,
+  `onBeadMatChange(fieldId, fromLog)`, `tackleWeightOz(shape)`, `tackleBeadSizes(mat)` —
+  the CASCADE (material -> brand -> lb test, weight type -> amount, bead material -> size)
+  over `src/data/tackle.json`; the picks resolve into the hidden `ml-line`/`ld-line` id
 - **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`,
   `idbDelete(store, key)`
 - **refresh.js** — `AUTO_REFRESH_MS`, `silenceableRefresh()`, `startAutoRefresh()`, `refreshNow()`

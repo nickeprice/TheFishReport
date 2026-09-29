@@ -17,13 +17,23 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — GitHub issues #1/#3 WS-3: the gear form is a **real cascade** on both tabs — 7
+  rows / 15 fields in the user-specified order (Mainline material → brand → lb test · Weight type →
+  amount · Leader length → material → brand → lb test · Hook/Yarn · Foam 1+2 · Beads). The three
+  line picks resolve into the HIDDEN `ml-line`/`ld-line` id, so the solver, the catch row and the
+  `*_line_id` columns are untouched. One rule: a child list = what its parent allows, a blank
+  parent = the union, so nothing is invented and the short static `<option>` lists (the no-library
+  fallback) are provably that union. A stale pick (a braid brand under mono) is dropped and takes
+  the id with it; `RIG_REQUIRED` now names the 14 visible fields. New recording-DOM assertion
+  drives the real cascade against the real `tackle.json`. `sw.js` `v2.03.16`, **113/113**.
+
 - 2026-09-29 — GitHub issues #1/#3 first pass: **WS-1** `useGPS()` no longer auto-falls-back
   and closes the station modal on failure (keeps it open with a retry hint, logs the real
   `/api/nearby_stations` status, stores the fix so the map centres on the angler); **WS-2** the
   Gear Sim HUD is now just Strike Zone (+ why it moved off the 4"–12" base) and colour-graded
   Line Height (green centre → yellow 50% → red edge, 0.1" steps) with the rig suggestions under
   it — score line, BOTTOM CURRENT and the old bottom box all gone. `sw.js` `v2.03.15`, 111/111.
-  WS-3 (cascading dropdowns), WS-4 (per-day weather) and WS-5 (private spots) still open —
+  WS-4 (per-day weather) and WS-5 (private spots) still open —
   see `memory-bank/activeContext.md`.
 
 - 2026-09-29 — Tackle brand is now end-to-end: `public.catches` gained `mainline_line_id` /

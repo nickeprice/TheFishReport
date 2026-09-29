@@ -1,14 +1,19 @@
 /**
  * src/shared/tackle.js - measured tackle library loader (docs/CONTRACT_TACKLE.md ->
- * src/data/tackle.json). Populates the data-driven line + weight pickers so the
- * options can never drift from the CSV, which is the single source of truth.
+ * src/data/tackle.json) plus the CASCADING pickers that read it.
  *
- * The pickers CHOOSE; the rig model underneath stays material+lb, because
- * solver.js, log.js (the catch row) and the DB all read `ml-mat`/`ml-lb`/`ld-mat`/
- * `ld-lb`. So a pick resolves into those fields and nothing downstream changes.
+ * The cascade (WS-3): Material -> Brand -> LB Test (mainline + leader), Weight Type ->
+ * Amount, Bead Material -> Size. A pick only CHOOSES: the three visible line parts
+ * resolve into the HIDDEN ml-line / ld-line id, which is what solver.js (measured
+ * diameter), log.js (the catch row) and the DB read, so nothing downstream of the form
+ * changed.
  *
  * public: TACKLE, tackleLoad(), tackleItems(), tackleLineById(), tackleLineByMatLb(),
- *         tackleRowLine(), populateTacklePickers(), onLinePickChange(), onWeightShapeChange()
+ *         tackleRowLine(), populateTacklePickers(), cascadeLine(role), resolveLineId(role),
+ *         onLinePartChange(fieldId, fromLog), onWeightShapeChange(baseId, fromLog),
+ *         onBeadMatChange(fieldId, fromLog), tackleLineBrands(mat, role),
+ *         tackleLineLbs(mat, brand, role), tackleLineFind(mat, brand, lb),
+ *         tackleWeightOz(shape), tackleBeadSizes(mat)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 var TACKLE = null;
@@ -73,37 +78,165 @@ function tackleRowLine(row, role) {
         isLeader ? (row.ldLb || row.leader_lb) : (row.mlLb || row.mainline_lb));
 }
 
-// Write the resolved material + lb for one role into its hidden canonical fields.
-function resolveLineFields(role) {
-    var isLeader = (role === 'leader');
-    var line = tackleLineById(getStr(isLeader ? 'ld-line' : 'ml-line'));
-    setFieldValue(isLeader ? 'ld-mat' : 'ml-mat', line ? line.material : '');
-    setFieldValue(isLeader ? 'ld-lb' : 'ml-lb', line ? String(line.lb_test) : '');
+// --- THE CASCADE (WS-3) ------------------------------------------------------------
+// ONE rule for lines, weights and beads: a child list holds exactly the values its
+// parent allows, and a BLANK parent offers the UNION across everything that parent
+// could be (the role's materials / every weight type / every bead material). So no
+// control is ever dead, no value is ever invented, and the short static <option> lists
+// in index.html are that same union (sanity asserts it) - which is the form an angler
+// gets when tackle.json never loads. Every list is filled into BOTH tabs at once, so
+// the Gear Sim and the Catch Log can never disagree about what is on offer.
+//
+// The line identity (material, brand, lb test) is exactly one measured row, which is
+// what lets the cascade resolve a real diameter. A PARTIAL pick resolves to nothing
+// rather than to a guessed brand; missingRigFields() is what blocks the sim/log then.
+function tackleLineFind(mat, brand, lb) {
+    if (!mat || !brand || !lb) return null;
+    var lines = tackleItems('line');
+    for (var i = 0; i < lines.length; i++) {
+        var it = lines[i];
+        if (it.material === mat && String(it.brand) === brand &&
+            Number(it.lb_test) === Number(lb)) return it;
+    }
+    return null;
 }
 
-// The Gear Sim and the Catch Log hold the same picker; keep them mirroring.
-function syncLinePicker(baseId, fromLog) {
-    var a = document.getElementById(baseId);
-    var b = document.getElementById(baseId + '-log');
-    if (!a || !b) return;
-    if (fromLog) a.value = b.value; else b.value = a.value;
+// Brands on offer for a material (blank material -> every brand the role allows).
+function tackleLineBrands(mat, role) {
+    var ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
+    var seen = {}, out = [];
+    tackleItems('line').forEach(function (it) {
+        if (ok.indexOf(it.material) === -1 || !it.brand || seen[it.brand]) return;
+        seen[it.brand] = true;
+        out.push(String(it.brand));
+    });
+    return out.sort(function (a, b) { return a.localeCompare(b); });
 }
 
-function onLinePickChange(baseId, fromLog) {
-    var isLeader = (baseId.indexOf('ld') === 0);
-    syncLinePicker(baseId, fromLog);
-    resolveLineFields(isLeader ? 'leader' : 'mainline');
-    var line = tackleLineById(getStr(isLeader ? 'ld-line' : 'ml-line'));
-    logDebug('Line picked: ' + (line ? line.label : '--'), 'STATE');
+// LB tests on offer for a (material, brand) pair (blank parent -> the union).
+function tackleLineLbs(mat, brand, role) {
+    var ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
+    var seen = {}, out = [];
+    tackleItems('line').forEach(function (it) {
+        if (ok.indexOf(it.material) === -1) return;
+        if (brand && String(it.brand) !== brand) return;
+        var lb = Number(it.lb_test);
+        if (!lb || seen[lb]) return;
+        seen[lb] = true;
+        out.push(lb);
+    });
+    return out.sort(function (a, b) { return a - b; });
 }
 
-// The weight shape is its own control; mirror it the same way.
+// The visible line fields, by role: ml-mat / ld-mat etc.
+function lineField(role, part) {
+    return (role === 'leader' ? 'ld-' : 'ml-') + part;
+}
+
+// Fill a control AND its -log twin with the same entries, then mirror the value across.
+// This is the ONLY way an option list is written, which is what keeps the two tabs in
+// lockstep; a stale value that fell out of its parent's list is cleared by the same
+// browser rule on both sides (assigning an absent value leaves the select empty).
+function fillBothSelects(baseId, entries) {
+    var base = document.getElementById(baseId);
+    var twin = document.getElementById(baseId + '-log');
+    if (base) fillSelect(base, entries);
+    if (twin) fillSelect(twin, entries);
+    if (base && twin) twin.value = base.value;
+}
+
+function mirrorValue(baseId) {
+    var base = document.getElementById(baseId);
+    var twin = document.getElementById(baseId + '-log');
+    if (base && twin) twin.value = base.value;
+}
+
+// Rebuild BRAND + LB from the material/brand picks, then refresh the hidden id.
+function cascadeLine(role) {
+    var mat = getStr(lineField(role, 'mat'));
+    fillBothSelects(lineField(role, 'brand'),
+        tackleLineBrands(mat, role).map(function (b) { return { value: b, text: b }; }));
+    fillBothSelects(lineField(role, 'lb'),
+        tackleLineLbs(mat, getStr(lineField(role, 'brand')), role)
+            .map(function (lb) { return { value: String(lb), text: lb + ' lb' }; }));
+    return resolveLineId(role);
+}
+
+// Resolve the HIDDEN line id from the three visible picks (incomplete pick -> no id).
+function resolveLineId(role) {
+    var line = tackleLineFind(getStr(lineField(role, 'mat')),
+                              getStr(lineField(role, 'brand')),
+                              getStr(lineField(role, 'lb')));
+    setFieldValue(lineField(role, 'line'), line ? line.id : '');
+    return line;
+}
+
+// Any of the six line controls changed. Copy the twin's value in first when the change
+// came from the Catch Log, then re-cascade: a brand the new material does not offer is
+// dropped here, so a stale pick can never resolve a wrong diameter or a wrong id.
+function onLinePartChange(fieldId, fromLog) {
+    var base = String(fieldId).replace(/-log$/, '');
+    if (fromLog) setFieldValue(base, getStr(fieldId));
+    var role = (base.indexOf('ld-') === 0) ? 'leader' : 'mainline';
+    var line = cascadeLine(role);
+    mirrorValue(base);
+    logDebug('Line ' + role + ': ' + (line ? line.label : '--'), 'STATE');
+}
+
+// The weight TYPE is its own control; mirror it and rebuild the amount list from the
+// rows that carry that type.
 function onWeightShapeChange(baseId, fromLog) {
-    var a = document.getElementById(baseId);
-    var b = document.getElementById(baseId + '-log');
-    if (!a || !b) return;
-    if (fromLog) a.value = b.value; else b.value = a.value;
-    logDebug('Weight shape: ' + getStr(baseId), 'STATE');
+    var base = String(baseId).replace(/-log$/, '');
+    if (fromLog) setFieldValue(base, getStr(baseId));
+    fillBothSelects('weight', tackleWeightOz(getStr(base)));
+    mirrorValue(base);
+    logDebug('Weight type: ' + getStr(base), 'STATE');
+}
+
+// Bead MATERIAL gates the size list (hard 2/4/6/8mm, soft 6/8mm, None 0mm).
+function onBeadMatChange(fieldId, fromLog) {
+    var base = String(fieldId).replace(/-log$/, '');
+    if (fromLog) setFieldValue(base, getStr(fieldId));
+    fillBothSelects('bd-sz', tackleBeadSizes(getStr(base)));
+    mirrorValue(base);
+    logDebug('Bead material: ' + getStr(base), 'STATE');
+}
+
+// Weight amount: the nominal oz of a weight row, read from the trailing "<n>/<d> oz" of
+// its own label (the CSV's wording), so the picker and the library cannot drift. The
+// rubber-sleeve rows weigh MORE than their nominal oz, so mass is deliberately NOT the
+// source of this list. Blank type -> the union of every type.
+var OZ_LABEL_RE = /(\d+)(?:\/(\d+))?\s*oz\s*$/i;
+
+function tackleWeightOz(shape) {
+    var seen = {}, out = [];
+    tackleItems('weight').forEach(function (it) {
+        if (shape && it.shape_label !== shape) return;
+        var m = String(it.label || '').match(OZ_LABEL_RE);
+        if (!m) return;
+        var oz = Number(m[1]) / (m[2] ? Number(m[2]) : 1);
+        if (!oz || seen[oz]) return;
+        seen[oz] = true;
+        out.push({ value: String(oz), text: m[0].replace(/\s+/g, ' ').trim() });
+    });
+    return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
+}
+
+// Bead size: the bead rows the material owns. "None" is the ABSENCE of a bead, so its 0
+// is supplied here rather than invented from the library; a blank material lists every
+// size the library has.
+function tackleBeadSizes(mat) {
+    var out = [];
+    if (!mat || mat === 'none') out.push({ value: '0', text: 'None' });
+    if (mat !== 'none') {
+        tackleItems('bead').forEach(function (it) {
+            if (mat && it.material !== mat) return;
+            var mm = Number(it.diameter_mm);
+            if (!mm || out.some(function (o) { return o.value === String(mm); })) return;
+            out.push({ value: String(mm), text: mm + 'mm' });
+        });
+    }
+    return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
 }
 
 function fillSelect(sel, entries) {
@@ -124,65 +257,34 @@ function fillSelect(sel, entries) {
     sel.value = previous;                       // keep a valid pick across a repopulate
 }
 
+// Boot: fill every list from the library before anything is picked. The material select
+// holds the library's OWN materials for that role; every child list is built for a blank
+// parent (= the union), so the form is usable top-down and the static index.html options
+// are provably the same union. A missing library leaves the static lists in place.
 function populateTacklePickers() {
     if (!TACKLE) return;
-    // Lines: one picker per role, one <optgroup> per material, ordered by lb then brand.
-    [['ml-line', 'mainline'], ['ld-line', 'leader']].forEach(function (pair) {
-        var sel = document.getElementById(pair[0]);
-        if (!sel) return;
-        var entries = [];
-        TACKLE_LINE_ROLES[pair[1]].forEach(function (mat) {
-            var rows = tackleItems('line').filter(function (i) { return i.material === mat; });
-            if (!rows.length) return;
-            rows.sort(function (a, b) {
-                return (Number(a.lb_test) - Number(b.lb_test)) ||
-                       String(a.brand).localeCompare(String(b.brand));
-            });
-            entries.push({ group: TACKLE_MAT_LABELS[mat] || mat, rows: rows });
+    [['ml', 'mainline'], ['ld', 'leader']].forEach(function (pair) {
+        var mats = TACKLE_LINE_ROLES[pair[1]].filter(function (mat) {
+            return tackleItems('line').some(function (it) { return it.material === mat; });
         });
-        var previous = sel.value;
-        var frag = document.createDocumentFragment();
-        var blank = document.createElement('option');
-        blank.value = '';
-        blank.textContent = '\u2014';
-        frag.appendChild(blank);
-        entries.forEach(function (grp) {
-            var og = document.createElement('optgroup');
-            og.label = grp.group;
-            grp.rows.forEach(function (it) {
-                var opt = document.createElement('option');
-                opt.value = it.id;
-                opt.textContent = it.label || it.id;
-                og.appendChild(opt);
-            });
-            frag.appendChild(og);
-        });
-        sel.innerHTML = '';
-        sel.appendChild(frag);
-        sel.value = previous;
-        var mirror = document.getElementById(pair[0] + '-log');
-        if (mirror) { mirror.innerHTML = sel.innerHTML; mirror.value = sel.value; }
+        fillBothSelects(pair[0] + '-mat', mats.map(function (mat) {
+            return { value: mat, text: TACKLE_MAT_LABELS[mat] || mat };
+        }));
+        cascadeLine(pair[1]);
     });
 
-    // Weight shapes: every distinct shape_label in the weight rows. Paired with the
-    // oz dropdown that identifies exactly one weight row (metal + sleeve included).
-    var shapeSel = document.getElementById('weight-shape');
-    if (shapeSel) {
-        var seen = {};
-        var shapes = [];
-        tackleItems('weight').forEach(function (it) {
-            if (!it.shape_label || seen[it.shape_label]) return;
-            seen[it.shape_label] = true;
-            shapes.push({ value: it.shape_label, text: it.shape_label });
-        });
-        shapes.sort(function (a, b) { return a.text.localeCompare(b.text); });
-        fillSelect(shapeSel, shapes);
-        var shapeMirror = document.getElementById('weight-shape-log');
-        if (shapeMirror) {
-            shapeMirror.innerHTML = shapeSel.innerHTML;
-            shapeMirror.value = shapeSel.value;
-        }
-    }
+    // Weight TYPES: every distinct shape_label in the weight rows (the pair
+    // shape_label + oz identifies exactly one weight row, metal + sleeve included).
+    var seen = {}, shapes = [];
+    tackleItems('weight').forEach(function (it) {
+        if (!it.shape_label || seen[it.shape_label]) return;
+        seen[it.shape_label] = true;
+        shapes.push({ value: it.shape_label, text: it.shape_label });
+    });
+    shapes.sort(function (a, b) { return a.text.localeCompare(b.text); });
+    fillBothSelects('weight-shape', shapes);
+    fillBothSelects('weight', tackleWeightOz(getStr('weight-shape')));
+    fillBothSelects('bd-sz', tackleBeadSizes(getStr('bd-mat')));
 }
 
 // Load once at boot. A failure (offline first run, or a deploy without the file)

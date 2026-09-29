@@ -9,6 +9,10 @@ var RIG_STORE_KEY = 'puyallup_last_rig';
 function saveRig() {
     try {
         var rig = {
+            // The line CASCADE, part by part, saved alongside the resolved id so a
+            // restore can rebuild the three visible picks instead of guessing them.
+            mlMat: getStr('ml-mat'), mlBrand: getStr('ml-brand'), mlLb: getStr('ml-lb'),
+            ldMat: getStr('ld-mat'), ldBrand: getStr('ld-brand'), ldLb: getStr('ld-lb'),
             mlLine: getStr('ml-line'),
             ldLine: getStr('ld-line'),
             ldLen: getStr('ld-len'),
@@ -39,32 +43,40 @@ function restoreRig() {
         var el = document.getElementById(id);
         if (el && val !== undefined && val !== null && val !== '') el.value = String(val);
     }
-    set('ml-line', rig.mlLine); set('ld-line', rig.ldLine);
-    set('ld-len', rig.ldLen);
-    set('weight', rig.weight); set('weight-shape', rig.weightShape);
-    set('hook', rig.hook); set('yarn', rig.yarn);
-    set('foam', rig.foam); set('foam2', rig.foam2);
-    set('bd-mat', rig.bdMat); set('bd-sz', rig.bdSz);
-    // Mirror to the Catch Log duplicated controls.
-    set('ml-line-log', rig.mlLine); set('ld-line-log', rig.ldLine);
-    set('ld-len-log', rig.ldLen);
-    set('weight-log', rig.weight); set('weight-shape-log', rig.weightShape);
-    set('hook-log', rig.hook); set('yarn-log', rig.yarn);
-    set('foam-log', rig.foam); set('foam2-log', rig.foam2);
-    set('bd-mat-log', rig.bdMat); set('bd-sz-log', rig.bdSz);
+    // Every VISIBLE control exists twice (Gear Sim + Catch Log mirror); the hidden
+    // ml-line / ld-line ids exist once, so they use set() alone.
+    function setBoth(id, val) { set(id, val); set(id + '-log', val); }
 
-    // A rig saved BEFORE the pickers existed carries material+lb only, so resolve
-    // the matching line id and let the picker show the angler's own line again.
-    if (!rig.mlLine && rig.mlMat) {
-        var ml = tackleLineByMatLb(rig.mlMat, rig.mlLb);
-        if (ml) { set('ml-line', ml.id); set('ml-line-log', ml.id); }
-    }
-    if (!rig.ldLine && rig.ldMat) {
-        var ld = tackleLineByMatLb(rig.ldMat, rig.ldLb);
-        if (ld) { set('ld-line', ld.id); set('ld-line-log', ld.id); }
-    }
-    // The pickers only CHOOSE: the hidden canonical mat/lb fields are what the
-    // solver, the catch row and the DB read, so derive them from the picks.
-    resolveLineFields('mainline');
-    resolveLineFields('leader');
+    // A rig saved before the cascade (or by an older installed client) has no brand:
+    // recover the brand + lb test from the saved line id, and material+lb as the last
+    // resort — that is the pre-picker contract, so an old rig still restores.
+    ['ml', 'ld'].forEach(function (pre) {
+        var line = rig[pre + 'Line'] ? tackleLineById(rig[pre + 'Line']) : null;
+        if (!line && rig[pre + 'Mat']) line = tackleLineByMatLb(rig[pre + 'Mat'], rig[pre + 'Lb']);
+        if (!line) return;
+        if (!rig[pre + 'Mat']) rig[pre + 'Mat'] = line.material;
+        if (!rig[pre + 'Brand']) rig[pre + 'Brand'] = String(line.brand || '');
+        if (!rig[pre + 'Lb']) rig[pre + 'Lb'] = String(line.lb_test);
+    });
+
+    // Parents BEFORE children: the cascade has to BUILD an option list before a value
+    // can land in it, so each parent is applied and cascaded before its child is set.
+    setBoth('ml-mat', rig.mlMat); setBoth('ld-mat', rig.ldMat);
+    cascadeLine('mainline'); cascadeLine('leader');
+    setBoth('ml-brand', rig.mlBrand); setBoth('ld-brand', rig.ldBrand);
+    cascadeLine('mainline'); cascadeLine('leader');
+    setBoth('ml-lb', rig.mlLb); setBoth('ld-lb', rig.ldLb);
+    // The picks only CHOOSE: the hidden ids are what the solver, the catch row and the
+    // DB read, so derive them from the restored picks.
+    resolveLineId('mainline'); resolveLineId('leader');
+
+    setBoth('weight-shape', rig.weightShape);
+    if (rig.weightShape) onWeightShapeChange('weight-shape');   // amounts for that type
+    setBoth('weight', rig.weight);
+    setBoth('ld-len', rig.ldLen);
+    setBoth('hook', rig.hook); setBoth('yarn', rig.yarn);
+    setBoth('foam', rig.foam); setBoth('foam2', rig.foam2);
+    setBoth('bd-mat', rig.bdMat);
+    if (rig.bdMat) onBeadMatChange('bd-mat');                   // sizes for that material
+    setBoth('bd-sz', rig.bdSz);
 }

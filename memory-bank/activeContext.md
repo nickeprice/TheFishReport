@@ -15,16 +15,17 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1 + WS-2 shipped, NOT committed)
+## HANDOFF — 2026-09-29 (WS-1 + WS-2 committed; WS-3 verified, pending this commit)
 
 WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded Line Height
-+ suggestions, no score / no BOTTOM CURRENT / no bottom box) are DONE and verified:
-`node sanity_pass.js --quiet` → **111/111**; `sw.js` `v2.03.15`. Dirty files at handoff:
-`index.html`, `src/styles.css`, `src/features/station/picker.js`,
-`src/features/gear-sim/{solver,zone}.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`,
-`memory-bank/activeContext.md`, `sw.js`.
-NEXT: execute **WS-3** (fully specified below — the two sanity assertions it must move are
-named). Then WS-4 (per-day weather) and WS-5 (private favourite spots + migration).
++ suggestions, no score / no BOTTOM CURRENT / no bottom box) shipped in `3e7259b`. WS-3
+(both tabs → the 7-row / 15-field material→brand→lb-test cascade) is DONE and verified:
+`node sanity_pass.js --quiet` → **113/113**; `sw.js` `v2.03.16`. Touched: `index.html`,
+`src/shared/tackle.js`, `src/features/gear-sim/{rig,zone}.js`, `src/styles.css`,
+`sanity_pass.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`, `sw.js`, `memory-bank/*`.
+NEXT: **WS-4** (per-day weather, issue #2). Then WS-5 (private favourite spots + migration).
+Still owed from WS-3: a real-browser pass over both tabs (the cascade is proven by the new
+recording-DOM harness in `sanity_pass.js`, not yet by hand).
 
 ## Instruction ledger — chat asks persisted to `.clinerules`
 - [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`
@@ -57,7 +58,7 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       Verify: `node sanity_pass.js --quiet` (frozen drift baseline still green).
 
 ### WS-3 — Cascading dropdowns, both tabs (issue #1b)
-- [ ] `index.html` (both tabs → 7-row / 15-field layout), `src/shared/tackle.js`,
+- [x] `index.html` (both tabs → 7-row / 15-field layout), `src/shared/tackle.js`,
       `zone.js` (`RIG_REQUIRED`), `sanity_pass.js`, `src/styles.css`, `sw.js` — cascade
       Material→Brand→LB Test (mainline + leader), Weight Type→Amount, Bead Material→Size from
       `tackle.json`.
@@ -75,7 +76,23 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       (`sanity_pass.js:359`) → the 15 ids above; `zone.js` `RIG_REQUIRED` ids must match the new
       VISIBLE selects or the sim blocks forever (currently lists `ml-line`/`ld-line`). `.gear-row`
       is a 2-col grid → add a `.gear-row-3` variant for row 1.
-      Verify: `node sanity_pass.js --quiet`; browser cascade on both tabs.
+      Verified (DONE 2026-09-29, sanity **113/113**, `sw.js` `v2.03.16`): the 3 moved/updated
+      guards (3-up CSS rule + 2 forms, 14 rows / 7 each, 15 ids in the instructed order) PLUS 2
+      new assertions — a recording-DOM harness that drives the real `cascadeLine()` /
+      `onWeightShapeChange()` / `onBeadMatChange()` against the real `tackle.json` (braid → 7
+      brands → 20/30/40 → id `braid-sufix-832-30`; a material switch clears the stale brand AND
+      the id; soft → 6/8mm, none → 0; the -log twin always matches), and "the static `<option>`
+      lists are the library union" (the offline fallback cannot drift). Implementation notes:
+      ONE cascade rule (a child list = what its parent allows; a blank parent = the union),
+      `fillBothSelects()` is the only writer of an option list so both tabs can never disagree,
+      weight amounts come from each row's own `1/4 oz` label (NOT from mass — the sleeve rows
+      weigh more than nominal), `RIG_REQUIRED` lists the 14 visible fields, and `restoreRig()`
+      applies parents before children (a rig saved by an older client recovers its brand/lb from
+      the saved line id, else from material+lb).
+      Potential bug (kept): without `tackle.json` there is no brand/lb to pick, so the sim/log
+      blocks on "Mainline brand" — the SAME offline behaviour as the pre-WS-3 single picker, and
+      `tackle.json` is precached in `sw.js` `SHELL_FILES`, so an installed app has it offline.
+      Still owed: a real-browser pass on both tabs (the harness proves the logic, not the DOM).
 
 ### WS-4 — Per-day weather forecast (issue #2)
 - [ ] `api/water_report.py`, `telemetry/report.js`, `telemetry/daynav.js`, `services/water.js` —

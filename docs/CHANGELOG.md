@@ -4,6 +4,24 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — Issue #1b (WS-3): the gear form is a real cascade
+Both tabs are now 7 rows / 15 fields in the user-specified order: Mainline material → brand → lb
+test · Weight type → amount · Leader length → material → brand → lb test · Hook/Yarn · Foam 1+2 ·
+Beads. The three line picks resolve into the HIDDEN `ml-line` / `ld-line` id, so `pickedLineDiameter()`,
+`logData()` and the `mainline_line_id` / `leader_line_id` columns are untouched. ONE cascade rule:
+a child list holds exactly what its parent allows, and a BLANK parent offers the union — so no
+control is dead, nothing is invented, and the short static `<option>` lists in `index.html` are
+provably that union (a new assertion compares them against `tackle.json`). `fillBothSelects()` is
+the only writer of an option list, so the Gear Sim and the Catch Log can never disagree; a stale
+pick (a braid brand under mono) is dropped and takes the resolved id with it. Weight amounts come
+from each row's own `1/4 oz` label — deliberately NOT from mass, because the rubber-sleeve rows
+weigh more than their nominal oz. `RIG_REQUIRED` lists the 14 VISIBLE fields, so the sim/log blocks
+by name instead of reading a blank hidden input. `sanity_pass.js` gains a recording-DOM harness
+that drives the real cascade functions against the real library. `sw.js` VERSION → `v2.03.16`.
+**113/113 GREEN**.
+- Key files: `index.html`, `src/shared/tackle.js`, `src/features/gear-sim/{rig,zone}.js`,
+  `src/styles.css`, `sanity_pass.js`, `docs/SYMBOLS.md`.
+
 ## 2026-09-29 — Issue #1a: Gear Sim HUD is now just the two numbers that matter
 Removed the score line and the whole BOTTOM CURRENT metric; the top HUD is two panels. LEFT =
 `Strike Zone: X"-Y"` plus a one-line "why it moved off the 4"-12" base" drawn from

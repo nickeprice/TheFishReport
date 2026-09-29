@@ -27,12 +27,15 @@ var DRIFT_TECHNIQUE = {
         var weightOz = rig.weightOz, ldLen = rig.ldLen, ldMat = rig.ldMat, ldLb = rig.ldLb;
         var mlMat = rig.mlMat, mlLb = rig.mlLb, hook = rig.hook, yarn = rig.yarn;
         var foam = rig.foam, foam2 = rig.foam2, bdMat = rig.bdMat, bdSz = rig.bdSz;
+        // The PICKED lines' real diameters. 0 means "no brand-specific pick", and the
+        // physics then resolves material+lb to the generic library row itself.
+        var ldDia = rig.ldDia || 0, mlDia = rig.mlDia || 0;
 
         // 2. Fluid dynamics (LOCKED: drag coefficient is always 1.0) -------------------
         // Every component counts: leader diameter (sqrt lb x material), coupled
         // mainline, bead sphere + material sink, hook mass/gap, yarn skirt.
         var velocity = hydraulicVelocity(flow, env.siteId);
-        var dragPerFt = totalDragPerFt(velocity.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz);
+        var dragPerFt = totalDragPerFt(velocity.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz, ldDia, mlDia);
         // Foam 1 + Foam 2 both contribute buoyancy (two corkies lift more).
         var lift = rigLift(foam.lift + foam2.lift, yarn, hook, bdMat, bdSz);
         var hgt = presentationHeightInches(lift, ldLen, dragPerFt);

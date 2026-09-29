@@ -9,6 +9,13 @@
  * Split out of sim.js in UPDATE 3.0 Phase 1.4 so runSim() is a short orchestrator.
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
+// The line PICKERS carry a brand-specific id; resolve it to the real measured diameter
+// so the drag term uses the angler's actual line, not just its material+lb class.
+function pickedLineDiameter(pickId) {
+    var line = (typeof tackleLineById === 'function') ? tackleLineById(getStr(pickId)) : null;
+    return (line && line.diameter_mm) ? line.diameter_mm : 0;   // 0 -> generic lookup
+}
+
 function readRigFromForm() {
     var hookRaw = parseFloat(getStr('hook'));
     return {
@@ -17,8 +24,10 @@ function readRigFromForm() {
         ldLen: getNum('ld-len'),
         ldMat: getStr('ld-mat'),
         ldLb: getNum('ld-lb') || REF_LB_TEST,
+        ldDia: pickedLineDiameter('ld-line'),
         mlMat: getStr('ml-mat'),
         mlLb: getNum('ml-lb'),
+        mlDia: pickedLineDiameter('ml-line'),
         hook: isNaN(hookRaw) ? 2 : hookRaw,     // 0 = 1/0, -1 = 2/0
         yarn: getNum('yarn'),
         foam: parseFoam(getStr('foam')),        // Foam 1

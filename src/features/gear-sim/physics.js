@@ -19,7 +19,11 @@
 // does not cover, or before the library has loaded (offline first run).
 var LINE_DIA_FACTOR = { mono: 1.0, copoly: 0.95, fluoro: 0.88, braid: 0.50 };
 
-function lineDiameterScale(lbTest, mat) {
+// explicitMm comes from the rig's PICKED line (brand-specific, e.g. Seaguar STS 12lb =
+// 0.31mm) so the angler's actual line drives the drag. Omitted -> resolve (material, lb)
+// to the generic library row; if that is unavailable, the old sqrt(lb) proxy.
+function lineDiameterScale(lbTest, mat, explicitMm) {
+    if (explicitMm) return explicitMm / REF_DIAMETER_MM;
     if (typeof tackleLineByMatLb === 'function') {
         var line = tackleLineByMatLb(mat || 'mono', lbTest);
         if (line && line.diameter_mm) return line.diameter_mm / REF_DIAMETER_MM;
@@ -64,21 +68,21 @@ function yarnDrag(yarnInches) {
 // couples through into the leader system. Braid cuts water, mono sails.
 var MAINLINE_COUPLING = 0.25;
 
-function mainlineDragPerFt(bottomVelocity, mlLb, mlMat) {
+function mainlineDragPerFt(bottomVelocity, mlLb, mlMat, mlDia) {
     if (!mlLb) return 0;
     // Drag goes as v^2 (F = 1/2 rho Cd A v^2), not linearly. Anchored so the scale is
     // exactly 1 at the reference flow, so the reference rig is unchanged and only the
     // RESPONSE to discharge moves.
     var velocityScale = Math.pow(bottomVelocity / REF_VELOCITY, 2);
-    return DRAG_REF * velocityScale * lineDiameterScale(mlLb, mlMat || 'braid') * MAINLINE_COUPLING;
+    return DRAG_REF * velocityScale * lineDiameterScale(mlLb, mlMat || 'braid', mlDia) * MAINLINE_COUPLING;
 }
 
 // Hydrodynamic drag per foot of leader. Scales with bed velocity, true line
 // diameter (sqrt of lb test x material factor) and how hard the lead pins the
 // leader down. Heavier lead sweeps the leader flatter, so height falls.
-function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat) {
+function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat, ldDia) {
     var velocityScale = Math.pow(bottomVelocity / REF_VELOCITY, 2);   // v^2, see mainlineDragPerFt
-    var diameterScale = lineDiameterScale(lbTest, ldMat || 'copoly');
+    var diameterScale = lineDiameterScale(lbTest, ldMat || 'copoly', ldDia);
     var anchorScale = 0.7 + (0.6 * weightOz);   // heavier lead sweeps the leader flatter
     var drag = DRAG_REF * velocityScale * diameterScale * anchorScale * dragCoeff;
     return Math.max(0.05, drag);
@@ -87,9 +91,12 @@ function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat) {
 // Total system drag in equivalent per-foot units: leader + coupled mainline +
 // bead sphere + hook gap + yarn skirt. Used by runSim, the solver, and sonar
 // alike so all three always agree.
-function totalDragPerFt(bottomVelocity, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarnInches, bdMat, bdSz) {
-    return leaderDragPerFt(bottomVelocity, ldLb, weightOz, 1.0, ldMat)
-        + mainlineDragPerFt(bottomVelocity, mlLb, mlMat)
+// ldDia / mlDia are the rig's PICKED line diameters in mm (optional: omitted means
+// "resolve material+lb to the generic library row", which is what community catch
+// rows and the solver's sweep both want).
+function totalDragPerFt(bottomVelocity, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarnInches, bdMat, bdSz, ldDia, mlDia) {
+    return leaderDragPerFt(bottomVelocity, ldLb, weightOz, 1.0, ldMat, ldDia)
+        + mainlineDragPerFt(bottomVelocity, mlLb, mlMat, mlDia)
         + beadDrag(bdMat, bdSz) + hookDrag(hook) + yarnDrag(yarnInches);
 }
 

@@ -716,6 +716,18 @@ function behaviorChecks(done) {
     drift === 0
       ? ok('gear-sim physics is deterministic (frozen baseline)', `${cases.length} rigs, drag coefficient locked at 1.0`)
       : fail('gear-sim physics is deterministic (frozen baseline)', `${drift} drifted: ${bad.join(' ')}`);
+
+    // gap 1 (2026-09-28): a PICKED line's real diameter must actually REACH the drag term,
+    // not merely be displayed. The leader term is linear in diameterScale, so the gap
+    // between two explicit diameters is exactly DRAG_REF * vScale * (d1 - d2) / REF.
+    const vb = hydraulicVelocity(1040).bottom;
+    const vs = Math.pow(vb / REF_VELOCITY, 2);
+    const dA = totalDragPerFt(vb, 12, 'mono', 15, 'mono', 0.5, 2, 0, 'hard', 6, 0.31, 0);
+    const dB = totalDragPerFt(vb, 12, 'mono', 15, 'mono', 0.5, 2, 0, 'hard', 6, 0.29, 0);
+    const wantDiff = DRAG_REF * vs * (0.31 - 0.29) / REF_DIAMETER_MM;
+    Math.abs((dA - dB) - wantDiff) < 1e-9
+      ? ok('picked line diameter reaches the drag term', '0.31 vs 0.29mm = DRAG_REF*vScale*d/REF')
+      : fail('picked line diameter reaches the drag term', `got ${dA - dB} want ${wantDiff}`);
   } catch (e) {
     fail('gear-sim physics is deterministic (frozen baseline)', String(e.message).split('\n')[0]);
   }

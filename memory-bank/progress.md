@@ -17,6 +17,23 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **WS-4 weather is per-day** (issue #2) + **tappable hourly popup**: each day now
+  reports ONE reference hour block — today = the hour containing *now* (`2:37pm → "3-4 PM"`), a
+  later day = the hour containing the **legal start** (`lines_in`), a 24hr river = sunrise, an
+  unverified window = midday — so the six weather pills describe the *same* moment and finally
+  change as you cycle days (the old code stamped one `current` snapshot on all four cards AND
+  `applyReportWeather` re-painted every card from `reports[0]`). New per-day `weather_hour` +
+  `weather_hourly` (24 rows); **wind shows the direction text as well as the arrow**; **Precip Vol
+  is the hour's volume**; tapping any of the six pills opens that day's **24-hour swipeable strip**
+  (reference hour outlined + auto-scrolled, ≥30% hours tinted on the precip strip). Physics
+  untouched: `rain` stays the daily freshet total, `cloud_pct` prefers the reference hour,
+  `press_delta` anchors to it. `sw.js` `v2.03.21`, **122/122**.
+
+- 2026-09-29 — HUD correction (user): the Strike Zone gradient lives on the **estimate number
+  only** — the separate trend strip + sliding marker are gone — and **both** panels now render one
+  bullet style (0.68rem / `#d1d5db`; the dim 0.62rem strike-zone variant read as hard to read).
+  `sw.js` `v2.03.20`, **120/120**.
+
 - 2026-09-29 — Gear Sim HUD v2 (chat ask, same session): line **brands list "Generic" first**
   (display only — the value stays the library string so matching/ids are untouched), the **Strike
   Zone Estimate grew a trend line** (red-yellow-**green**-yellow-red strip, marker walks right for a

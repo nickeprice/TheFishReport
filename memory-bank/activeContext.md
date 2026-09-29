@@ -15,21 +15,30 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1 + WS-2 committed; WS-3 + WS-6 + WS-7 verified, pending this commit)
+## HANDOFF — 2026-09-29 (WS-1/2/3/6/7 + Phase 1 + Phase 2 committed; **Phase 3 is NEXT**)
 
-WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded Line Height
-+ suggestions, no score / no BOTTOM CURRENT / no bottom box) shipped in `3e7259b`. WS-3
-(both tabs → the 7-row / 15-field material→brand→lb-test cascade), WS-6 (HUD polish: centred
-panels, bulleted notes, "… Estimate:" caps, clearance above the first row) and WS-7 (HUD v2:
-"Generic" first, strike-zone trend line, one bullet per row, community note hidden, "On target"
-rows, trimmed rig bullets) are DONE and verified: `node sanity_pass.js` → **120/120**;
-`sw.js` `v2.03.19`. Touched: `index.html`, `src/styles.css`, `src/shared/tackle.js`,
-`src/features/gear-sim/{rig,zone,solver}.js`, `src/features/gear-sim/techniques/drift.js`,
-`sanity_pass.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`, `sw.js`, `memory-bank/*`.
-NEXT: **WS-4** (per-day weather, issue #2). Then WS-5 (private favourite spots + migration).
-Two things owed: a by-hand browser pass over the Gear Sim HUD (the cascade is proven by the
-recording-DOM harness, the CSS by rule — not by paint), and confirmation of the WS-7 community
-interpretation (the sonar NOTE hidden, not the Catch Log board).
+Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-6 (HUD
+polish), WS-7 (HUD v2 + label addendum), **Phase 1** (gradient on the estimate only + one bullet
+style, `37fb1ed`) and **Phase 2** (WS-4 per-day reference-hour weather + wind direction text +
+tappable 24-hour popup, `880753d`). Current state: sanity **122/122**, `sw.js` `v2.03.21`,
+`origin/main` clean.
+
+**NEXT = Phase 3 / WS-8a** (fully specified in the CURRENT SPRINT block below — read that first):
+thermal-optimum curve in `inputs.js`; `zone.js` pressure demotion + turbidity (own-gauge, null →
+no term) + time-of-day/light terms + new `whereToFish()`; `continuity.js` `depthAtGauge(flow,
+siteId)` = cross-section **area ÷ width** from `src/data/channel_measurements.js` (already in the
+file, currently unused) cross-checked by `Q/(W·V)`, exposed as `spotDepthFt()` with the SAME
+same-reach provenance shape as `velocityAtSpot()`; `solver.js`/`drift.js` render the "where to
+fish" bullet (on AND off target); `sanity_pass.js` pins the new curve + depth maths. The frozen
+baselines run REPORT-LESS, so they must NOT move — pin the NEW behaviour instead of re-pinning old
+numbers.
+
+Then Phase 4 (WS-8b, needs a separate product confirm: DEM cross-section → real spot depth,
+crepuscular curve, velocity lie buckets, re-enabling the community-sonar calibrator) and WS-5
+(private favourite spots + `favorite_spots` migration).
+
+Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
+per-day weather by the live API + sanity, the popup CSS by rule — none by eye).
 
 ## Instruction ledger — chat asks persisted to `.clinerules`
 - [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`

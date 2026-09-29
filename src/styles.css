@@ -35,14 +35,16 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 #tab-gear-sim h2:first-child, #tab-catch-log h2:first-child { margin-top: 4px; }
 #tab-gear-sim h3, #tab-catch-log h3 { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 12px 0 6px 0; padding: 0; }
 
-#hud { position: -webkit-sticky; position: sticky; top: 48px; background-color: #1a1a1a; z-index: 1000; padding: 7px 10px; border-bottom: 1px solid #333; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-#hud-msg { font-size: 0.72rem; color: var(--text-muted); margin: 0 0 5px 0; }
-.hud-metrics { display: flex; justify-content: space-between; }
-.metric { flex: 1; text-align: center; border-right: 1px solid #333; }
-.metric:last-child { border-right: none; }
-.metric-val { font-size: 1.05rem; font-weight: bold; margin-bottom: 1px; }
-.metric-label { font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase; }
-.metric-target { font-size: 0.58rem; color: #777; }
+#hud { position: -webkit-sticky; position: sticky; top: 48px; background-color: #1a1a1a; z-index: 1000; padding: 8px 10px; border-bottom: 1px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+.hud-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hud-panel { min-width: 0; }
+.hud-panel:first-child { border-right: 1px solid #333; padding-right: 10px; }
+.hud-line { font-size: 1.05rem; font-weight: bold; margin-bottom: 2px; }
+.hud-cap { color: #e5e7eb; }
+.hud-val { font-weight: bold; }
+.hud-note { font-size: 0.62rem; color: #9ca3af; line-height: 1.35; }
+.hud-changes { margin: 4px 0 0 0; padding-left: 14px; text-align: left; }
+.hud-changes li { font-size: 0.68rem; color: #d1d5db; line-height: 1.35; margin-bottom: 3px; }
 
 .bucket { padding: 0 12px 16px 12px; }
 .row { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -74,10 +76,7 @@ button.btn-main { width: 100%; padding: 12px; border: none; border-radius: 8px; 
 
 /* Brag Board table */
 
-#suggestions { background-color: #2a2015; border: 1px solid #5c4018; border-radius: 10px; padding: 12px 14px; margin: 16px 0 0 0; font-size: 0.85rem; line-height: 1.5; color: #fcd34d; display: none; }
-#suggestions .sug-head { display: block; margin-bottom: 6px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: #fbbf24; }
-#suggestions .sug-zone { color: #e5e7eb; }
-#suggestions .sug-cond { color: var(--text-muted); font-size: 0.72rem; margin-top: 8px; line-height: 1.45; }
+/* The old bottom "Rig Adjustments" box merged into the HUD Line Height panel. */
 
 /* CATCH LOG AUTH (anonymous guest session) */
 #auth-section { padding-top: 4px; }

@@ -41,21 +41,24 @@ function fallbackStation() {
     selectPreset('12101500', 47.1950, -122.3020, 'Puyallup River at Puyallup, WA', false);
 }
 
+// GPS pick. On ANY failure the modal stays OPEN with a retry hint - it is never
+// closed out from under the angler. The old auto-fallback straight to the Puyallup
+// default (fallbackStation -> selectPreset -> closeStationModal) is what made
+// "nearest river" look like it "failed and closed out of the menu". Retry = tap the
+// same button again (useGPS stays bound to it).
 function useGPS() {
     var status = document.getElementById('gps-status');
     status.innerText = "Waiting for GPS (grant the location prompt)...";
     if (!navigator.geolocation) {
-        status.innerText = "Geolocation not supported. Falling back.";
-        setTimeout(fallbackStation, 1500);
+        status.innerText = "Geolocation is not supported on this device \u2014 pick a river below or search by name/ID.";
         return;
     }
     var settled = false;
     var watchdog = setTimeout(function () {
         if (settled) return;
         settled = true;
-        status.innerText = "GPS took too long. Falling back.";
-        logDebug("GPS location timed out - falling back to default station", "ERR");
-        fallbackStation();
+        status.innerText = "GPS took too long. Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+        logDebug("GPS location timed out - modal left open for retry", "ERR");
     }, 15000);
     navigator.geolocation.getCurrentPosition(async function(pos) {
         if (settled) return;
@@ -63,24 +66,37 @@ function useGPS() {
         clearTimeout(watchdog);
         var lat = pos.coords.latitude;
         var lon = pos.coords.longitude;
+        // Hold the fix privately: mapCenter() centres on it and logData() can enrich the
+        // private catch row. Never surfaced in the public feed or debug UI.
+        window.userGPSCoords = { lat: lat, lon: lon };
         status.innerText = "Captured position. Searching nearby USGS gauges...";
         var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         var fetchTimer = setTimeout(function () { if (controller) controller.abort(); }, 10000);
         try {
-            // Same-origin server-side USGS lookup (reliable on mobile). Retry once
-            // if the first response is empty (a cold Cloudflare tunnel connection can
-            // return an aborted body on the very first request).
+            // Same-origin server-side USGS lookup (reliable on mobile). Retry once if the
+            // first response is empty OR errors (a cold Cloudflare tunnel connection can
+            // return an aborted body on the very first request). The real status/body is
+            // logged so an upstream USGS outage is distinguishable from a code bug.
             var timeSeries = null;
+            var lastErr = null;
             for (var attempt = 0; attempt < 2; attempt++) {
                 var response = await fetch('/api/nearby_stations?lat=' + lat + '&lon=' + lon, { cache: "no-store", signal: controller ? controller.signal : undefined });
-                var data = await response.json();
-                timeSeries = (data && data.stations) ? data.stations : [];
-                if (timeSeries && timeSeries.length > 0) break;
+                var bodyText = await response.text();
+                if (!response.ok) {
+                    lastErr = "HTTP " + response.status;
+                    logDebug("nearby_stations " + response.status + ": " + String(bodyText).slice(0, 200), "ERR");
+                } else {
+                    var data = null;
+                    try { data = JSON.parse(bodyText); } catch (pe) { lastErr = "bad JSON"; }
+                    timeSeries = (data && data.stations) ? data.stations : [];
+                    if (timeSeries.length > 0) break;
+                }
                 if (attempt === 0) await new Promise(function (r) { setTimeout(r, 700); });
             }
             if (!timeSeries || timeSeries.length === 0) {
-                status.innerText = "No USGS stations found in range. Falling back.";
-                setTimeout(fallbackStation, 2000);
+                status.innerText = "No USGS stations found nearby" + (lastErr ? " (" + lastErr + ")" : "") +
+                    ". Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+                logDebug("nearby_stations returned 0 stations" + (lastErr ? " (" + lastErr + ")" : ""), "ERR");
                 return;
             }
             var stationsMap = {};
@@ -107,13 +123,11 @@ function useGPS() {
                 status.innerText = "Found: " + closest.name + " (" + closest.distance.toFixed(1) + " mi)";
                 setTimeout(function() { selectPreset(closest.id, closest.lat, closest.lon, closest.name, true); }, 1500);
             } else {
-                status.innerText = "No active gauge stations in range. Falling back.";
-                setTimeout(fallbackStation, 2000);
+                status.innerText = "No active gauge stations in range. Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
             }
         } catch(e) {
-            status.innerText = "USGS search failed. Falling back.";
+            status.innerText = "USGS search failed (" + e.message + "). Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
             logDebug("USGS GPS box error: " + e.message, "ERR");
-            setTimeout(fallbackStation, 2000);
         } finally {
             clearTimeout(fetchTimer);
         }
@@ -121,8 +135,10 @@ function useGPS() {
         if (settled) return;
         settled = true;
         clearTimeout(watchdog);
-        status.innerText = (err && err.code === 3) ? "GPS timed out. Falling back." : "GPS Access Denied. Falling back.";
+        var msg = (err && err.code === 3) ? "GPS timed out"
+            : (err && err.code === 1) ? "Location access was denied"
+            : "GPS is unavailable";
+        status.innerText = msg + ". Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
         logDebug("Geolocation error: " + (err ? err.message : "unknown"), "ERR");
-        setTimeout(fallbackStation, 1500);
     }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
 }

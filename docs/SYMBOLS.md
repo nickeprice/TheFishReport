@@ -90,7 +90,7 @@ this file**, or the pass fails.
 - **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()`
 - **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `computeStrikeZone()`,
-  `refreshZonePreview()`, `bestZoneRig()`
+  `refreshZonePreview()`, `zoneWhyText()`, `zoneColor()`, `bestZoneRig()`
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

@@ -4,6 +4,32 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — Issue #1a: Gear Sim HUD is now just the two numbers that matter
+Removed the score line and the whole BOTTOM CURRENT metric; the top HUD is two panels. LEFT =
+`Strike Zone: X"-Y"` plus a one-line "why it moved off the 4"-12" base" drawn from
+`zone.notes` (new `zoneWhyText()` drops the redundant "shifted ..." summary). RIGHT =
+`Line Height: N.N"`, colour-graded by distance to the zone MIDDLE in 0.1" steps (new
+`zoneColor()`: centre green 140 -> 50% yellow 52 -> edge/beyond red 0), with the bulleted rig
+changes underneath. The old bottom "Rig Adjustments" box + its CSS are gone — the suggestions
+now live in the HUD. The internal `score` is untouched (it still gates the "Try this"
+suggestion and the frozen `sanity_pass.js` baseline); it is simply no longer displayed.
+`sw.js` VERSION → `v2.03.15`. **111/111 GREEN**.
+- Key files: `index.html`, `src/features/gear-sim/{solver,zone}.js`, `src/styles.css`,
+  `docs/SYMBOLS.md`.
+
+
+## 2026-09-29 — Issue #3a: "Use My GPS" no longer closes the modal on failure
+`useGPS()` auto-fell-back to the Puyallup default on ANY failure — unsupported, timeout, empty
+result or HTTP error — and `selectPreset()` closes the modal, which is exactly why "find
+nearest river" read as "it fails and closes out of the menu". Every failure path now keeps the
+modal OPEN with a retry hint in `#gps-status` (the button itself is the retry), logs the real
+`/api/nearby_stations` status + body so an upstream USGS outage is distinguishable from a code
+bug, and stores the fix in `window.userGPSCoords` so the station map centres on the angler
+(`map.js` `mapCenter()` already read it — nothing had ever set it). `fallbackStation()` stays
+defined (SYMBOLS) but is no longer called automatically. `sw.js` VERSION → `v2.03.14`.
+**111/111 GREEN**.
+- Key files: `src/features/station/picker.js`, `sw.js`.
+
 ## 2026-09-29 — Shipped: live deployment verified after the P4/P4b push
 `7f2d4fa` is on `main` and CI (`.github/workflows/sanity.yml`) is **success**. Vercel's git
 integration deployed it: the deployment status for that commit is `success` ("Deployment has

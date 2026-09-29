@@ -104,11 +104,19 @@
 
 <!-- TOOL 2: GEAR SIM -->
 <div id="tab-gear-sim" class="tab-content">
+    <!-- Outcome HUD. LEFT = today's strike zone + why it moved off the 4"-12" base.
+         RIGHT = the angler's line height, colour-graded toward the zone MIDDLE, with
+         the exact rig changes to get into the zone listed beneath it. -->
     <div id="hud">
-        <div id="hud-msg">Awaiting inputs...</div>
-        <div class="hud-metrics">
-            <div class="metric"><div id="hud-hgt" class="metric-val">--</div><div class="metric-label">LINE HEIGHT</div><div id="target-hgt" class="metric-target">Zone: 4.0" - 12.0"</div></div>
-            <div class="metric"><div id="hud-vel" class="metric-val">--</div><div class="metric-label">BOTTOM CURRENT</div><div id="vel-target" class="metric-target">how hard the water pulls</div></div>
+        <div class="hud-panels">
+            <div class="hud-panel">
+                <div class="hud-line"><span class="hud-cap">Strike Zone:</span> <span id="hud-zone" class="hud-val">4.0" - 12.0"</span></div>
+                <div id="hud-zone-why" class="hud-note">Baseline 4.0" - 12.0" &mdash; no water report loaded yet.</div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-line"><span class="hud-cap">Line Height:</span> <span id="hud-hgt" class="hud-val">--</span></div>
+                <ul id="hud-changes" class="hud-changes"></ul>
+            </div>
         </div>
     </div>
 
@@ -196,7 +204,6 @@
         </div>
 
         <button class="btn-main" id="btn-sim" onclick="runSim()">RUN SIMULATION</button>
-        <div id="suggestions"></div>
     </div>
 </div>
 

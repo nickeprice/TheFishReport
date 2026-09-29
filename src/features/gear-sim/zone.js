@@ -2,7 +2,8 @@
  * src/features/gear-sim/zone.js - rig requirements (no defaults), the strike
  * zone, and the best-rig search that moves the presentation into the zone.
  * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(),
- *         computeStrikeZone(), refreshZonePreview(), bestZoneRig()
+ *         computeStrikeZone(), refreshZonePreview(), zoneWhyText(), zoneColor(),
+ *         bestZoneRig()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // Required gear fields — no defaults, so anything the angler has never entered
@@ -130,13 +131,41 @@ function computeStrikeZone(sonar) {
     return zone;
 }
 
-// Keeps the HUD strike-zone label live: fires on date switches and when the water
+// The one-line "why is it not the 4"-12" base" explanation for the HUD's left panel:
+// every zone.shift reason the weather + community data produced, or an honest baseline
+// line when nothing moved it. The "Strike zone shifted ..." summary note is dropped here
+// because the panel already prints the resulting range.
+function zoneWhyText(zone) {
+    var reasons = (zone && zone.notes) ? zone.notes.filter(function (n) {
+        return n.indexOf('Strike zone shifted') !== 0;
+    }) : [];
+    if (!reasons.length) return 'Base 4.0" - 12.0" \u2014 nothing in the current conditions is shifting it.';
+    return reasons.join(' ');
+}
+
+// Line-height colour, graded red -> yellow -> green as the presentation nears the MIDDLE
+// of the strike zone, in 0.1" micro-steps so the colour and the printed number always
+// agree: centre = green (hue 140) · 50% to centre = yellow (hue 52) · edge and beyond =
+// red (hue 0). Fully geometric - a rig can be "in the zone" and still only amber at its edge.
+function zoneColor(hgt, zone) {
+    var center = (zone.min + zone.max) / 2;
+    var half = Math.max(0.5, (zone.max - zone.min) / 2);
+    var q = Math.round(hgt * 10) / 10;               // 0.1" micro-step
+    var d = Math.abs(q - center) / half;             // 0 at the centre, 1 at the edge
+    if (d > 1) d = 1;
+    var t = d * 2;                                    // 0..2
+    var hue = (t <= 1) ? (140 - 88 * t) : (52 - 52 * (t - 1));
+    return 'hsl(' + Math.round(hue) + ', 72%, 46%)';
+}
+
+// Keeps the HUD strike-zone panel live: fires on date switches and when the water
 // report lands, so the zone is correct before the angler presses RUN SIMULATION.
 function refreshZonePreview() {
-    var label = document.getElementById('target-hgt');
-    if (!label) return;
     var zone = computeStrikeZone();
-    label.innerText = 'Zone: ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
+    var range = document.getElementById('hud-zone');
+    if (range) range.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
+    var why = document.getElementById('hud-zone-why');
+    if (why) why.innerText = zoneWhyText(zone);
 }
 
 // ==================================================================================

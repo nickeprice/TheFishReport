@@ -82,57 +82,36 @@ function buildSimStats(rig, out) {
 }
 
 function paintSimHud(rig, out, stats) {
-    var hgt = out.hgt, velocity = out.velocity, zone = out.zone;
-    var score = out.score, blownOut = out.blownOut, suggestions = out.suggestions;
+    var hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
 
-    var color = 'var(--accent-green)';
-    if (score < 4.0) color = 'var(--accent-yellow)';
-    if (score < 2.5) color = 'var(--accent-red)';
+    // LEFT panel: the strike zone + why it moved off the 4"-12" base.
+    var eZone = document.getElementById('hud-zone');
+    if (eZone) eZone.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
+    var eWhy = document.getElementById('hud-zone-why');
+    if (eWhy) eWhy.innerText = zoneWhyText(zone);
 
+    // RIGHT panel: the angler's line height, colour-graded toward the zone MIDDLE in
+    // 0.1" steps (green = dead centre, yellow = halfway, red = at/beyond the edge), with
+    // the exact rig changes to get into the zone listed beneath it.
     var eHgt = document.getElementById('hud-hgt');
     eHgt.innerText = hgt.toFixed(1) + '"';
-    eHgt.style.color = color;
+    eHgt.style.color = zoneColor(hgt, zone);
 
-    // BOTTOM CURRENT shows the TRUE measured ft/s when the gauge has USGS field
-    // measurements. The solver keeps its own anchored calibration scale internally
-    // (velocity.bottom), so displaying truth can never move the physics.
-    var shownBottom = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
-    var eVel = document.getElementById('hud-vel');
-    eVel.innerText = shownBottom.toFixed(1);
-    eVel.style.color = blownOut ? 'var(--accent-red)' : color;
-
-    // Provenance, honest limits, and the continuity caveat: this is the GAUGE's velocity
-    // applied to the angler's reach (no spot-width source exists yet), so it is labelled as
-    // the gauge value plus the gauge's measured channel width - not a fabricated spot number.
-    var velNote;
-    if (velocity.source === 'measured') {
-        velNote = velocity.thinRecent ? 'USGS curve - thin recent data' : 'USGS-measured ft/s';
-        if (velocity.station) {
-            var wFt = gaugeWidthFt(velocity.station);
-            if (wFt) velNote += ' \u2022 ' + Math.round(wFt) + ' ft channel';
-        }
-    } else {
-        velNote = 'estimated ft/s';
+    var ul = document.getElementById('hud-changes');
+    if (ul) {
+        ul.innerHTML = '';
+        suggestions.forEach(function (s) {
+            var li = document.createElement('li');
+            li.textContent = s;
+            ul.appendChild(li);
+        });
     }
-    document.getElementById('target-hgt').innerText = 'Zone: ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
-    document.getElementById('vel-target').innerText = blownOut ? 'BLOWN OUT' : velNote;
-
-    var msg = blownOut ? 'BLOWN OUT - no presentation control'
-        : ((hgt >= zone.min && hgt <= zone.max) ? 'Inside the strike zone' : 'Outside the strike zone');
-    document.getElementById('hud-msg').innerText = msg + '  \u2022  Score ' + score.toFixed(1) + ' / 5.0';
-
-    // Logging is decoupled from the Gear Sim - the catch-log button keeps its
-    // own label/state (set by applyAuthState) and is never gated on the sim.
-
-    var sugBox = document.getElementById('suggestions');
-    sugBox.style.display = 'block';
-    sugBox.innerHTML = '<span class="sug-head">Rig Adjustments</span>- ' + suggestions.join('<br>- ') +
-        '<div class="sug-cond">' + zone.notes.join('<br>') + '</div>';
 
     var simBtn = document.getElementById('btn-sim');
     if (simBtn) { simBtn.innerText = 'RUN SIMULATION'; simBtn.disabled = false; }
     // Continuity record: log the gauge value WITH the (currently unmeasured) spot ratio, so
     // the trail shows exactly what was assumed instead of an unexplained single number.
+    var shownBottom = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
     var near = (typeof velocityAtSpot === 'function')
         ? velocityAtSpot(rig.flow, velocity.station || null) : null;
     logDebug('Sim: height ' + hgt.toFixed(2) + '", bed velocity ' + shownBottom.toFixed(2) +
@@ -141,5 +120,5 @@ function paintSimHud(rig, out, stats) {
         (near ? '; spot x' + near.ratio + ' measured=' + near.ratioMeasured +
             ' \u00b1' + Math.round(near.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
-        '", score ' + score.toFixed(2), 'SIM');
+        '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone), 'SIM');
 }

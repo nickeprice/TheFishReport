@@ -15,6 +15,82 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
+## HANDOFF — 2026-09-29 (WS-1 + WS-2 shipped, NOT committed)
+
+WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded Line Height
++ suggestions, no score / no BOTTOM CURRENT / no bottom box) are DONE and verified:
+`node sanity_pass.js --quiet` → **111/111**; `sw.js` `v2.03.15`. Dirty files at handoff:
+`index.html`, `src/styles.css`, `src/features/station/picker.js`,
+`src/features/gear-sim/{solver,zone}.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`,
+`memory-bank/activeContext.md`, `sw.js`.
+NEXT: execute **WS-3** (fully specified below — the two sanity assertions it must move are
+named). Then WS-4 (per-day weather) and WS-5 (private favourite spots + migration).
+
+## ACTIVE — GitHub issues #1–#3 (approved plan 2026-09-29)
+
+Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Verify.
+
+### WS-1 — GPS "nearest river" regression (issue #3a)
+- [x] `src/features/station/picker.js` — `useGPS()` must KEEP the modal OPEN on every failure
+      path (unsupported / timeout / empty / HTTP error) and show a retry hint instead of
+      auto-calling `fallbackStation()` → `selectPreset()` → `closeStationModal()`; log the real
+      `/api/nearby_stations` HTTP status + body; set `window.userGPSCoords` on success so
+      `mapCenter()` centres on the user. Keep `fallbackStation()` DEFINED (SYMBOLS assertion).
+      Potential bug: all three `settled` paths must leave a non-blank `#gps-status` message or
+      the button looks stuck.
+      Verified: `node sanity_pass.js --quiet` 111/111; `node --check
+      src/features/station/picker.js`.
+
+### WS-2 — Gear Sim HUD redesign (issue #1a)
+- [x] `index.html` (HUD block + DELETE `<div id="suggestions">`), `solver.js` (`paintSimHud`),
+      `zone.js` (`refreshZonePreview`), `src/styles.css`, `sw.js` — top HUD becomes TWO panels:
+      LEFT `Strike Zone: X"–Y"` + why-it-shifted line (from `zone.notes`); RIGHT `Line Height:
+      N.N"` colour-coded (0.1"-quantised green=centre / yellow=halfway / red=edge) WITH the
+      bulleted `out.suggestions` beneath it. Remove BOTTOM CURRENT, the score text, and the
+      bottom "Rig Adjustments" box + its CSS.
+      Potential bug: keep the internal `score` (gates the "Try this" suggestion + the frozen
+      `sanity_pass.js:736` baseline) — only stop DISPLAYING it.
+      Verify: `node sanity_pass.js --quiet` (frozen drift baseline still green).
+
+### WS-3 — Cascading dropdowns, both tabs (issue #1b)
+- [ ] `index.html` (both tabs → 7-row / 15-field layout), `src/shared/tackle.js`,
+      `zone.js` (`RIG_REQUIRED`), `sanity_pass.js`, `src/styles.css`, `sw.js` — cascade
+      Material→Brand→LB Test (mainline + leader), Weight Type→Amount, Bead Material→Size from
+      `tackle.json`.
+      DESIGN (verified 2026-09-29): keep `ml-line`/`ld-line` as HIDDEN inputs holding the
+      resolved tackle.json id, so `solver.js` `pickedLineDiameter()`, `log.js` and the DB
+      catch-row contract are UNCHANGED. `ml-mat`/`ml-lb`/`ld-mat`/`ld-lb` become the VISIBLE
+      selects (their values already feed `readRigFromForm`/`logData` verbatim); add visible
+      `ml-brand`/`ld-brand`. Field order (user spec): ml-mat, ml-brand, ml-lb, weight-shape,
+      weight, ld-len, ld-mat, ld-brand, ld-lb, hook, yarn, foam, foam2, bd-mat, bd-sz.
+      Data: lines = material→brand→lb_test (110 rows). Weights = 10 `shape_label`s, each with
+      the same 6 NOMINAL oz (0.25…1) — keep Amount values nominal (0.25 etc.) so the frozen
+      physics baseline cannot move. Beads = hard{2,4,6,8} / soft{6,8} / none{0}.
+      Potential bug: TWO existing sanity assertions must move DELIBERATELY — `gearRows === 12`
+      → 14 (`sanity_pass.js:349`, message "6 resting rows" → 7) AND the `GEAR_ORDER` array
+      (`sanity_pass.js:359`) → the 15 ids above; `zone.js` `RIG_REQUIRED` ids must match the new
+      VISIBLE selects or the sim blocks forever (currently lists `ml-line`/`ld-line`). `.gear-row`
+      is a 2-col grid → add a `.gear-row-3` variant for row 1.
+      Verify: `node sanity_pass.js --quiet`; browser cascade on both tabs.
+
+### WS-4 — Per-day weather forecast (issue #2)
+- [ ] `api/water_report.py`, `telemetry/report.js`, `telemetry/daynav.js`, `services/water.js` —
+      backend emits per-`forecast_date` weather (Open-Meteo daily/hourly) instead of one
+      `current` snapshot; frontend paints weather from `reportsData[activeDateOffset]` in
+      `updateActiveDateUI()` (not `reports[0]`).
+      Potential bug: absent per-day fields must stay `null` → frontend renders `--`, never a
+      fabricated value.
+      Verify: `python3 -m py_compile api/water_report.py`; `node sanity_pass.js --quiet`.
+
+### WS-5 — Private favourite spots + map (issue #3b)
+- [ ] `supabase/migrations/*` (new), `services/supabase.js`, `features/map/map.js`,
+      `index.html`, `src/styles.css`, `sw.js` — idempotent timestamped `favorite_spots` table
+      with RLS scoped to the owning anonymous user; client CRUD; map "save this spot" + a saved
+      layer. Never in the public feed.
+      Potential bug: RLS must default-deny — a spot must be invisible to another session.
+      Verify: `npx supabase db push --yes < /dev/null`, then a read-only live-DB query.
+
+
 ## ACTIVE — measured tackle data → **P1 DONE 2026-09-28**
 
 `docs/tackle_measurements.csv` now holds **185 rows** (was 38): foam 4 · bead 6 · hook 4 ·

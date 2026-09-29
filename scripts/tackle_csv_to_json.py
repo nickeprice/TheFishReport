@@ -28,22 +28,31 @@ CSV_PATH = ROOT / "docs" / "tackle_measurements.csv"
 JSON_PATH = ROOT / "src" / "data" / "tackle.json"
 
 COLUMNS = [
-    "id", "type", "label", "material", "lb_test", "diameter_mm", "mass_g",
-    "buoyancy_g", "density_g_cm3", "area_cm2", "shape", "cd", "gap_width_mm",
-    "wire_diameter_mm", "buoyancy_per_inch_g", "notes",
+    "id", "type", "label", "brand", "material", "lb_test", "diameter_mm",
+    "mass_g", "buoyancy_g", "density_g_cm3", "area_cm2", "shape", "cd",
+    "gap_width_mm", "wire_diameter_mm", "buoyancy_per_inch_g",
+    "sample_length_mm", "notes",
 ]
 
-TYPES = {"foam", "line", "bead", "hook", "yarn"}
-SHAPES = {"sphere", "plate", "other"}
-TEXT_COLS = ("material", "shape", "notes")
+TYPES = {"foam", "line", "bead", "hook", "yarn", "weight"}
+# Geometric shapes only. A rubber sleeve on a weight is a LABEL/variant, not a
+# shape, so `shape` stays the bare geometry and the variant lives in `label`.
+SHAPES = {"sphere", "plate", "other", "egg", "slinky", "pencil", "barrel",
+          "teardrop", "cannonball"}
+TEXT_COLS = ("brand", "material", "shape", "notes")
 
 # What each type must have before it can drive real physics.
 REQUIRED = {
-    "foam": ("mass_g", "buoyancy_g", "diameter_mm"),
+    # foam: drag area comes from diameter_mm (sphere) OR area_cm2 (egg/cheater),
+    # so area_cm2 is the field that always applies.
+    "foam": ("mass_g", "buoyancy_g", "area_cm2"),
     "bead": ("mass_g", "buoyancy_g", "diameter_mm"),
     "line": ("diameter_mm",),
     "hook": ("mass_g",),
     "yarn": ("buoyancy_per_inch_g",),
+    # weight: mass pins the sink/hold side, area_cm2 the drag side. Mass is
+    # currently derived from the oz label; area still needs measuring.
+    "weight": ("mass_g", "area_cm2"),
 }
 
 

@@ -15,6 +15,59 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
+## ACTIVE — measured tackle data → **P1 DONE 2026-09-28**
+
+`docs/tackle_measurements.csv` now holds **185 rows** (was 38): foam 4 · bead 6 · hook 4 ·
+yarn 1 · line 110 · weight 60. Schema gained `brand` + `sample_length_mm` (18 cols total),
+`type: weight`, `material` for weights, and 9 shapes. Measured on a 0.01 g scale + Archimedes
+rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values are DERIVED
+(density 0.5 / 1.0), and yarn is ESTIMATED near-neutral — every such value is flagged in
+`notes`. Measurement protocol: `docs/CONTRACT_TACKLE.md`.
+
+- [x] **P1. Schema + all 185 rows** — converter `COLUMNS`/`TYPES`/`SHAPES`/`TEXT_COLS`/
+      `REQUIRED` updated (`scripts/tackle_csv_to_json.py`); 6 phantom line rows removed
+      (`mainline-mono-*`, `mainline-copoly-*`); soft 2/4 mm beads removed (not owned);
+      lines are role-agnostic (`{material}-{brand}-{lb}`, `generic` = fallback).
+      Potential bug: the CSV header is compared byte-for-byte against the converter's
+      `COLUMNS`, so the two must always change together.
+      Verified: `--check` → "checked 185 item(s) / 60 still incomplete" (exactly the weight
+      rows, all missing `area_cm2`); JSON round-trip derives corky 0.4993 / cheater 0.428 /
+      bead 0.9982; `node sanity_pass.js --quiet` 107/107; the throwaway generator was deleted
+      and `src/data/tackle.json` was NOT committed (it ships with P3).
+- [ ] **P1b. Weights still need `area_cm2` + `cd`** — mass (oz→g), density (lead 11.34 /
+      tungsten 19.3) and shape are in, but the drag half is not, so `--check` flags all 60.
+      Measure the broadside silhouette (graph paper + photo) per shape; `cd` is a standard per
+      shape (sphere 0.47 · cylinder ≈1.0 · teardrop ≈0.3). Rubber-sleeved rows are separate
+      items and drag differently from bare ones.
+
+- [ ] **P3. (next) Physics rewrite that consumes the JSON** — each measured field now has a
+      named target in `src/features/gear-sim/`: `buoyancy_g` (foam) → `foam.lift` via
+      `parseFoam()`; `buoyancy_per_inch_g` (yarn) → the hardcoded `yarnInches * 0.15` term in
+      `inputs.js:187 rigLift()` — measured ~0.01/in, i.e. **yarn is NOT a lift device**; hook
+      `mass_g` → `hookSink()` (measured 0.35/0.28/0.20/0.16 vs the constants
+      0.35/0.28/0.20/0.12 — only size 2 moves); bead `mass_g`/`buoyancy_g` → `beadSink()`
+      (both bead materials measure density ≈1.0, so `BEAD_DENSITY = {hard:1.0, soft:0.55}` is
+      **wrong for soft** — the soft/hard difference is drag, not lift); line `diameter_mm` →
+      `lineDiameterScale(lbTest, mat)` (`physics.js:17`) and the `DRAG_REF = 7.5` terms (110
+      real diameters, keyed `{material}-{brand}-{lb}`); weight mass/density/shape → the
+      `anchorScale = 0.7 + 0.6*oz` fudge, which reads mass only and must become a real
+      hold-or-drag model. Nothing reads `tackle.json` yet — verified by grep.
+      Then commit the JSON, add it to `SHELL_FILES`, bump `VERSION`, re-pin the frozen baselines.
+      Potential bug: `DRAG_REF`/`blownOut` 3.5 were tuned against the old inflated velocity, so
+      swapping in real units is a deliberate **contract bump** — expect the frozen baselines to
+      move and be re-pinned with the rationale inline (see the accuracy roadmap below).
+- [x] **M3. Closed by P1** — the cheater is now `shape=other` with a measured broadside area
+      (0.97 cm², egg 13 × 9.5 mm) and `cd = 0.5` instead of the wrong sphere default; the yarn
+      row carries an ESTIMATED near-neutral `buoyancy_per_inch_g = 0.01` (flagged in `notes`)
+      rather than a fabricated soaked measurement.
+- [x] **M4. Closed by P1 (the free win, as predicted)** — standard material densities are typed
+      into `density_g_cm3` on all 110 line rows (fluoro 1.78 · copoly 1.2 · mono 1.15 ·
+      braid 1.0) and survive into the JSON because the converter only overwrites that column
+      when `buoyancy_g` is present. The per-brand long-length weigh-off stays open — that is
+      what the reserved `sample_length_mm` column is for. Never put a long-length weigh-off in
+      `mass_g`: there is no length column to interpret it.
+
+
 ## ACTIVE — rename to "The Fish Report"
 
 - [x] **D1. Swap the user-visible app name** — `index.html` `<title>` → `The Fish Report`,

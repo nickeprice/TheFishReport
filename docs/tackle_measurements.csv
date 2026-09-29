@@ -1,39 +1,186 @@
-id,type,label,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,notes
-corky-14,foam,Corky 14 (6mm),,,6.0,,,,0.283,sphere,0.47,,,,
-corky-12,foam,Corky 12 (8mm),,,8.0,,,,0.503,sphere,0.47,,,,
-corky-10,foam,Corky 10 (10mm),,,10.0,0.42,0.51,,0.785,sphere,0.47,,,,worked example - replace with your own measurement
-cheater-12,foam,Cheater 12,,,,,,,,sphere,0.47,,,,
-leader-mono-10,line,Leader mono 10lb,mono,10,,,,,,,,,,,
-leader-mono-12,line,Leader mono 12lb,mono,12,,,,,,,,,,,
-leader-mono-15,line,Leader mono 15lb,mono,15,,,,,,,,,,,
-leader-mono-17,line,Leader mono 17lb,mono,17,,,,,,,,,,,
-leader-copoly-10,line,Leader copoly 10lb,copoly,10,,,,,,,,,,,
-leader-copoly-12,line,Leader copoly 12lb,copoly,12,,,,,,,,,,,
-leader-copoly-15,line,Leader copoly 15lb,copoly,15,,,,,,,,,,,
-leader-copoly-17,line,Leader copoly 17lb,copoly,17,,,,,,,,,,,
-leader-fluoro-10,line,Leader fluoro 10lb,fluoro,10,,,,,,,,,,,
-leader-fluoro-12,line,Leader fluoro 12lb,fluoro,12,,,,,,,,,,,
-leader-fluoro-15,line,Leader fluoro 15lb,fluoro,15,,,,,,,,,,,
-leader-fluoro-17,line,Leader fluoro 17lb,fluoro,17,,,,,,,,,,,
-mainline-braid-20,line,Mainline braid 20lb,braid,20,,,,,,,,,,,
-mainline-braid-30,line,Mainline braid 30lb,braid,30,,,,,,,,,,,
-mainline-braid-40,line,Mainline braid 40lb,braid,40,,,,,,,,,,,
-mainline-mono-20,line,Mainline mono 20lb,mono,20,,,,,,,,,,,
-mainline-mono-30,line,Mainline mono 30lb,mono,30,,,,,,,,,,,
-mainline-mono-40,line,Mainline mono 40lb,mono,40,,,,,,,,,,,
-mainline-copoly-20,line,Mainline copoly 20lb,copoly,20,,,,,,,,,,,
-mainline-copoly-30,line,Mainline copoly 30lb,copoly,30,,,,,,,,,,,
-mainline-copoly-40,line,Mainline copoly 40lb,copoly,40,,,,,,,,,,,
-bead-hard-2,bead,Bead hard 2mm,hard,,2.0,,,,0.031,sphere,0.47,,,,
-bead-hard-4,bead,Bead hard 4mm,hard,,4.0,,,,0.126,sphere,0.47,,,,
-bead-hard-6,bead,Bead hard 6mm,hard,,6.0,,,,0.283,sphere,0.47,,,,
-bead-hard-8,bead,Bead hard 8mm,hard,,8.0,,,,0.503,sphere,0.47,,,,
-bead-soft-2,bead,Bead soft 2mm,soft,,2.0,,,,0.031,sphere,0.47,,,,
-bead-soft-4,bead,Bead soft 4mm,soft,,4.0,,,,0.126,sphere,0.47,,,,
-bead-soft-6,bead,Bead soft 6mm,soft,,6.0,,,,0.283,sphere,0.47,,,,
-bead-soft-8,bead,Bead soft 8mm,soft,,8.0,,,,0.503,sphere,0.47,,,,
-hook-2-0,hook,Hook 2/0,,,,,,,,,,,,,
-hook-1-0,hook,Hook 1/0,,,,,,,,,,,,,
-hook-1,hook,Hook 1,,,,,,,,,,,,,
-hook-2,hook,Hook 2,,,,,,,,,,,,,
-yarn-egg,yarn,Egg yarn (saturated),,,,,,,,,,,,,measure 10in soaked 5min then divide by 10
+id,type,label,brand,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,sample_length_mm,notes
+corky-14,foam,Corky 14 (6mm),,,,6.0,0.05,0.1,,0.283,sphere,0.47,,,,,mass from 6-count batch; buoyancy DERIVED from density 0.5
+corky-12,foam,Corky 12 (8mm),,,,8.0,0.2,0.4,,0.503,sphere,0.47,,,,,measured; density 0.5
+corky-10,foam,Corky 10 (10mm),,,,10.0,0.3,0.6,,0.785,sphere,0.47,,,,,measured; density 0.5
+cheater-12,foam,Cheater 12 (egg 13x9.5mm),,,,,0.3,0.7,,0.97,other,0.5,,,,,egg 13x9.5mm; area = broadside ellipse pi*6.5*4.75mm; cd approx
+bead-hard-2,bead,Bead hard 2mm,,hard,,2.0,0.004,0.004,1.0,0.031,sphere,0.47,,,,,DERIVED geometrically (below 0.01g scale)
+bead-hard-4,bead,Bead hard 4mm,,hard,,4.0,0.034,0.034,1.0,0.126,sphere,0.47,,,,,DERIVED geometrically (density 1.0)
+bead-hard-6,bead,Bead hard 6mm,,hard,,6.0,0.11,0.11,1.0,0.283,sphere,0.47,,,,,= soft 6mm measured mass
+bead-hard-8,bead,Bead hard 8mm,,hard,,8.0,0.25,0.25,1.0,0.503,sphere,0.47,,,,,measured 4-count batch = 1.0g; sinks
+bead-soft-6,bead,Bead soft 6mm,,soft,,6.0,0.11,0.11,1.0,0.283,sphere,0.47,,,,,measured 10-count = 1.1g; neutral (bubble floats it)
+bead-soft-8,bead,Bead soft 8mm,,soft,,8.0,0.25,0.25,1.0,0.503,sphere,0.47,,,,,"= hard 8mm (same size, density 1.0)"
+hook-2-0,hook,Hook 2/0,,,,,0.35,,,,,,,,,,dry weight measured
+hook-1-0,hook,Hook 1/0,,,,,0.28,,,,,,,,,,dry weight measured
+hook-1,hook,Hook 1,,,,,0.2,,,,,,,,,,dry weight measured
+hook-2,hook,Hook 2,,,,,0.16,,,,,,,,,,dry weight measured
+yarn-egg,yarn,Egg yarn (saturated),,,,,,,,,,,,,0.01,,ESTIMATED near-neutral; model 0.15/in lift is ~15x high
+braid-generic-20,line,Generic average 20lb,Generic average,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-generic-30,line,Generic average 30lb,Generic average,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-generic-40,line,Generic average 40lb,Generic average,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-super8slick-v2-20,line,PowerPro Super8Slick V2 20lb,PowerPro Super8Slick V2,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-super8slick-v2-30,line,PowerPro Super8Slick V2 30lb,PowerPro Super8Slick V2,braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-super8slick-v2-40,line,PowerPro Super8Slick V2 40lb,PowerPro Super8Slick V2,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-original-20,line,PowerPro Original (4-carrier) 20lb,PowerPro Original (4-carrier),braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-original-30,line,PowerPro Original (4-carrier) 30lb,PowerPro Original (4-carrier),braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-original-40,line,PowerPro Original (4-carrier) 40lb,PowerPro Original (4-carrier),braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-sufix-832-20,line,Sufix 832 Advanced Superline 20lb,Sufix 832 Advanced Superline,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-sufix-832-30,line,Sufix 832 Advanced Superline 30lb,Sufix 832 Advanced Superline,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-sufix-832-40,line,Sufix 832 Advanced Superline 40lb,Sufix 832 Advanced Superline,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-daiwa-j-braid-x8-grand-20,line,Daiwa J-Braid x8 Grand 20lb,Daiwa J-Braid x8 Grand,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-daiwa-j-braid-x8-grand-30,line,Daiwa J-Braid x8 Grand 30lb,Daiwa J-Braid x8 Grand,braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-daiwa-j-braid-x8-grand-40,line,Daiwa J-Braid x8 Grand 40lb,Daiwa J-Braid x8 Grand,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-seaguar-smackdown-20,line,Seaguar Smackdown 20lb,Seaguar Smackdown,braid,20,0.235,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-seaguar-smackdown-30,line,Seaguar Smackdown 30lb,Seaguar Smackdown,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-seaguar-smackdown-40,line,Seaguar Smackdown 40lb,Seaguar Smackdown,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-spiderwire-stealth-20,line,SpiderWire Stealth 20lb,SpiderWire Stealth,braid,20,0.25,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-spiderwire-stealth-30,line,SpiderWire Stealth 30lb,SpiderWire Stealth,braid,30,0.3,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-spiderwire-stealth-40,line,SpiderWire Stealth 40lb,SpiderWire Stealth,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-8,line,Generic average 8lb,Generic average,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-10,line,Generic average 10lb,Generic average,fluoro,10,0.265,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-12,line,Generic average 12lb,Generic average,fluoro,12,0.295,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-15,line,Generic average 15lb,Generic average,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-17,line,Generic average 17lb,Generic average,fluoro,17,0.375,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-8,line,Seaguar STS (Salmon/Steelhead) 8lb,Seaguar STS (Salmon/Steelhead),fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-10,line,Seaguar STS (Salmon/Steelhead) 10lb,Seaguar STS (Salmon/Steelhead),fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-12,line,Seaguar STS (Salmon/Steelhead) 12lb,Seaguar STS (Salmon/Steelhead),fluoro,12,0.31,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-15,line,Seaguar STS (Salmon/Steelhead) 15lb,Seaguar STS (Salmon/Steelhead),fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-17,line,Seaguar STS (Salmon/Steelhead) 17lb,Seaguar STS (Salmon/Steelhead),fluoro,17,0.37,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-8,line,Seaguar Blue Label Leader 8lb,Seaguar Blue Label Leader,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-10,line,Seaguar Blue Label Leader 10lb,Seaguar Blue Label Leader,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-12,line,Seaguar Blue Label Leader 12lb,Seaguar Blue Label Leader,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-15,line,Seaguar Blue Label Leader 15lb,Seaguar Blue Label Leader,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-8,line,Seaguar Red Label / InvizX 8lb,Seaguar Red Label / InvizX,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-10,line,Seaguar Red Label / InvizX 10lb,Seaguar Red Label / InvizX,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-12,line,Seaguar Red Label / InvizX 12lb,Seaguar Red Label / InvizX,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-15,line,Seaguar Red Label / InvizX 15lb,Seaguar Red Label / InvizX,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-17,line,Seaguar Red Label / InvizX 17lb,Seaguar Red Label / InvizX,fluoro,17,0.37,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-8,line,Sunline FC Sniper 8lb,Sunline FC Sniper,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-10,line,Sunline FC Sniper 10lb,Sunline FC Sniper,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-12,line,Sunline FC Sniper 12lb,Sunline FC Sniper,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-15,line,Sunline FC Sniper 15lb,Sunline FC Sniper,fluoro,15,0.31,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-17,line,Sunline FC Sniper 17lb,Sunline FC Sniper,fluoro,17,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-8,line,Berkley Trilene 100% Fluoro 8lb,Berkley Trilene 100% Fluoro,fluoro,8,0.254,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-10,line,Berkley Trilene 100% Fluoro 10lb,Berkley Trilene 100% Fluoro,fluoro,10,0.279,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-12,line,Berkley Trilene 100% Fluoro 12lb,Berkley Trilene 100% Fluoro,fluoro,12,0.304,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-15,line,Berkley Trilene 100% Fluoro 15lb,Berkley Trilene 100% Fluoro,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-17,line,Berkley Trilene 100% Fluoro 17lb,Berkley Trilene 100% Fluoro,fluoro,17,0.381,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-8,line,Maxima Fluorocarbon Leader 8lb,Maxima Fluorocarbon Leader,fluoro,8,0.24,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-10,line,Maxima Fluorocarbon Leader 10lb,Maxima Fluorocarbon Leader,fluoro,10,0.28,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-12,line,Maxima Fluorocarbon Leader 12lb,Maxima Fluorocarbon Leader,fluoro,12,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-15,line,Maxima Fluorocarbon Leader 15lb,Maxima Fluorocarbon Leader,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-8,line,P-Line Tactical / HALO Leader 8lb,P-Line Tactical / HALO Leader,fluoro,8,0.23,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-10,line,P-Line Tactical / HALO Leader 10lb,P-Line Tactical / HALO Leader,fluoro,10,0.28,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-12,line,P-Line Tactical / HALO Leader 12lb,P-Line Tactical / HALO Leader,fluoro,12,0.3,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-15,line,P-Line Tactical / HALO Leader 15lb,P-Line Tactical / HALO Leader,fluoro,15,0.35,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-17,line,P-Line Tactical / HALO Leader 17lb,P-Line Tactical / HALO Leader,fluoro,17,0.38,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-8,line,Generic average 8lb,Generic average,mono,8,0.265,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-10,line,Generic average 10lb,Generic average,mono,10,0.295,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-12,line,Generic average 12lb,Generic average,mono,12,0.34,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-15,line,Generic average 15lb,Generic average,mono,15,0.38,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-17,line,Generic average 17lb,Generic average,mono,17,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-8,line,Berkley Trilene XL 8lb,Berkley Trilene XL,mono,8,0.254,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-10,line,Berkley Trilene XL 10lb,Berkley Trilene XL,mono,10,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-12,line,Berkley Trilene XL 12lb,Berkley Trilene XL,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-17,line,Berkley Trilene XL 17lb,Berkley Trilene XL,mono,17,0.406,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-8,line,Berkley Trilene Big Game 8lb,Berkley Trilene Big Game,mono,8,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-10,line,Berkley Trilene Big Game 10lb,Berkley Trilene Big Game,mono,10,0.304,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-12,line,Berkley Trilene Big Game 12lb,Berkley Trilene Big Game,mono,12,0.355,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-15,line,Berkley Trilene Big Game 15lb,Berkley Trilene Big Game,mono,15,0.381,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-8,line,Stren Original 8lb,Stren Original,mono,8,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-10,line,Stren Original 10lb,Stren Original,mono,10,0.304,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-12,line,Stren Original 12lb,Stren Original,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-17,line,Stren Original 17lb,Stren Original,mono,17,0.406,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-8,line,Ande Premium 8lb,Ande Premium,mono,8,0.25,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-10,line,Ande Premium 10lb,Ande Premium,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-12,line,Ande Premium 12lb,Ande Premium,mono,12,0.35,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-15,line,Ande Premium 15lb,Ande Premium,mono,15,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-8,line,Sufix Superior 8lb,Sufix Superior,mono,8,0.28,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-10,line,Sufix Superior 10lb,Sufix Superior,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-12,line,Sufix Superior 12lb,Sufix Superior,mono,12,0.35,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-15,line,Sufix Superior 15lb,Sufix Superior,mono,15,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-8,line,Maxima Ultragreen 8lb,Maxima Ultragreen,mono,8,0.28,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-10,line,Maxima Ultragreen 10lb,Maxima Ultragreen,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-12,line,Maxima Ultragreen 12lb,Maxima Ultragreen,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-15,line,Maxima Ultragreen 15lb,Maxima Ultragreen,mono,15,0.38,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+copoly-generic-8,line,Generic average 8lb,Generic average,copoly,8,0.275,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-generic-10,line,Generic average 10lb,Generic average,copoly,10,0.31,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-generic-12,line,Generic average 12lb,Generic average,copoly,12,0.35,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-generic-15,line,Generic average 15lb,Generic average,copoly,15,0.395,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-generic-17,line,Generic average 17lb,Generic average,copoly,17,0.45,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-izorline-platinum-8,line,Izorline Platinum 8lb,Izorline Platinum,copoly,8,0.25,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-izorline-platinum-10,line,Izorline Platinum 10lb,Izorline Platinum,copoly,10,0.3,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-izorline-platinum-12,line,Izorline Platinum 12lb,Izorline Platinum,copoly,12,0.35,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-izorline-platinum-15,line,Izorline Platinum 15lb,Izorline Platinum,copoly,15,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-p-line-cxx-8,line,P-Line CXX X-Tra Strong 8lb,P-Line CXX X-Tra Strong,copoly,8,0.29,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-p-line-cxx-10,line,P-Line CXX X-Tra Strong 10lb,P-Line CXX X-Tra Strong,copoly,10,0.35,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-p-line-cxx-12,line,P-Line CXX X-Tra Strong 12lb,P-Line CXX X-Tra Strong,copoly,12,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-p-line-cxx-15,line,P-Line CXX X-Tra Strong 15lb,P-Line CXX X-Tra Strong,copoly,15,0.43,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-p-line-cxx-17,line,P-Line CXX X-Tra Strong 17lb,P-Line CXX X-Tra Strong,copoly,17,0.45,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-yo-zuri-hybrid-8,line,Yo-Zuri Hybrid 8lb,Yo-Zuri Hybrid,copoly,8,0.284,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-yo-zuri-hybrid-10,line,Yo-Zuri Hybrid 10lb,Yo-Zuri Hybrid,copoly,10,0.308,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-yo-zuri-hybrid-12,line,Yo-Zuri Hybrid 12lb,Yo-Zuri Hybrid,copoly,12,0.338,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-yo-zuri-hybrid-15,line,Yo-Zuri Hybrid 15lb,Yo-Zuri Hybrid,copoly,15,0.405,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-8,line,McCoy Mean Green 8lb,McCoy Mean Green,copoly,8,0.28,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-10,line,McCoy Mean Green 10lb,McCoy Mean Green,copoly,10,0.3,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-12,line,McCoy Mean Green 12lb,McCoy Mean Green,copoly,12,0.33,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-15,line,McCoy Mean Green 15lb,McCoy Mean Green,copoly,15,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+weight-lead-slinky-1-4,weight,Lead Slinky (shot in tubing) 1/4 oz,,lead,,,7.09,,11.34,,slinky,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-slinky-3-8,weight,Lead Slinky (shot in tubing) 3/8 oz,,lead,,,10.63,,11.34,,slinky,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-slinky-1-2,weight,Lead Slinky (shot in tubing) 1/2 oz,,lead,,,14.17,,11.34,,slinky,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-slinky-5-8,weight,Lead Slinky (shot in tubing) 5/8 oz,,lead,,,17.72,,11.34,,slinky,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-slinky-3-4,weight,Lead Slinky (shot in tubing) 3/4 oz,,lead,,,21.26,,11.34,,slinky,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-slinky-1,weight,Lead Slinky (shot in tubing) 1 oz,,lead,,,28.35,,11.34,,slinky,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-1-4,weight,Lead Pencil 1/4 oz,,lead,,,7.09,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-rubber-1-4,weight,Lead Pencil (rubber sleeve) 1/4 oz,,lead,,,7.09,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-3-8,weight,Lead Pencil 3/8 oz,,lead,,,10.63,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-rubber-3-8,weight,Lead Pencil (rubber sleeve) 3/8 oz,,lead,,,10.63,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-1-2,weight,Lead Pencil 1/2 oz,,lead,,,14.17,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-rubber-1-2,weight,Lead Pencil (rubber sleeve) 1/2 oz,,lead,,,14.17,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-5-8,weight,Lead Pencil 5/8 oz,,lead,,,17.72,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-rubber-5-8,weight,Lead Pencil (rubber sleeve) 5/8 oz,,lead,,,17.72,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-3-4,weight,Lead Pencil 3/4 oz,,lead,,,21.26,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-rubber-3-4,weight,Lead Pencil (rubber sleeve) 3/4 oz,,lead,,,21.26,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-1,weight,Lead Pencil 1 oz,,lead,,,28.35,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-pencil-rubber-1,weight,Lead Pencil (rubber sleeve) 1 oz,,lead,,,28.35,,11.34,,pencil,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-barrel-1-4,weight,Lead Barrel 1/4 oz,,lead,,,7.09,,11.34,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-barrel-3-8,weight,Lead Barrel 3/8 oz,,lead,,,10.63,,11.34,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-barrel-1-2,weight,Lead Barrel 1/2 oz,,lead,,,14.17,,11.34,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-barrel-5-8,weight,Lead Barrel 5/8 oz,,lead,,,17.72,,11.34,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-barrel-3-4,weight,Lead Barrel 3/4 oz,,lead,,,21.26,,11.34,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-barrel-1,weight,Lead Barrel 1 oz,,lead,,,28.35,,11.34,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-1-4,weight,Lead Teardrop 1/4 oz,,lead,,,7.09,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-rubber-1-4,weight,Lead Teardrop (rubber sleeve) 1/4 oz,,lead,,,7.09,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-3-8,weight,Lead Teardrop 3/8 oz,,lead,,,10.63,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-rubber-3-8,weight,Lead Teardrop (rubber sleeve) 3/8 oz,,lead,,,10.63,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-1-2,weight,Lead Teardrop 1/2 oz,,lead,,,14.17,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-rubber-1-2,weight,Lead Teardrop (rubber sleeve) 1/2 oz,,lead,,,14.17,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-5-8,weight,Lead Teardrop 5/8 oz,,lead,,,17.72,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-rubber-5-8,weight,Lead Teardrop (rubber sleeve) 5/8 oz,,lead,,,17.72,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-3-4,weight,Lead Teardrop 3/4 oz,,lead,,,21.26,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-rubber-3-4,weight,Lead Teardrop (rubber sleeve) 3/4 oz,,lead,,,21.26,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-1,weight,Lead Teardrop 1 oz,,lead,,,28.35,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-teardrop-rubber-1,weight,Lead Teardrop (rubber sleeve) 1 oz,,lead,,,28.35,,11.34,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-1-4,weight,Lead Cannonball 1/4 oz,,lead,,,7.09,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-rubber-1-4,weight,Lead Cannonball (rubber sleeve) 1/4 oz,,lead,,,7.09,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-3-8,weight,Lead Cannonball 3/8 oz,,lead,,,10.63,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-rubber-3-8,weight,Lead Cannonball (rubber sleeve) 3/8 oz,,lead,,,10.63,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-1-2,weight,Lead Cannonball 1/2 oz,,lead,,,14.17,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-rubber-1-2,weight,Lead Cannonball (rubber sleeve) 1/2 oz,,lead,,,14.17,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-5-8,weight,Lead Cannonball 5/8 oz,,lead,,,17.72,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-rubber-5-8,weight,Lead Cannonball (rubber sleeve) 5/8 oz,,lead,,,17.72,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-3-4,weight,Lead Cannonball 3/4 oz,,lead,,,21.26,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-rubber-3-4,weight,Lead Cannonball (rubber sleeve) 3/4 oz,,lead,,,21.26,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-1,weight,Lead Cannonball 1 oz,,lead,,,28.35,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-lead-cannonball-rubber-1,weight,Lead Cannonball (rubber sleeve) 1 oz,,lead,,,28.35,,11.34,,cannonball,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-barrel-1-4,weight,Tungsten Barrel 1/4 oz,,tungsten,,,7.09,,19.3,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-barrel-3-8,weight,Tungsten Barrel 3/8 oz,,tungsten,,,10.63,,19.3,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-barrel-1-2,weight,Tungsten Barrel 1/2 oz,,tungsten,,,14.17,,19.3,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-barrel-5-8,weight,Tungsten Barrel 5/8 oz,,tungsten,,,17.72,,19.3,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-barrel-3-4,weight,Tungsten Barrel 3/4 oz,,tungsten,,,21.26,,19.3,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-barrel-1,weight,Tungsten Barrel 1 oz,,tungsten,,,28.35,,19.3,,barrel,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-teardrop-1-4,weight,Tungsten Teardrop 1/4 oz,,tungsten,,,7.09,,19.3,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-teardrop-3-8,weight,Tungsten Teardrop 3/8 oz,,tungsten,,,10.63,,19.3,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-teardrop-1-2,weight,Tungsten Teardrop 1/2 oz,,tungsten,,,14.17,,19.3,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-teardrop-5-8,weight,Tungsten Teardrop 5/8 oz,,tungsten,,,17.72,,19.3,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-teardrop-3-4,weight,Tungsten Teardrop 3/4 oz,,tungsten,,,21.26,,19.3,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured
+weight-tungsten-teardrop-1,weight,Tungsten Teardrop 1 oz,,tungsten,,,28.35,,19.3,,teardrop,,,,,,nominal mass from oz label; area + cd not yet measured

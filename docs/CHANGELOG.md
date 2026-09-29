@@ -4,6 +4,27 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Tackle library expanded to 185 measured rows (P1)
+`docs/tackle_measurements.csv` went 38 → **185 rows** so the Gear Sim can stop running on
+unitless fudges: **110 lines** (brand-expanded, role-agnostic ids `{material}-{brand}-{lb}`,
+`generic` = fallback) and **60 weights** (lead slinky/pencil/barrel/teardrop/cannonball plus
+tungsten barrel/teardrop; the rubber sleeve is a label variant, not a shape), plus the measured
+foam 4 · bead 6 · hook 4 · yarn 1. Schema: `brand` + `sample_length_mm` added (18 cols),
+`type: weight`, `material` on weights, 9 shapes. Removed: 6 phantom line rows
+(`mainline-mono-*`, `mainline-copoly-*`) and the soft 2/4 mm beads (not owned).
+
+Measured 2026-09-28 on a 0.01 g scale + Archimedes rig: corkies density **0.5** (3 sizes, consistent) ·
+cheater **0.43** (egg 13 × 9.5 mm, broadside area 0.97 cm²) · beads **≈1.0 for both** hard and soft ·
+hooks 0.35 / 0.28 / 0.20 / 0.16 g. Below scale resolution and therefore DERIVED: the 6 mm corky
+(density 0.5) and the 2/4 mm beads (density 1.0). ESTIMATED near-neutral: yarn **0.01 g/in**, which
+shows the model's `+0.15/in` yarn *lift* is ~15× high, and that `BEAD_DENSITY.soft = 0.55` is wrong
+(both bead materials measure ≈1.0 — the soft/hard difference is drag, not buoyancy).
+
+Still open: `area_cm2` + `cd` on the 60 weight rows (`--check` lists exactly those) and the physics
+rewrite (P3) that consumes the JSON.
+- Key files: `docs/tackle_measurements.csv`, `docs/CONTRACT_TACKLE.md`,
+  `scripts/tackle_csv_to_json.py`.
+
 ## 2026-09-28 — GitHub repo renamed `index.html` → `TheFishReport`
 Infra only, no code: the repo now lives at `github.com/nickeprice/TheFishReport` (renamed via
 `PATCH /repos/nickeprice/index.html` using the stored `gho_` credential — `gh` is not installed

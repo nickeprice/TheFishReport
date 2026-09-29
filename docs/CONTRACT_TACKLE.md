@@ -1,9 +1,14 @@
 # Contract — Tackle Spec (measured, not guessed)
 
-**Status:** TEMPLATE — fill in the values. The Gear Sim currently runs on unitless
-calibration constants (`lift = 0.90`, `DRAG_REF = 7.5`, `hookSink = 0.35`). This file
-replaces those with real grams, millimetres and cm² so the drag equation
-`F = ½·ρ·C_d·A·v²` gets real numbers in it.
+**Status:** FILLED — measured 2026-09-28 (foam, beads, hooks, yarn) + published line
+diameters + the weight library. The Gear Sim still runs on unitless calibration constants
+(`lift = 0.90`, `DRAG_REF = 7.5`, `hookSink = 0.35`); this file is the data that will replace
+them with real grams, millimetres and cm² so `F = ½·ρ·C_d·A·v²` gets real numbers in it.
+
+**Still missing:** `area_cm2` + `cd` for the 60 weight rows (the drag half of a lead/tungsten
+weight) — `python3 scripts/tackle_csv_to_json.py --check` lists exactly those. Anything whose
+`notes` say DERIVED or ESTIMATED was not directly measured: either the item is below the
+0.01 g scale's resolution, or the value is a standard material constant.
 
 The whole thing rests on **one setup (Archimedes)** — weigh the item in air, then weigh it
 submerged. That pair gives you mass, buoyancy, volume and density all at once. Everything
@@ -58,7 +63,10 @@ Then:
 | `projected_area_cm2` | graph paper + photo | silhouette → count squares | for spheres skip it: `A = π(d/2)²` |
 | `cd` | standard | sphere ≈ 0.47, flat plate ≈ 1.1 | **line `cd` is NOT a static measurement** — see below |
 | hook `gap_width_mm`, `wire_diameter_mm` | calipers | direct | drag is a small correction |
-| yarn `buoyancy_per_inch_g` | Archimedes | measure a known length (e.g. 10"), ÷ length | measure **after 5 min soak** — that's the honest in-river value |
+| weight `area_cm2` | graph paper + photo | silhouette of the **broadside** (what the current sees) | the rubber sleeve changes area *and* bottom grip — measure the sleeved unit as its own item |
+| weight `cd` | standard | sphere `0.47`, cylinder ≈ `1.0`, teardrop ≈ `0.3` | `slinky` is a cylinder, so it drags like a parachute — the whole reason shape is being modelled |
+| weight `density_g_cm3` | standard | lead `11.34`, tungsten `19.3`, steel `7.85` | a tungsten weight of the same oz is ~40% smaller → less drag, sinks harder |
+| yarn `buoyancy_per_inch_g` | Archimedes | measure a known length (e.g. 10"), ÷ length | measure **after 5 min soak** — that's the honest in-river value (synthetic yarn reads ≈ neutral, so expect a very small number) |
 
 ### Drag coefficient of line — don't hand-measure it
 
@@ -83,22 +91,27 @@ cannot drift.
 
 | Column | Unit | Applies to | Notes |
 |---|---|---|---|
-| `id` | — | all | unique slug, e.g. `corky-10` (the stable key) |
-| `type` | — | all | `foam` \| `line` \| `bead` \| `hook` \| `yarn` |
-| `label` | — | all | display name |
-| `material` | — | line, bead | line: `mono`/`copoly`/`fluoro`/`braid`; bead: `hard`/`soft` |
+| `id` | — | all | unique slug (the stable key), e.g. `corky-10`, `fluoro-seaguar-sts-12` |
+| `type` | — | all | `foam` \| `line` \| `bead` \| `hook` \| `yarn` \| `weight` |
+| `label` | — | all | display name; carries the variant (e.g. `Lead Pencil (rubber sleeve) 1/4 oz`) |
+| `brand` | — | line | brand name; `generic` = the fallback average row |
+| `material` | — | line, bead, weight | line: `mono`/`copoly`/`fluoro`/`braid`; bead: `hard`/`soft`; weight: `lead`/`tungsten` |
 | `lb_test` | lb | line | |
-| `diameter_mm` | mm | line, bead, foam | line: wrap-and-divide |
-| `mass_g` | g | all | |
+| `diameter_mm` | mm | line, bead, foam | line: published average, or wrap-and-divide |
+| `mass_g` | g | all | weight: a unit conversion of the oz label |
 | `buoyancy_g` | g-force | all | straight off the Archimedes rig |
-| `density_g_cm3` | g/cm³ | all | **derived** when blank (`mass / volume`) |
-| `area_cm2` | cm² | foam, bead | spheres: `π(d/2)²` |
-| `shape` | — | foam, bead | `sphere` (drives the standard `cd`) |
-| `cd` | — | foam, bead | `0.47` for spheres; flat plate ≈ 1.1 |
+| `density_g_cm3` | g/cm³ | all | **derived** when `buoyancy_g` is present, else a standard material value |
+| `area_cm2` | cm² | foam, bead, weight | spheres: `π(d/2)²`; irregular: photo + graph paper |
+| `shape` | — | foam, bead, weight | geometry only: `sphere`/`plate`/`other`/`egg`/`slinky`/`pencil`/`barrel`/`teardrop`/`cannonball` |
+| `cd` | — | foam, bead, weight | `0.47` sphere · `1.1` flat plate · egg ≈ `0.5` |
 | `gap_width_mm` | mm | hook | |
 | `wire_diameter_mm` | mm | hook | |
 | `buoyancy_per_inch_g` | g/in | yarn | 10 in saturated ÷ 10 |
+| `sample_length_mm` | mm | line, yarn | length of a weighed sample, so a per-length mass stays honest (unused so far) |
 | `notes` | — | all | free text — avoid commas, or wrap the cell in quotes |
+
+A weight's **rubber sleeve is a variant, not a shape**: `shape` stays the bare geometry and
+the sleeve lives in `label` (each configuration is its own row, measured as a whole unit).
 
 Leave a cell **blank** when it does not apply, and blank when you have not measured it yet.
 Blank means "unknown", which is honest. Never type a guess.

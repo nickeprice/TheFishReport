@@ -79,9 +79,15 @@ var DRIFT_TECHNIQUE = {
             suggestions.push('Try this: ' + best.foam.label + ' + ' + best.leader + ' ft leader + ' + best.weight + ' oz lead -> projects ' + best.hgt.toFixed(1) + '" of line height.');
         }
 
+        // 5. The "where to fish" row (WS-8a): depth of water + the lie + light/colour, with the
+        // angler's own line measured against that band. Deliberately NOT part of `suggestions`:
+        // it describes where the FISH are, not what to change, and keeping it out leaves the
+        // frozen suggestion baseline (and its assertions) exactly where they were.
+        var where = (typeof whereToFish === 'function') ? whereToFish(zone, hgt) : null;
+
         return {
             velocity: velocity, dragPerFt: dragPerFt, lift: lift, hgt: hgt, blownOut: blownOut,
-            sonar: sonar, zone: zone, score: score, suggestions: suggestions
+            sonar: sonar, zone: zone, score: score, suggestions: suggestions, whereToFish: where
         };
     }
 };

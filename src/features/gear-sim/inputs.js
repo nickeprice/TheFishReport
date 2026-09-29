@@ -3,7 +3,8 @@
  * kinematic primitives (hydraulic velocity + rig lift).
  * public: currentStats, BASE_ZONE_MIN/MAX, getNum/getStr/getGPS, FOAM_TABLE,
  *         parseFoam/hookLabel/hookSink, hydraulicVelocity(), rigLift(),
- *         getActiveStationId(), measuredFit(), measuredVelocity()
+ *         getActiveStationId(), measuredFit(), measuredVelocity(),
+ *         THERMAL_BANDS, thermalOptimum(tempF)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // --- GEAR SIM: DETERMINISTIC FLUID DYNAMICS ENGINE ---
@@ -194,4 +195,41 @@ function hydraulicVelocity(flow, siteId) {
 // beadSink is subtracted because every bead has mass; denser materials sink more.
 function rigLift(foamLift, yarnInches, hook, bdMat, bdSz) {
     return Math.max(0.02, foamLift + (yarnInches * 0.15) - hookSink(hook) - beadSink(bdMat, bdSz));
+}
+
+// ==================================================================================
+// THERMAL OPTIMUM (WS-8a)
+// Water temperature sets metabolism, and metabolism sets how high a salmonid will
+// hold. The old rule was ONE line - ">= 55F and they rise" - and it had the physics
+// backwards once past the comfort band: a fish above its optimum does not climb, it
+// slides DEEPER looking for the coldest, most oxygenated water it can find (which is
+// why warm-water fish stack in the deep tail of a pool). This is the published
+// comfort band for Oncorhynchus/steelhead reduced to the ONE number the zone model
+// needs: a shift in inches. Pure function of temperature - no report, no DOM.
+// Bands (deg F): <45 torpid | 45-50 cool | 50-60 optimal | 60-65 warming | >65 stress.
+// 65 itself reads as WARMING; stress starts above it.
+// ==================================================================================
+var THERMAL_BANDS = [
+    { band: 'torpid',  range: 'under 45', shift: -1.50, label: 'below the feed window',
+      note: 'fish sit tight to the bottom and rarely move.' },
+    { band: 'cool',    range: '45-50',    shift: -0.75, label: 'cold but feeding',
+      note: 'fish hold low and feed slowly.' },
+    { band: 'optimal', range: '50-60',    shift:  0.75, label: 'prime metabolic range',
+      note: 'fish hold and feed up in the column.' },
+    { band: 'warming', range: '60-65',    shift: -1.00, label: 'above the optimum',
+      note: 'fish slide to the coolest, fastest water - riffle tailouts and deep pool tails.' },
+    { band: 'stress',  range: 'over 65',  shift: -2.00, label: 'thermal stress',
+      note: 'fish stack in the deepest, most oxygenated pockets.' }
+];
+
+function thermalOptimum(tempF) {
+    if (tempF === null || tempF === undefined || isNaN(tempF)) return null;
+    var t = Number(tempF);
+    var b;
+    if (t < 45) b = THERMAL_BANDS[0];
+    else if (t < 50) b = THERMAL_BANDS[1];
+    else if (t < 60) b = THERMAL_BANDS[2];
+    else if (t <= 65) b = THERMAL_BANDS[3];
+    else b = THERMAL_BANDS[4];
+    return { band: b.band, range: b.range, shift: b.shift, label: b.label, note: b.note, tempF: t };
 }

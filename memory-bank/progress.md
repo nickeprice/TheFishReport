@@ -17,6 +17,19 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **WS-8a science model** (issue #2 follow-on): the Gear Sim's environment is rebuilt.
+  The single `≥55F → rise` rule (backwards above the comfort band) becomes `thermalOptimum()` with
+  five bands — `<45` torpid / `45–50` cool / `50–60` optimal / `60–65` warming / `>65` stress — the
+  barometer is **demoted** +3.5/−3.0 → **±1.2"**, and two terms join it: **own-gauge turbidity**
+  (`window.turbidityFnu`, null → no term) and **light from the report's reference hour** (never the
+  clock — that would make the solver non-deterministic). Depth is now **measured**: `depthAtGauge()`
+  = median `A/W` of the six USGS rows nearest today's flow, cross-checked by `Q/(W·V)` (worst gap
+  0.47%), exposed as `spotDepthFt()` in the same same-reach provenance shape as `velocityAtSpot()`
+  and **null** when unmeasured. New **"Where to fish"** row (depth + lie + colour/light + your
+  line against the band, on AND off target) paints as the last strike-zone bullet and returns as
+  `out.whereToFish` — deliberately not a `suggestions` entry, so the frozen baseline stayed at 2.
+  `sw.js` `v2.03.22`, **128/128**.
+
 - 2026-09-29 — **WS-4 weather is per-day** (issue #2) + **tappable hourly popup**: each day now
   reports ONE reference hour block — today = the hour containing *now* (`2:37pm → "3-4 PM"`), a
   later day = the hour containing the **legal start** (`lines_in`), a 24hr river = sunrise, an

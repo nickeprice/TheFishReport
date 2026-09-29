@@ -850,6 +850,188 @@ function behaviorChecks(done) {
     fail('drift technique reproduces the frozen solver output', String(e.message).split('\n')[0]);
   }
 
+  // --- WS-8a: the scientific model (thermal curve, gauge depth, colour/light, where-to-fish) ---
+  // The frozen baselines above run REPORT-LESS on purpose, so NONE of them may move. This block
+  // pins the NEW behaviour instead: the thermal-optimum band edges, D = A/W from the REAL USGS
+  // cross-sections (with its Q/(W*V) cross-check), the null-everything path that must never
+  // fabricate a spot depth, the DEMOTED barometer, the own-gauge colour and reference-hour light
+  // terms, and the "where to fish" row actually reaching the strike-zone panel through the REAL
+  // painter rather than only appearing in the source.
+  try {
+    var activeDateOffset = 0;                 // reportsData is declared in the drift block above
+    eval(fs.readFileSync(path.join(ROOT, 'src/data/channel_measurements.js'), 'utf8'));
+    eval(fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/continuity.js'), 'utf8'));
+
+    // (1) The thermal curve: every band edge, and null -> no term at all (the old rule was a
+    // single ">= 55F -> rise", which pointed the wrong way above the comfort band).
+    const edges = [[44, 'torpid', -1.5], [45, 'cool', -0.75], [49.9, 'cool', -0.75], [50, 'optimal', 0.75],
+      [59.9, 'optimal', 0.75], [60, 'warming', -1], [65, 'warming', -1], [65.5, 'stress', -2], [70, 'stress', -2]];
+    const badEdges = edges.filter(([t, band, sh]) => {
+      const b = thermalOptimum(t);
+      return !b || b.band !== band || b.shift !== sh;
+    });
+    const noTemp = thermalOptimum(null) === null && thermalOptimum(undefined) === null && thermalOptimum(NaN) === null;
+    (badEdges.length === 0 && noTemp)
+      ? ok('thermal-optimum curve replaces "warm water = rise"',
+           'torpid <45 / cool 45-50 / optimal 50-60 / warming 60-65 / stress >65, null -> no term')
+      : fail('thermal-optimum curve replaces "warm water = rise"', `${JSON.stringify(badEdges)} noTemp=${noTemp}`);
+
+    // (2) Depth is the gauge's OWN measured cross-section: median of the six rows nearest today's
+    // discharge, cross-checked against Q/(W*V) on those same rows.
+    const dN = depthAtGauge(1040, '12089500');
+    const dHi = depthAtGauge(3000, '12089500');
+    const dPuy = depthAtGauge(1040, '12101500');
+    const depthOk = dN && dHi && dPuy &&
+      Math.abs(dN.value - 3.159825238772607) < 1e-6 &&
+      Math.abs(dHi.value - 4.260821514090993) < 1e-6 &&
+      Math.abs(dPuy.value - 3.329611650485437) < 1e-6 &&
+      dN.rows === 6 && dN.gaugeRows === 237 && dN.source === 'measured' && dN.thinRecent === false &&
+      dN.crossCheckPct < 0.05 && dHi.crossCheckPct < 0.05 && dPuy.crossCheckPct < 0.05 &&
+      dN.minFt < dN.value && dN.value < dN.maxFt;
+    depthOk
+      ? ok('gauge depth is the measured cross-section (A/W), cross-checked by Q/(W*V)',
+           'Nisqually 3.16 ft @1040 and 4.26 @3000, Puyallup 3.33 @1040; worst continuity gap <0.5%')
+      : fail('gauge depth is the measured cross-section (A/W), cross-checked by Q/(W*V)',
+             `N=${dN && dN.value} Hi=${dHi && dHi.value} Puy=${dPuy && dPuy.value} ` +
+             `x=${dN && dN.crossCheckPct} rows=${dN && dN.rows}/${dN && dN.gaugeRows}`);
+
+    // (3) Nothing measured -> NO depth number. A missing/unknown gauge must stay null, and
+    // spotDepthFt() must still carry the same-reach provenance velocityAtSpot() carries.
+    const noSite = spotDepthFt(1040, null);
+    const nullOk = depthAtGauge(1040, null) === null && depthAtGauge(1040, '99999999') === null &&
+      noSite.value === null && noSite.atGauge === false && noSite.source === 'none' &&
+      noSite.uncertainty === 0.2 && noSite.ratioMeasured === false;
+    nullOk
+      ? ok('no measured cross-section -> a null depth, never a fabricated number',
+           'unknown/null siteId -> value null, atGauge false, source none, +/-20% same-reach spread kept')
+      : fail('no measured cross-section -> a null depth, never a fabricated number', JSON.stringify(noSite));
+
+    // (4) "Where to fish" - depth + lie + colour, ON and OFF target, and the honest empty path.
+    const realGetItem = global.localStorage.getItem;
+    const bare = whereToFish({ min: 4, max: 12 });
+    global.localStorage.getItem = (k) => (k === 'active_station' ? JSON.stringify({ id: '12089500' }) : null);
+    const offTgt = whereToFish({ min: 4, max: 12 }, 2.8867637713966774);
+    const onTgt = whereToFish({ min: 4, max: 12 }, 8);
+    global.turbidityFnu = 32;
+    const dirty = whereToFish({ min: 4, max: 12 }, 8);
+    global.turbidityFnu = null;
+    global.localStorage.getItem = realGetItem;
+    const whereOk = /^Where to fish: /.test(bare) && /no measured cross-section/.test(bare) &&
+      !/ft of water/.test(bare) && !/\d+ ft of water/.test(bare) &&
+      /hold ~8\.0" up in ~3\.2 ft of water \(gauge cross-section, \u00b132%\)/.test(offTgt) &&
+      /bed 1\.5 ft\/s: soft water, fish spread over the flats and riffle lips/.test(offTgt) &&
+      /your line at 2\.9" is 5\.1" below that band/.test(offTgt) &&
+      /your line at 8\.0" is in that band/.test(onTgt) &&
+      /coloured water \(32\.0 FNU\) puts them shallower, closer to cover/.test(dirty);
+    whereOk
+      ? ok('"where to fish" carries depth + lie + colour, on AND off target',
+           'no gauge -> no depth number; with the Nisqually -> "hold ~8.0" up in ~3.2 ft ... +/-32%"; in/out of band')
+      : fail('"where to fish" carries depth + lie + colour, on AND off target',
+             `${bare} || ${offTgt} || ${onTgt} || ${dirty}`);
+  } catch (e) {
+    fail('thermal-optimum curve replaces "warm water = rise"', String(e.message).split('\n')[0]);
+    fail('gauge depth is the measured cross-section (A/W), cross-checked by Q/(W*V)', 'block threw');
+    fail('no measured cross-section -> a null depth, never a fabricated number', 'block threw');
+    fail('"where to fish" carries depth + lie + colour, on AND off target', 'block threw');
+  }
+
+  // --- WS-8a part 2: the report terms (demoted barometer, colour, light) --------
+  // Colour reads the ACTIVE gauge's own FNU (no reading -> no term at all) and the light term
+  // reads the report's REFERENCE HOUR block, never the local clock - a clock would make
+  // computeStrikeZone() non-deterministic and flap the frozen baselines between 7 AM and 7 PM.
+  // The expected stacks are arithmetic: falling 1.2 + cloud 1.5 + rain 1.0 + optimal 0.75 +
+  // low light 1.0 = +5.45", and the fully-loaded case adds dirty 1.25 for +6.7", which is what
+  // proves the unchanged 7.0" ZONE_TREND_FULL_SCALE still bounds the rebuilt model.
+  try {
+    reportsData = [{ press_delta: -0.08, cloud_pct: 90, rain: 0.4, weather_hour: { iso: '2026-09-29T05:00', label: '5-6 AM' } }];
+    activeDateOffset = 0;
+    global.waterTempF = 52;
+    const wzHot = computeStrikeZone();
+    const wzHotNotes = wzHot.notes.join(' | ');
+    reportsData = [{ press_delta: 0.05, cloud_pct: 5, rain: 0, weather_hour: { iso: '2026-09-29T13:00', label: '1-2 PM' } }];
+    global.waterTempF = 61;
+    const wzCold = computeStrikeZone();
+    const wzColdNotes = wzCold.notes.join(' | ');
+    reportsData = [{ press_delta: -0.08, cloud_pct: 50, rain: 0 }];     // no reference hour, no probe
+    global.waterTempF = null;
+    const wzBare = computeStrikeZone();
+    const wzBareNotes = wzBare.notes.join(' | ');
+    global.turbidityFnu = 32;
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0 }];
+    const wzColour = computeStrikeZone();
+    global.turbidityFnu = 80;
+    reportsData = [{ press_delta: -0.08, cloud_pct: 90, rain: 0.4, weather_hour: { iso: '2026-09-29T05:00', label: '5-6 AM' } }];
+    global.waterTempF = 52;
+    const wzMax = computeStrikeZone();
+    global.turbidityFnu = null;
+    global.waterTempF = null;
+    const wzTermsOk = Math.abs(wzHot.shift - 5.45) < 1e-9 && Math.abs(wzCold.shift + 4.45) < 1e-9 &&
+      Math.abs(wzBare.shift - 1.2) < 1e-9 && Math.abs(wzColour.shift - 0.75) < 1e-9 &&
+      Math.abs(wzMax.shift - 6.7) < 1e-9 && zoneTrend(wzMax).ratio < 1 &&
+      /Low light \(5-6 AM\): fish feed up in the column/.test(wzHotNotes) &&
+      /Water 52F \(50-60F band\)/.test(wzHotNotes) &&
+      /High sun \(1-2 PM\): fish hold deep and tight/.test(wzColdNotes) &&
+      /Water 61F \(60-65F band\): fish slide to the coolest, fastest water/.test(wzColdNotes) &&
+      /Coloured water \(32\.0 FNU\): fish move up and closer to cover/.test(wzColour.notes.join(' | ')) &&
+      wzBareNotes.indexOf('FNU') === -1 && wzBareNotes.indexOf('light') === -1;
+    wzTermsOk
+      ? ok('zone terms: demoted barometer, own-gauge colour, reference-hour light',
+           '+5.45" stacked, -4.45" the other way, alone the barometer is 1.2"; no probe/hour -> no term; the 6.7" ceiling still fits 7.0"')
+      : fail('zone terms: demoted barometer, own-gauge colour, reference-hour light',
+             `hot=${wzHot.shift} cold=${wzCold.shift} bare=${wzBare.shift} colour=${wzColour.shift} ` +
+             `max=${wzMax.shift} ratio=${zoneTrend(wzMax).ratio} | ${wzBareNotes}`);
+  } catch (e) {
+    fail('zone terms: demoted barometer, own-gauge colour, reference-hour light', String(e.message).split('\n')[0]);
+  }
+
+
+  // --- WS-8a part 3: the row reaches the panel, and the wiring cannot regress --
+  // Drive the REAL paintZoneHud() against a recording <ul> (the DOM stub appends nowhere), then
+  // re-run the frozen drift rig under the frozen report-less conditions: the where-to-fish row
+  // must exist and the pinned suggestion count must NOT have moved - which is exactly why the
+  // row is rendered by the panel painter instead of being pushed into out.suggestions.
+  try {
+    const recUl = {
+      id: 'hud-zone-notes', children: [], innerHTML: '',
+      appendChild(c) { this.children.push(c); }
+    };
+    const realGetById = global.document.getElementById;
+    global.document.getElementById = (id) => (id === 'hud-zone-notes' ? recUl : realGetById(id));
+    reportsData = [{ press_delta: -0.08, cloud_pct: 50, rain: 0 }];
+    paintZoneHud(computeStrikeZone(), null);
+    global.document.getElementById = realGetById;
+    const wsPainted = recUl.children.map((c) => String(c.textContent));
+    reportsData = [];                                   // report-less == the frozen harness conditions
+    const wsRig = {
+      flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
+      mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+      foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
+    };
+    const wsOut = gearTechnique().compute(wsRig, { flow: 1040, species: 'Chinook', dbArray: [] });
+    const wsWireOk = wsPainted.length === 2 && /^Barometer falling/.test(wsPainted[0]) &&
+      /^Where to fish: /.test(wsPainted[1]) &&
+      wsOut.suggestions.length === 2 && /^Too low at 2\.9"/.test(wsOut.suggestions[0]) &&
+      Math.abs(wsOut.hgt - 2.8867637713966774) < 1e-9 &&
+      /^Where to fish: no measured cross-section/.test(wsOut.whereToFish);
+    const zoneSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/zone.js'), 'utf8');
+    const solverSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/solver.js'), 'utf8');
+    const driftSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/techniques/drift.js'), 'utf8');
+    const waterSrc = fs.readFileSync(path.join(ROOT, 'src/services/water.js'), 'utf8');
+    const wsStaticOk = !/shift \+= 3\.5|shift -= 3\.0/.test(zoneSrc) && !/Warm water \(/.test(zoneSrc) &&
+      /thermalOptimum\(/.test(zoneSrc) && /turbidityTerm\(\)/.test(zoneSrc) && /lightTerm\(/.test(zoneSrc) &&
+      /ZONE_TREND_FULL_SCALE = 7\.0/.test(zoneSrc) && /where \|\| whereToFish\(zone\)/.test(zoneSrc) &&
+      /paintZoneHud\(zone, out\.whereToFish\)/.test(solverSrc) && /whereToFish\(zone, hgt\)/.test(driftSrc) &&
+      /window\.turbidityFnu = hasTurb/.test(waterSrc);
+    (wsWireOk && wsStaticOk)
+      ? ok('the where-to-fish row is painted, and the frozen suggestion count did not move',
+           'recording <ul> gets [zone reason, Where to fish ...]; drift still 2 suggestions, hgt 2.887"')
+      : fail('the where-to-fish row is painted, and the frozen suggestion count did not move',
+             `painted=[${wsPainted.join(' | ')}] sugg=${wsOut.suggestions.length} where=${wsOut.whereToFish} ` +
+             `hgt=${wsOut.hgt} static=${wsStaticOk}`);
+  } catch (e) {
+    fail('the where-to-fish row is painted, and the frozen suggestion count did not move', String(e.message).split('\n')[0]);
+  }
+
   // --- P4b: the PICKED brand must reach the ROW -------------------------------
   // The three identity columns are only worth their migration if the client writes them, so
   // assert the real toCatchRow() mapping (not a regex): ids present -> columns set, ids absent

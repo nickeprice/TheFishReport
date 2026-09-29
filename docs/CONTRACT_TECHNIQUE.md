@@ -67,9 +67,16 @@ fallback — and passes the diameter into `totalDragPerFt`.
   blownOut,                     // bool: bed too fast for the lead
   sonar, zone,                  // zone = {min, max, notes[], center?}
   score,                        // 0.0 - 5.0
-  suggestions: [string]         // plain-English "Rig Adjustments"
+  suggestions: [string],        // plain-English "Rig Adjustments"
+  whereToFish                   // one "Where to fish: …" row (WS-8a) or null
 }
 ```
+
+`whereToFish` is the depth-of-water + lie + light/colour row (from `zone.js`'s
+`whereToFish(zone, hgt)`). It is deliberately NOT a `suggestions` entry: it says where the
+FISH are rather than what to change, and keeping it out of the array leaves the pinned
+`suggestions.length` baseline untouched. `paintSimHud()` renders it as the last row of the
+strike-zone panel, so it shows ON and OFF target.
 
 ## Rules
 

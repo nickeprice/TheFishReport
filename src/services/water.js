@@ -98,13 +98,15 @@ async function fetchCFSMomentum(siteId) {
 function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
     var hasTemp = (waterTempF !== undefined && waterTempF !== null && !isNaN(waterTempF));
     window.waterTempF = hasTemp ? Number(waterTempF) : null;   // Gear Sim falls back to the baseline zone when temp is unknown
+    var hasTurb = (turbidityFnu !== undefined && turbidityFnu !== null && !isNaN(turbidityFnu));
+    // WS-8a: the Gear Sim's colour term reads the SAME own-gauge reading the card paints,
+    // so the zone can never use a turbidity the angler cannot see. null -> no term at all.
+    window.turbidityFnu = hasTurb ? Number(turbidityFnu) : null;
     document.querySelectorAll('.water-temp').forEach(function (el) {
         el.innerText = hasTemp ? Math.round(Number(waterTempF)) : '--';
     });
     document.querySelectorAll('.turbidity-val').forEach(function (el) {
-        el.innerText = (turbidityFnu !== undefined && turbidityFnu !== null && !isNaN(turbidityFnu))
-            ? Number(turbidityFnu).toFixed(1)
-            : '--';
+        el.innerText = hasTurb ? Number(turbidityFnu).toFixed(1) : '--';
     });
 }
 

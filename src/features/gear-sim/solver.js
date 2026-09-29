@@ -84,10 +84,10 @@ function buildSimStats(rig, out) {
 function paintSimHud(rig, out, stats) {
     var hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
 
-    // LEFT panel: the strike zone, its trend colour/marker and ONE BULLET PER REASON it
-    // moved off the 4"-12" base. Same painter as the live preview, so the panel is whole
-    // (paintZoneHud is in zone.js).
-    paintZoneHud(zone);
+    // LEFT panel: the strike zone, its trend colour and ONE BULLET PER REASON it moved off the
+    // 4"-12" base - plus the solved "where to fish" row. Same painter as the live preview, so
+    // the panel is whole (paintZoneHud is in zone.js).
+    paintZoneHud(zone, out.whereToFish);
 
     // RIGHT panel: the angler's line height, colour-graded toward the zone MIDDLE in
     // 0.1" steps (green = dead centre, yellow = halfway, red = at/beyond the edge), with
@@ -113,11 +113,16 @@ function paintSimHud(rig, out, stats) {
     var shownBottom = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
     var near = (typeof velocityAtSpot === 'function')
         ? velocityAtSpot(rig.flow, velocity.station || null) : null;
+    var spotDepth = (typeof spotDepthFt === 'function')
+        ? spotDepthFt(rig.flow, velocity.station || null) : null;
     logDebug('Sim: height ' + hgt.toFixed(2) + '", bed velocity ' + shownBottom.toFixed(2) +
         ' ft/s (' + velocity.source + (typeof velocity.trueBottom === 'number'
             ? ', true ft/s' : ', calibration scale') + ')' +
         (near ? '; spot x' + near.ratio + ' measured=' + near.ratioMeasured +
             ' \u00b1' + Math.round(near.uncertainty * 100) + '%' : '') +
+        (spotDepth && spotDepth.value ? '; gauge depth ' + spotDepth.value.toFixed(2) + ' ft' +
+            ' \u00b1' + Math.round(spotDepth.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
-        '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone), 'SIM');
+        '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
+        (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
 }

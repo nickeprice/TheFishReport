@@ -4,6 +4,45 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — WS-8a: the scientific model (thermal curve, gauge depth, colour/light, "where to fish")
+The Gear Sim's environment model is rebuilt around the physics that actually moves fish. The old
+temperature rule was ONE line — "`>= 55F` and they rise" — and it had it backwards above the
+comfort band: a salmonid past its optimum does not climb, it slides DEEPER looking for the coldest,
+most oxygenated water it can find. `inputs.js` now carries **`THERMAL_BANDS` + `thermalOptimum(tempF)`**:
+`<45` torpid · `45–50` cool · `50–60` optimal · `60–65` warming · `>65` thermal stress (`65` itself is
+warming; stress starts above it), each with its own wording, and a `null` probe yields NO term at all.
+The barometer is **demoted from +3.5"/−3.0" to ±1.2"** (a third of the zone was never a
+second-order effect) and two new report terms join it: **own-gauge turbidity** (`window.turbidityFnu`,
+set by `applyOwnGaugeWaterQuality()` from the same 63680 reading the card paints — clear `<8` → −0.5,
+light stain, coloured, dirty `>=50` → +1.25) and a **light term from the report's REFERENCE HOUR
+block** (low light → +1.0, high sun → −0.75). Deliberately NOT the local clock: a clock fallback
+would make `computeStrikeZone()` non-deterministic and flap the frozen baselines between 7 AM and
+7 PM. The rebuilt stack peaks at 6.7" — still inside the unchanged 7.0" `ZONE_TREND_FULL_SCALE`, so
+the pinned gradient maths did not move.
+
+**Depth is now measured, not assumed.** New `continuity.js` `depthAtGauge(flow, siteId)`: every USGS
+field row already carries its cross-section area and width, so `D = A/W` — the MEDIAN of the six rows
+nearest today's discharge, **cross-checked against `Q/(W·V)`** on those same rows (worst gap 0.47% at
+the Nisqually, well inside the generator's 5% gate). Nisqually 3.16 ft @1040 CFS / 4.26 @3000,
+Puyallup 3.33 @1040. `spotDepthFt(flow, siteId)` wraps it in the SAME provenance shape as
+`velocityAtSpot()` (same-reach ±20%, plus the cross-section's own spread) and returns `value: null`
+when the gauge has no measured cross-section — never a fabricated spot number.
+
+**"Where to fish"** (`zone.js` `whereToFish(zone, hgt)`) composes the depth of water the fish are
+holding in, the LIE the bed velocity implies (>3.0 ft/s pushy water → behind boulders/wood/cut banks;
+1.5–3.0 → the seam and the pool tailout; <1.5 → soft flats), the colour/light clauses, and the
+angler's own line measured against that band — so it reads ON and OFF target. It renders as the LAST
+row of the strike-zone panel (`paintZoneHud(zone, where)`, shared with the live preview) and is
+returned by `drift.js` as `out.whereToFish`; it is deliberately NOT pushed into `out.suggestions`
+(where the FISH are is not "what to change"), so the frozen suggestion baseline stayed at 2.
+`sw.js` `v2.03.22`. **128/128 GREEN** — 6 new assertions pin the curve's band edges, the real `A/W`
+depth + its continuity cross-check, the null-depth path, the where-to-fish text/uncertainty, the
+report-term arithmetic (+5.45" / −4.45" / 1.2" alone / 6.7" ceiling), and the row reaching a
+recording panel through the REAL painter.
+- Key files: `src/features/gear-sim/{inputs,continuity,zone,solver}.js`,
+  `src/features/gear-sim/techniques/drift.js`, `src/services/water.js`, `sanity_pass.js`, `sw.js`,
+  `docs/{SYMBOLS,CONTRACT_TECHNIQUE}.md`.
+
 ## 2026-09-29 — WS-4: weather is PER-DAY (reference hour) + tappable hourly popup
 `api/water_report.py` no longer stamps one `current` snapshot onto all four days. Each day now
 reports ONE **reference hour block**: today = the hour containing NOW (`2:37pm -> "3-4 PM"`), a

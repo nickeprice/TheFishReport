@@ -1,9 +1,9 @@
 /**
  * src/features/gear-sim/zone.js - rig requirements (no defaults), the strike
  * zone, and the best-rig search that moves the presentation into the zone.
- * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(),
+ * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(), getTurbidityFnu(),
  *         computeStrikeZone(), gradeColor(), zoneColor(), zoneTrend(), zoneNotes(),
- *         paintZoneHud(), refreshZonePreview(), bestZoneRig()
+ *         whereToFish(), paintZoneHud(), refreshZonePreview(), bestZoneRig()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // Required gear fields — no defaults, so anything the angler has never entered
@@ -49,6 +49,81 @@ function getWaterTempF() {
     return null;
 }
 
+// Own-gauge turbidity (FNU), set by applyOwnGaugeWaterQuality() from the water-report
+// payload's 63680 reading. Same contract as getWaterTempF(): the ACTIVE station's own
+// gauge or nothing - no proxy, no cross-gauge substitute. null -> the zone model simply
+// has no turbidity term.
+function getTurbidityFnu() {
+    if (window.turbidityFnu !== undefined && window.turbidityFnu !== null && !isNaN(window.turbidityFnu)) {
+        return Number(window.turbidityFnu);
+    }
+    var el = document.querySelector('.turbidity-val');
+    if (el) {
+        var parsed = parseFloat(String(el.innerText).replace(/[^0-9.\-]/g, ''));
+        if (!isNaN(parsed) && parsed >= 0 && parsed < 5000) return parsed;
+    }
+    return null;
+}
+
+// The hour the zone model describes: the report's REFERENCE HOUR block (WS-4) - today
+// that is the hour containing now, a later day the hour holding the legal start.
+// Deliberately NOT the local clock: a clock fallback would make computeStrikeZone()
+// depend on when it was called, which breaks the sim's determinism contract and would
+// make the frozen baselines flap between 7 AM and 7 PM. null -> no light term.
+function refHourBlock() {
+    var rep = getActiveReport();
+    var wh = rep && rep.weather_hour;
+    if (!wh) return null;
+    var m = wh.iso ? /T(\d{2}):/.exec(String(wh.iso)) : null;
+    if (!m) return null;
+    return { hour: Number(m[1]), label: wh.label || '' };
+}
+
+// Turbidity bands (FNU, own gauge). Dirty water hides the fish from above, so they
+// move SHALLOWER and tighter to cover; clear water does the opposite. Brackets are the
+// angler-facing colour classes, and the shifts stay small - colour is a modifier, not
+// the driver (the thermal curve and the barometer lead).
+var TURBIDITY_BANDS = [
+    { max: 8,        shift: -0.50, label: 'clear' },
+    { max: 20,       shift:  0.25, label: 'light stain' },
+    { max: 50,       shift:  0.75, label: 'coloured' },
+    { max: Infinity, shift:  1.25, label: 'dirty' }
+];
+
+function turbidityTerm() {
+    var fnu = getTurbidityFnu();
+    if (fnu === null) return null;
+    for (var i = 0; i < TURBIDITY_BANDS.length; i++) {
+        if (fnu < TURBIDITY_BANDS[i].max) {
+            var where = (TURBIDITY_BANDS[i].shift > 0)
+                ? 'fish move up and closer to cover.'
+                : 'fish are spooky - they sit deep and tight.';
+            return { shift: TURBIDITY_BANDS[i].shift, label: TURBIDITY_BANDS[i].label, fnu: fnu, note: where };
+        }
+    }
+    return null;
+}
+
+// Light term from the reference hour block. Low light (dawn / dusk / dark) lets fish
+// feed up in the column; high overhead sun pins them down. The midday window is the
+// only "bright" bracket here - the crepuscular CURVE (a real low-light peak around
+// sunrise/sunset) is WS-8b and needs its own product confirm, so this stays a
+// three-way bracket rather than a fake curve.
+var LIGHT_LOW_SHIFT = 1.00;
+var LIGHT_BRIGHT_SHIFT = -0.75;
+
+function lightTerm(hour) {
+    if (hour === null || hour === undefined || isNaN(hour)) return null;
+    var h = Number(hour);
+    if (h < 7 || h >= 19) {
+        return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish feed up in the column.' };
+    }
+    if (h >= 10 && h <= 16) {
+        return { shift: LIGHT_BRIGHT_SHIFT, label: 'high sun', note: 'fish hold deep and tight.' };
+    }
+    return null;
+}
+
 function computeStrikeZone(sonar) {
     // sonar (optional): { center, samples } from communitySonar(). Weather sets the
     // baseline expectation; community catches act as live sonar that pulls the zone
@@ -62,14 +137,17 @@ function computeStrikeZone(sonar) {
     zone.report = rep;
 
     // Barometric trend drives the swim bladder: falling = suspend, rising = pin down.
+    // WS-8a DEMOTED this from +3.5" / -3.0" (a third of the whole zone) to +/-1.2". It is
+    // a real effect but a SECOND-ORDER one: the thermal curve, the light and the water
+    // colour lead. Nothing else moved to compensate - the smaller term IS the change.
     var pressureDelta = Number(rep.press_delta);
     if (!isNaN(pressureDelta)) {
         if (pressureDelta <= -0.03) {
-            zone.shift += 3.5;
-            zone.notes.push('Barometer falling ' + pressureDelta.toFixed(2) + ' inHg: bladders expand, fish ride higher.');
+            zone.shift += 1.2;
+            zone.notes.push('Barometer falling ' + pressureDelta.toFixed(2) + ' inHg: bladders expand, fish ride a little higher.');
         } else if (pressureDelta >= 0.03) {
-            zone.shift -= 3.0;
-            zone.notes.push('Barometer rising ' + pressureDelta.toFixed(2) + ' inHg: fish pin down (lockjaw).');
+            zone.shift -= 1.2;
+            zone.notes.push('Barometer rising ' + pressureDelta.toFixed(2) + ' inHg: fish pin down a little (lockjaw).');
         }
     }
 
@@ -92,16 +170,33 @@ function computeStrikeZone(sonar) {
         zone.notes.push('Rain freshet (' + rain.toFixed(2) + '"): coloured water, run a bigger profile.');
     }
 
-    // Water temperature = metabolism: cold fish sulk on the bottom, warm fish rise.
+    // Water temperature = metabolism, via the THERMAL OPTIMUM curve (WS-8a). This
+    // replaces the old two-line rule ("< 46 -> deep, >= 55 -> rise"), which pointed the
+    // wrong way above the comfort band: warm water sends salmonids to the coldest,
+    // most oxygenated water, not up. Bands + wording live in inputs.js.
     var temp = getWaterTempF();
-    if (temp !== null) {
-        if (temp < 46) {
-            zone.shift -= 1.0;
-            zone.notes.push('Cold water (' + temp.toFixed(0) + 'F): lethargic fish sit tight to the bottom.');
-        } else if (temp >= 55) {
-            zone.shift += 1.0;
-            zone.notes.push('Warm water (' + temp.toFixed(0) + 'F): active fish, willing to rise.');
-        }
+    var th = (typeof thermalOptimum === 'function') ? thermalOptimum(temp) : null;
+    if (th) {
+        zone.shift += th.shift;
+        zone.notes.push('Water ' + th.tempF.toFixed(0) + 'F (' + th.range + 'F band): ' + th.note);
+    }
+
+    // Colour of the water (own gauge only). No reading -> no term at all: an absent
+    // probe is never an estimate.
+    var turb = turbidityTerm();
+    if (turb) {
+        zone.shift += turb.shift;
+        zone.notes.push(turb.label.charAt(0).toUpperCase() + turb.label.slice(1) + ' water (' +
+            turb.fnu.toFixed(1) + ' FNU): ' + turb.note);
+    }
+
+    // Light at the hour the report describes (its REFERENCE HOUR block, see refHourBlock()).
+    var block = refHourBlock();
+    var light = block ? lightTerm(block.hour) : null;
+    if (light) {
+        zone.shift += light.shift;
+        var when = block.label ? ' (' + block.label + ')' : '';
+        zone.notes.push(light.label.charAt(0).toUpperCase() + light.label.slice(1) + when + ': ' + light.note);
     }
 
     } // end else (water report loaded) - sonar below runs with or without a report
@@ -177,10 +272,14 @@ function zoneColor(hgt, zone) {
 
 // The strike-zone ESTIMATE GRADIENT: how far today's zone sits from the 4.0"-12.0" base, used to
 // colour the estimate number itself (green at the base -> yellow at half scale -> red at full).
-// FULL_SCALE is the largest stack the weather rules in computeStrikeZone() can build - falling
-// 3.5 + cloud 1.5 + rain 1.0 + warm 1.0 = 7.0" deeper, rising 3.0 + sun 1.5 + cold 1.0 = 5.5"
-// shallower. The offset is quantised to 0.1" so the colour and the printed range agree. A
-// community pull can saturate the scale (it is not bounded by the weather rules), hence the clamp.
+// FULL_SCALE is the largest stack the report rules in computeStrikeZone() can build. WS-8a
+// rebuilt the stack (thermal curve + turbidity + light replaced "warm water = rise") and it now
+// peaks at 6.7" deeper - falling 1.2 + cloud 1.5 + rain 1.0 + optimal 0.75 + dirty 1.25 + low
+// light 1.0 - and 5.45" shallower (rising 1.2 + sun 1.5 + torpid 1.5 + clear 0.5 + high sun
+// 0.75). The constant deliberately stays 7.0: it is still above the true ceiling, so no zone
+// can saturate the scale, and keeping it leaves the pinned trend maths untouched.
+// The offset is quantised to 0.1" so the colour and the printed range agree. A community pull
+// can still saturate the scale (it is not bounded by the report rules), hence the clamp.
 var ZONE_TREND_FULL_SCALE = 7.0;
 
 function zoneTrend(zone) {
@@ -191,10 +290,81 @@ function zoneTrend(zone) {
     return { offset: offset, ratio: ratio, color: gradeColor(ratio) };
 }
 
+// ==================================================================================
+// WHERE TO FISH (WS-8a)
+// The zone says HOW HIGH in the column the fish are holding. This says WHERE that is:
+// the depth of water they are sitting in, the piece of water that holds them (the lie),
+// and what the light and the colour are doing to them - then, when a rig height is
+// supplied, whether the angler's line is in that band. Shown ON and OFF target.
+//
+// Every clause is measured or omitted. No measured cross-section -> no depth number
+// (never a made-up spot depth); no measured velocity curve -> no lie call. The bullets
+// stay short single clauses because they ride the same <ul> as the zone reasons.
+// ==================================================================================
+var LIE_SOFT_FTS = 1.5;     // true ft/s at the gauge: below this the bed is soft
+var LIE_FAST_FTS = 3.0;     // above this the bed is pushy
+
+function whereToFish(zone, hgt) {
+    var flow = (typeof getCurrentFlow === 'function') ? getCurrentFlow() : null;
+    var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
+    var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
+    var near = (typeof velocityAtSpot === 'function') ? velocityAtSpot(flow, siteId) : null;
+    var parts = [];
+    var mid = zone ? (zone.min + zone.max) / 2 : null;
+
+    // 1. Depth of water they are holding in, from the gauge's measured cross-section.
+    // The uncertainty is the WORSE of the two honest spreads: the same-reach factor
+    // (the spot is not the gauge) and the cross-section's own row-to-row spread. Kept
+    // tight - the row has to read inside a half-width HUD panel.
+    if (spot && spot.value > 0 && mid !== null) {
+        var unc = Math.max(spot.uncertainty || 0, spot.spreadPct || 0);
+        parts.push('hold ~' + mid.toFixed(1) + '" up in ~' + spot.value.toFixed(1) + ' ft of water (gauge cross-section, \u00b1' +
+            Math.round(unc * 100) + '%)');
+    } else {
+        parts.push('no measured cross-section at this gauge, so no spot depth');
+    }
+
+    // 2. The lie: what the bed velocity says about the water holding them.
+    if (near && typeof near.bottom === 'number') {
+        var v = near.bottom;
+        if (v > LIE_FAST_FTS) {
+            parts.push('bed ' + v.toFixed(1) + ' ft/s: the lie is behind boulders, wood and cut banks');
+        } else if (v >= LIE_SOFT_FTS) {
+            parts.push('bed ' + v.toFixed(1) + ' ft/s: the lie is the seam beside the current tongue');
+        } else {
+            parts.push('bed ' + v.toFixed(1) + ' ft/s: soft water, fish spread over the flats and riffle lips');
+        }
+    }
+
+    // 3. Colour + light - only when the own gauge / the report's reference hour carry them.
+    var turb = turbidityTerm();
+    if (turb) {
+        parts.push(turb.label + ' water (' + turb.fnu.toFixed(1) + ' FNU) puts them ' +
+            (turb.shift > 0 ? 'shallower, closer to cover' : 'deeper and tighter'));
+    }
+    var block = refHourBlock();
+    var light = block ? lightTerm(block.hour) : null;
+    if (light) parts.push(light.label + ' at ' + (block.label || 'this hour') + ' keeps them ' +
+        (light.shift > 0 ? 'up' : 'deep'));
+
+    // 4. The angler's line against that band (only when a solved height is supplied).
+    if (zone && mid !== null && typeof hgt === 'number' && isFinite(hgt)) {
+        if (hgt >= zone.min && hgt <= zone.max) {
+            parts.push('your line at ' + hgt.toFixed(1) + '" is in that band');
+        } else {
+            parts.push('your line at ' + hgt.toFixed(1) + '" is ' + Math.abs(hgt - mid).toFixed(1) + '" ' +
+                (hgt < zone.min ? 'below' : 'above') + ' that band');
+        }
+    }
+
+    return 'Where to fish: ' + parts.join('; ') + '.';
+}
+
 // Paint the WHOLE left panel from a zone: the estimate (coloured by the gradient) and ONE
 // BULLET PER REASON. Shared by the live preview below and by runSim()'s paintSimHud(), so the
-// panel can never be half-updated.
-function paintZoneHud(zone) {
+// panel can never be half-updated. `where` (optional) is a precomputed whereToFish() row, so
+// the solved HUD line and the preview line can never disagree.
+function paintZoneHud(zone, where) {
     var trend = zoneTrend(zone);
     var range = document.getElementById('hud-zone');
     if (range) {
@@ -204,7 +374,9 @@ function paintZoneHud(zone) {
     var ul = document.getElementById('hud-zone-notes');
     if (ul) {
         ul.innerHTML = '';
-        zoneNotes(zone).forEach(function (n) {
+        var rows = zoneNotes(zone);
+        if (typeof whereToFish === 'function') rows = rows.concat([where || whereToFish(zone)]);
+        rows.forEach(function (n) {
             var li = document.createElement('li');   // plain li: same bullets as the line-height panel
             li.textContent = n;                    // data text -> textContent, never innerHTML
             ul.appendChild(li);

@@ -88,17 +88,22 @@ this file**, or the pass fails.
 ## src/features/gear-sim
 - **inputs.js** — `currentStats`, `BASE_ZONE_MIN`/`BASE_ZONE_MAX`, `getNum`/`getStr`/`getGPS`,
   `FOAM_TABLE`, `parseFoam`/`hookLabel`/`hookSink`, `hydraulicVelocity(flow, siteId)`,
-  `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`
+  `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`,
+  `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a)
 - **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
-  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (same-reach estimate + spread)
+  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (same-reach estimate + spread);
+  `depthAtGauge(flow, siteId)` (`D = A/W`, cross-checked by `Q/(W·V)`), `spotDepthFt(flow, siteId)`
+  — the same-reach DEPTH estimate (`value: null` = unmeasured) (WS-8a)
 - **physics.js** — `lineDiameterScale`, `beadDrag`/`beadSink`, `hookDrag`, `yarnDrag`,
   `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `presentationHeightInches()`
 - **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()`
-- **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `computeStrikeZone()`,
-  `gradeColor()`, `zoneColor()`, `zoneTrend()`, `zoneNotes()`, `paintZoneHud()`,
-  `refreshZonePreview()`, `bestZoneRig()` — the HUD zone panel (trend line + one bullet per
-  reason; the community note is filtered out) and the colour grade shared with line height
+- **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `getTurbidityFnu()`,
+  `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `zoneNotes()`,
+  `whereToFish(zone, hgt)`, `paintZoneHud(zone, where)`, `refreshZonePreview()`, `bestZoneRig()` —
+  the HUD zone panel (one bullet per reason + the "where to fish" row; the community note is
+  filtered out) and the colour grade shared with line height. The report terms are the WS-8a set:
+  demoted barometer ±1.2", thermal curve, own-gauge colour, reference-hour light.
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

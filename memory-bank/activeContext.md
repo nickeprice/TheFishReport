@@ -15,30 +15,23 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1/2/3/6/7 + Phase 1 + Phase 2 committed; **Phase 3 is NEXT**)
+## HANDOFF — 2026-09-29 (WS-1/2/3/6/7 + Phases 1–3 committed; **Phase 4 / WS-5 are NEXT**)
 
 Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-6 (HUD
 polish), WS-7 (HUD v2 + label addendum), **Phase 1** (gradient on the estimate only + one bullet
-style, `37fb1ed`) and **Phase 2** (WS-4 per-day reference-hour weather + wind direction text +
-tappable 24-hour popup, `880753d`). Current state: sanity **122/122**, `sw.js` `v2.03.21`,
-`origin/main` clean.
+style, `37fb1ed`), **Phase 2** (WS-4 per-day reference-hour weather + wind direction text +
+tappable 24-hour popup, `880753d`) and **Phase 3** (WS-8a: thermal-optimum curve, own-gauge colour,
+reference-hour light, demoted barometer, measured `A/W` gauge depth, the "where to fish" row).
+Current state: sanity **128/128**, `sw.js` `v2.03.22`, `origin/main` clean.
 
-**NEXT = Phase 3 / WS-8a** (fully specified in the CURRENT SPRINT block below — read that first):
-thermal-optimum curve in `inputs.js`; `zone.js` pressure demotion + turbidity (own-gauge, null →
-no term) + time-of-day/light terms + new `whereToFish()`; `continuity.js` `depthAtGauge(flow,
-siteId)` = cross-section **area ÷ width** from `src/data/channel_measurements.js` (already in the
-file, currently unused) cross-checked by `Q/(W·V)`, exposed as `spotDepthFt()` with the SAME
-same-reach provenance shape as `velocityAtSpot()`; `solver.js`/`drift.js` render the "where to
-fish" bullet (on AND off target); `sanity_pass.js` pins the new curve + depth maths. The frozen
-baselines run REPORT-LESS, so they must NOT move — pin the NEW behaviour instead of re-pinning old
-numbers.
-
-Then Phase 4 (WS-8b, needs a separate product confirm: DEM cross-section → real spot depth,
-crepuscular curve, velocity lie buckets, re-enabling the community-sonar calibrator) and WS-5
-(private favourite spots + `favorite_spots` migration).
+**NEXT = Phase 4 / WS-8b — but it needs a separate product confirm before any code** (DEM
+cross-section → a real spot depth instead of the same-reach estimate, the crepuscular light curve,
+finer velocity-lie buckets, re-enabling the community-sonar calibrator). **WS-5** (private
+favourite spots + `favorite_spots` migration, RLS default-deny) needs no confirm and can go first.
 
 Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
-per-day weather by the live API + sanity, the popup CSS by rule — none by eye).
+per-day weather by the live API + sanity, the popup CSS by rule, the new where-to-fish row only by
+the recording `<ul>` — none by eye).
 
 ## Instruction ledger — chat asks persisted to `.clinerules`
 - [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`
@@ -231,16 +224,37 @@ change.
   `sw.js` `v2.03.21`. Two bugs caught and fixed while verifying: `compass_from_deg` was clobbered by
   the helper insertion (the module still compiled because the orphan body was absorbed into the
   function above), and `pressure` was double-converted (fixed by keeping `pressure_hpa` raw).
-- [ ] Phase 3 — WS-8a scientific model: `inputs.js` (thermal-optimum curve: `<45` torpid · `45–50`
-  cool · `50–60` optimal · `60–65` warming · `>65` thermal stress — replaces `≥55 → "rise"`),
-  `zone.js` (demote the ±3.0/3.5 pressure shift; add turbidity [own-gauge, null → no term] and
-  time-of-day/light terms; new `whereToFish()` = depth-of-fish + lie + light/turbidity),
-  `continuity.js` (`depthAtGauge(flow, siteId)` = `a/w`; `spotDepthFt()` same-reach
-  `{value, provenance, uncertainty}`), `src/data/channel_measurements.js` (expose per-point
-  area/width), `solver.js`/`drift.js` (render the "where to fish" bullet), `sanity_pass.js`.
+- [x] Phase 3 — WS-8a scientific model: `inputs.js` (`THERMAL_BANDS` + `thermalOptimum(tempF)`:
+  `<45` torpid · `45–50` cool · `50–60` optimal · `60–65` warming · `>65` stress, 65 = warming,
+  null probe → no term — replaces `≥55 → "rise"`), `zone.js` (barometer demoted +3.5/−3.0 → ±1.2;
+  new `getTurbidityFnu()` + `turbidityTerm()` [own-gauge, null → no term] and `refHourBlock()` +
+  `lightTerm()` [report reference hour, NOT the clock — a clock would make `computeStrikeZone()`
+  non-deterministic and flap the frozen baselines]; `whereToFish(zone, hgt)` = depth-of-water +
+  lie + colour/light + the line's position in/out of the band; `paintZoneHud(zone, where)` appends
+  the row), `continuity.js` (`depthAtGauge(flow, siteId)` = median `A/W` over the six rows nearest
+  today's flow, cross-checked by `Q/(W·V)`; `spotDepthFt()` = the SAME same-reach provenance shape
+  as `velocityAtSpot()`, `value: null` when unmeasured), `solver.js`/`drift.js` (the
+  `out.whereToFish` row + the debug record), `src/services/water.js` (`window.turbidityFnu`),
+  `sanity_pass.js`, `sw.js` → `v2.03.22`.
   Potential bug: the frozen baselines run REPORT-LESS, so they must NOT move; pin the new curve
   instead of re-pinning old numbers.
   Verify: `node sanity_pass.js --quiet` + `node --check`.
+  Verified: sanity **128/128** (6 new assertions: the curve's 9 band edges + null; `A/W` on the REAL
+  USGS rows — Nisqually 3.159825238772607 ft @1040 / 4.260821514090993 @3000, Puyallup
+  3.329611650485437 @1040, worst continuity gap 0.47%; the null-depth path; the where-to-fish text
+  incl. "±32%" and in/out-of-band; the term arithmetic +5.45 / −4.45 / 1.2 alone / the 6.7" ceiling
+  inside 7.0; and the row reaching a recording `<ul>` through the REAL painter). The frozen drift
+  baseline did NOT move (2 suggestions, hgt 2.887"). Two deliberate scope calls: the where-to-fish
+  row is NOT part of `out.suggestions` (so the pinned count survives), and `channel_measurements.js`
+  was left untouched because its `points[]` already expose the per-point `a`/`w` the depth maths
+  reads — regenerating that file would only re-emit the same numbers.
+  Still open from this wire (WS-8b): DEM width@height → a REAL spot depth, the crepuscular curve,
+  and finer velocity-lie buckets (this ships a 3-bucket call at 1.5 / 3.0 ft/s).
+  Live data note (2026-09-29): `/api/water_report?site=12101500` returned
+  `water_temp_f: null, turbidity_fnu: null` on all four days, so the thermal and colour terms are
+  DORMANT at the Puyallup until that gauge reports 00010/63680 — correctly (null → no term, never a
+  guess). The light term IS live there: the reference hours came back `3-4 PM` today and `6-7 AM`
+  on the later days, i.e. +1.0" low light on any day whose reference block is a dawn legal start.
 - [ ] Phase 4 — deferred (separate confirm): WS-8b (persist the DEM width@height cross-section →
   real spot depth; crepuscular light curve; velocity lie buckets; re-enable the community-sonar
   calibrator — a product decision).

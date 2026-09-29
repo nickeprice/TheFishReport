@@ -668,21 +668,35 @@ function behaviorChecks(done) {
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
+    // Load the MEASURED tackle library as well, so this baseline exercises the real
+    // measured-diameter path instead of the sqrt(lb) proxy fallback. Without it, a
+    // wrong number in lineDiameterScale() would pass the suite silently.
+    eval(fs.readFileSync(path.join(ROOT, 'src', 'shared', 'tackle.js'), 'utf8'));
+    TACKLE = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'data', 'tackle.json'), 'utf8'));
     const cases = [
       // Re-pinned 2026-09-28 for the v^2 drag law (was linear in velocity), and for
       // REF_VELOCITY becoming the exact reference bed velocity (2.442952438) instead of a
       // rounded 2.45. Only the RESPONSE to flow moved: drag is +41% at 2500 CFS and -19% at
       // 600, while the 1040 CFS reference shifts just +0.28%.
+      //
+      // Re-pinned AGAIN 2026-09-28 (P3): line drag now uses the MEASURED diameters from
+      // src/data/tackle.json via lineDiameterScale() instead of the sqrt(lb/12) proxy. The
+      // reference rig (12lb mono leader) is anchored unchanged, so the 1040 rows move only
+      // ~-0.01%. The rows that genuinely move are the 2500 one (20lb braid mainline: real
+      // 0.23mm vs a proxy scale of 0.6455, so it drags harder) and the 600 one (10lb copoly
+      // leader: real 0.31mm vs 0.8672). This block LOADS the library, so a regression in the
+      // measured path fails here instead of passing silently.
       { rig: [1040, 0.5, 12, 'mono', 15, 'mono', 2, 0, 'hard', 6, 8, '12', '0'],
-        want: [2.442952438, 4.024883779, 9.796313729, 0.3936, 2.886585691, false] },
+        want: [2.442952438, 4.024883779, 9.795588235294117, 0.3936, 2.8867637713966774, false] },
       { rig: [1040, 0.25, 12, 'mono', 15, 'mono', 2, 0, 'hard', 6, 8, '14', '12'],
-        want: [2.442952438, 4.024883779, 8.671313729, 0.6936, 5.08578349, false] },
+        want: [2.442952438, 4.024883779, 8.670588235294117, 0.6936, 5.08612871920681, false] },
       { rig: [2500, 0.75, 15, 'fluoro', 20, 'braid', 0, 1, 'soft', 8, 10, '10', '0'],
-        want: [3.469586182, 5.716313149, 19.986081012, 0.65736, 2.530083536, false] },
+        want: [3.469586182, 5.716313149, 19.87215698801195, 0.65736, 2.5423189537067374, false] },
       { rig: [600, 0.5, 10, 'copoly', 12, 'mono', -1, 2, 'hard', 4, 6, 'c12', '0'],
-        want: [1.960478917, 3.229985025, 5.566313396, 0.6244, 6.289897321, false] },
+        want: [1.960478917, 3.229985025, 5.781432857814255, 0.6244, 6.104993199104268, false] },
     ];
     let drift = 0;
+    const bad = [];
     for (const c of cases) {
       const [flow, weightOz, ldLb, ldMat, mlLb, mlMat, hook, yarn, bdMat, bdSz, ldLen, f1, f2] = c.rig;
       const v = hydraulicVelocity(flow);
@@ -692,11 +706,16 @@ function behaviorChecks(done) {
       const hgt = presentationHeightInches(lift, ldLen, drag);
       const blown = (v.bottom > 3.5 && weightOz < 0.5);
       const got = [v.bottom, v.mean, drag, lift, hgt, blown];
-      for (let i = 0; i < got.length; i++) if (Math.abs(got[i] - c.want[i]) > 1e-6) drift++;
+      for (let i = 0; i < got.length; i++) {
+        if (Math.abs(got[i] - c.want[i]) > 1e-6) {
+          drift++;
+          bad.push(`${c.rig[0]}cfs[${i}]=${got[i]}`);   // paste-ready for `want`
+        }
+      }
     }
     drift === 0
       ? ok('gear-sim physics is deterministic (frozen baseline)', `${cases.length} rigs, drag coefficient locked at 1.0`)
-      : fail('gear-sim physics is deterministic (frozen baseline)', `${drift} value(s) drifted`);
+      : fail('gear-sim physics is deterministic (frozen baseline)', `${drift} drifted: ${bad.join(' ')}`);
   } catch (e) {
     fail('gear-sim physics is deterministic (frozen baseline)', String(e.message).split('\n')[0]);
   }
@@ -719,8 +738,10 @@ function behaviorChecks(done) {
     const t = gearTechnique();
     const got = t.compute(rig, { flow: 1040, species: 'Chinook', dbArray: [] });
     const near = (a, b) => Math.abs(a - b) < 1e-6;
+    // Re-pinned 2026-09-28 (P3): the measured line diameters shift this reference rig by
+    // -0.006% on height and -0.018% on score (see the frozen-baseline block above).
     const okT = t.id === 'drift' &&
-      near(got.hgt, 2.886585691) && near(got.score, 4.498963561) &&
+      near(got.hgt, 2.8867637713966774) && near(got.score, 4.499043697128505) &&
       near(got.velocity.bottom, 2.442952438) &&
       got.zone.min === 4 && got.zone.max === 12 && got.blownOut === false &&
       got.suggestions.length === 3;

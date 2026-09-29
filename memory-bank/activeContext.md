@@ -6,6 +6,15 @@ parked, and the two future buckets below are parked deliberately.
 Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `docs/ROADMAP.md`
 · History: `docs/CHANGELOG.md` + `docs/ARCHIVE.md` · Status: `progress.md`.
 
+- [x] **D4. GitHub repo renamed `index.html` → `TheFishReport`** — done via the REST API
+      (`PATCH /repos/nickeprice/index.html`) because `gh` is not installed; local `origin`
+      re-pointed to `https://github.com/nickeprice/TheFishReport.git` and the new URL accepts
+      pushes. Potential bug: the IDE's `associatedRemoteUrls` and the local folder name
+      (`~/index.html`) still say the old name — the folder was deliberately NOT renamed, because
+      it would invalidate every absolute path in this workspace.
+      Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
+      old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
+
 ## ACTIVE — rename to "The Fish Report"
 
 - [x] **D1. Swap the user-visible app name** — `index.html` `<title>` → `The Fish Report`,

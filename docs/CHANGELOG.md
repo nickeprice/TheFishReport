@@ -4,7 +4,18 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
-## 2026-09-28 — Rename to **The Fish Report** (UI + identity strings)
+## 2026-09-28 — GitHub repo renamed `index.html` → `TheFishReport`
+Infra only, no code: the repo now lives at `github.com/nickeprice/TheFishReport` (renamed via
+`PATCH /repos/nickeprice/index.html` using the stored `gho_` credential — `gh` is not installed
+here). Local `origin` re-pointed to the new URL; `git ls-remote` + `fetch` verified, `origin/main`
+still `578aa06`, tree clean. GitHub 301-redirects the old URL, so existing clones and the Vercel
+Git integration keep working (Vercel keys on the repo, not the name; no `vercel.json`/`.vercel`
+link file exists). No tracked file hardcoded the old repo URL, so nothing else needed editing.
+Note: the local folder is still `~/index.html`, and the IDE's `associatedRemoteUrls` refreshes to
+the new URL on reload.
+- Key files: `.git/config` (remote URL) only.
+
+
 User-visible identity: `index.html` `<title>` → `The Fish Report`, `apple-mobile-web-app-title`
 → `Fish Report`, `manifest.json` `name` ("The Fish Report") / `short_name` ("Fish Report").
 `/manifest.json` is in `sw.js` `SHELL_FILES`, so `VERSION` bumped `v2.03.09` → `v2.03.11`

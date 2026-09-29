@@ -40,6 +40,36 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
       shape (sphere 0.47 · cylinder ≈1.0 · teardrop ≈0.3). Rubber-sleeved rows are separate
       items and drag differently from bare ones.
 
+### Design LOCKED with the user 2026-09-28 (do not relitigate — execute)
+
+- **P2 layout = Approach B, unified line picker.** Replace the 4 line selects (Mainline
+  Material + Lb, Leader Material + Lb; ×2 tabs = 8 controls) with ONE `Mainline` and ONE
+  `Leader` `<select>`, each `<optgroup>`-grouped by material, option text
+  "Seaguar STS — 12lb", `value` = the tackle.json id. Lines go 6 controls → 2.
+- **Dropdowns are DATA-DRIVEN from `src/data/tackle.json`** (single source of truth). Load once
+  in the `app.js` bootstrap and populate; on fetch failure fall back to the hardcoded Generic
+  rows. Never hardcode the 110 line names in `index.html` — that is the drift this whole effort
+  exists to kill.
+- **Weight = 2 controls**: `Weight (oz)` + `Weight shape`, whose options come from the weight
+  rows' `label`s (so "Pencil (rubber sleeve)" is its own option). Rubber stays in the label.
+- **Brand IS persisted to the catch log**, so sonar replays at the exact brand.
+- **lb lists expand**: leader needs `8`; mainline needs `8/10/12/15/17` for non-braid materials.
+- The `gearRows === 12` assertion (`sanity_pass.js:344`) WILL change — update it deliberately,
+  and keep the `!html.includes('gear-grid')` assertion.
+
+- [ ] **P2. UI (Approach B)** — `index.html` (both tabs), `rig.js` (`mlId`/`ldId` replacing
+      mat+lb), `solver.js`, `sonar.js`, `src/shared/forms.js` + `syncSelect`, then `sw.js`
+      SHELL_FILES + VERSION bump.
+      Potential bug: community catch rows only carry mat+lb, so the replay path MUST keep a
+      generic-line fallback or old rows resolve to nothing.
+      Verified: `sanity_pass.js` green after the row-count update; picker populated while
+      offline; both tabs stay in sync.
+- [ ] **P4. DB** — timestamped idempotent migration adding the line ids + weight shape to
+      `public.catches`, applied by me with `npx supabase db push --yes`, then verified with a
+      read-only query, preserving RLS and the public-feed privacy boundary.
+      **USER REVIEW REQUESTED for this and for P3's baseline re-pin.**
+
+
 - [ ] **P3. (next) Physics rewrite that consumes the JSON** — each measured field now has a
       named target in `src/features/gear-sim/`: `buoyancy_g` (foam) → `foam.lift` via
       `parseFoam()`; `buoyancy_per_inch_g` (yarn) → the hardcoded `yarnInches * 0.15` term in

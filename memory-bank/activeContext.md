@@ -142,6 +142,11 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       stays one topic — both are OVER the 150-line target (`spots.js` 195, `map.js` 173,
       `supabase.js` 457), recorded here rather than mangled. No outbox for spots (planning
       data, not a catch): a failed save tells the angler instead of queueing.
+      Open by design (NOT dropped): a saved spot is the CURRENT position (the GPS fix when we
+      have one, else the active station's gauge) — there is no "save THIS gauge pin as a spot"
+      action from a map popup yet, and no rename/edit beyond re-saving. Both are small, additive
+      follow-ups; issue #3's ask ("save your location … conditions at my spot tomorrow") is
+      covered by what shipped.
 
 ### WS-6 — Gear Sim HUD polish (chat ask 2026-09-29, same session as WS-3)
 - [x] Four asks, all shipped: (1) the strike-zone and line-height panels are CENTRED — label,

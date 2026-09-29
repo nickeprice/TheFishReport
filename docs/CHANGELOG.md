@@ -4,6 +4,21 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — `scripts/session_instructions.py`: make the instruction audit cheap
+Instructions are given in chat and recorded nowhere in the repo, so a promise can be acknowledged
+in prose and then evaporate when the conversation pivots — rod length was lost that way TWICE
+(`R5`, `R7`). Auditing for it by reading a transcript is what made the R8 check expensive: the
+session that hid those three misses (`1790604718924_nudti`) is **7.26 MB, of which 3.03 MB is
+assistant reasoning against 27 KB of user text (112x)**. This script prints only the user turns and
+strips the wrapper/switch notices: the entire 108-turn session comes out as **11 KB — 662x
+smaller** — so a phase-end audit is one command instead of a multi-megabyte read.
+
+Re-ran the COMPLETE audit with it and reconciled all 108 turns: no further misses. Notably
+confirmed msg 39 ("lets delete the .kilo worktree") really was done — `.kilo` is now 4 KB with a
+single 0-byte marker and `git worktree list` shows only main — and that the remaining items are the
+documented open-by-design ones (OAuth → Update 4.0 §3.1, the `blownOut` contract bump, spot width).
+- Key files: `scripts/session_instructions.py`, `docs/CHANGELOG.md`.
+
 ## 2026-09-28 — Audit of the rod-length chat: three promised items had been dropped
 Re-read the source session (`1790604718924_nudti`) end-to-end instead of trusting the memory notes,
 and diffed every instruction against the live repo. Most of that chat did ship — Planetary Computer

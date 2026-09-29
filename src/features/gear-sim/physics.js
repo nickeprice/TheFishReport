@@ -12,10 +12,19 @@
 // area, diameter ~ sqrt(area)), times a material factor: fluoro runs thinner than
 // mono/copoly at the same lb test, braid far thinner still. So 15lb fluoro drags
 // slightly MORE than 12lb mono (thicker in absolute terms), exactly as on the water.
+// Line diameter: the MEASURED diameter from the tackle library when it is loaded
+// (src/data/tackle.json, 110 lines), normalised against the reference line so the
+// scale stays dimensionless and anchored at exactly 1.0 for the locked reference
+// rig. Falls back to the old sqrt(lb)/material-factor proxy for a line the library
+// does not cover, or before the library has loaded (offline first run).
 var LINE_DIA_FACTOR = { mono: 1.0, copoly: 0.95, fluoro: 0.88, braid: 0.50 };
 
 function lineDiameterScale(lbTest, mat) {
-    var f = LINE_DIA_FACTOR[mat] || 1.0;
+    if (typeof tackleLineByMatLb === 'function') {
+        var line = tackleLineByMatLb(mat || 'mono', lbTest);
+        if (line && line.diameter_mm) return line.diameter_mm / REF_DIAMETER_MM;
+    }
+    var f = LINE_DIA_FACTOR[mat] || 1.0;             // proxy fallback
     return Math.sqrt(Math.max(lbTest, 1) / REF_LB_TEST) * f;
 }
 

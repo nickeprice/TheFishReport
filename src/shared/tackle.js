@@ -39,13 +39,19 @@ function tackleLineById(id) {
 
 // Fallback for a plain material+lb pair (a community catch row, or a rig saved
 // before the pickers existed): prefer the `generic` average row for that size.
+// NOTE the brand TEXT is "Generic average" (a display string), so match on it
+// case-insensitively rather than on an exact slug.
+function isGenericLine(it) {
+    return /^generic/i.test(String((it && it.brand) || ''));
+}
+
 function tackleLineByMatLb(mat, lb) {
     var lines = tackleItems('line');
     var first = null;
     for (var i = 0; i < lines.length; i++) {
         var it = lines[i];
         if (it.material !== mat || Number(it.lb_test) !== Number(lb)) continue;
-        if (it.brand === 'generic') return it;
+        if (isGenericLine(it)) return it;
         if (!first) first = it;
     }
     return first;

@@ -22,6 +22,11 @@ var BASE_ZONE_MAX = 12.0;    // inches - baseline strike zone ceiling
 var DRAG_REF = 7.5;          // drag units per foot of leader at the reference conditions
 var REF_FLOW = 1040;         // reference discharge (CFS) the calibration is anchored to
 var REF_LB_TEST = 12;        // reference leader diameter for those conditions
+// Reference diameter for the MEASURED line library: generic mono 12 lb. The old
+// sqrt(lb/12) proxy returned exactly 1.0 for this line, so anchoring the real
+// diameters here keeps the locked reference rig where it was and only moves rigs
+// whose real diameter differs from the proxy. See docs/CONTRACT_TACKLE.md.
+var REF_DIAMETER_MM = 0.34;
 var REF_MEAN_VELOCITY = 0.25 * Math.pow(REF_FLOW, 0.4);               // 4.024883779
 var REF_BOTTOM_VELOCITY = REF_MEAN_VELOCITY * Math.pow(0.05, 1 / 6);  // 2.442952438
 // Drag denominator. Taken from the SAME expression as the reference bed velocity rather than

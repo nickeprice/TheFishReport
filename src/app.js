@@ -1,5 +1,5 @@
 /**
- * src/app.js - Puyallup River Companion BOOTSTRAP.
+ * src/app.js - The Fish Report BOOTSTRAP.
  *
  * The classic-script monolith was split into modules during UPDATE 3.0 Phase 1.1
  * (2,460 lines -> 24). Everything now lives under src/shared/* and src/features/*

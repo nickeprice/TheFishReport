@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * sanity_pass.js — zero-dependency sanity pass for the Puyallup River Companion.
+ * sanity_pass.js — zero-dependency sanity pass for The Fish Report.
  *
  * The repo has no test runner and deliberately avoids npm tooling. This script:
  *   1. Builds/starts the dev server (scripts/dev_server.py) on a free port.
@@ -845,7 +845,7 @@ function behaviorChecks(done) {
 // Runner
 async function main() {
   if (!QUIET) {
-    console.log('Sanity pass — Puyallup River Companion');
+    console.log('Sanity pass — The Fish Report');
     console.log('======================================');
   }
 

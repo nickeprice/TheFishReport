@@ -37,7 +37,7 @@ SSL_CONTEXT = ssl._create_unverified_context()
 
 INDEX_URL = "https://wdfw.wa.gov/fishing/management/north-falcon/forecasts"
 JSON_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "data", "wdfw_forecasts.json")
-USER_AGENT = "Mozilla/5.0 (Puyallup-River-Companion; contact via wdfw.wa.gov)"
+USER_AGENT = "Mozilla/5.0 (The-Fish-Report; contact via wdfw.wa.gov)"
 FORECAST_YEAR = 2026
 
 

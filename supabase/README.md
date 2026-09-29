@@ -1,6 +1,6 @@
 # Supabase schema management
 
-This directory holds the database schema for the Puyallup River Companion as
+This directory holds the database schema for The Fish Report as
 **idempotent SQL migrations**, so the live project and a fresh local environment
 can both be built from the same source of truth.
 

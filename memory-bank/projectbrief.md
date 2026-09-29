@@ -1,4 +1,4 @@
-# Project Brief — Puyallup River Companion
+# Project Brief — The Fish Report
 
 A mobile-first, installable **PWA** for Washington river anglers: live conditions, a
 deterministic rig simulator, and a private catch log — usable offline in a dead zone.

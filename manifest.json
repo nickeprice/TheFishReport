@@ -1,6 +1,6 @@
 {
-  "name": "Puyallup River Companion",
-  "short_name": "Puyallup River",
+  "name": "The Fish Report",
+  "short_name": "Fish Report",
   "description": "Live water report, fishing window scoring and a deterministic Gear Sim for the Puyallup, White, Carbon, Green and Nisqually rivers.",
   "id": "/",
   "start_url": "/",

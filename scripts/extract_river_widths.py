@@ -18,9 +18,9 @@ HONEST CAVEATS, deliberate:
     window is searched for the nearest substantial water body rather than assuming centre.
 
 Usage:
-    /tmp/prc_env/bin/python scripts/extract_river_widths.py
-    /tmp/prc_env/bin/python scripts/extract_river_widths.py --station 12101500
-    /tmp/prc_env/bin/python scripts/extract_river_widths.py --half-window-m 300
+    /tmp/tfr_env/bin/python scripts/extract_river_widths.py
+    /tmp/tfr_env/bin/python scripts/extract_river_widths.py --station 12101500
+    /tmp/tfr_env/bin/python scripts/extract_river_widths.py --half-window-m 300
 
 Requires rasterio + numpy (pip install rasterio).
 """

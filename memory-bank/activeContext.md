@@ -6,6 +6,33 @@ parked, and the two future buckets below are parked deliberately.
 Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `docs/ROADMAP.md`
 · History: `docs/CHANGELOG.md` + `docs/ARCHIVE.md` · Status: `progress.md`.
 
+## ACTIVE — rename to "The Fish Report"
+
+- [x] **D1. Swap the user-visible app name** — `index.html` `<title>` → `The Fish Report`,
+      `apple-mobile-web-app-title` → `Fish Report`, `manifest.json` `name` → `The Fish Report`
+      / `short_name` → `Fish Report`. Bumped `sw.js` `VERSION` `v2.03.09` → `v2.03.10` because
+      `/manifest.json` is a `SHELL_FILES` entry (no bump ⇒ installed PWA keeps the old name).
+      Potential bug: a stale shell cache serves the old manifest, so the name "changes" only
+      after a refresh cycle.
+      Verified: `node sanity_pass.js --quiet` green; `manifest.json` re-parses; `sw.js` OK.
+- [x] **D2. Rename the identity strings that are not UI** (user picked the recommended subset) —
+      doc titles (`README.md`, `AGENTS.md`, `memory-bank/projectbrief.md`,
+      `supabase/README.md`), the init-migration comment, file headers
+      (`sw.js`, `src/app.js`, `sanity_pass.js`), the `dev_server.py` banner, the WDFW scraper
+      `USER_AGENT`, the `extract_river_widths.py` `/tmp/prc_env` example path, and the
+      `prc-*` → `tfr-*` SW cache prefixes (second `VERSION` bump → `v2.03.11`).
+      Potential bug: the cache-prefix rename is a cache-key change, so it needs an online +
+      offline check — covered by `activate` deleting any cache not in `keep`.
+      Verified: `node sanity_pass.js --quiet` → 107/107 green; JS + `py_compile` syntax clean;
+      old name now only remains in `src/data/wdfw_rules.json` (WDFW "harvester companion card"
+      regulation prose), which must never be touched.
+- [ ] **D3. (OPEN BY DESIGN) Two identifiers keep the old name deliberately** —
+      `src/shared/idb.js` `IDB_NAME = 'puyallup_companion'` (IndexedDB name keys the **offline
+      catch buffer**; renaming orphans unsynced catches unless a copy shim ships) and
+      `supabase/config.toml` `project_id` (local-stack label only — the linked remote is
+      `pztcfsqifbfkjvosygcy` per `supabase/.temp/project-ref`). Only revisit with a migration
+      shim, and it is not user-visible.
+
 ## ACTIVE — persist operating instructions to `.clinerules`
 
 - [x] **Persist the 4-section instruction block** (handoff / terseness / verification /

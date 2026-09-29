@@ -79,7 +79,7 @@ def main():
 
     httpd = ThreadingHTTPServer((host, port), Handler)
     display = '0.0.0.0' if host in ('0.0.0.0', '::') else host
-    print('Puyallup River Companion dev server')
+    print('The Fish Report dev server')
     print('  root : %s' % ROOT)
     print('  host : %s' % display)
     print('  url  : http://%s:%d/index.html' % (display, port))

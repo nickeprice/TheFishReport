@@ -1,5 +1,5 @@
 -- ============================================================================
--- Puyallup River Companion - initial schema
+-- The Fish Report - initial schema
 --
 -- This migration formalises the objects that ALREADY EXIST in the live project
 -- (ref: pztcfsqifbfkjvosygcy). Every statement is idempotent so it can be pushed

@@ -1,5 +1,5 @@
 /**
- * sw.js - Puyallup River Companion service worker
+ * sw.js - The Fish Report service worker
  *
  * Caching strategy by request type:
  *
@@ -26,10 +26,10 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.09';
-const SHELL_CACHE = 'prc-shell-' + VERSION;
-const API_CACHE = 'prc-api-' + VERSION;
-const ASSET_CACHE = 'prc-assets-' + VERSION;
+const VERSION = 'v2.03.11';
+const SHELL_CACHE = 'tfr-shell-' + VERSION;
+const API_CACHE = 'tfr-api-' + VERSION;
+const ASSET_CACHE = 'tfr-assets-' + VERSION;
 
 // App shell: everything needed to render the UI with zero network.
 const SHELL_FILES = [

@@ -4,6 +4,25 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Rename to **The Fish Report** (UI + identity strings)
+User-visible identity: `index.html` `<title>` → `The Fish Report`, `apple-mobile-web-app-title`
+→ `Fish Report`, `manifest.json` `name` ("The Fish Report") / `short_name` ("Fish Report").
+`/manifest.json` is in `sw.js` `SHELL_FILES`, so `VERSION` bumped `v2.03.09` → `v2.03.11`
+(second bump covers the cache-prefix rename below) — without a bump an installed PWA keeps the
+old name. Same pass renamed the *identity strings* that are not UI: doc titles (README, AGENTS,
+projectbrief, supabase/README), the init-migration comment, file headers in
+`sw.js`/`src/app.js`/`sanity_pass.js`, the `dev_server.py` banner, the WDFW scraper
+`USER_AGENT`, and the `prc-*` → `tfr-*` service-worker cache prefixes (safe: `activate`
+deletes every cache not in `keep`, so the stale `prc-*` caches self-clean). Regional prose and
+`wdfw_rules.json` regulatory text ("designated harvester companion card") were NOT touched.
+Deliberately left: `src/shared/idb.js` `IDB_NAME = 'puyallup_companion'` — IndexedDB is keyed by
+name and holds the offline catch buffer, so renaming orphans unsynced catches unless a copy shim
+ships; and `supabase/config.toml` `project_id` (local-stack label; the linked remote ref lives in
+`supabase/.temp/project-ref`).
+- Key files: `index.html`, `manifest.json`, `sw.js`, `README.md`, `AGENTS.md`,
+  `memory-bank/projectbrief.md`, `supabase/README.md`, `sanity_pass.js`, `src/app.js`,
+  `scripts/{dev_server,refresh_wdfw_forecast,extract_river_widths}.py`.
+
 ## 2026-09-28 — `scripts/session_instructions.py`: make the instruction audit cheap
 Instructions are given in chat and recorded nowhere in the repo, so a promise can be acknowledged
 in prose and then evaporate when the conversation pivots — rod length was lost that way TWICE

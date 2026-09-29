@@ -1,4 +1,4 @@
-# Puyallup River Companion
+# The Fish Report
 
 A mobile-first fishing companion for Washington's Puyallup / White / Carbon /
 Green / Nisqually rivers. Three tools in one shell:

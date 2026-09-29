@@ -44,9 +44,9 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 .hud-line { font-size: 1.05rem; font-weight: bold; margin-bottom: 2px; }
 .hud-cap { color: #e5e7eb; }
 .hud-val { font-weight: bold; }
-.hud-note { font-size: 0.62rem; color: #9ca3af; line-height: 1.35; }
 /* Bulleted notes. The marker rides INSIDE the line (list-style-position: inside) so a
-   centred bullet is not pushed off-centre by padding-left: keep it at 0. */
+   centred bullet is not pushed off-centre by padding-left: keep it at 0. The left
+   "why it moved" note is the quieter, smaller one of the two lists. */
 .hud-changes { margin: 4px 0 0 0; padding: 0; text-align: center; list-style-position: inside; }
 .hud-changes li { font-size: 0.68rem; color: #d1d5db; line-height: 1.35; margin-bottom: 3px; }
 .hud-changes li.hud-note { font-size: 0.62rem; color: #9ca3af; }

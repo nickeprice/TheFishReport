@@ -104,17 +104,21 @@
 
 <!-- TOOL 2: GEAR SIM -->
 <div id="tab-gear-sim" class="tab-content">
-    <!-- Outcome HUD. LEFT = today's strike zone + why it moved off the 4"-12" base.
-         RIGHT = the angler's line height, colour-graded toward the zone MIDDLE, with
-         the exact rig changes to get into the zone listed beneath it. -->
+    <!-- Outcome HUD. LEFT = today's ESTIMATED strike zone + why it moved off the
+         4"-12" base. RIGHT = the angler's ESTIMATED line height, colour-graded toward
+         the zone MIDDLE, with the exact rig changes to get into the zone listed
+         beneath it. Both panels are CENTRED (label, number, and the bulleted notes
+         underneath) so the two halves read as a symmetric pair. -->
     <div id="hud">
         <div class="hud-panels">
             <div class="hud-panel">
-                <div class="hud-line"><span class="hud-cap">Strike Zone:</span> <span id="hud-zone" class="hud-val">4.0" - 12.0"</span></div>
-                <div id="hud-zone-why" class="hud-note">Baseline 4.0" - 12.0" &mdash; no water report loaded yet.</div>
+                <div class="hud-line"><span class="hud-cap">Strike Zone Estimate:</span> <span id="hud-zone" class="hud-val">4.0" - 12.0"</span></div>
+                <ul class="hud-changes">
+                    <li id="hud-zone-why" class="hud-note">Baseline 4.0" - 12.0" &mdash; no water report loaded yet.</li>
+                </ul>
             </div>
             <div class="hud-panel">
-                <div class="hud-line"><span class="hud-cap">Line Height:</span> <span id="hud-hgt" class="hud-val">--</span></div>
+                <div class="hud-line"><span class="hud-cap">Line Height Estimate:</span> <span id="hud-hgt" class="hud-val">--</span></div>
                 <ul id="hud-changes" class="hud-changes"></ul>
             </div>
         </div>

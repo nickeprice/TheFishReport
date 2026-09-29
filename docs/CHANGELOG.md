@@ -4,6 +4,20 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — Gear Sim HUD: centred, bulleted, and labelled as an estimate
+`Strike Zone:` → **`Strike Zone Estimate:`** and `Line Height:` → **`Line Height Estimate:`**. Both
+HUD panels are now text-centre — label, number, and the notes beneath them — so the two halves read
+as a symmetric pair. The left "why it moved" note became a BULLET like the right panel's rig changes
+(it was a plain `div`): `.hud-changes` now rides its markers INSIDE the line
+(`list-style-position: inside`, `padding-left: 0`) so a centred bullet is not pushed off-centre, and
+`li.hud-note` keeps the quieter 0.62rem muted styling for that note. The sticky banner and the first
+gear row were reading as ONE block at 0 gap, so the Gear Sim bucket gains 14px of top padding
+(`#tab-gear-sim #hud + .bucket`) — the Catch Log tab is untouched. No JS changed: `refreshZonePreview()`
+and `paintSimHud()` only set `innerText` on `#hud-zone-why`, which is the same property on an `li`.
+`sw.js` VERSION → `v2.03.17`. **116/116 GREEN** — 2 new assertions pin the cap wording + both bullet
+containers, and the centring/separation CSS rules.
+- Key files: `index.html`, `src/styles.css`, `sanity_pass.js`.
+
 ## 2026-09-29 — Issue #1b (WS-3): the gear form is a real cascade
 Both tabs are now 7 rows / 15 fields in the user-specified order: Mainline material → brand → lb
 test · Weight type → amount · Leader length → material → brand → lb test · Hook/Yarn · Foam 1+2 ·

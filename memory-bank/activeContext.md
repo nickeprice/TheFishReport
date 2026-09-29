@@ -15,17 +15,18 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1 + WS-2 committed; WS-3 verified, pending this commit)
+## HANDOFF — 2026-09-29 (WS-1 + WS-2 committed; WS-3 + WS-6 verified, pending this commit)
 
 WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded Line Height
 + suggestions, no score / no BOTTOM CURRENT / no bottom box) shipped in `3e7259b`. WS-3
-(both tabs → the 7-row / 15-field material→brand→lb-test cascade) is DONE and verified:
-`node sanity_pass.js --quiet` → **114/114**; `sw.js` `v2.03.16`. Touched: `index.html`,
-`src/shared/tackle.js`, `src/features/gear-sim/{rig,zone}.js`, `src/styles.css`,
+(both tabs → the 7-row / 15-field material→brand→lb-test cascade) and WS-6 (HUD polish:
+centred panels, bulleted notes, "… Estimate:" caps, clearance above the first row) are DONE
+and verified: `node sanity_pass.js` → **116/116**; `sw.js` `v2.03.17`. Touched: `index.html`,
+`src/styles.css`, `src/shared/tackle.js`, `src/features/gear-sim/{rig,zone}.js`,
 `sanity_pass.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`, `sw.js`, `memory-bank/*`.
 NEXT: **WS-4** (per-day weather, issue #2). Then WS-5 (private favourite spots + migration).
-Still owed from WS-3: a real-browser pass over both tabs (the cascade is proven by the new
-recording-DOM harness in `sanity_pass.js`, not yet by hand).
+Still owed: a by-hand browser pass over the Gear Sim (the cascade is proven by the recording-DOM
+harness in `sanity_pass.js`, and the HUD CSS by rule, not by paint).
 
 ## Instruction ledger — chat asks persisted to `.clinerules`
 - [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`
@@ -113,6 +114,24 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       layer. Never in the public feed.
       Potential bug: RLS must default-deny — a spot must be invisible to another session.
       Verify: `npx supabase db push --yes < /dev/null`, then a read-only live-DB query.
+
+### WS-6 — Gear Sim HUD polish (chat ask 2026-09-29, same session as WS-3)
+- [x] Four asks, all shipped: (1) the strike-zone and line-height panels are CENTRED — label,
+      number and the notes beneath them — so the two halves read as a symmetric pair;
+      (2) the notes/points under each are BULLETED (the right panel's rig changes always were,
+      the left "why it moved" note was a plain `<div>` → now the first `<li>` of a `<ul>`);
+      (3) caps renamed "Strike Zone:" → **Strike Zone Estimate:** and "Line Height:" →
+      **Line Height Estimate:**; (4) the sticky banner and the first cascade row read as ONE
+      block → `#tab-gear-sim #hud + .bucket { padding-top: 14px }`.
+      Files: `index.html` (HUD block), `src/styles.css` (`.hud-panel` centre, `.hud-changes`
+      `list-style-position: inside` + `padding: 0` so a centred bullet is not pushed off-centre,
+      `li.hud-note` keeps the quieter 0.62rem muted note), `sanity_pass.js`, `sw.js`.
+      Not touched on purpose: `zone.js` `refreshZonePreview()` / `solver.js` `paintSimHud()` only
+      set `innerText` on `#hud-zone-why`, which is the same property on an `<li>` as it was on the
+      `div`, so no JS changed (NOT verified in a browser — see the owed look below).
+      Verified: `node sanity_pass.js` **116/116** with 2 NEW assertions — the cap wording + both
+      bullets are in the markup, and the centring/separation CSS rules exist (`sw.js`
+      `v2.03.17`). **Still owed: a by-hand browser look** (CSS is asserted by rule, not painted).
 
 
 ## ACTIVE — measured tackle data → **P1 DONE 2026-09-28**

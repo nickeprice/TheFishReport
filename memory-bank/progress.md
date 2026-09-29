@@ -17,6 +17,13 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — Gear Sim HUD polish (chat ask, same session as WS-3): both panels are **centred**
+  (label, number, notes) and both notes are **bulleted** (the left "why it moved" note was a plain
+  `div`), the caps read **Strike Zone Estimate:** / **Line Height Estimate:**, and the sticky banner
+  no longer sits flush on the first cascade row (`#tab-gear-sim #hud + .bucket`, 14px). No JS
+  changed — `innerText` on the `li` is the same property the `div` had. `sw.js` `v2.03.17`,
+  **116/116** (2 new assertions). A by-hand browser look is still owed.
+
 - 2026-09-29 — GitHub issues #1/#3 WS-3: the gear form is a **real cascade** on both tabs — 7
   rows / 15 fields in the user-specified order (Mainline material → brand → lb test · Weight type →
   amount · Leader length → material → brand → lb test · Hook/Yarn · Foam 1+2 · Beads). The three

@@ -188,6 +188,26 @@ function staticIntegrity() {
   (!cssSrc.includes('gear-grid') && !cssSrc.includes('.run-footer'))
     ? ok('dead .gear-grid / .run-footer rules removed', 'no stale layout rules')
     : fail('dead .gear-grid / .run-footer rules removed', 'stale CSS found');
+
+  // Gear Sim HUD wording + bullets (direct user instruction, 2026-09-29): both numbers are
+  // ESTIMATES, and every line under them is a bulleted note — the right panel's rig changes
+  // always were, the left "why it moved" note used to be a plain div. Pin the wording, the
+  // bullet containers and the two CSS rules that make it read right (centred panels, and
+  // clearance between the sticky banner and the first gear row).
+  (html.includes('<span class="hud-cap">Strike Zone Estimate:</span>') &&
+   html.includes('<span class="hud-cap">Line Height Estimate:</span>') &&
+   /<li id="hud-zone-why"/.test(html) && /<ul id="hud-changes"/.test(html))
+    ? ok('HUD caps say "Estimate" and both notes are bulleted',
+         'Strike Zone Estimate / Line Height Estimate, both in <ul> bullets')
+    : fail('HUD caps say "Estimate" and both notes are bulleted',
+           'cap wording or bullet list changed');
+  (/\.hud-panel \{[^}]*text-align: center/.test(cssSrc) &&
+   /\.hud-changes \{[^}]*list-style-position: inside/.test(cssSrc) &&
+   /#tab-gear-sim #hud \+ \.bucket \{[^}]*padding-top: 1[0-9]px/.test(cssSrc))
+    ? ok('HUD panels are centred, with clearance above the first gear row',
+         '.hud-panel centred + inside bullets + bucket padding-top')
+    : fail('HUD panels are centred, with clearance above the first gear row',
+           'centring / separation CSS missing');
   // Scroll/bar geometry: no body-as-scroll-container, and the body padding must
   // clear the REAL 56px bar + safe-area inset.
   (/html, body \{[^}]*height: 100%/.test(cssSrc) === false)

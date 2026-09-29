@@ -37,14 +37,19 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 
 #hud { position: -webkit-sticky; position: sticky; top: 48px; background-color: #1a1a1a; z-index: 1000; padding: 8px 10px; border-bottom: 1px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 .hud-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.hud-panel { min-width: 0; }
+/* Both panels are CENTRED — label, number, and the bulleted notes under them — so the two
+   halves read as a symmetric pair instead of two left-aligned columns. */
+.hud-panel { min-width: 0; text-align: center; }
 .hud-panel:first-child { border-right: 1px solid #333; padding-right: 10px; }
 .hud-line { font-size: 1.05rem; font-weight: bold; margin-bottom: 2px; }
 .hud-cap { color: #e5e7eb; }
 .hud-val { font-weight: bold; }
 .hud-note { font-size: 0.62rem; color: #9ca3af; line-height: 1.35; }
-.hud-changes { margin: 4px 0 0 0; padding-left: 14px; text-align: left; }
+/* Bulleted notes. The marker rides INSIDE the line (list-style-position: inside) so a
+   centred bullet is not pushed off-centre by padding-left: keep it at 0. */
+.hud-changes { margin: 4px 0 0 0; padding: 0; text-align: center; list-style-position: inside; }
 .hud-changes li { font-size: 0.68rem; color: #d1d5db; line-height: 1.35; margin-bottom: 3px; }
+.hud-changes li.hud-note { font-size: 0.62rem; color: #9ca3af; }
 
 .bucket { padding: 0 12px 16px 12px; }
 .row { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -62,6 +67,10 @@ label { font-size: 0.65rem; color: #aaa; margin-bottom: 3px; text-transform: upp
 .gear-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .gear-row-3 { grid-template-columns: repeat(3, 1fr); }
 .gear-row .field { display: flex; flex-direction: column; min-width: 0; }
+/* The sticky HUD banner and the first gear row read as ONE block at 0 gap. Give the form
+   room to breathe under the banner (gear-sim only: the Catch Log tab starts with the
+   sign-in block, which already has its own spacing). */
+#tab-gear-sim #hud + .bucket { padding-top: 14px; }
 /* Paired feet / inches entry — REMOVED with rod length (2026-09-28): .dual-input had
    no other user, so the rule is gone rather than left as dead CSS. */
 select { max-width: 100%; min-width: 0; }

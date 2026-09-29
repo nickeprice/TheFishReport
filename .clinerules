@@ -25,13 +25,29 @@
   BOTH `index.html` (load order, `app.js` last) AND `sw.js` SHELL_FILES, and bump VERSION.
 
 # Reading discipline
-- Never whole-read `src/data/*.json` (`wdfw_rules.json` is thousands of lines):
-  grep the key, then read ±30 lines.
+- Never whole-read `src/data/*.json` (`wdfw_rules.json` is thousands of lines),
+  `docs/ARCHIVE*.md`, or `docs/CHANGELOG.md`: grep/search the specific key, then
+  read only a ±30 line window around the match.
 - One feature boundary per Act prompt (not a rigid "max 2 files" rule).
 
 # Verification
-- After frontend changes run `node sanity_pass.js` — it derives the script list from
-  `index.html`, so newly added modules are auto syntax/HTTP-checked.
+- After frontend changes run `node sanity_pass.js --quiet` — it derives the script
+  list from `index.html`, so newly added modules are auto syntax/HTTP-checked
+  (`--quiet` prints only failures + the PASSED/FAILED summary).
+
+# Context handoff
+- Monitor context window usage; when it gets tight, finish the current logical step
+  and prepare a handoff.
+- Handoff: update `memory-bank/activeContext.md` + `memory-bank/progress.md`, then end
+  the turn with a condensed carry-over block (current objective, last completed step,
+  immediate next step). No task-spawning tool exists — the user restarts the session
+  manually and reads `activeContext.md`.
+
+# Output terseness
+- No prose wind-up, filler, or hedging; deliver diffs directly.
+- YAGNI: implement the minimum block that satisfies the verification step.
+- Terseness does NOT waive the base rule: end with a concise summary + flag any
+  non-obvious decision.
 
 # Instruction ledger (chat asks are not in the repo)
 - Any instruction that outlives the current turn gets a `- [ ]` box in

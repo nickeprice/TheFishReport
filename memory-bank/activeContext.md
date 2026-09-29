@@ -6,6 +6,15 @@ parked, and the two future buckets below are parked deliberately.
 Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `docs/ROADMAP.md`
 · History: `docs/CHANGELOG.md` + `docs/ARCHIVE.md` · Status: `progress.md`.
 
+## ACTIVE — persist operating instructions to `.clinerules`
+
+- [x] **Persist the 4-section instruction block** (handoff / terseness / verification /
+      reading blacklist) into `.clinerules`, rewritten to real tools and reconciled with
+      the base rules — `ask_followup_question`, `new_task`, and `environment_details` do
+      NOT exist, so handoff = write state + end turn, user restarts manually.
+      Verified: `git diff .clinerules` shows only the intended hunks; JS untouched so
+      sanity is unaffected.
+
 ## ACTIVE — hygiene sprint
 
 - [x] **H1. `SHELL_FILES` ↔ `index.html` parity guard** — `sanity_pass.js`.

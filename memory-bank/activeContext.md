@@ -83,14 +83,47 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
       Verified: 10 distinct `shape_label`s, every one present at all 6 oz, all 60
       `(shape_label, mass_g)` pairs unique (so the pair identifies exactly one row), and no
       non-weight row carries the field. `py_compile` clean; JSON regenerated then removed.
-- [ ] **P4. DB** — timestamped idempotent migration adding the line ids + weight shape to
-      `public.catches`, applied by me with `npx supabase db push --yes`, then verified with a
-      read-only query, preserving RLS and the public-feed privacy boundary.
-      **USER REVIEW REQUESTED for this and for P3's baseline re-pin.**
+- [x] **P4. DB — DONE 2026-09-29, migration `20260929055300_line_ids_weight_shape`.** Decision
+      resolved as recommended: **ADD** `mainline_line_id` / `leader_line_id` / `weight_shape` (all
+      nullable text) **ALONGSIDE** the mat/lb pair — additive + no backfill, so old catches stay
+      readable and the legacy readers (community sonar replays, the frozen baselines) keep working;
+      a pre-P4 row has no brand to recover, and inventing one would fabricate data. No FK and no
+      index: the library is a static asset (`src/data/tackle.json`) and the columns are read per
+      row, never filtered on.
+      Potential bug: the columns are **ALWAYS NULL until the client sends them**, and PostgREST
+      rejects an unknown column (400/PGRST204) — so DB-before-client is the only safe order. Never
+      ship the client send first.
+      Verified LIVE: `public.catches` went 34 → 37 columns (the 3 new ones text/nullable/no
+      default); `catches` RLS still enabled; `public_catch_feed` still its 4 explicit columns
+      (name/time/river/fish — the brand does NOT reach the public board); `get_global_calibration`
+      signature `(integer,text)`, `security definer`, ACL
+      (`anon`/`authenticated`/`service_role`) UNCHANGED and still returns 1 row; `npx supabase db
+      push --yes < /dev/null` recorded the migration as applied.
+- [x] **P4b. Client send + replay — DONE 2026-09-29, sanity 111/111, `VERSION` `v2.03.13`.**
+      `logData()` sends `ldLine`/`mlLine`/`weightShape`; `toCatchRow()` maps them to
+      `leader_line_id`/`mainline_line_id`/`weight_shape` (absent → NULL, never `''`, so an older
+      installed client is harmless); new `tackleRowLine(row, role)` in `src/shared/tackle.js`
+      prefers the brand id (it owns the measured diameter) and falls back to material+lb, and
+      `communitySonar()` now passes that diameter into `totalDragPerFt`. `fetchGlobalCalibration()`
+      passes the ids through if the RPC ever returns them.
+      Potential bug: id-less rows take exactly the old code path, which is *why* the frozen
+      baselines did not move — do NOT "simplify" the fallback away, it is the legacy contract.
+      Verified: `node sanity_pass.js` 111/111 (the 4 frozen rigs + the drift technique unchanged,
+      so no re-pin was needed); 2 NEW checks — the real `toCatchRow()` mapping (ids → columns,
+      absent → NULL) and "a row with the picked brand replays at that brand" (**2.887″ → 3.976″**
+      for the same row with brand ids); live PostgREST resolves the columns
+      (`select=mainline_line_id,leader_line_id,weight_shape` → 200 `[]`); `node --check` clean.
+      **Deliberately NOT done:** `get_global_calibration` still does not return the ids — it is
+      `SECURITY DEFINER` + anon-executable and the whole community path is gated off anyway
+      (`loc !== 'Fair'`, nothing populates it), so widening an anon-readable surface would change
+      nothing for an angler today. That is now ONE decision with the item below, not two.
+      **Still unverified end-to-end:** a real UI log → row read-back (needs a signed-in browser
+      session; the mapping and the REST surface are both proven, the round-trip is not).
 
 ## Handoff — 2026-09-28 (end of session; context exhausted, nothing half-built)
 
-**Objective:** land the measured-tackle library into the Gear Sim. P1 + P2 DONE; P3 PARTIAL; P4 open.
+**Objective:** land the measured-tackle library into the Gear Sim. P1, P2, P4, P4b DONE; P3 PARTIAL
+(the measured diameters are threaded; the remaining measured units are listed below).
 
 **Last completed step:** P3a — `lineDiameterScale()` now uses the **measured** diameters
 (`diameter_mm / REF_DIAMETER_MM`, anchored at 0.34 mm = generic mono 12 lb so the locked reference
@@ -123,13 +156,14 @@ braid 40 +3.1%, fluoro 12 −1.4%, reference rig −0.03%.
 0.12 → 0.16); the weight shape/density (`anchorScale = 0.7 + 0.6*oz` is still a mass-only fudge —
 the weight `area_cm2`/`cd` are also still unmeasured, which is P1b).
 
-**Immediate next step:** **P4** — the migration, which needs the column decision: add
-`leader_line_id` / `mainline_line_id` / `weight_shape` ALONGSIDE the existing mat/lb columns
-(recommended: small, idempotent, old catches stay readable) or replace them. Then optionally:
-thread the brand into `zone.js`'s sweep, and consume the last measured units (yarn 0.01/in vs the
-0.15 constant, `BEAD_DENSITY.soft` 0.55 -> ~1.0, hook size 2's 0.16, and the weight
-mass/area/density in place of `anchorScale = 0.7 + 0.6*oz`). Nothing is mid-flight: tree clean,
-app runs, sanity 109/109, and `--check` reports 185/185 complete.
+**Immediate next step:** the tackle library is fully wired end to end (P1 → P4b all DONE), so the
+next step is a **product call, not code**: the merged decision above (enable `communitySonar()`'s
+`loc` gate and, in the same change, decide whether `get_global_calibration` returns the brand ids).
+After that the remaining measured data is physics-contract work — P3 leftovers (yarn 0.01/in vs the
+0.15 constant, `BEAD_DENSITY.soft` 0.55 -> ~1.0, hook size 2's 0.16) and the weight
+mass/area/density in place of `anchorScale = 0.7 + 0.6*oz`, which must land WITH the hold-bottom
+model (that is its trigger, per the accuracy roadmap). Nothing is mid-flight: tree clean (the P4/P4b
+diff is uncommitted), app runs, sanity 111/111, and `--check` reports 185/185 complete.
 
 
 
@@ -395,10 +429,12 @@ Exempt by rule: `src/data/*` (`washington.js` 254, `wdfw_rules.json` 11,222).
 
 ## Open product decisions (do NOT build without an explicit call)
 
-- [ ] **Inert community sonar.** `communitySonar()` skips every row whose `loc !== 'Fair'`,
-      and nothing has ever populated that field — so the whole path is dead. Fixing it
-      CHANGES the Gear Sim's strike zone. Recorded as a product decision in
-      `docs/ROADMAP.md` §3.2.
+- [ ] **Inert community sonar — MERGED with "should the RPC return the brand ids?"** (2026-09-29).
+      `communitySonar()` skips every row whose `loc !== 'Fair'`, and nothing has ever populated that
+      field — so the whole path is dead, and the P4b brand ids cannot reach a cloud row until the
+      RPC returns them. Both are the same call: enabling the gate without the RPC gives
+      material-level replays, widening the RPC without the gate changes nothing. Recorded in
+      `docs/ROADMAP.md` §3.2 + `docs/CONTRACT_CATCH.md`.
 - [ ] **1.4b** Technique/Species picker in both tabs plus `GEAR_STYLES`/`GEAR_SPECIES`
       (deferred: it needs real style tuning, not scaffolding).
 

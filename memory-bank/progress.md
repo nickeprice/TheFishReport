@@ -17,6 +17,12 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — Tackle brand is now end-to-end: `public.catches` gained `mainline_line_id` /
+  `leader_line_id` / `weight_shape` (P4, additive, applied + verified live), the client writes them
+  and the replay reads them via `tackleRowLine()` (P4b) — same row with brand ids replays
+  2.887″ → 3.976″. Frozen baselines did not move (id-less rows keep the legacy path). Sanity
+  111/111. The RPC/`loc` gate is now one merged product decision.
+
 - 2026-09-28 — Temporal audit answered "are we mixing dates?": yes, but measured — the record is
   1977–2026 and the Puyallup is stable to <1% (**the White is the find: 1 measurement since 2010,
   now flagged**). Then shipped honest velocity display (true ft/s beside the anchored scale),

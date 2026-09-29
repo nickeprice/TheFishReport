@@ -765,6 +765,74 @@ function behaviorChecks(done) {
     fail('drift technique reproduces the frozen solver output', String(e.message).split('\n')[0]);
   }
 
+  // --- P4b: the PICKED brand must reach the ROW -------------------------------
+  // The three identity columns are only worth their migration if the client writes them, so
+  // assert the real toCatchRow() mapping (not a regex): ids present -> columns set, ids absent
+  // (a payload from an older installed client) -> NULL, never ''. logData() is checked at the
+  // source level because it needs the whole form/DOM stack to run.
+  try {
+    const rowFn = extract('toCatchRow');
+    if (!rowFn) {
+      fail('catch row carries the picked brand', 'toCatchRow() not found');
+    } else {
+      eval(rowFn);
+      const mapped = toCatchRow({
+        clientId: 'x', name: 'n', time: '2026-09-29T00:00:00Z', spc: 'Chinook',
+        mlLine: 'braid-daiwa-j-braid-x8-grand-20', ldLine: 'fluoro-seaguar-sts-8',
+        weightShape: 'Lead Pencil (rubber sleeve)'
+      });
+      const got = mapped.mainline_line_id === 'braid-daiwa-j-braid-x8-grand-20' &&
+        mapped.leader_line_id === 'fluoro-seaguar-sts-8' &&
+        mapped.weight_shape === 'Lead Pencil (rubber sleeve)';
+      const legacy = toCatchRow({ clientId: 'y', name: 'n', time: '2026-09-29T00:00:00Z', spc: 'Chinook' });
+      const nulls = legacy.mainline_line_id === null && legacy.leader_line_id === null &&
+        legacy.weight_shape === null;
+      const payloadSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'log.js'), 'utf8');
+      const sends = /ldLine:\s*getStr\('ld-line'\)/.test(payloadSrc) &&
+        /mlLine:\s*getStr\('ml-line'\)/.test(payloadSrc) &&
+        /weightShape:\s*getStr\('weight-shape'\)/.test(payloadSrc);
+      (got && nulls && sends)
+        ? ok('catch row carries the picked brand',
+             'logData() sends the ids -> toCatchRow() maps them; absent -> NULL, never empty string')
+        : fail('catch row carries the picked brand', `mapped=${got} nulls=${nulls} sends=${sends}`);
+    }
+  } catch (e) {
+    fail('catch row carries the picked brand', String(e.message).split('\n')[0]);
+  }
+
+  // --- P4b: the brand changes the community REPLAY ----------------------------
+  // The library is loaded by now, so an id-bearing calibration row must replay at the BRAND's
+  // measured diameter while a material+lb-only row keeps the generic row for its class: the two
+  // heights must therefore DIFFER. If they stop differing, the brand is being ignored again.
+  // (The rows carry loc:'Fair' because that gate decides whether a row is used at all — see the
+  // inert-sonar product decision in docs/ROADMAP.md §3.2 — and the last check pins the gate, so
+  // P4b cannot silently switch the whole sonar path on.)
+  try {
+    const baseRow = {
+      flow: 1040, spc: 'Chinook', loc: 'Fair', ldLen: 8, weight: 0.5, hook: '2', yarn: 0,
+      foam: '12', foam2: '0', bdMat: 'hard', bdSz: 6, ldMat: 'mono', ldLb: 12, mlMat: 'mono', mlLb: 15
+    };
+    const brandRow = Object.assign({}, baseRow, {
+      ldLine: 'fluoro-seaguar-sts-8',             // fluoro  8lb, 0.235 mm measured
+      mlLine: 'braid-daiwa-j-braid-x8-grand-20'   // braid  20lb, 0.230 mm measured
+    });
+    const genericCenter = communitySonar([baseRow, baseRow], 1040, 'Chinook', null).center;
+    const brandCenter = communitySonar([brandRow, brandRow], 1040, 'Chinook', null).center;
+    const picked = tackleRowLine(brandRow, 'leader');
+    const fellBack = tackleRowLine(baseRow, 'leader');
+    const prefersId = !!picked && picked.id === 'fluoro-seaguar-sts-8' && picked.diameter_mm === 0.235;
+    const usesPair = !!fellBack && fellBack.material === 'mono' && Number(fellBack.lb_test) === 12;
+    const gate = communitySonar([Object.assign({}, brandRow, { loc: null })], 1040, 'Chinook', null).samples === 0;
+    (isFinite(genericCenter) && isFinite(brandCenter) &&
+     Math.abs(brandCenter - genericCenter) > 1e-3 && prefersId && usesPair && gate)
+      ? ok('a row with the picked brand replays at that brand',
+           `generic ${genericCenter.toFixed(3)}" vs brand ${brandCenter.toFixed(3)}"`)
+      : fail('a row with the picked brand replays at that brand',
+             `generic=${genericCenter} brand=${brandCenter} prefersId=${prefersId} usesPair=${usesPair} gate=${gate}`);
+  } catch (e) {
+    fail('a row with the picked brand replays at that brand', String(e.message).split('\n')[0]);
+  }
+
 
 
   // --- Measured gauge velocity (USGS field measurements) ---------------------

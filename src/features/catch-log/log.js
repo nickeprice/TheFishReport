@@ -69,6 +69,11 @@ async function logData() {
         ldLb: getNum('ld-lb'),
         mlMat: getStr('ml-mat'),
         mlLb: getNum('ml-lb'),
+        // P4b: the PICKED brand ids + weight shape ride along with the resolved material/lb,
+        // so a replay runs the angler's actual line and the weight row is identifiable.
+        ldLine: getStr('ld-line'),
+        mlLine: getStr('ml-line'),
+        weightShape: getStr('weight-shape'),
         weight: getNum('weight'),
         hook: hookValue,
         yarn: getNum('yarn'),

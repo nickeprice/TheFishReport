@@ -89,12 +89,21 @@ function communitySonar(dbArray, flow, species, siteId) {
         if (isNaN(hookNum)) hookNum = 2;
         var lift = rigLift(foam.lift + foam2.lift, row.yarn || 0, hookNum, bdMat, bdSzRaw);
         var bedVel = hydraulicVelocity(row.flow, siteId).bottom;
-        var lb = row.ldLb || row.leader_lb || REF_LB_TEST;
-        var ldMat = row.ldMat || row.leader_material || 'copoly';
+        // P4b: prefer the BRAND the angler picked (its id owns the measured diameter, so the
+        // replay runs the real line) and fall back to material + lb for a row logged before
+        // the pickers existed, or written by an older installed client. tackleRowLine()
+        // returns null when neither resolves, which keeps the old defaults below.
+        var ldLine = (typeof tackleRowLine === 'function') ? tackleRowLine(row, 'leader') : null;
+        var mlLine = (typeof tackleRowLine === 'function') ? tackleRowLine(row, 'mainline') : null;
+        var lb = (ldLine && ldLine.lb_test) ? ldLine.lb_test : (row.ldLb || row.leader_lb || REF_LB_TEST);
+        var ldMat = (ldLine && ldLine.material) ? ldLine.material : (row.ldMat || row.leader_material || 'copoly');
         var wt = (row.weight !== undefined && row.weight !== null) ? row.weight : 0.5;
-        var mlLb = row.mlLb || row.mainline_lb || 0;
-        var mlMat = row.mlMat || row.mainline_mat || 'braid';
-        var drag = totalDragPerFt(bedVel, lb, ldMat, mlLb, mlMat, wt, hookNum, row.yarn || 0, bdMat, bdSzRaw);
+        var mlLb = (mlLine && mlLine.lb_test) ? mlLine.lb_test : (row.mlLb || row.mainline_lb || 0);
+        var mlMat = (mlLine && mlLine.material) ? mlLine.material : (row.mlMat || row.mainline_mat || 'braid');
+        // 0 means "no explicit diameter" -> lineDiameterScale() falls back to generic/by-lb.
+        var ldDia = (ldLine && ldLine.diameter_mm) ? ldLine.diameter_mm : 0;
+        var mlDia = (mlLine && mlLine.diameter_mm) ? mlLine.diameter_mm : 0;
+        var drag = totalDragPerFt(bedVel, lb, ldMat, mlLb, mlMat, wt, hookNum, row.yarn || 0, bdMat, bdSzRaw, ldDia, mlDia);
         var h = presentationHeightInches(lift, row.ldLen, drag);
         if (isFinite(h) && h > 0) {
             heights.push(h);

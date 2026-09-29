@@ -139,7 +139,9 @@ async function getSession() {
 // name/time/flow/spc -> angler_name/catch_time/flow/species, GPS "lat, lon" split ->
 // latitude/longitude, weight -> weight,
 // ldLen/ldMat/ldLb -> leader_length/leader_material/leader_lb,
-// hook -> hook_size, yarn -> yarn, foam -> foam (+corky_size mirror),
+// mlLine/ldLine/weightShape -> mainline_line_id/leader_line_id/weight_shape (P4b: the PICKED
+//   brand ids + weight shape, which ride ALONGSIDE the material+lb fallback),
+// hook -> hook_size, yarn -> yarn, foam -> foam (+ foam2 -> foam_2),
 // bdMat/bdSz -> bead_material/bead_size.
 function toCatchRow(payload) {
     var t = payload.time ? new Date(payload.time) : new Date();
@@ -176,6 +178,12 @@ function toCatchRow(payload) {
         bead_size: payload.bdSz,
         mainline_mat: payload.mlMat || null,
         mainline_lb: (payload.mlLb !== undefined && payload.mlLb !== null) ? payload.mlLb : null,
+        // P4b: the picked brand ids (`src/data/tackle.json`) + the weight row's shape_label.
+        // They must be sent AFTER the columns exist (migration 20260929055300) — PostgREST
+        // rejects an unknown column with 400/PGRST204. Readers must tolerate NULL.
+        mainline_line_id: payload.mlLine || null,
+        leader_line_id: payload.ldLine || null,
+        weight_shape: payload.weightShape || null,
         gauge_height: (payload.gauge !== undefined && payload.gauge !== null) ? payload.gauge : null,
         barometer: (payload.barometer !== undefined && payload.barometer !== null) ? payload.barometer : null,
         water_temp_f: (payload.waterTemp !== undefined && payload.waterTemp !== null) ? payload.waterTemp : null,
@@ -319,6 +327,13 @@ async function fetchGlobalCalibration(flow, species) {
                 ldLb: (r.leader_lb !== undefined) ? r.leader_lb : null,
                 mlMat: (r.mainline_mat !== undefined) ? r.mainline_mat : (r.mlMat || null),
                 mlLb: (r.mainline_lb !== undefined) ? r.mainline_lb : null,
+                // P4b: pass the brand ids through IF the RPC ever returns them, so the replay
+                // picks them up with no further client change. They are null today —
+                // `get_global_calibration` does not select the columns yet (see the P4b note
+                // in docs/CONTRACT_CATCH.md for why that is a deliberate product decision).
+                ldLine: r.leader_line_id || null,
+                mlLine: r.mainline_line_id || null,
+                weightShape: r.weight_shape || null,
                 weight: (r.lead_oz !== undefined) ? r.lead_oz : r.weight,
                 hook: (r.hook_size !== undefined) ? r.hook_size : null,
                 yarn: (r.yarn_in !== undefined) ? r.yarn_in : r.yarn,

@@ -49,9 +49,14 @@ Registered in `registry.js` as `GEAR_TECHNIQUES[id] = MY_TECHNIQUE;`.
 
 ### `env`
 
-`{ flow, species, dbArray }` — `dbArray` is community-sonar calibration rows (already
-resolved by `loadCalibrationData()`, which is async and therefore stays OUTSIDE
-`compute`).
+`{ flow, species, dbArray, siteId }` — `dbArray` is community-sonar calibration rows (already
+resolved by `loadCalibrationData()`, which is async and therefore stays OUTSIDE `compute`).
+`siteId` selects the gauge's measured velocity curve.
+
+A calibration row may carry the PICKED brand ids (`ldLine`/`mlLine`, or the DB names
+`leader_line_id`/`mainline_line_id`); `communitySonar()` resolves each line with
+`tackleRowLine(row, role)` — brand id first (it owns the measured diameter), material + lb as the
+fallback — and passes the diameter into `totalDragPerFt`.
 
 ### Return value (consumed by `buildSimStats()` + `paintSimHud()`)
 

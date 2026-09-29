@@ -4,6 +4,36 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — P4b: the picked brand now reaches the catch row and the replay
+The three P4 columns were write-only until now. `logData()` sends `ldLine` / `mlLine` /
+`weightShape` from the pickers, `toCatchRow()` maps them into `leader_line_id` /
+`mainline_line_id` / `weight_shape` (absent → NULL, never `''`, so an older installed client is
+harmless), and the replay resolves them: `tackleRowLine(row, role)` prefers the brand id — which
+owns the measured diameter the drag term needs — and falls back to material + lb, so
+`communitySonar()` runs the angler's actual line. Id-less rows take exactly the old path, which is
+why the **frozen baselines did not move** and needed no re-pin. Proven live-surface: PostgREST
+resolves the columns (`GET /rest/v1/...&select=mainline_line_id,leader_line_id,weight_shape` → 200
+`[]`). Two new sanity checks: the real `toCatchRow()` mapping (plus the payload source), and
+"a row with the picked brand replays at that brand" — same row, brand ids: **2.887″ → 3.976″**.
+Deliberately NOT done: `get_global_calibration` still does not return the ids — it is
+`SECURITY DEFINER` + anon-executable and the whole community path is gated off (`loc !== 'Fair'`,
+nothing populates it, ROADMAP §3.2), so widening it would change nothing today. One decision, later.
+- Key files: `src/services/supabase.js`, `src/features/catch-log/log.js`,
+  `src/features/gear-sim/sonar.js`, `src/shared/tackle.js`, `sanity_pass.js`, `sw.js` (`v2.03.13`).
+
+## 2026-09-29 — P4: `public.catches` can hold the picked tackle brand
+Migration `20260929055300_line_ids_weight_shape` adds **three nullable text columns alongside**
+`mainline_mat`/`mainline_lb`/`leader_material`/`leader_lb`: `mainline_line_id`, `leader_line_id`
+(the `src/data/tackle.json` item id) and `weight_shape` (the weight row's `shape_label`). Additive
+and un-backfilled on purpose — the mat/lb pair stays the fallback for legacy readers (community
+sonar replays, the frozen baselines), and a pre-P4 row has no brand to recover. No FK and no index:
+the library is a static asset and the columns are read per row. Applied with `npx supabase db push
+--yes` and **verified live**: 34 → 37 columns, catches RLS still on, `public_catch_feed` still its 4
+explicit columns (the brand never reaches the public board), and `get_global_calibration`'s
+signature, `security definer` flag and ACL unchanged. They stay NULL until the client write path
+sends them — columns must land FIRST, because PostgREST 400s on an unknown column.
+- Key files: `supabase/migrations/20260929055300_line_ids_weight_shape.sql`, `docs/CONTRACT_CATCH.md`.
+
 ## 2026-09-28 — Weight drag areas derived from geometry (P1b) — the sheet is complete
 The 60 weight rows had no `area_cm2`/`cd`, so the drag half of a lead/tungsten weight was invisible.
 Rather than guess, the volumes come **exactly** from each row's own `mass_g` ÷ metal density, and the

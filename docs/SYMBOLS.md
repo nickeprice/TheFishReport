@@ -59,7 +59,8 @@ this file**, or the pass fails.
   `escapeJsString(value)`, `newUuid()`
 - **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`
 - **tackle.js** — `tackleLoad()`, `tackleItems(type)`, `tackleLineById(id)`,
-  `tackleLineByMatLb(mat, lb)`, `populateTacklePickers()`, `onLinePickChange()`,
+  `tackleLineByMatLb(mat, lb)`, `tackleRowLine(row, role)` (brand id -> else material+lb),
+  `populateTacklePickers()`, `onLinePickChange()`,
   `onWeightShapeChange()`, `resolveLineFields(role)` — data-driven line + weight-shape
   pickers from `src/data/tackle.json`
 - **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`,

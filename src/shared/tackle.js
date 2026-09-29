@@ -8,7 +8,7 @@
  * `ld-lb`. So a pick resolves into those fields and nothing downstream changes.
  *
  * public: TACKLE, tackleLoad(), tackleItems(), tackleLineById(), tackleLineByMatLb(),
- *         populateTacklePickers(), onLinePickChange(), onWeightShapeChange()
+ *         tackleRowLine(), populateTacklePickers(), onLinePickChange(), onWeightShapeChange()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 var TACKLE = null;
@@ -55,6 +55,22 @@ function tackleLineByMatLb(mat, lb) {
         if (!first) first = it;
     }
     return first;
+}
+
+// Resolve the LINE a catch row (or a cloud calibration row) refers to. The PICKED brand id
+// wins when the row carries one — it owns the measured diameter, so the replay uses the
+// angler's actual line — and material + lb is the fallback for a row logged before the
+// pickers existed or written by an older installed client. Returns null when neither
+// resolves (library not loaded, or the row predates both fields).
+function tackleRowLine(row, role) {
+    if (!row) return null;
+    var isLeader = (role === 'leader');
+    var byId = tackleLineById(isLeader ? (row.ldLine || row.leader_line_id)
+                                      : (row.mlLine || row.mainline_line_id));
+    if (byId) return byId;
+    return tackleLineByMatLb(
+        isLeader ? (row.ldMat || row.leader_material) : (row.mlMat || row.mainline_mat),
+        isLeader ? (row.ldLb || row.leader_lb) : (row.mlLb || row.mainline_lb));
 }
 
 // Write the resolved material + lb for one role into its hidden canonical fields.

@@ -87,6 +87,18 @@ identical across 9'0" / 9'8" / 12'0" — only the prose suggestion echoed it).
       (`rod length is fully removed — no rod-ft / rodFt / rod_ft in index.html or any
       loaded script`); docs updated (`CONTRACT_CATCH`, `CONTRACT_TECHNIQUE`, `SYMBOLS`,
       `README`, `CHANGELOG`).
+- [x] **R7. Reorder the gear boxes to the instructed 2-up flow** — the SAME instruction block
+      (msg 1477) specified the order that survives the removal: row 1 mainline material + mainline
+      lb test · row 2 weight + leader length · row 3 leader material + leader lb test · row 4 hook
+      size + yarn · row 5 foam 1 + foam 2 · row 6 bead material + bead size. Mainline moves to the
+      top and Weight absorbs Leader Length. This half was acknowledged and silently skipped with R5,
+      so the order is now asserted rather than assumed (both tabs).
+      Potential bug: the leader row was 3-up, so moving Leader Length into Weight's row orphans the
+      3-up layout — retire its CSS or the rule lies about a layout nothing uses.
+      Verified: scripted diff of BOTH `gear-rows` blocks vs HEAD = 122 lines each side, the only
+      delta being the two `gear-row-3` classes (every id/for/onchange/placeholder/type/option
+      byte-identical); the 3-up rule deleted from `src/styles.css`; `sw.js` → `v2.03.08`; sanity
+      **107/107 GREEN** with the new `gear box order is the instructed 2-up flow (both tabs)` guard.
 
 
 

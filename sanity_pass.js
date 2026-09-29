@@ -170,11 +170,12 @@ function staticIntegrity() {
     : fail('Gear Sim stars + score bar removed', 'stale stars/score-bar markup');
 
   const cssSrc = fs.readFileSync(path.join(ROOT, 'src', 'styles.css'), 'utf8');
-  // Phase 2.4.1: gear fields rest in explicit per-line rows (.gear-row) with a
-  // 3-up leader row, replacing the auto-flow 2-column grid.
-  (cssSrc.includes('.gear-row {') && cssSrc.includes('.gear-row-3 {'))
-    ? ok('resting gear rows present (.gear-row + .gear-row-3)', 'one gear group per line')
-    : fail('resting gear rows present (.gear-row + .gear-row-3)', 'missing .gear-row rules');
+  // Phase 2.4.1: gear fields rest in explicit per-line rows (.gear-row) replacing the
+  // auto-flow 2-column grid. The 3-up leader variant (.gear-row-3) was retired when the
+  // rows were reordered to the user-specified 2-up flow, so it must NOT come back.
+  (cssSrc.includes('.gear-row {') && !cssSrc.includes('.gear-row-3'))
+    ? ok('resting gear rows present (.gear-row, no stale 3-up)', 'one gear group per line')
+    : fail('resting gear rows present (.gear-row, no stale 3-up)', 'missing .gear-row rules');
   (!cssSrc.includes('gear-grid') && !cssSrc.includes('.run-footer'))
     ? ok('dead .gear-grid / .run-footer rules removed', 'no stale layout rules')
     : fail('dead .gear-grid / .run-footer rules removed', 'stale CSS found');
@@ -344,6 +345,28 @@ function staticIntegrity() {
   (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)
     : fail('both gear forms use 6 resting rows each', `${gearRows} rows found`);
+
+  // The gear-box ORDER is a deliberate user instruction (session 1790604718924_nudti,
+  // msg 1477): with rod length removed the flow became Mainline → Weight + Leader Length
+  // → Leader → Hook/Yarn → Foam 1+2 → Beads, every row 2-up. The instruction was once
+  // acknowledged and silently skipped, so assert the exact per-row `for=` ids in document
+  // order for BOTH tabs and fail loudly on any future reorder.
+  {
+    const GEAR_ORDER = ['ml-mat', 'ml-lb', 'weight', 'ld-len', 'ld-mat', 'ld-lb',
+                        'hook', 'yarn', 'foam', 'foam2', 'bd-mat', 'bd-sz'];
+    const blocks = html.split('<div class="gear-rows">');
+    const labelsOf = (b) => (b.match(/<label for="[^"]+"/g) || [])
+      .map((s) => s.match(/for="([^"]+)"/)[1]);
+    const simOrder = labelsOf((blocks[1] || '').split('<button class="btn-main"')[0]).join(',');
+    const logOrder = labelsOf((blocks[2] || '')
+      .split('<h2 class="purple-heading">Catch Result')[0]).join(',');
+    const wantSim = GEAR_ORDER.join(',');
+    const wantLog = GEAR_ORDER.map((id) => `${id}-log`).join(',');
+    (simOrder === wantSim && logOrder === wantLog)
+      ? ok('gear box order is the instructed 2-up flow (both tabs)', wantSim)
+      : fail('gear box order is the instructed 2-up flow (both tabs)',
+             `sim=[${simOrder}] log=[${logOrder}]`);
+  }
 
   // Rod length was REMOVED 2026-09-28 (it moved no number — see memory-bank/activeContext.md).
   // This guard exists because the removal was once instructed, acknowledged and then silently

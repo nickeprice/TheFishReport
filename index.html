@@ -113,20 +113,13 @@
     </div>
 
     <div class="bucket">
-        <!-- Resting gear ROWS — ONE gear group per line, field ORDER preserved:
-             Weight → Mainline → Leader (3-up) → Hook+Yarn → Foam 1+2 → Beads.
+        <!-- Resting gear ROWS — ONE gear group per line, field ORDER is the
+             user-specified 2-up flow (sanity asserts it):
+             Mainline → Weight + Leader Length → Leader → Hook+Yarn → Foam 1+2 → Beads.
              NO pre-selected defaults: values come from your last saved rig, and
              anything you have never entered stays blank and is required. -->
         <div class="gear-rows">
-            <!-- Row 1: Weight -->
-            <div class="gear-row">
-                <div class="field">
-                    <label for="weight">Weight</label>
-                    <select id="weight" onchange="syncSelect('weight')"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
-                </div>
-            </div>
-
-            <!-- Row 2: Mainline Material + Mainline Lb Test -->
+            <!-- Row 1: Mainline Material + Mainline Lb Test -->
             <div class="gear-row">
                 <div class="field">
                     <label for="ml-mat">Mainline Material</label>
@@ -138,12 +131,20 @@
                 </div>
             </div>
 
-            <!-- Row 3: Leader Length + Leader Material + Leader Lb Test (3-up) -->
-            <div class="gear-row gear-row-3">
+            <!-- Row 2: Weight + Leader Length -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="weight">Weight</label>
+                    <select id="weight" onchange="syncSelect('weight')"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
+                </div>
                 <div class="field">
                     <label for="ld-len">Leader Length (ft)</label>
                     <input type="number" id="ld-len" min="1" max="20" step="1" onchange="syncSelect('ld-len')" placeholder="10">
                 </div>
+            </div>
+
+            <!-- Row 3: Leader Material + Leader Lb Test -->
+            <div class="gear-row">
                 <div class="field">
                     <label for="ld-mat">Leader Material</label>
                     <select id="ld-mat" onchange="onLineMatChange('ld-mat')"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluoro</option></select>
@@ -222,15 +223,7 @@
 
         <!-- DUPLICATED CONTROLS (kept in sync with the Gear Sim) — same ROW order. -->
         <div class="gear-rows">
-            <!-- Row 1: Weight -->
-            <div class="gear-row">
-                <div class="field">
-                    <label for="weight-log">Weight</label>
-                    <select id="weight-log" onchange="syncSelect('weight', true)"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
-                </div>
-            </div>
-
-            <!-- Row 2: Mainline Material + Mainline Lb Test -->
+            <!-- Row 1: Mainline Material + Mainline Lb Test -->
             <div class="gear-row">
                 <div class="field">
                     <label for="ml-mat-log">Mainline Material</label>
@@ -242,12 +235,20 @@
                 </div>
             </div>
 
-            <!-- Row 3: Leader Length + Leader Material + Leader Lb Test (3-up) -->
-            <div class="gear-row gear-row-3">
+            <!-- Row 2: Weight + Leader Length -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="weight-log">Weight</label>
+                    <select id="weight-log" onchange="syncSelect('weight', true)"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option><option value="1">1 oz</option></select>
+                </div>
                 <div class="field">
                     <label for="ld-len-log">Leader Length (ft)</label>
                     <input type="number" id="ld-len-log" min="1" max="20" step="1" onchange="syncSelect('ld-len', true)" placeholder="10">
                 </div>
+            </div>
+
+            <!-- Row 3: Leader Material + Leader Lb Test -->
+            <div class="gear-row">
                 <div class="field">
                     <label for="ld-mat-log">Leader Material</label>
                     <select id="ld-mat-log" onchange="onLineMatChange('ld-mat', true)"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluoro</option></select>

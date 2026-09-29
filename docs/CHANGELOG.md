@@ -4,6 +4,24 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Gear box order: the instructed 2-up flow (follow-up to rod removal)
+Removing rod length left the form's field ORDER wrong. The same instruction block (session
+`1790604718924_nudti`, msg 1477) specified: row 1 mainline material + mainline lb test, row 2
+weight + leader length, row 3 leader material + leader lb test, row 4 hook size + yarn, row 5
+foam 1 + foam 2, row 6 bead material + bead size — i.e. Mainline moves to the top, Weight absorbs
+Leader Length, and the leader row is no longer 3-up. It was acknowledged and then skipped, so it is
+now pinned by a sanity guard instead of trusted.
+
+Both tabs (`index.html`) reordered; every id/for/onchange/placeholder/type/option line is
+unchanged (scripted diff of the two `gear-rows` blocks vs HEAD: 122 lines each side, the only delta
+being the two `gear-row-3` classes). The now-dead 3-up rule is deleted from `src/styles.css` and the
+CSS guard asserts it stays gone. `sanity_pass.js` gains `gear box order is the instructed 2-up flow
+(both tabs)`, asserting the exact `for=` sequence per form. `sw.js` VERSION → `v2.03.08`.
+
+Verified: sanity **107/107 GREEN**; the order guard echoes
+`ml-mat,ml-lb,weight,ld-len,ld-mat,ld-lb,hook,yarn,foam,foam2,bd-mat,bd-sz`.
+- Key files: `index.html`, `src/styles.css`, `sw.js`, `sanity_pass.js`.
+
 ## 2026-09-28 — Remove rod length (the instruction that evaporated)
 The instruction was given in the previous session — *"additionally im saying lets remove the rod
 length"* (20:56Z) and *"drop the `rod_ft` db column"* (21:05Z) — and answered with *"Confirmed on

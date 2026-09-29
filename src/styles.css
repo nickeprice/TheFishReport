@@ -36,19 +36,34 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 #tab-gear-sim h3, #tab-catch-log h3 { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 12px 0 6px 0; padding: 0; }
 
 #hud { position: -webkit-sticky; position: sticky; top: 48px; background-color: #1a1a1a; z-index: 1000; padding: 8px 10px; border-bottom: 1px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-.hud-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-/* Both panels are CENTRED — label, number, and the bulleted notes under them — so the two
-   halves read as a symmetric pair instead of two left-aligned columns. */
-.hud-panel { min-width: 0; text-align: center; }
-.hud-panel:first-child { border-right: 1px solid #333; padding-right: 10px; }
-.hud-line { font-size: 1.05rem; font-weight: bold; margin-bottom: 2px; }
+/* TWO STACKED BANNERS (restructured 2026-09-29 on a direct user ask): the strike zone
+   estimate on top, the line-height estimate under it, then ONE summary paragraph and the
+   off-target gear changes. Each banner is a full-width row so the label and its number read
+   as a single statement instead of two half-width columns. */
+.hud-banner {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
+    font-size: 1.05rem;
+    font-weight: bold;
+    padding: 3px 0;
+}
+.hud-banner + .hud-banner { border-top: 1px solid #262626; }
 .hud-cap { color: #e5e7eb; }
 .hud-val { font-weight: bold; }
-/* Bulleted notes, IDENTICAL in both HUD panels (the strike-zone reasons used to be a smaller,
-   dimmer variant and read as hard to read). The marker rides INSIDE the line
-   (list-style-position: inside) so a centred bullet is not pushed off-centre by padding-left. */
-.hud-changes { margin: 4px 0 0 0; padding: 0; text-align: center; list-style-position: inside; }
-.hud-changes li { font-size: 0.68rem; color: #d1d5db; line-height: 1.35; margin-bottom: 3px; }
+/* The one cohesive "what the fish are doing and where" paragraph. Deliberately the widest
+   text block in the HUD: it is the part an angler actually reads. */
+.hud-outlook {
+    margin: 6px 0 0 0;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: #d1d5db;
+    text-align: left;
+}
+/* Off-target gear changes only. Bulleted, one row per change. */
+.hud-changes { margin: 6px 0 0 0; padding: 0; text-align: left; list-style-position: inside; }
+.hud-changes li { font-size: 0.72rem; color: var(--accent-yellow); line-height: 1.4; margin-bottom: 3px; }
 
 .bucket { padding: 0 12px 16px 12px; }
 .row { display: flex; gap: 8px; margin-bottom: 8px; }

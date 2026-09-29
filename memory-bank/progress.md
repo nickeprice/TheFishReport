@@ -17,6 +17,17 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **HUD restructure: two banners + ONE summary** (direct user ask): the Gear Sim HUD is
+  now **Strike Zone banner → Line Height banner → one cohesive paragraph** ("what the fish are doing
+  and where": outcome by net shift, the two strongest drivers in plain words, the depth of water
+  they are holding in, the lie, and your line against that band) **→ gear changes only when the rig
+  is off target** (the "On target" padder row is gone). The per-reason bullets are deleted as a
+  display (`zoneNotes()`/`ZONE_NOTE_HIDDEN` removed; `zone.notes` still records every reason and
+  `paintSimHud()` writes them to the debug trail). New `zone.terms` structured drivers +
+  `fishOutlook()`; `positionParts()` now feeds both the detail string and the summary. `sw.js`
+  `v2.03.25`, **135/135**. ⚠ One interpretation flagged: both banners are stacked with the summary
+  BELOW both.
+
 - 2026-09-29 — **WS-8b (b1) + Phase 4 decisions**: the Gear Sim's light term now brackets the
   reference hour against **that day's own sunrise/sunset** (`parseClockMinutes()`,
   `LIGHT_EDGE_MINUTES`/`LIGHT_CORE_MINUTES`) instead of fixed clock hours — the old version gave a

@@ -102,12 +102,13 @@ this file**, or the pass fails.
 - **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()`
 - **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `getTurbidityFnu()`,
-  `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `zoneNotes()`,
-  `whereToFish(zone, hgt)`, `paintZoneHud(zone, where)`, `refreshZonePreview()`, `bestZoneRig()` —
-  the HUD zone panel (one bullet per reason + the "where to fish" row; the community note is
-  filtered out) and the colour grade shared with line height. The report terms are the WS-8a set:
-  demoted barometer ±1.2", thermal curve, own-gauge colour, and a light term bracketed against
-  THAT DAY's sunrise/sunset (`parseClockMinutes()`, `lightTerm(block, rep)` — WS-8b b1).
+  `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `positionParts()`,
+  `whereToFish()` (detail string), `fishOutlook()` (the ONE HUD summary paragraph),
+  `paintZoneHud(zone, outlook)`, `refreshZonePreview()`, `bestZoneRig()` —
+  the HUD: two estimate banners + the summary paragraph, and the colour grade shared with line
+  height. The report terms are the WS-8a set: demoted barometer ±1.2", thermal curve, own-gauge
+  colour, and a light term bracketed against THAT DAY's sunrise/sunset (`parseClockMinutes()`,
+  `lightTerm(block, rep)` — WS-8b b1). `zone.notes` still records every reason for the log.
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

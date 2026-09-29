@@ -55,10 +55,9 @@ var DRIFT_TECHNIQUE = {
         if (score > 5) score = 5;
 
         // 4. Build the suggestions: SHORT rows, one per bullet -------------------------
-        // Only "what the zone is doing to you" + "what to change": no calibration
-        // meta-talk, no re-statement of the form (the community data already moved the
-        // zone above). An ON-TARGET rig gets a single "On target" row - a paragraph of
-        // explanation is noise when there is nothing to change.
+        // Only "what the zone is doing to you" and "what to change", and ONLY when the rig is
+        // off target (an on-target rig gets no rows: the summary above the list already says
+        // the line is in the band). No calibration meta-talk, no re-statement of the form.
         var suggestions = [];
         var best = bestZoneRig(zone, velocity.bottom, ldLb, ldMat, mlLb, mlMat, foam.key, weightOz, ldLen, yarn, hook, bdMat, bdSz, foam2.lift);
 
@@ -71,23 +70,26 @@ var DRIFT_TECHNIQUE = {
             suggestions.push('Too low at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - add lift: bigger corky, more yarn, or a longer leader.');
         } else if (hgt > zone.max) {
             suggestions.push('Too high at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - cut lift: smaller corky, less yarn, heavier lead, or a shorter leader.');
-        } else {
-            suggestions.push('On target');
         }
+        // ON TARGET -> NO suggestion rows at all (direct user ask, 2026-09-29): the summary
+        // above the list already says the line is in the band, so an "On target" row is noise.
 
         if (best && !blownOut && score < 5.0) {
             suggestions.push('Try this: ' + best.foam.label + ' + ' + best.leader + ' ft leader + ' + best.weight + ' oz lead -> projects ' + best.hgt.toFixed(1) + '" of line height.');
         }
 
-        // 5. The "where to fish" row (WS-8a): depth of water + the lie + light/colour, with the
-        // angler's own line measured against that band. Deliberately NOT part of `suggestions`:
-        // it describes where the FISH are, not what to change, and keeping it out leaves the
-        // frozen suggestion baseline (and its assertions) exactly where they were.
+        // 5. The "where to fish" row (WS-8a) and the cohesive SUMMARY (restructured
+        // 2026-09-29): `whereToFish` is the provenance-heavy detail for the log/return,
+        // `outlook` is the one paragraph the HUD prints under the two banners. Neither is
+        // pushed into `suggestions` - where the FISH are is not "what to change" - which
+        // keeps the frozen suggestion baseline untouched.
         var where = (typeof whereToFish === 'function') ? whereToFish(zone, hgt) : null;
+        var outlook = (typeof fishOutlook === 'function') ? fishOutlook(zone, hgt) : null;
 
         return {
             velocity: velocity, dragPerFt: dragPerFt, lift: lift, hgt: hgt, blownOut: blownOut,
-            sonar: sonar, zone: zone, score: score, suggestions: suggestions, whereToFish: where
+            sonar: sonar, zone: zone, score: score, suggestions: suggestions,
+            whereToFish: where, outlook: outlook
         };
     }
 };

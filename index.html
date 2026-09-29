@@ -128,27 +128,22 @@
 
 <!-- TOOL 2: GEAR SIM -->
 <div id="tab-gear-sim" class="tab-content">
-    <!-- Outcome HUD. LEFT = today's ESTIMATED strike zone + why it moved off the
-         4"-12" base. RIGHT = the angler's ESTIMATED line height, colour-graded toward
-         the zone MIDDLE, with the exact rig changes to get into the zone listed
-         beneath it. Both panels are CENTRED (label, number, and the bulleted notes
-         underneath) so the two halves read as a symmetric pair. -->
+    <!-- Outcome HUD (restructured 2026-09-29 on a direct user ask). TWO stacked BANNERS —
+         the estimated strike zone, then the angler's estimated line height — followed by ONE
+         cohesive summary of what the fish are doing and where (fishOutlook()), and then the
+         gear changes ONLY when the current rig is off target. The per-reason bullets are gone:
+         they live on in the debug trail. Each banner's number keeps its own colour grade. -->
     <div id="hud">
-        <div class="hud-panels">
-            <div class="hud-panel">
-                <div class="hud-line"><span class="hud-cap">Strike Zone Estimate:</span> <span id="hud-zone" class="hud-val">4.0" - 12.0"</span></div>
-                <!-- One bullet PER REASON (rebuilt by paintZoneHud()); "On target" when nothing is
-                     shifting the zone. Community-catch influence is NOT shown. The estimate NUMBER
-                     itself is colour-graded by how far the zone sits from the 4.0"-12.0" base. -->
-                <ul id="hud-zone-notes" class="hud-changes">
-                    <li>Baseline 4.0" - 12.0" &mdash; no water report loaded yet.</li>
-                </ul>
-            </div>
-            <div class="hud-panel">
-                <div class="hud-line"><span class="hud-cap">Line Height Estimate:</span> <span id="hud-hgt" class="hud-val">--</span></div>
-                <ul id="hud-changes" class="hud-changes"></ul>
-            </div>
+        <div class="hud-banner">
+            <span class="hud-cap">Strike Zone Estimate:</span>
+            <span id="hud-zone" class="hud-val">4.0" - 12.0"</span>
         </div>
+        <div class="hud-banner">
+            <span class="hud-cap">Line Height Estimate:</span>
+            <span id="hud-hgt" class="hud-val">--</span>
+        </div>
+        <p id="hud-where" class="hud-outlook">Load a water report to see where the fish are holding today.</p>
+        <ul id="hud-changes" class="hud-changes"></ul>
     </div>
 
     <div class="bucket">

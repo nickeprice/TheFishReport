@@ -287,6 +287,32 @@ change.
   real spot depth; crepuscular light curve; velocity lie buckets; re-enable the community-sonar
   calibrator — a product decision).
 
+## HUD RESTRUCTURE — 2026-09-29 (direct user ask, supersedes WS-7's bullet display)
+
+- [x] **Two banners + one cohesive summary + suggestions ONLY when off target.** The user's words:
+      "its too much info … instead of each having bullets below them there should be two separate
+      banners first the strike zone estimate output and the line height estimate output, and then
+      this would populate the where the fish are and suggestion changes if you are out of target".
+      Shipped: `index.html` (two `.hud-banner` rows, `<p id="hud-where" class="hud-outlook">`, the
+      `#hud-changes` list — no more `.hud-panels` grid, no `#hud-zone-notes`), `src/styles.css`
+      (banner + summary CSS, dead `.hud-panels`/`.hud-panel` rules removed), `zone.js`
+      (`zone.terms` structured drivers, `positionParts()` shared by the detail + the summary,
+      `fishOutlook(zone, hgt)`, `paintZoneHud(zone, outlook)`; `zoneNotes()`/`ZONE_NOTE_HIDDEN`
+      DELETED), `drift.js` (returns `outlook`, no "On target" row), `solver.js` (paints the
+      summary + logs every `zone.notes` reason to the debug trail), `inputs.js` (driver nouns on
+      `THERMAL_BANDS`), `sanity_pass.js`, `sw.js` `v2.03.25`, docs.
+      Verified: sanity **135/135** — the WS-7 bullet assertion was REPLACED (deliberate reversal,
+      recorded here and in the CHANGELOG) by a summary assertion on the REAL `fishOutlook()`
+      (five outcome bands, top-two drivers, third driver dropped, community wording impossible,
+      depth/lie/line sentences, report-less path, no-rig = no line claim), the painter is driven
+      against a recording `#hud-where`, and a NEW assertion pins that an on-target rig
+      (hgt 4.810" in the 4"–12" zone) yields **0** suggestions.
+      ⚠ Interpretation flagged for confirmation: "two separate banners … and then this would
+      populate the where the fish are" was read as BOTH banners stacked on top with the summary
+      BELOW both (not the summary owned by the line-height banner). If the intent was the latter,
+      the fix is one block move in `index.html` + the CSS order — no JS change.
+      Note: the frozen drift baseline did NOT move (off-target rig still 2 suggestions, hgt 2.887").
+
 ## PHASE 4 DECISIONS — 2026-09-29 (user call, Act mode)
 
 The user was given the four sub-items with their evidence and chose: **b1 yes, c2 no, d3 no, and

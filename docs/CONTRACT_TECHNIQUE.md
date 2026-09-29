@@ -69,14 +69,16 @@ fallback — and passes the diameter into `totalDragPerFt`.
   score,                        // 0.0 - 5.0
   suggestions: [string],        // plain-English "Rig Adjustments"
   whereToFish                   // one "Where to fish: …" row (WS-8a) or null
+  `outlook`                      // the ONE cohesive "where the fish are" summary (WS-8a restructure)
 }
 ```
 
-`whereToFish` is the depth-of-water + lie + light/colour row (from `zone.js`'s
-`whereToFish(zone, hgt)`). It is deliberately NOT a `suggestions` entry: it says where the
-FISH are rather than what to change, and keeping it out of the array leaves the pinned
-`suggestions.length` baseline untouched. `paintSimHud()` renders it as the last row of the
-strike-zone panel, so it shows ON and OFF target.
+`outlook` is what the HUD prints under the two estimate banners: the outcome, the two biggest
+drivers in plain words, the depth of water the fish are holding in, the lie, and the angler's own
+line against that band (`zone.js` `fishOutlook()`). `whereToFish` is the provenance-heavy DETAIL
+string for the log and this return value. Neither is a `suggestions` entry — where the FISH are is
+not "what to change" — and `suggestions` is **empty when the rig is on target** (no "On target"
+padder row: the summary already states the line is in the band).
 
 ## Rules
 

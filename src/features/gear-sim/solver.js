@@ -84,18 +84,19 @@ function buildSimStats(rig, out) {
 function paintSimHud(rig, out, stats) {
     var hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
 
-    // LEFT panel: the strike zone, its trend colour and ONE BULLET PER REASON it moved off the
-    // 4"-12" base - plus the solved "where to fish" row. Same painter as the live preview, so
-    // the panel is whole (paintZoneHud is in zone.js).
-    paintZoneHud(zone, out.whereToFish);
+    // BANNERS + SUMMARY: the strike-zone banner (gradient colour) and the ONE cohesive
+    // "where the fish are" paragraph, printed under both banners. Same painter as the live
+    // preview, so the two can never disagree (paintZoneHud is in zone.js).
+    paintZoneHud(zone, out.outlook);
 
-    // RIGHT panel: the angler's line height, colour-graded toward the zone MIDDLE in
-    // 0.1" steps (green = dead centre, yellow = halfway, red = at/beyond the edge), with
-    // the exact rig changes to get into the zone listed beneath it.
+    // The line-height banner keeps its own grade: colour-graded toward the zone MIDDLE in
+    // 0.1" steps (green = dead centre, yellow = halfway, red = at/beyond the edge).
     var eHgt = document.getElementById('hud-hgt');
     eHgt.innerText = hgt.toFixed(1) + '"';
     eHgt.style.color = zoneColor(hgt, zone);
 
+    // Rig changes ONLY when off target (an on-target rig has no suggestions: the summary
+    // already states the line is in the band).
     var ul = document.getElementById('hud-changes');
     if (ul) {
         ul.innerHTML = '';
@@ -124,5 +125,8 @@ function paintSimHud(rig, out, stats) {
             ' \u00b1' + Math.round(spotDepth.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
         '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
+        // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
+        // debug trail is where they survive in full - including the community-sonar note.
+        (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +
         (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
 }

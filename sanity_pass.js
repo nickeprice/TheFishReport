@@ -189,17 +189,19 @@ function staticIntegrity() {
     ? ok('dead .gear-grid / .run-footer rules removed', 'no stale layout rules')
     : fail('dead .gear-grid / .run-footer rules removed', 'stale CSS found');
 
-  // Gear Sim HUD wording + bullets (direct user instruction, 2026-09-29): both numbers are
-  // ESTIMATES, both note lists are bulleted (one ROW per point), and the strike zone carries
-  // a TREND LINE whose marker is placed by paintZoneHud(). Pin the wording, the containers
-  // and the grade rule, so a silent revert fails here.
+  // Gear Sim HUD structure (direct user instruction, 2026-09-29): TWO estimate BANNERS — the
+  // strike zone, then the line height — ONE cohesive summary paragraph under them, and the gear
+  // changes below that, shown only when the rig is off target. The per-reason bullet list and the
+  // two-column panel grid are gone, so a silent revert fails here.
   (html.includes('<span class="hud-cap">Strike Zone Estimate:</span>') &&
    html.includes('<span class="hud-cap">Line Height Estimate:</span>') &&
-   /id="hud-zone-notes"/.test(html) && /<ul id="hud-changes"/.test(html))
-    ? ok('HUD caps say "Estimate" and both note lists are bullets',
-         'Strike Zone Estimate / Line Height Estimate, both in <ul> bullets')
-    : fail('HUD caps say "Estimate" and both note lists are bullets',
-           'cap wording or bullet list changed');
+   (html.match(/class="hud-banner"/g) || []).length === 2 &&
+   /<p id="hud-where" class="hud-outlook"/.test(html) && /<ul id="hud-changes"/.test(html) &&
+   !/hud-zone-notes|hud-panels|hud-panel\b/.test(html) && !/hud-panels|hud-panel\b/.test(cssSrc))
+    ? ok('HUD = two estimate banners + one summary paragraph + the change list',
+         'Strike Zone Estimate / Line Height Estimate banners, #hud-where summary, #hud-changes; no bullet list, no panel grid')
+    : fail('HUD = two estimate banners + one summary paragraph + the change list',
+           'banner structure or summary paragraph changed');
   // WS-7 correction (direct user ask): the gradient lives on the ESTIMATE NUMBER only — the
   // separate trend strip + marker were unwanted, and the strike-zone bullets no longer use the
   // dim/smaller variant (both HUD panels now render ONE bullet style).
@@ -209,14 +211,21 @@ function staticIntegrity() {
          'no .zone-trend / #hud-zone-mark; no .hud-note variant')
     : fail('strike-zone gradient is on the estimate only (no strip, one bullet style)',
            'a trend strip or the dim bullet variant came back');
-  // The community note must stay OFF the HUD even though the sonar still moves the zone.
-  (fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')
-    .includes('Recent community catches holding') &&
-   /ZONE_NOTE_HIDDEN = \/\^\(Strike zone shifted\|Recent community catches holding\)\//.test(
-     fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')))
-    ? ok('community-catch note is computed but hidden from the HUD',
-         'zone.notes keeps it; zoneNotes() filters it out')
-    : fail('community-catch note is computed but hidden from the HUD', 'filter missing');
+  // The community note must stay OFF the HUD even though the sonar still moves the zone. The
+  // old display filter (zoneNotes/ZONE_NOTE_HIDDEN) went with the bullet list; the guarantee is
+  // now structural - the summary paragraph simply never prints community wording (asserted on
+  // the REAL fishOutlook() further down), while zone.notes still records the effect for the log.
+  {
+    // Comments cannot display anything, so strip them: the check is about real code.
+    const zoneSrcStatic = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')
+      .replace(/\/\/[^\n]*/g, '');
+    (zoneSrcStatic.includes('Recent community catches holding') &&
+     !/ZONE_NOTE_HIDDEN/.test(zoneSrcStatic) && !/function zoneNotes\(/.test(zoneSrcStatic) &&
+     /function fishOutlook\(/.test(zoneSrcStatic))
+      ? ok('community-catch note is computed but never displayed',
+           'zone.notes keeps it for the log; the bullet filter left with the bullets; the summary never mentions it')
+      : fail('community-catch note is computed but never displayed', 'note missing, or the old filter came back');
+  }
   // Bead labels read plainly (the "(Presentation)" suffix was a stray) and the Cheater float is
   // named "Cheater 10" (direct user corrections). The option VALUE stays 'c12', so parseFoam()
   // / FOAM_TABLE lifts - and therefore the frozen physics - are untouched.
@@ -230,13 +239,14 @@ function staticIntegrity() {
       : fail('bead labels are plain and the Cheater float reads "Cheater 10"',
              `presentation=${html.includes('Presentation')} cheaterOptions=${cheater}`);
   }
-  (/\.hud-panel \{[^}]*text-align: center/.test(cssSrc) &&
-   /\.hud-changes \{[^}]*list-style-position: inside/.test(cssSrc) &&
+  (/.hud-banner \{[^}]*justify-content: center/.test(cssSrc) &&
+   /.hud-outlook \{[^}]*text-align: left/.test(cssSrc) &&
+   /.hud-changes \{[^}]*list-style-position: inside/.test(cssSrc) &&
    /#tab-gear-sim #hud \+ \.bucket \{[^}]*padding-top: 1[0-9]px/.test(cssSrc))
-    ? ok('HUD panels are centred, with clearance above the first gear row',
-         '.hud-panel centred + inside bullets + bucket padding-top')
-    : fail('HUD panels are centred, with clearance above the first gear row',
-           'centring / separation CSS missing');
+    ? ok('HUD banners are centred, the summary is readable, with clearance above the first gear row',
+         '.hud-banner centred + .hud-outlook left-aligned + .hud-changes bullets + bucket padding-top')
+    : fail('HUD banners are centred, the summary is readable, with clearance above the first gear row',
+           'banner / summary / separation CSS missing');
   // Scroll/bar geometry: no body-as-scroll-container, and the body padding must
   // clear the REAL 56px bar + safe-area inset.
   (/html, body \{[^}]*height: 100%/.test(cssSrc) === false)
@@ -846,6 +856,19 @@ function behaviorChecks(done) {
       ? ok('drift technique reproduces the frozen solver output', 'hgt 2.887", score 4.499, 2 short rows')
       : fail('drift technique reproduces the frozen solver output',
              `hgt=${got.hgt} score=${got.score} zone=${got.zone.min}-${got.zone.max} sugg=${got.suggestions.length} [${got.suggestions.join(' | ')}]`);
+
+    // ON TARGET -> NO suggestion rows at all (direct user ask, 2026-09-29). This rig lands at
+    // 4.81" inside the baseline 4"-12" zone, so the HUD shows the summary paragraph and no
+    // "what to change" rows: the old single "On target" row was noise.
+    const rigOn = Object.assign({}, rig, { ldLen: 6, weightOz: 0.25, foam: parseFoam('10') });
+    const gotOn = t.compute(rigOn, { flow: 1040, species: 'Chinook', dbArray: [] });
+    (gotOn.suggestions.length === 0 && gotOn.hgt >= gotOn.zone.min && gotOn.hgt <= gotOn.zone.max &&
+     /Your line at 4\.8" is in that band\./.test(String(gotOn.outlook)))
+      ? ok('an on-target rig gets no suggestion rows at all',
+           'hgt 4.810" inside the 4"-12" zone -> 0 suggestions; the summary states the line is in that band')
+      : fail('an on-target rig gets no suggestion rows at all',
+             `hgt=${gotOn.hgt} zone=${gotOn.zone.min}-${gotOn.zone.max} sugg=${gotOn.suggestions.length} ` +
+             `[${gotOn.suggestions.join(' | ')}] outlook=${gotOn.outlook}`);
   } catch (e) {
     fail('drift technique reproduces the frozen solver output', String(e.message).split('\n')[0]);
   }
@@ -1012,22 +1035,27 @@ function behaviorChecks(done) {
   }
 
 
-  // --- WS-8a part 3: the row reaches the panel, and the wiring cannot regress --
-  // Drive the REAL paintZoneHud() against a recording <ul> (the DOM stub appends nowhere), then
-  // re-run the frozen drift rig under the frozen report-less conditions: the where-to-fish row
-  // must exist and the pinned suggestion count must NOT have moved - which is exactly why the
-  // row is rendered by the panel painter instead of being pushed into out.suggestions.
+  // --- WS-8a part 3: the summary reaches the panel, and the wiring cannot regress ------
+  // Drive the REAL paintZoneHud() against a recording element (the DOM stub appends nowhere),
+  // then re-run the frozen drift rig under the frozen report-less conditions: the summary must
+  // be painted AND the pinned suggestion count must NOT have moved - the reason the summary is
+  // rendered by the panel painter instead of being pushed into out.suggestions.
   try {
-    const recUl = {
-      id: 'hud-zone-notes', children: [], innerHTML: '',
-      appendChild(c) { this.children.push(c); }
+    const recWhere = {
+      id: 'hud-where', tag: 'p', textContent: '', innerHTML: '',
+      appendChild() {}, style: {}
     };
+    const recZone = { id: 'hud-zone', innerText: '', style: {} };
     const realGetById = global.document.getElementById;
-    global.document.getElementById = (id) => (id === 'hud-zone-notes' ? recUl : realGetById(id));
+    global.document.getElementById = (id) => {
+      if (id === 'hud-where') return recWhere;
+      if (id === 'hud-zone') return recZone;
+      return realGetById(id);
+    };
     reportsData = [{ press_delta: -0.08, cloud_pct: 50, rain: 0 }];
     paintZoneHud(computeStrikeZone(), null);
     global.document.getElementById = realGetById;
-    const wsPainted = recUl.children.map((c) => String(c.textContent));
+    const wsPainted = String(recWhere.textContent);
     reportsData = [];                                   // report-less == the frozen harness conditions
     const wsRig = {
       flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
@@ -1035,28 +1063,30 @@ function behaviorChecks(done) {
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
     };
     const wsOut = gearTechnique().compute(wsRig, { flow: 1040, species: 'Chinook', dbArray: [] });
-    const wsWireOk = wsPainted.length === 2 && /^Barometer falling/.test(wsPainted[0]) &&
-      /^Where to fish: /.test(wsPainted[1]) &&
+    const wsWireOk = /^Fish are sitting above the base zone and feeding\./.test(wsPainted) &&
+      /Most of that is the falling barometer\./.test(wsPainted) &&
+      /^Where to fish: /.test(wsOut.whereToFish) &&
+      /No water report loaded yet, so this is the plain 4" - 12" base zone\./.test(wsOut.outlook) &&
       wsOut.suggestions.length === 2 && /^Too low at 2\.9"/.test(wsOut.suggestions[0]) &&
-      Math.abs(wsOut.hgt - 2.8867637713966774) < 1e-9 &&
-      /^Where to fish: no measured cross-section/.test(wsOut.whereToFish);
+      Math.abs(wsOut.hgt - 2.8867637713966774) < 1e-9;
     const zoneSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/zone.js'), 'utf8');
     const solverSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/solver.js'), 'utf8');
     const driftSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/techniques/drift.js'), 'utf8');
     const waterSrc = fs.readFileSync(path.join(ROOT, 'src/services/water.js'), 'utf8');
     const wsStaticOk = !/shift \+= 3\.5|shift -= 3\.0/.test(zoneSrc) && !/Warm water \(/.test(zoneSrc) &&
       /thermalOptimum\(/.test(zoneSrc) && /turbidityTerm\(\)/.test(zoneSrc) && /lightTerm\(/.test(zoneSrc) &&
-      /ZONE_TREND_FULL_SCALE = 7\.0/.test(zoneSrc) && /where \|\| whereToFish\(zone\)/.test(zoneSrc) &&
-      /paintZoneHud\(zone, out\.whereToFish\)/.test(solverSrc) && /whereToFish\(zone, hgt\)/.test(driftSrc) &&
+      /ZONE_TREND_FULL_SCALE = 7\.0/.test(zoneSrc) && /id === 'hud-where'/.test(solverSrc + zoneSrc) === false &&
+      /paintZoneHud\(zone, out\.outlook\)/.test(solverSrc) && /fishOutlook\(zone, hgt\)/.test(driftSrc) &&
+      /suggestions\.push\('On target'\)/.test(driftSrc) === false &&
       /window\.turbidityFnu = hasTurb/.test(waterSrc);
     (wsWireOk && wsStaticOk)
-      ? ok('the where-to-fish row is painted, and the frozen suggestion count did not move',
-           'recording <ul> gets [zone reason, Where to fish ...]; drift still 2 suggestions, hgt 2.887"')
-      : fail('the where-to-fish row is painted, and the frozen suggestion count did not move',
-             `painted=[${wsPainted.join(' | ')}] sugg=${wsOut.suggestions.length} where=${wsOut.whereToFish} ` +
-             `hgt=${wsOut.hgt} static=${wsStaticOk}`);
+      ? ok('the summary paragraph is painted, and the frozen suggestion count did not move',
+           'recording #hud-where gets the outcome + driver sentences; drift still 2 suggestions, hgt 2.887"; no "On target" row exists')
+      : fail('the summary paragraph is painted, and the frozen suggestion count did not move',
+             `painted=[${wsPainted}] sugg=${wsOut.suggestions.length} where=${wsOut.whereToFish} ` +
+             `outlook=${wsOut.outlook} hgt=${wsOut.hgt} static=${wsStaticOk}`);
   } catch (e) {
-    fail('the where-to-fish row is painted, and the frozen suggestion count did not move', String(e.message).split('\n')[0]);
+    fail('the summary paragraph is painted, and the frozen suggestion count did not move', String(e.message).split('\n')[0]);
   }
 
   // --- WS-5: private favourite spots (issue #3b) -------------------------------
@@ -1439,25 +1469,59 @@ function behaviorChecks(done) {
     fail('tackle cascade drives the gear form (both tabs)', String(e.message).split('\n')[0]);
   }
 
-  // --- WS-7: the zone panel reads as a LIST, with a graded trend --------------------
-  // The gear sources (inputs / physics / sonar / zone) are already eval'd above, so these are
-  // the REAL functions. The asks: one bullet per reason (never one joined sentence), "On
-  // target" when nothing is shifting the zone, the community note NOT shown even though the
-  // sonar still moves the zone, and a trend graded green at the 4"-12" base -> yellow at half
-  // scale -> red at full scale, quantised to 0.1" (so a 0.04" move cannot flip the colour).
+  // --- HUD restructure: TWO banners + ONE summary (direct user ask, 2026-09-29) -------------
+  // The zone panel's per-reason bullets were replaced by one cohesive paragraph, so the REAL
+  // fishOutlook() is asserted here: the outcome band by net shift, the two named drivers, the
+  // depth/lie/line sentences, the report-less path, and that the community wording (which the
+  // old display filter `zoneNotes()` existed for) can no longer reach the angler. The trend
+  // maths and the line-height grade are unchanged, so they stay pinned in the same block.
   try {
     const badZone = [];
     const eqz = (label, got, want) => { if (got !== want) badZone.push(`${label}=[${got}] want [${want}]`); };
-    const zoneRows = zoneNotes({ notes: [
-      'Barometer rising 0.03 inHg: fish pin down (lockjaw).',
-      'Heavy cloud cover (100%): fish feel safe riding higher.',
-      'Recent community catches holding near 9.4" (3 fish): zone pulled +0.6" toward feeding fish.',
-      'Strike zone shifted +2.0" to 6.0" - 14.0".'
-    ] });
-    eqz('one row per reason', String(zoneRows.length), '2');
-    eqz('weather only', String(/community|Strike zone shifted/i.test(zoneRows.join(' '))), 'false');
-    eqz('on target', zoneNotes({ notes: [] }).join('|'), 'On target');
-    eqz('no zone object', zoneNotes(null).join('|'), 'On target');
+
+    const sonarZone = {
+      min: 6, max: 14, shift: 2,
+      report: { cfs: 1040 },
+      terms: [
+        { key: 'cloud', dir: 'high', shift: 1.5, driver: 'the heavy cloud' },
+        { key: 'pressure', dir: 'fall', shift: 1.2, driver: 'the falling barometer' },
+        { key: 'turbidity', dir: 'coloured', shift: 0.75, driver: 'the colour in the water' }
+      ],
+      notes: ['Recent community catches holding near 9.4" (3 fish): zone pulled +0.6" toward feeding fish.']
+    };
+    const outlook = fishOutlook(sonarZone, 8.0);
+    eqz('up band', String(/^Fish are up and feeding hard\./.test(outlook)), 'true');
+    eqz('top two drivers', String(/Most of that is the heavy cloud and the falling barometer\./.test(outlook)), 'true');
+    eqz('third driver dropped', String(/the colour in the water/.test(outlook)), 'false');
+    eqz('community wording never shown', String(/community/i.test(outlook)), 'false');
+    // Depth + lie need a station, exactly like the app: stub the active station, then restore.
+    const realGetItem2 = global.localStorage.getItem;
+    global.localStorage.getItem = (k) => (k === 'active_station' ? JSON.stringify({ id: '12101500' }) : null);
+    const outlookStn = fishOutlook(sonarZone, 8.0);
+    global.localStorage.getItem = realGetItem2;
+    eqz('depth sentence', String(/holding about 10\.0" off the bed, in ~3\.3 ft of water at 1040 CFS \(measured at the gauge, \u00b120%\)\./.test(outlookStn)), 'true');
+    eqz('lie sentence', String(/Soft water, so they are spread over the flats and riffle lips\./.test(outlookStn)), 'true');
+    eqz('line in band', String(/Your line at 8\.0" is in that band\./.test(outlookStn)), 'true');
+    eqz('five sentences', String(outlookStn.split('. ').length), '5');
+
+    // Each outcome band, by net shift.
+    const bandOf = (s) => fishOutlook({ min: 4 + s, max: 12 + s, shift: s, report: {}, terms: [], notes: [] }).split('. ')[0];
+    eqz('band 2.0', bandOf(2.0), 'Fish are up and feeding hard');
+    eqz('band 0.8', bandOf(0.8), 'Fish are sitting above the base zone and feeding');
+    eqz('band 0', bandOf(0), 'Fish are right where you would expect them today');
+    eqz('band -1', bandOf(-1), 'Fish are pinned down and slow to move');
+    eqz('band -3', bandOf(-3), 'Fish are deep and locked up');
+    // No report and no terms must stay plain, and must never invent a driver.
+    const noReport = fishOutlook({ min: 4, max: 12, shift: 0, terms: [], notes: [], report: null });
+    eqz('no report', String(/^No water report loaded yet/.test(noReport)), 'true');
+    const noTerms = fishOutlook({ min: 4, max: 12, shift: 0, terms: [], notes: [], report: {} });
+    eqz('no terms', String(/Nothing in the conditions is pushing them either way\./.test(noTerms)), 'true');
+    // The live preview has no rig, so it must not claim anything about a line.
+    eqz('no rig -> no line sentence',
+      String(/Your line/.test(fishOutlook({ min: 4, max: 12, shift: 0, terms: [], notes: [], report: {} }))), 'false');
+    // The old bullet machinery is gone for good.
+    eqz('no zoneNotes()', String(typeof zoneNotes), 'undefined');
+    eqz('no ZONE_NOTE_HIDDEN', String(typeof ZONE_NOTE_HIDDEN), 'undefined');
 
     const tBase = zoneTrend({ min: 4, max: 12 });
     const tHalf = zoneTrend({ min: 7.5, max: 15.5 });
@@ -1475,11 +1539,11 @@ function behaviorChecks(done) {
     eqz('lh centre', zoneColor(8.0, { min: 4, max: 12 }), 'hsl(140, 72%, 46%)');
     eqz('lh edge', zoneColor(12.0, { min: 4, max: 12 }), 'hsl(0, 72%, 46%)');
     badZone.length === 0
-      ? ok('strike-zone HUD: one bullet per reason + a graded estimate',
-           'community note hidden · "On target" when nothing shifted · green base -> yellow half -> red full, 0.1" steps')
-      : fail('strike-zone HUD: one bullet per reason + a graded estimate', badZone.join(' '));
+      ? ok('HUD summary: one outcome paragraph + a graded estimate',
+           'outcome bands by shift · top-two drivers named · depth/lie/line sentences · no community wording · bullets gone · green base -> yellow half -> red full, 0.1" steps')
+      : fail('HUD summary: one outcome paragraph + a graded estimate', badZone.join(' '));
   } catch (e) {
-    fail('strike-zone HUD: one bullet per reason + a graded estimate', String(e.message).split('\n')[0]);
+    fail('HUD summary: one outcome paragraph + a graded estimate', String(e.message).split('\n')[0]);
   }
 
   // --- P4b: the brand changes the community REPLAY ----------------------------

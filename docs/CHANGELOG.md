@@ -4,6 +4,48 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — HUD restructure: two banners + ONE "where the fish are" summary (direct user ask)
+The Gear Sim HUD no longer explains itself. Instead of a bullet per technical reason under each
+estimate, it now reads top-to-bottom as: **banner 1 = Strike Zone Estimate**, **banner 2 = Line
+Height Estimate**, then **one cohesive paragraph** saying what the fish are doing and where, then
+the gear changes **only if the current rig is off target**.
+
+- `index.html` — the two-column `.hud-panels` grid and the `#hud-zone-notes` bullet list are gone;
+  two full-width `.hud-banner` rows, then `<p id="hud-where" class="hud-outlook">`, then the
+  existing `<ul id="hud-changes">`. Each banner keeps its own colour grade (zone = distance from
+  the 4"–12" base; line height = distance from the zone middle).
+- `zone.js` — `computeStrikeZone()` now also records **structured terms** (`zone.terms`: key, dir,
+  shift, driver) beside the human `zone.notes`, and `fishOutlook(zone, hgt)` composes the paragraph:
+  the **outcome** by net shift ("Fish are up and feeding hard" → "Fish are deep and locked up",
+  five bands), the **two strongest drivers in plain words** ("Most of that is the heavy cloud and
+  the falling barometer"), the **depth of water** they are holding in ("about 10.0" off the bed, in
+  ~3.3 ft of water at 1040 CFS (measured at the gauge, ±20%)"), the **lie** ("Soft water, so they are
+  spread over the flats and riffle lips"), and the **angler's line** against that band. Driver nouns
+  live with the bands (`THERMAL_BANDS[].driver`, `TURBIDITY_BANDS[].driver`), so wording cannot drift
+  from the numbers.
+- `zoneNotes()` + `ZONE_NOTE_HIDDEN` are **DELETED** — they existed only to filter the bullet list.
+  This reverses WS-7's "one bullet per reason" display on the user's instruction; `zone.notes` still
+  records every reason and `paintSimHud()` now writes them to `logDebug`, so no information is lost,
+  it is just not shouted at an angler. The community-sonar wording can no longer reach the screen by
+  construction (the summary never mentions it), which is asserted.
+- `drift.js` — an **on-target rig now produces ZERO suggestion rows** (the old single "On target"
+  padder is gone): the summary already says the line is in the band. Off-target rows are unchanged,
+  so the frozen baseline stays at 2 suggestions. The technique also returns `outlook`.
+- `paintZoneHud(zone, outlook)` paints the zone banner + the summary paragraph (`textContent`);
+  `solver.js` passes `out.outlook` and paints the line-height banner + the change list. The live
+  preview (`refreshZonePreview`) shows the same summary with no line sentence, because no rig exists yet.
+- Copy decisions: the summary is outcome-first and drops the FT/S from the lie sentence (the number
+  stays in `whereToFish`, the detail string), and the depth sentence names the CFS the measurement
+  applies at so the number is never floating loose.
+- `sw.js` `v2.03.25`. **135/135 GREEN** — the old bullet assertion became a summary assertion on the
+  REAL `fishOutlook()` (all five outcome bands, top-two drivers, a third driver suppressed, no
+  community wording, depth/lie/line sentences, the report-less single-sentence path, no-rig -> no
+  line claim) plus the painter now driven against a recording `#hud-where`, a new assertion that an
+  on-target rig yields 0 suggestions, and static guards that the banners/summary exist and that
+  `zoneNotes`/`ZONE_NOTE_HIDDEN`/`On target` cannot come back.
+- Key files: `index.html`, `src/styles.css`, `src/features/gear-sim/{zone,solver,inputs}.js`,
+  `src/features/gear-sim/techniques/drift.js`, `sanity_pass.js`, `sw.js`, `docs/{SYMBOLS,CONTRACT_TECHNIQUE}.md`.
+
 ## 2026-09-29 — WS-8b (b1): the light term rides the day's sunrise/sunset (+ Phase 4 decisions)
 Product decisions taken on the Phase 4 bundle, then the one piece of code they cleared.
 

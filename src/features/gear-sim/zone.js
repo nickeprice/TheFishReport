@@ -2,8 +2,8 @@
  * src/features/gear-sim/zone.js - rig requirements (no defaults), the strike
  * zone, and the best-rig search that moves the presentation into the zone.
  * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(), getTurbidityFnu(),
- *         computeStrikeZone(), gradeColor(), zoneColor(), zoneTrend(), zoneNotes(),
- *         whereToFish(), paintZoneHud(), refreshZonePreview(), bestZoneRig()
+ *         computeStrikeZone(), gradeColor(), zoneColor(), zoneTrend(), positionParts(),
+ *         whereToFish(), fishOutlook(), paintZoneHud(), refreshZonePreview(), bestZoneRig()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // Required gear fields — no defaults, so anything the angler has never entered
@@ -84,10 +84,10 @@ function refHourBlock() {
 // angler-facing colour classes, and the shifts stay small - colour is a modifier, not
 // the driver (the thermal curve and the barometer lead).
 var TURBIDITY_BANDS = [
-    { max: 8,        shift: -0.50, label: 'clear' },
-    { max: 20,       shift:  0.25, label: 'light stain' },
-    { max: 50,       shift:  0.75, label: 'coloured' },
-    { max: Infinity, shift:  1.25, label: 'dirty' }
+    { max: 8,        shift: -0.50, label: 'clear',       driver: 'the clear water' },
+    { max: 20,       shift:  0.25, label: 'light stain', driver: 'the light stain in the water' },
+    { max: 50,       shift:  0.75, label: 'coloured',    driver: 'the colour in the water' },
+    { max: Infinity, shift:  1.25, label: 'dirty',       driver: 'the dirty water' }
 ];
 
 function turbidityTerm() {
@@ -98,7 +98,8 @@ function turbidityTerm() {
             var where = (TURBIDITY_BANDS[i].shift > 0)
                 ? 'fish move up and closer to cover.'
                 : 'fish are spooky - they sit deep and tight.';
-            return { shift: TURBIDITY_BANDS[i].shift, label: TURBIDITY_BANDS[i].label, fnu: fnu, note: where };
+            return { shift: TURBIDITY_BANDS[i].shift, label: TURBIDITY_BANDS[i].label,
+                driver: TURBIDITY_BANDS[i].driver, fnu: fnu, note: where };
         }
     }
     return null;
@@ -167,7 +168,7 @@ function computeStrikeZone(sonar) {
     // baseline expectation; community catches act as live sonar that pulls the zone
     // toward where fish are actually feeding. Omitting sonar gives the weather-only
     // preview used by refreshZonePreview().
-    var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
+    var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], terms: [], report: null, sonar: null };
     var rep = getActiveReport();
     if (!rep) {
         zone.notes.push('No water report loaded: using the baseline 4.0" - 12.0" strike zone.');
@@ -182,9 +183,11 @@ function computeStrikeZone(sonar) {
     if (!isNaN(pressureDelta)) {
         if (pressureDelta <= -0.03) {
             zone.shift += 1.2;
+            zone.terms.push({ key: 'pressure', dir: 'fall', shift: 1.2, driver: 'the falling barometer' });
             zone.notes.push('Barometer falling ' + pressureDelta.toFixed(2) + ' inHg: bladders expand, fish ride a little higher.');
         } else if (pressureDelta >= 0.03) {
             zone.shift -= 1.2;
+            zone.terms.push({ key: 'pressure', dir: 'rise', shift: -1.2, driver: 'the rising barometer' });
             zone.notes.push('Barometer rising ' + pressureDelta.toFixed(2) + ' inHg: fish pin down a little (lockjaw).');
         }
     }
@@ -194,9 +197,11 @@ function computeStrikeZone(sonar) {
     if (!isNaN(cloud)) {
         if (cloud >= 70) {
             zone.shift += 1.5;
+            zone.terms.push({ key: 'cloud', dir: 'high', shift: 1.5, driver: 'the heavy cloud' });
             zone.notes.push('Heavy cloud cover (' + cloud + '%): fish feel safe riding higher.');
         } else if (cloud <= 30) {
             zone.shift -= 1.5;
+            zone.terms.push({ key: 'cloud', dir: 'low', shift: -1.5, driver: 'the bright sun' });
             zone.notes.push('Bright sun (' + cloud + '% cloud): fish hold deep and tight.');
         }
     }
@@ -205,6 +210,7 @@ function computeStrikeZone(sonar) {
     var rain = Number(rep.rain);
     if (!isNaN(rain) && rain > 0.25) {
         zone.shift += 1.0;
+        zone.terms.push({ key: 'rain', dir: 'freshet', shift: 1.0, driver: 'the rain freshet' });
         zone.notes.push('Rain freshet (' + rain.toFixed(2) + '"): coloured water, run a bigger profile.');
     }
 
@@ -216,6 +222,7 @@ function computeStrikeZone(sonar) {
     var th = (typeof thermalOptimum === 'function') ? thermalOptimum(temp) : null;
     if (th) {
         zone.shift += th.shift;
+        zone.terms.push({ key: 'thermal', dir: th.band, shift: th.shift, driver: th.driver });
         zone.notes.push('Water ' + th.tempF.toFixed(0) + 'F (' + th.range + 'F band): ' + th.note);
     }
 
@@ -224,6 +231,7 @@ function computeStrikeZone(sonar) {
     var turb = turbidityTerm();
     if (turb) {
         zone.shift += turb.shift;
+        zone.terms.push({ key: 'turbidity', dir: turb.label, shift: turb.shift, driver: turb.driver });
         zone.notes.push(turb.label.charAt(0).toUpperCase() + turb.label.slice(1) + ' water (' +
             turb.fnu.toFixed(1) + ' FNU): ' + turb.note);
     }
@@ -234,6 +242,8 @@ function computeStrikeZone(sonar) {
     var light = block ? lightTerm(block, rep) : null;
     if (light) {
         zone.shift += light.shift;
+        zone.terms.push({ key: 'light', dir: light.shift > 0 ? 'low' : 'high', shift: light.shift,
+            driver: light.shift > 0 ? 'the low light' : 'the high sun' });
         var when = block.label ? ' (' + block.label + ')' : '';
         zone.notes.push(light.label.charAt(0).toUpperCase() + light.label.slice(1) + when + ': ' + light.note);
     }
@@ -272,20 +282,12 @@ function computeStrikeZone(sonar) {
     return zone;
 }
 
-// The HUD's left-panel bullets: ONE ROW PER REASON the zone moved off the 4"-12" base, in
-// the order the rules fired, so the panel reads as a list instead of one wrapped sentence.
-// Two notes are deliberately NOT shown: the "Strike zone shifted ..." summary (the panel
-// already prints the resulting range) and the community-catch note - the sonar still pulls
-// the zone in computeStrikeZone(), we simply don't display it.
-// Nothing is shifting the zone -> a single "On target" row, no explanation.
-var ZONE_NOTE_HIDDEN = /^(Strike zone shifted|Recent community catches holding)/;
-
-function zoneNotes(zone) {
-    var notes = (zone && zone.notes) ? zone.notes.filter(function (n) {
-        return !ZONE_NOTE_HIDDEN.test(String(n));
-    }) : [];
-    return notes.length ? notes : ['On target'];
-}
+// NOTE (upstream, 2026-09-29): `zone.notes` is still produced for EVERY reason the zone
+// moved — it is the audit trail paintSimHud() writes to logDebug. It is deliberately NO
+// LONGER the display: the HUD prints one cohesive fishOutlook() paragraph instead. The
+// "Strike zone shifted ..." summary and the community-catch note therefore need no display
+// filter any more (the old `zoneNotes()` + `ZONE_NOTE_HIDDEN` pair was removed with the
+// bullet list); the outlook never mentions either.
 
 // THE shared colour grade: d = 0 (best / on target) -> 1 (worst / furthest from the target).
 // Green (hue 140) at the target, yellow (52) at the halfway point, red (0) at the edge and
@@ -330,52 +332,76 @@ function zoneTrend(zone) {
 }
 
 // ==================================================================================
-// WHERE TO FISH (WS-8a)
-// The zone says HOW HIGH in the column the fish are holding. This says WHERE that is:
-// the depth of water they are sitting in, the piece of water that holds them (the lie),
-// and what the light and the colour are doing to them - then, when a rig height is
-// supplied, whether the angler's line is in that band. Shown ON and OFF target.
+// WHERE THE FISH ARE (WS-8a, restructured 2026-09-29 on a direct user ask)
+//
+// The zone says HOW HIGH in the column the fish are holding. `positionParts()` turns that
+// into the three plain sentences the angler actually reads: the depth of water they are
+// sitting in, the piece of water that holds them (the lie), and how the angler's own line
+// sits against that band. `whereToFish()` is the DETAIL string (provenance-heavy, used by
+// the debug trail and the technique's return); `fishOutlook()` is the one cohesive
+// SUMMARY the HUD prints under the two banners.
 //
 // Every clause is measured or omitted. No measured cross-section -> no depth number
-// (never a made-up spot depth); no measured velocity curve -> no lie call. The bullets
-// stay short single clauses because they ride the same <ul> as the zone reasons.
+// (never a made-up spot depth); no measured velocity curve -> no lie call.
 // ==================================================================================
 var LIE_SOFT_FTS = 1.5;     // true ft/s at the gauge: below this the bed is soft
 var LIE_FAST_FTS = 3.0;     // above this the bed is pushy
 
-function whereToFish(zone, hgt) {
+function positionParts(zone, hgt) {
     var flow = (typeof getCurrentFlow === 'function') ? getCurrentFlow() : null;
     var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
     var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
     var near = (typeof velocityAtSpot === 'function') ? velocityAtSpot(flow, siteId) : null;
-    var parts = [];
-    var mid = zone ? (zone.min + zone.max) / 2 : null;
+    var mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
+    var out = { depth: null, lie: null, liePlain: null, line: null, depthParts: null, bed: null, unc: null };
 
-    // 1. Depth of water they are holding in, from the gauge's measured cross-section.
-    // The uncertainty is the WORSE of the two honest spreads: the same-reach factor
-    // (the spot is not the gauge) and the cross-section's own row-to-row spread. Kept
-    // tight - the row has to read inside a half-width HUD panel.
+    // Depth of water they are holding in, from the gauge's measured cross-section. The
+    // uncertainty is the WORSE of the two honest spreads: the same-reach factor (the spot
+    // is not the gauge) and the cross-section's own row-to-row spread.
     if (spot && spot.value > 0 && mid !== null) {
-        var unc = Math.max(spot.uncertainty || 0, spot.spreadPct || 0);
-        parts.push('hold ~' + mid.toFixed(1) + '" up in ~' + spot.value.toFixed(1) + ' ft of water (gauge cross-section, \u00b1' +
-            Math.round(unc * 100) + '%)');
+        out.unc = Math.max(spot.uncertainty || 0, spot.spreadPct || 0);
+        out.depthParts = { midIn: mid, ft: spot.value, pct: Math.round(out.unc * 100), flow: flow };
+        out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + spot.value.toFixed(1) +
+            ' ft of water (gauge cross-section, \u00b1' + out.depthParts.pct + '%)';
     } else {
-        parts.push('no measured cross-section at this gauge, so no spot depth');
+        out.depth = 'no measured cross-section at this gauge, so no spot depth';
     }
 
-    // 2. The lie: what the bed velocity says about the water holding them.
+    // The lie: what the bed velocity says about the water holding them. TWO forms - `lie`
+    // carries the number for the detail string, `liePlain` is the outcome-first sentence the
+    // summary prints (an angler reading the summary does not need the gauge's ft/s).
     if (near && typeof near.bottom === 'number') {
-        var v = near.bottom;
-        if (v > LIE_FAST_FTS) {
-            parts.push('bed ' + v.toFixed(1) + ' ft/s: the lie is behind boulders, wood and cut banks');
-        } else if (v >= LIE_SOFT_FTS) {
-            parts.push('bed ' + v.toFixed(1) + ' ft/s: the lie is the seam beside the current tongue');
+        out.bed = near.bottom;
+        if (near.bottom > LIE_FAST_FTS) {
+            out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: the lie is behind boulders, wood and cut banks';
+            out.liePlain = 'Pushy water, so look for them behind boulders, wood and cut banks';
+        } else if (near.bottom >= LIE_SOFT_FTS) {
+            out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: the lie is the seam beside the current tongue';
+            out.liePlain = 'Moderate flow, so look for them in the seam beside the current tongue';
         } else {
-            parts.push('bed ' + v.toFixed(1) + ' ft/s: soft water, fish spread over the flats and riffle lips');
+            out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: soft water, fish spread over the flats and riffle lips';
+            out.liePlain = 'Soft water, so they are spread over the flats and riffle lips';
         }
     }
 
-    // 3. Colour + light - only when the own gauge / the report's reference hour carry them.
+    // The angler's line against that band (only when a solved height is supplied).
+    if (mid !== null && typeof hgt === 'number' && isFinite(hgt) && zone) {
+        if (hgt >= zone.min && hgt <= zone.max) {
+            out.line = 'your line at ' + hgt.toFixed(1) + '" is in that band';
+        } else {
+            out.line = 'your line at ' + hgt.toFixed(1) + '" is ' + Math.abs(hgt - mid).toFixed(1) + '" ' +
+                (hgt < zone.min ? 'below' : 'above') + ' that band';
+        }
+    }
+    return out;
+}
+
+// The DETAIL string: every clause with its provenance, for the debug trail and the
+// technique's return value. NOT what the HUD prints any more (see fishOutlook).
+function whereToFish(zone, hgt) {
+    var p = positionParts(zone, hgt);
+    var parts = [p.depth];
+    if (p.lie) parts.push(p.lie);
     var turb = turbidityTerm();
     if (turb) {
         parts.push(turb.label + ' water (' + turb.fnu.toFixed(1) + ' FNU) puts them ' +
@@ -385,41 +411,95 @@ function whereToFish(zone, hgt) {
     var light = block ? lightTerm(block, getActiveReport()) : null;
     if (light) parts.push(light.label + ' at ' + (block.label || 'this hour') + ' keeps them ' +
         (light.shift > 0 ? 'up' : 'deep'));
-
-    // 4. The angler's line against that band (only when a solved height is supplied).
-    if (zone && mid !== null && typeof hgt === 'number' && isFinite(hgt)) {
-        if (hgt >= zone.min && hgt <= zone.max) {
-            parts.push('your line at ' + hgt.toFixed(1) + '" is in that band');
-        } else {
-            parts.push('your line at ' + hgt.toFixed(1) + '" is ' + Math.abs(hgt - mid).toFixed(1) + '" ' +
-                (hgt < zone.min ? 'below' : 'above') + ' that band');
-        }
-    }
-
+    if (p.line) parts.push(p.line);
     return 'Where to fish: ' + parts.join('; ') + '.';
 }
 
-// Paint the WHOLE left panel from a zone: the estimate (coloured by the gradient) and ONE
-// BULLET PER REASON. Shared by the live preview below and by runSim()'s paintSimHud(), so the
-// panel can never be half-updated. `where` (optional) is a precomputed whereToFish() row, so
-// the solved HUD line and the preview line can never disagree.
-function paintZoneHud(zone, where) {
+// ==================================================================================
+// THE SUMMARY (direct user ask, 2026-09-29): ONE cohesive read of what the fish are
+// doing and where, instead of a bullet per technical reason plus a where-to-fish row.
+//
+//   sentence 1  the OUTCOME (how the day has them behaving)
+//   sentence 2  the two biggest drivers, in plain words
+//   sentence 3  where they are: the depth of water they are holding in
+//   sentence 4  the lie that water is (omitted when no velocity curve exists)
+//   sentence 5  the angler's own line against that band (only once a rig is solved)
+//
+// Deliberately no raw numbers beyond the ones that mean something (depth, line height) and
+// no community/sonar wording. The full per-term reasons still exist on `zone.notes` and are
+// written to the debug trail by paintSimHud(), so nothing is lost - it is just not shouted
+// at an angler who is holding a rod.
+// ==================================================================================
+var OUTLOOK_BANDS = [
+    { min:  2.0,      text: 'Fish are up and feeding hard.' },
+    { min:  0.7,      text: 'Fish are sitting above the base zone and feeding.' },
+    { min: -0.7,      text: 'Fish are right where you would expect them today.' },
+    { min: -2.0,      text: 'Fish are pinned down and slow to move.' },
+    { min: -Infinity, text: 'Fish are deep and locked up.' }
+];
+
+function fishOutlook(zone, hgt) {
+    var z = zone || { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, terms: [], report: null };
+    var shift = Number(z.shift) || 0;
+    var sentences = [];
+
+    // 1. The outcome - and, when there is no report at all, that is the whole story.
+    if (!z.report) {
+        sentences.push('No water report loaded yet, so this is the plain 4" - 12" base zone.');
+    } else {
+        var lead = OUTLOOK_BANDS[OUTLOOK_BANDS.length - 1].text;
+        for (var i = 0; i < OUTLOOK_BANDS.length; i++) {
+            if (shift >= OUTLOOK_BANDS[i].min) { lead = OUTLOOK_BANDS[i].text; break; }
+        }
+        sentences.push(lead);
+
+        // 2. The why - the two strongest drivers, named the way an angler would.
+        var terms = (z.terms || []).slice().sort(function (a, b) {
+            return Math.abs(b.shift) - Math.abs(a.shift);
+        });
+        var drivers = [];
+        for (var t = 0; t < terms.length && drivers.length < 2; t++) {
+            if (terms[t].driver && drivers.indexOf(terms[t].driver) === -1) drivers.push(terms[t].driver);
+        }
+        if (drivers.length === 2) {
+            sentences.push('Most of that is ' + drivers[0] + ' and ' + drivers[1] + '.');
+        } else if (drivers.length === 1) {
+            sentences.push('Most of that is ' + drivers[0] + '.');
+        } else {
+            sentences.push('Nothing in the conditions is pushing them either way.');
+        }
+    }
+
+    // 3 + 4. Where they are, and where the angler's line sits.
+    var p = positionParts(z, hgt);
+    if (p.depthParts) {
+        sentences.push('They are holding about ' + p.depthParts.midIn.toFixed(1) + '" off the bed, in ~' +
+            p.depthParts.ft.toFixed(1) + ' ft of water at ' + Math.round(p.depthParts.flow) +
+            ' CFS (measured at the gauge, \u00b1' + p.depthParts.pct + '%).');
+    } else {
+        sentences.push('There is no depth measurement for this gauge, so there is no depth to quote.');
+    }
+    if (p.liePlain) sentences.push(p.liePlain + '.');
+    if (p.line) sentences.push(p.line.charAt(0).toUpperCase() + p.line.slice(1) + '.');
+
+    return sentences.join(' ');
+}
+
+// Paint the HUD's zone banner (number + gradient colour) and the ONE summary paragraph
+// under the banners. Shared by the live preview below and by runSim()'s paintSimHud(), so
+// the banner and the summary can never disagree. `outlook` (optional) is a precomputed
+// fishOutlook() string so the solved HUD and the preview match exactly.
+function paintZoneHud(zone, outlook) {
     var trend = zoneTrend(zone);
     var range = document.getElementById('hud-zone');
     if (range) {
         range.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
         range.style.color = trend.color;          // the gradient IS the estimate's colour
     }
-    var ul = document.getElementById('hud-zone-notes');
-    if (ul) {
-        ul.innerHTML = '';
-        var rows = zoneNotes(zone);
-        if (typeof whereToFish === 'function') rows = rows.concat([where || whereToFish(zone)]);
-        rows.forEach(function (n) {
-            var li = document.createElement('li');   // plain li: same bullets as the line-height panel
-            li.textContent = n;                    // data text -> textContent, never innerHTML
-            ul.appendChild(li);
-        });
+    var where = document.getElementById('hud-where');
+    if (where) {
+        var text = outlook || ((typeof fishOutlook === 'function') ? fishOutlook(zone) : '');
+        where.textContent = text;                 // data text -> textContent, never innerHTML
     }
 }
 

@@ -6,6 +6,12 @@
 - Pipe verification output through `tail -n 40` / `grep`; only dump full logs on failure.
 - Batch independent reads/searches/edits into one tool call.
 
+# Git (standing instruction from user, 2026-09-29)
+- The words **"commit" and "push" mean the SAME thing: stage everything, commit, and push
+  to `origin`.** Never commit without pushing, never push without committing, and never stop
+  at a local commit to ask whether to push.
+- Write the commit message from the actual change; reference the issue numbers it addresses.
+
 # Workflow
 - Plan mode: explore the minimum, record the plan as `- [ ]` boxes in
   `memory-bank/activeContext.md` with file paths, one-line Potential Bugs, and a

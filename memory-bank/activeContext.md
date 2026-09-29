@@ -26,6 +26,10 @@ WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded
 NEXT: execute **WS-3** (fully specified below — the two sanity assertions it must move are
 named). Then WS-4 (per-day weather) and WS-5 (private favourite spots + migration).
 
+## Instruction ledger — chat asks persisted to `.clinerules`
+- [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`
+      §Git. Never stop at a local commit; never ask whether to push.
+
 ## ACTIVE — GitHub issues #1–#3 (approved plan 2026-09-29)
 
 Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Verify.

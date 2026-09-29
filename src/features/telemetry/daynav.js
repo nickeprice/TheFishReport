@@ -160,6 +160,10 @@ function updateActiveDateUI() {
 
     // Keep the Gear Sim strike zone in step with the day being viewed
     if (typeof refreshZonePreview === 'function') refreshZonePreview();
+
+    // WS-4: the day's own weather (temp / wind / precip / cloud pills) is painted for THIS
+    // day's card only, so cycling the days actually changes what the pills say.
+    if (rep && typeof applyReportWeather === 'function') applyReportWeather(rep);
 }
 
 /**

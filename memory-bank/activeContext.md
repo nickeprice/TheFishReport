@@ -207,7 +207,7 @@ change.
   Verified: `node sanity_pass.js` **120/120**; `sw.js` `v2.03.20` — `zoneTrend()` returns
   `{offset, ratio, color}`, both panels render plain `<li>` at one style, and the new guard proves
   the strip/variant cannot return.
-- [ ] Phase 2 — WS-4 per-day weather: `api/water_report.py` (add `cloudcover,wind_speed_10m,
+- [x] Phase 2 — WS-4 per-day weather: `api/water_report.py` (add `cloudcover,wind_speed_10m,
   wind_direction_10m` to the hourly request; per-day REFERENCE HOUR: today = hour containing now,
   future = `lines_in` hour / sunrise / 12 PM; new `weather_hour` object + `weather_hourly` 24 rows;
   keep `rain`/`cloud_pct` for physics — `press_delta` re-anchors to the reference hour, a deliberate
@@ -216,8 +216,12 @@ change.
   weather on day change), `index.html`/`styles.css` (popup + swipeable strip), `sanity_pass.js`.
   Potential bug: per-day fields must stay `null` when the hourly slice is missing → `--`, never
   fabricated; the repaint must NOT touch the other cards.
-  Verify: `python3 -m py_compile api/water_report.py`; `node sanity_pass.js --quiet`; manual
-  `/api/water_report` → 4 distinct blocks.
+  Verified: live `/api/water_report` → 4 distinct days (`3-4 PM / 6-7 AM / 6-7 AM / 6-7 AM`,
+  temps 63/51/46/57°F, per-day wind+compass, 24 hourly rows each); sanity **122/122** with a new
+  per-day assertion that also cross-checks the popup's 6 metric keys against the payload;
+  `sw.js` `v2.03.21`. Two bugs caught and fixed while verifying: `compass_from_deg` was clobbered by
+  the helper insertion (the module still compiled because the orphan body was absorbed into the
+  function above), and `pressure` was double-converted (fixed by keeping `pressure_hpa` raw).
 - [ ] Phase 3 — WS-8a scientific model: `inputs.js` (thermal-optimum curve: `<45` torpid · `45–50`
   cool · `50–60` optimal · `60–65` warming · `>65` thermal stress — replaces `≥55 → "rise"`),
   `zone.js` (demote the ±3.0/3.5 pressure shift; add turbidity [own-gauge, null → no term] and

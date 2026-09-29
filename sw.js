@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.20';
+const VERSION = 'v2.03.21';
 const SHELL_CACHE = 'tfr-shell-' + VERSION;
 const API_CACHE = 'tfr-api-' + VERSION;
 const ASSET_CACHE = 'tfr-assets-' + VERSION;
@@ -53,6 +53,7 @@ const SHELL_FILES = [
     '/src/features/telemetry/hero.js',
     '/src/features/telemetry/daynav.js',
     '/src/features/telemetry/report.js',
+    '/src/features/telemetry/hourly.js',
     '/src/features/gear-sim/inputs.js',
     '/src/features/gear-sim/continuity.js',
     '/src/features/gear-sim/physics.js',

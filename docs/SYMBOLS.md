@@ -82,6 +82,8 @@ this file**, or the pass fails.
 - **daynav.js** — `activeDateOffset`, `reportsData`, `stepDate()`, `showDay()`,
   `updateActiveDateUI()`, `renderWaterReportEmptyState()`, `legalHoursLabel()`
 - **report.js** — `loadWaterReport(silent)`
+- **hourly.js** — `HOURLY_METRICS`, `openHourlyPopup(metricKey)`, `closeHourlyPopup()` — the
+  tap-a-pill 24-hour strip (WS-4), auto-scrolled to the day's reference hour
 
 ## src/features/gear-sim
 - **inputs.js** — `currentStats`, `BASE_ZONE_MIN`/`BASE_ZONE_MAX`, `getNum`/`getStr`/`getGPS`,

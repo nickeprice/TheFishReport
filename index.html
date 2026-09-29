@@ -73,6 +73,17 @@
     </div>
 </div>
 
+<!-- HOURLY POPUP (WS-4): tap any of the six weather pills on a day card for that day's own
+     24-hour strip (the reference hour is outlined; the strip swipes left/right). -->
+<div id="hourly-modal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title" id="hourly-title">Hourly</h2>
+        <p id="hourly-sub" class="hourly-sub"></p>
+        <div id="hourly-strip" class="hourly-strip"></div>
+        <button class="btn-main" onclick="closeHourlyPopup()" style="background-color: #333; color: #fff; margin-top: 10px; min-height: 44px;">CLOSE</button>
+    </div>
+</div>
+
 <!-- TOOL 1: WATER REPORT -->
 <div id="tab-water-report" class="tab-content tab-active">
     <div id="date-reg-header" class="date-reg-header">
@@ -417,6 +428,7 @@
 <script src="src/features/telemetry/hero.js"></script>
 <script src="src/features/telemetry/daynav.js"></script>
 <script src="src/features/telemetry/report.js"></script>
+<script src="src/features/telemetry/hourly.js"></script>
 <script src="src/features/gear-sim/inputs.js"></script>
 <script src="src/features/gear-sim/continuity.js"></script>
 <script src="src/features/gear-sim/physics.js"></script>

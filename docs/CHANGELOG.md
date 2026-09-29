@@ -4,6 +4,32 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — WS-4: weather is PER-DAY (reference hour) + tappable hourly popup
+`api/water_report.py` no longer stamps one `current` snapshot onto all four days. Each day now
+reports ONE **reference hour block**: today = the hour containing NOW (`2:37pm -> "3-4 PM"`), a
+later day = the hour containing the **legal start** (`lines_in`, so `6-7 AM` for a daylight river
+starting 6:05), a **24hr** river = sunrise, and an unverified window = midday. Every pill
+(barometer, precip %, precip vol, cloud, temp, wind) reads THAT hour, so the six cells finally
+describe the same moment — and they change as you cycle days. New payload fields per day:
+`weather_hour` (the block: label/iso/values) and `weather_hourly` (the day's own 24 hourly rows),
+with `pressure_hpa` kept raw so the existing `hpa_to_inhg()` payload conversion cannot
+double-convert (that bug showed 30.02 inHg as 0.89 mid-implementation). Physics is untouched:
+`rain` stays the DAILY total (freshet), `cloud_pct` now prefers the reference hour and falls back
+to the daily mean, and `press_delta` anchors to the reference hour instead of midnight.
+Frontend: **wind shows the direction text as well as the arrow** (`↗ WSW 11 mph`, in both the
+render and the live paint), each weather pill's sub-line names its hour block, **Precip Vol is the
+hour's volume** (the day total moved into the popup), the six pills are tappable, and
+`applyReportWeather()` now paints **only the active day's card** — the old `querySelectorAll`
+stamped `reports[0]` over every card, which is precisely why cycling the days never changed the
+numbers. New `src/features/telemetry/hourly.js` (`openHourlyPopup(metricKey)`) renders that day's
+**24-hour strip**: the reference hour outlined, the row auto-scrolled to it, swipe/scroll
+left-right, and a `>=30%` hour tinted on the Precip-chance strip (the "when / how long" the old
+`in 3H` hint only showed for a >=30% spell). `sw.js` VERSION → `v2.03.21`. **122/122 GREEN** — a new
+assertion proves the weather is per-day (distinct labels + temps across the four days, 24 rows
+each) and cross-checks the popup's six metric keys against the payload keys.
+- Key files: `api/water_report.py`, `src/features/telemetry/{report,hourly,daynav}.js`,
+  `src/services/water.js`, `index.html`, `src/styles.css`, `sanity_pass.js`, `docs/SYMBOLS.md`.
+
 ## 2026-09-29 — HUD correction: gradient on the estimate only + one bullet style
 Two direct user corrections. The Strike Zone Estimate keeps its colour gradient on the **number**, but
 the separate red-yellow-green strand with the sliding marker is **gone** (`index.html` strip +

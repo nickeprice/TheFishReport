@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import re
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler
@@ -151,6 +152,134 @@ def precip_phase(hourly, time_arr, ref_iso):
         return 'none', '', ''
     except Exception:
         return 'none', '', ''
+
+def legal_window(rule, sunrise_dt, sunset_dt, dt):
+    """(lines_in, lines_out, timeline_in, timeline_out) for one day - NEVER fabricated.
+
+    `legal_hours` is a per-waterbody FACT from the region registry: a 24hr river is open end
+    to end, a daylight river runs sunrise-1h to sunset+1h, and an unknown/custom river has NO
+    verified window (None -> the UI says "check the regulations"). The timeline window is the
+    separate sunlight-based fishing model and keeps its original bounds. Extracted so the
+    per-day WEATHER pick and the legal-hours payload cannot drift apart.
+    """
+    timeline_in, timeline_out = sunrise_dt - timedelta(hours=1), sunset_dt + timedelta(hours=1)
+    if rule == "24hr":
+        return ("12:00 AM", "11:59 PM",
+                dt.replace(hour=0, minute=0, second=0), dt.replace(hour=23, minute=59, second=0))
+    if rule == "daylight":
+        return ((sunrise_dt - timedelta(hours=1)).strftime('%-I:%M %p'),
+                (sunset_dt + timedelta(hours=1)).strftime('%-I:%M %p'),
+                timeline_in, timeline_out)
+    return None, None, timeline_in, timeline_out
+
+def _parse_clock(text, day):
+    """'6:35 AM' + a date -> datetime on that day. None when unparseable (never guessed)."""
+    m = re.match(r'\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])?', str(text or ''))
+    if not m:
+        return None
+    hour, minute = int(m.group(1)), int(m.group(2))
+    ampm = (m.group(3) or '').upper()
+    if ampm == 'PM' and hour != 12: hour += 12
+    elif ampm == 'AM' and hour == 12: hour = 0
+    return day.replace(hour=hour % 24, minute=minute, second=0, microsecond=0)
+
+def reference_hour_dt(dt, now_local, sunrise_dt, lines_in_str, legal_rule):
+    """The hour BLOCK a day reports (WS-4).
+
+      today      -> the hour containing NOW            (2:37pm -> 2-3 PM)
+      later day  -> the hour containing the legal START (when the angler could begin)
+      24hr river -> SUNRISE (no start time exists; the natural first light)
+      unverified -> midday, a neutral reference the UI labels as such
+
+    Uses the LOCAL now from Open-Meteo's `current.time` (the API is asked for
+    America/Los_Angeles), not the server clock, so a UTC server cannot pick the wrong day.
+    """
+    if now_local is not None and dt.date() == now_local.date():
+        return now_local.replace(minute=0, second=0, microsecond=0)
+    if legal_rule == "daylight" and lines_in_str:
+        start = _parse_clock(lines_in_str, dt)
+        if start is not None:
+            return start
+    if sunrise_dt is not None:
+        return sunrise_dt.replace(minute=0, second=0, microsecond=0)
+    return dt.replace(hour=12, minute=0, second=0, microsecond=0)
+
+def _hour_index(time_arr, target_dt):
+    """Index of the hourly row nearest `target_dt` (None when there is nothing to match)."""
+    if not time_arr or target_dt is None:
+        return None
+    best, best_diff = None, None
+    for k, h in enumerate(time_arr):
+        try:
+            d = datetime.fromisoformat(h)
+        except Exception:
+            continue
+        diff = abs((d - target_dt).total_seconds())
+        if best_diff is None or diff < best_diff:
+            best, best_diff = k, diff
+    return best
+
+def _hour_at(hourly, key, idx):
+    """One value out of an hourly array by index; None when absent (never invented)."""
+    arr = (hourly or {}).get(key)
+    if not arr or idx is None or idx < 0 or idx >= len(arr):
+        return None
+    return arr[idx]
+
+def _hour_label(iso):
+    """'2026-09-29T14:00' -> '2-3 PM' (the block the pill describes)."""
+    try:
+        d = datetime.fromisoformat(iso)
+    except Exception:
+        return None
+    end = d + timedelta(hours=1)
+    if d.strftime('%p') == end.strftime('%p'):
+        return d.strftime('%-I') + '-' + end.strftime('%-I %p')
+    return d.strftime('%-I %p') + ' - ' + end.strftime('%-I %p')
+
+def _weather_hour_row(meta, time_arr, idx):
+    """The display weather for ONE hour, unit-converted. Absent fields stay None."""
+    if idx is None or not time_arr or idx >= len(time_arr):
+        return None
+    hourly = (meta or {}).get('hourly') or {}
+    pop = _hour_at(hourly, 'precipitation_probability', idx)
+    precip_mm = _hour_at(hourly, 'precipitation', idx)
+    cloud = _hour_at(hourly, 'cloudcover', idx)
+    press = _hour_at(hourly, 'surface_pressure', idx)
+    temp_c = _hour_at(hourly, 'temperature_2m', idx)
+    wind_kmh = _hour_at(hourly, 'wind_speed_10m', idx)
+    wind_deg = _hour_at(hourly, 'wind_direction_10m', idx)
+    return {
+        "iso": time_arr[idx],
+        "label": _hour_label(time_arr[idx]),
+        "air_temp_f": (round(temp_c * 9.0 / 5.0 + 32.0, 1) if temp_c is not None else None),
+        "wind_speed_mph": (round(wind_kmh * 0.621371, 1) if wind_kmh is not None else None),
+        "wind_dir_deg": wind_deg,
+        "wind_dir_compass": compass_from_deg(wind_deg),
+        "pop_pct": (round(float(pop)) if pop is not None else None),
+        "precip_in": (round(mm_to_in(precip_mm), 2) if precip_mm is not None else None),
+        "cloud_pct": (round(float(cloud)) if cloud is not None else None),
+        "pressure": (round(hpa_to_inhg(press), 2) if press is not None else None),
+        # Raw hPa kept alongside the display value: the report payload converts once more
+        # (hpa_to_inhg) for `pressure` / `press_delta`, so handing it an inHg value would
+        # double-convert (that bug shipped once - 30.02 inHg became 0.89).
+        "pressure_hpa": press,
+    }
+
+def weather_hourly_rows(meta, time_arr, day):
+    """The day's own 24 hourly display rows (the tap-to-expand strip). [] when unavailable."""
+    rows = []
+    for k, iso in enumerate(time_arr or []):
+        try:
+            if datetime.fromisoformat(iso).date() != day.date():
+                continue
+        except Exception:
+            continue
+        row = _weather_hour_row(meta, time_arr, k)
+        if row:
+            rows.append(row)
+    return rows
+
 
 def compass_from_deg(deg):
     """16-point compass label for a bearing in degrees (e.g. 225 -> 'SW')."""
@@ -903,7 +1032,8 @@ def fetch_meteorological_data(lat=LAT, lon=LON):
     meteo_url = (f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
                  f"&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation"
                  f"&daily=sunrise,sunset,moonrise,moonset,cloudcover_mean,precipitation_sum"
-                 f"&hourly=surface_pressure,precipitation_probability,temperature_2m,precipitation&timezone=America%2FLos_Angeles")
+                 f"&hourly=surface_pressure,precipitation_probability,temperature_2m,precipitation"
+                 f",cloudcover,wind_speed_10m,wind_direction_10m&timezone=America%2FLos_Angeles")
     req = urllib.request.Request(meteo_url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
         with urllib.request.urlopen(req, timeout=5, context=SSL_CONTEXT) as res:
@@ -1298,12 +1428,25 @@ class handler(BaseHTTPRequestHandler):
             sunrise_dt, sunset_dt = dt.replace(hour=6, minute=35), dt.replace(hour=19, minute=30)
             moonrise_str, moonset_str = None, None
             cloud_pct, rain_mm, press_curr_hpa, press_prev_hpa = 50, 0.0, 1013.25, 1013.25
-            # "Now" air/wind/precip from Open-Meteo `current` + hourly PoP. These are
-            # fetched once for all 4 days, so they represent NOW, not each day's
-            # own forecast. Absent -> null (frontend renders "--", never guesses).
+            # WEATHER IS PER-DAY (WS-4). Each day reports ONE REFERENCE HOUR - the block the
+            # angler would actually be fishing:
+            #   today      -> the hour containing NOW             (2:37pm -> "2-3 PM")
+            #   later day  -> the hour containing the LEGAL START (when fishing is allowed)
+            #   24hr river -> SUNRISE (no start time exists; the natural first light)
+            #   unverified -> midday, a neutral reference the UI labels as such
+            # Every pill (barometer, precip %, precip vol, cloud, temp, wind) shows THAT hour,
+            # and `weather_hourly` carries the day's own 24 hourly rows for the popup. Absent
+            # fields stay None so the UI renders "--" and never guesses.
             air_temp_f, wind_speed_mph, wind_dir_deg, pop_pct = None, None, None, None
             temp_prev_f, temp_delta_f = None, None
             precip_phase_key, precip_start_text, precip_end_text = 'none', '', ''
+            weather_hour, weather_hourly = None, []
+            time_arr, now_local = [], None
+            legal_rule = legal_hours_for_site(site)
+            if legal_rule not in ("24hr", "daylight"):
+                legal_rule = "unknown" if legal_rule != "custom" else "custom"
+            lines_in_str, lines_out_str, timeline_in, timeline_out = legal_window(
+                legal_rule, sunrise_dt, sunset_dt, dt)
             
             if met_data and 'daily' in met_data and 'hourly' in met_data:
                 try:
@@ -1311,69 +1454,62 @@ class handler(BaseHTTPRequestHandler):
                     sunset_dt = datetime.fromisoformat(met_data['daily']['sunset'][i])
                     moonrise_str = met_data['daily']['moonrise'][i] if 'moonrise' in met_data['daily'] else None
                     moonset_str = met_data['daily']['moonset'][i] if 'moonset' in met_data['daily'] else None
-                    cloud_pct = met_data['daily']['cloudcover_mean'][i]
                     rain_mm = met_data['daily']['precipitation_sum'][i]
                     time_arr = met_data['hourly']['time']
-                    
-                    # OVERHAUL: Dynamic 6-Hour Rolling Pressure Window
-                    target_now = dt.strftime('%Y-%m-%dT%H:00')
-                    target_minus6 = (dt - timedelta(hours=6)).strftime('%Y-%m-%dT%H:00')
-                    
-                    if target_now in time_arr: press_curr_hpa = met_data['hourly']['surface_pressure'][time_arr.index(target_now)]
-                    if target_minus6 in time_arr: press_prev_hpa = met_data['hourly']['surface_pressure'][time_arr.index(target_minus6)]
+                    # The legal window depends on sunrise/sunset, so recompute it now that the
+                    # real solar times have landed (the pre-try values are the offline path).
+                    lines_in_str, lines_out_str, timeline_in, timeline_out = legal_window(
+                        legal_rule, sunrise_dt, sunset_dt, dt)
+                    # LOCAL now from Open-Meteo's own `current.time` (the API is asked for
+                    # America/Los_Angeles): a UTC server must not pick the wrong day.
+                    _cur_ref = met_data.get('current') or {}
+                    if _cur_ref.get('time'):
+                        try: now_local = datetime.fromisoformat(_cur_ref['time'])
+                        except Exception: now_local = None
+                    # 1. Which hour block does this day report? (today = now, later day =
+                    #    the legal start hour, 24hr = sunrise, unverified = midday)
+                    ref_dt = reference_hour_dt(dt, now_local, sunrise_dt, lines_in_str, legal_rule)
+                    ref_idx = _hour_index(time_arr, ref_dt)
 
-                    # Current-conditions object (wind_speed_10m is km/h, temperature
-                    # is Celsius, precipitation is mm by default -> convert).
-                    cur = met_data.get('current') or {}
-                    if cur.get('temperature_2m') is not None:
-                        air_temp_f = round(cur['temperature_2m'] * 9.0 / 5.0 + 32.0, 1)
-                        # Temperature trend vs the SAME station ~3 hours earlier
-                        # (honest: hourly forecast on the same lat/lon, not a guess).
-                        try:
-                            ref_iso = cur.get('time') or time_arr[0]
-                            ref_dt = datetime.fromisoformat(ref_iso)
-                            mins_ago = []
-                            for hi, h in enumerate(time_arr):
-                                cand = datetime.fromisoformat(h)
-                                if cand <= ref_dt:
-                                    mins_ago.append((abs((ref_dt - cand).total_seconds()), hi))
-                            if mins_ago:
-                                mins_ago.sort()
-                                prev_h = mins_ago[0][1]
-                                # Prefer ~3h back if available.
-                                for m, hi in mins_ago:
-                                    if 150 <= m / 60.0 <= 210:
-                                        prev_h = hi; break
-                                prev_c = met_data['hourly']['temperature_2m'][prev_h]
-                                if prev_c is not None:
-                                    temp_prev_f = round(prev_c * 9.0 / 5.0 + 32.0, 1)
-                                    temp_delta_f = round(air_temp_f - temp_prev_f, 1)
-                        except Exception:
-                            temp_delta_f = None
-                    if cur.get('wind_speed_10m') is not None:
-                        wind_speed_mph = round(cur['wind_speed_10m'] * 0.621371, 1)
-                    if cur.get('wind_direction_10m') is not None:
-                        wind_dir_deg = cur['wind_direction_10m']
-                    # Precipitation probability is hourly-only; sample the hour
-                    # nearest to the current observation time.
-                    if 'precipitation_probability' in met_data['hourly'] and time_arr:
-                        try:
-                            stamp = cur.get('time') or time_arr[0]
-                            ref_ms = datetime.fromisoformat(stamp).timestamp()
-                            best_i, best_diff = 0, None
-                            for hi, h in enumerate(time_arr):
-                                diff = abs(datetime.fromisoformat(h).timestamp() - ref_ms)
-                                if best_diff is None or diff < best_diff:
-                                    best_diff, best_i = diff, hi
-                            pp = met_data['hourly']['precipitation_probability'][best_i]
-                            if pp is not None:
-                                pop_pct = round(float(pp))
-                            # Phase hint: 'in 3H' / 'now for 2H' / '' from the same
-                            # hourly probability forecast (never a fabricated time).
-                            precip_phase_key, precip_start_text, precip_end_text = precip_phase(
-                                met_data['hourly'], time_arr, stamp)
-                        except Exception:
-                            pop_pct = None
+                    # 2. That hour's conditions + the day's own 24-row strip.
+                    weather_hour = _weather_hour_row(met_data, time_arr, ref_idx)
+                    weather_hourly = weather_hourly_rows(met_data, time_arr, dt)
+
+                    # 3. Promote the reference hour to the top-level display fields (same key
+                    #    names, so the pills and every existing caller keep working). The DAILY
+                    #    cloud mean is the fallback when that hour carries no cloudcover.
+                    if weather_hour:
+                        air_temp_f = weather_hour['air_temp_f']
+                        wind_speed_mph = weather_hour['wind_speed_mph']
+                        wind_dir_deg = weather_hour['wind_dir_deg']
+                        pop_pct = weather_hour['pop_pct']
+                        cloud_pct = (weather_hour['cloud_pct']
+                                     if weather_hour['cloud_pct'] is not None
+                                     else met_data['daily']['cloudcover_mean'][i])
+                        if weather_hour['pressure_hpa'] is not None:
+                            press_curr_hpa = weather_hour['pressure_hpa']
+
+                    # 4. The 6-hour rolling pressure window now anchors to the SAME reference
+                    #    hour - this is the `press_delta` the strike zone reads.
+                    press_arr = met_data['hourly'].get('surface_pressure') or []
+                    prev_idx = _hour_index(time_arr, ref_dt - timedelta(hours=6))
+                    if prev_idx is not None and prev_idx < len(press_arr) and press_arr[prev_idx] is not None:
+                        press_prev_hpa = press_arr[prev_idx]
+
+                    # 5. Temperature trend: the reference hour vs the SAME station 3 hours
+                    #    earlier (honest - the same hourly forecast, never a guess).
+                    heat_arr = met_data['hourly'].get('temperature_2m') or []
+                    prior_idx = _hour_index(time_arr, ref_dt - timedelta(hours=3))
+                    if (weather_hour and weather_hour['air_temp_f'] is not None and
+                            prior_idx is not None and prior_idx < len(heat_arr) and
+                            heat_arr[prior_idx] is not None):
+                        temp_prev_f = round(heat_arr[prior_idx] * 9.0 / 5.0 + 32.0, 1)
+                        temp_delta_f = round(weather_hour['air_temp_f'] - temp_prev_f, 1)
+
+                    # 6. The precipitation timing story for THIS day's reference hour
+                    #    ('in 3H' / 'now for 2H' / '' - never a fabricated time).
+                    precip_phase_key, precip_start_text, precip_end_text = precip_phase(
+                        met_data['hourly'], time_arr, ref_dt.isoformat())
                 except: pass
 
             rain_in = mm_to_in(rain_mm)
@@ -1392,24 +1528,10 @@ class handler(BaseHTTPRequestHandler):
             env_score, flow_mult, _ = calculate_macro_environment(flow_index, press_curr_inHg, press_prev_inHg, rain_in, lunar_val, is_netting_day)
             
             # --- Legal fishing hours (registry-driven; NEVER fabricated) ------------
-            # `legal_hours` is a per-waterbody FACT from the region registry. The
-            # QUALITY timeline below is a separate sunlight-based fishing model and
-            # keeps its original window, so the hero/peak scoring is unchanged.
-            legal_rule = legal_hours_for_site(site)
-            timeline_in, timeline_out = sunrise_dt - timedelta(hours=1), sunset_dt + timedelta(hours=1)
-            if legal_rule == "24hr":
-                # Night fishing allowed: the day is open end to end.
-                timeline_in = dt.replace(hour=0, minute=0, second=0)
-                timeline_out = dt.replace(hour=23, minute=59, second=0)
-                lines_in_str, lines_out_str = "12:00 AM", "11:59 PM"
-            elif legal_rule == "daylight":
-                lines_in_str = (sunrise_dt - timedelta(hours=1)).strftime('%-I:%M %p')
-                lines_out_str = (sunset_dt + timedelta(hours=1)).strftime('%-I:%M %p')
-            else:
-                # custom (none configured yet) / unknown -> no verified window, so we
-                # report null and the UI says "check the regulations".
-                legal_rule = "unknown" if legal_rule != "custom" else "custom"
-                lines_in_str, lines_out_str = None, None
+            # Already resolved at the TOP of this day's block by legal_window(): the per-day
+            # WEATHER pick needs the legal START hour, so legal_rule + lines_in_str /
+            # lines_out_str + the sunlight-based timeline window are computed BEFORE the
+            # weather extraction. Nothing to recompute here.
             
             upper_dt, lower_dt = None, None
             if moonrise_str and moonset_str:
@@ -1455,6 +1577,10 @@ class handler(BaseHTTPRequestHandler):
                 "air_temp_f": air_temp_f, "wind_speed_mph": wind_speed_mph, "wind_dir_compass": compass_from_deg(wind_dir_deg), "pop_pct": pop_pct,
                 "temp_prev_f": temp_prev_f, "temp_delta_f": temp_delta_f,
                 "precip_phase": precip_phase_key, "precip_start_text": precip_start_text, "precip_end_text": precip_end_text,
+                # WS-4: the reference HOUR this day reports (pills + label) and the day's own
+                # 24 hourly rows for the tap-to-expand popup. `rain` above stays the DAILY
+                # total (the freshet input); `weather_hour['precip_in']` is that hour's volume.
+                "weather_hour": weather_hour, "weather_hourly": weather_hourly,
                 "lunar_icon": lunar_icon, "cloud_pct": cloud_pct,
                 "sunrise": sunrise_dt.strftime('%-I:%M %p'), "sunset": sunset_dt.strftime('%-I:%M %p'),
                 "moon_upper": moon_upper_str, "moon_lower": moon_lower_str,

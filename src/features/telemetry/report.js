@@ -94,12 +94,18 @@ async function loadWaterReport(silent) {
             // Temperature trend arrow + color (same barometer pattern, honest data).
             var tCol = (rep.temp_delta_f > 0.4) ? 'var(--accent-green)' : ((rep.temp_delta_f < -0.4) ? 'var(--accent-red)' : '#ffffff');
             var tArr = (rep.temp_delta_f > 0.4) ? '\u2191' : ((rep.temp_delta_f < -0.4) ? '\u2193' : '\u2014');
-            // Wind: direction arrow + speed (single "mph" unit — FIXES the
-            // duplicate "mphmph" text). 16-point compass -> 8-way arrow.
+            // Wind: direction arrow + SPEED + the 16-point direction TEXT (the user asked for
+            // both: "↗ NE 9 mph"). Single "mph" unit — FIXES the old duplicate "mphmph".
             var WIND_ARROWS = { 'N':'\u2191','NNE':'\u2197','NE':'\u2197','ENE':'\u2197','E':'\u2192','ESE':'\u2198','SE':'\u2198','SSE':'\u2198','S':'\u2193','SSW':'\u2199','SW':'\u2199','WSW':'\u2199','W':'\u2190','WNW':'\u2196','NW':'\u2196','NNW':'\u2196' };
+            var windDirText = rep.wind_dir_compass ? (WIND_ARROWS[rep.wind_dir_compass] + ' ' + rep.wind_dir_compass) : '';
             var windDisplay = (rep.wind_speed_mph != null)
-                ? ((rep.wind_dir_compass ? (WIND_ARROWS[rep.wind_dir_compass] || rep.wind_dir_compass) + ' ' : '') + Math.round(rep.wind_speed_mph) + ' mph')
+                ? ((windDirText ? windDirText + ' ' : '') + Math.round(rep.wind_speed_mph) + ' mph')
                 : '--';
+            // WS-4: every weather pill reports ONE reference HOUR, so its sub-line is that
+            // block ("2-3 PM" today = now; "6-7 AM" on a later day = when fishing can start).
+            var hourLabel = (rep.weather_hour && rep.weather_hour.label) ? rep.weather_hour.label : '';
+            // The pills the angler can tap for the hourly strip (Phase 2b wires the popup).
+            var weatherHour = rep.weather_hour || {};
 
             var cfsVal = (rep.cfs !== null && rep.cfs !== undefined) ? Number(rep.cfs).toLocaleString('en-US') + ' CFS' : '-- CFS';
             var gageVal = (rep.gage !== null && rep.gage !== undefined) ? rep.gage.toFixed(2) + ' ft Gauge Height' : '-- ft Gauge Height';
@@ -147,39 +153,42 @@ async function loadWaterReport(silent) {
                 formatTideRow(rep.tide_chart, rep.tide_curve, rep.tide_points) +
                 '<div class="env-weather-solunar">' +
                   '<div class="env-stat-grid">' +
-                    // Row 1 (Atmospheric): BAROMETER, PRECIP %, PRECIP VOL (each
-                    // with a live timing hint when the forecast supports it)
-                    '<div class="env-badge">' +
+                    // Row 1 (Atmospheric): BAROMETER, PRECIP %, PRECIP VOL - every one of
+                    // these reads the day's REFERENCE HOUR (today = now; a later day = the
+                    // hour fishing can start), and its sub-line NAMES that hour block.
+                    '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pressure\')">' +
                       '<div class="env-badge-val" style="color:' + pCol + ';">' + rep.pressure.toFixed(2) + ' <span style="font-size:10px; font-weight:600;">inHg</span> ' + pArr + '</div>' +
                       // Reserved sub-line slot on EVERY cell so all 9 pills centre
                       // their value/label pair identically (empty = no hint).
-                      '<div class="env-badge-sub"></div>' +
+                      '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Barometer</div>' +
                     '</div>' +
-                    '<div class="env-badge">' +
+                    '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pop_pct\')">' +
                       '<div class="env-badge-val"><span class="precip-pop">' + (rep.pop_pct != null ? rep.pop_pct : '--') + '</span>%</div>' +
-                      '<div class="env-badge-sub">' + (rep.precip_start_text || rep.precip_end_text || '') + '</div>' +
+                      '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Precip %</div>' +
                     '</div>' +
-                    '<div class="env-badge">' +
-                      '<div class="env-badge-val"><span class="precip-vol">' + (rep.rain != null ? rep.rain.toFixed(2) : '--') + '</span>"</div>' +
-                      '<div class="env-badge-sub">' + (rep.precip_start_text || rep.precip_end_text || '') + '</div>' +
+                    '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'precip_in\')">' +
+                      // WS-4: this is the REFERENCE HOUR's precipitation (was the daily total,
+                      // which now lives in the popup and still drives the Gear Sim freshet).
+                      '<div class="env-badge-val"><span class="precip-vol">' + (weatherHour.precip_in != null ? Number(weatherHour.precip_in).toFixed(2) : '--') + '</span>"</div>' +
+                      '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Precip Vol</div>' +
                     '</div>' +
-                    // Row 2: CLOUD%, TEMP (trend arrow), WIND (direction arrow)
-                    '<div class="env-badge">' +
+                    // Row 2: CLOUD%, TEMP (trend arrow), WIND (direction arrow + text)
+                    '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'cloud_pct\')">' +
                       '<div class="env-badge-val">' + rep.cloud_pct + '%</div>' +
-                      '<div class="env-badge-sub"></div>' +
+                      '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Cloud Cover</div>' +
                     '</div>' +
-                    '<div class="env-badge">' +
+                    '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'air_temp_f\')">' +
                       '<div class="env-badge-val" style="color:' + tCol + ';"><span class="air-temp">' + (rep.air_temp_f != null ? Math.round(rep.air_temp_f) : '--') + '</span>° ' + tArr + '</div>' +
-                      '<div class="env-badge-sub"></div>' +
+                      '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Temp</div>' +
                     '</div>' +
-                    '<div class="env-badge">' +
+                    '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'wind_speed_mph\')">' +
                       '<div class="env-badge-val"><span class="wind-val">' + windDisplay + '</span></div>' +
-                      '<div class="env-badge-sub"></div>' +
+                      '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Wind</div>' +
                     '</div>' +
                     // Row 3: SUNRISE/SUNSET (split), MOON PHASE, SOLUNAR
@@ -264,10 +273,12 @@ async function loadWaterReport(silent) {
         ]).then(function () {
             logDebug('Telemetry batch settled (CFS momentum)', 'NET');
         });
-        // "Now" surface conditions (air/wind/precip) are painted FROM the first
-        // report day (backend Open-Meteo `current`) — no client-side Open-Meteo call.
-        if (reports && reports[0] && typeof applyReportWeather === 'function') {
-            applyReportWeather(reports[0]);
+        // WS-4: each day's card already carries ITS OWN reference-hour weather (rendered
+        // above from that day's payload), so this only re-paints the ACTIVE day (and it is
+        // what makes the day switch repaint in updateActiveDateUI).
+        var activeRep = reports[Math.min(Math.max(activeDateOffset, 0), reports.length - 1)];
+        if (activeRep && typeof applyReportWeather === 'function') {
+            applyReportWeather(activeRep);
         }
     } catch(e) {
         logDebug("API Error: " + e.message, "ERR");

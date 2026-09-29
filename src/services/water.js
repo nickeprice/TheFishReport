@@ -111,8 +111,12 @@ function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
 // Surface "now" conditions painted FROM the water-report payload (since
 // Commit 2.1f the backend's Open-Meteo request includes `current` readings, so
 // the client no longer calls Open-Meteo directly). Also stashes the wind for
-// the catch-log env enrichment (window.currentWindMph / currentWindDir) and
-// paints the 6 stat-grid placeholders that are not server-rendered.
+// the catch-log env enrichment (window.currentWindMph / currentWindDir).
+//
+// WS-4: this paints the ACTIVE DAY'S CARD ONLY. It used to querySelectorAll across every
+// day card, which stamped reports[0]'s weather onto all of them - that is exactly why
+// cycling the days never changed the numbers. Pass the day's own rep (or none, and the card
+// it belongs to is skipped) and it repaints just that card.
 function applyReportWeather(rep) {
     if (!rep) return;
     var WIND_ARROWS = { 'N':'\u2191','NNE':'\u2197','NE':'\u2197','ENE':'\u2197','E':'\u2192','ESE':'\u2198','SE':'\u2198','SSE':'\u2198','S':'\u2193','SSW':'\u2199','SW':'\u2199','WSW':'\u2199','W':'\u2190','WNW':'\u2196','NW':'\u2196','NNW':'\u2196' };
@@ -120,6 +124,10 @@ function applyReportWeather(rep) {
     var wSpeed = (rep.wind_speed_mph !== undefined && rep.wind_speed_mph !== null && !isNaN(rep.wind_speed_mph)) ? Number(rep.wind_speed_mph) : null;
     var wDir = (rep.wind_dir_compass !== undefined && rep.wind_dir_compass !== null) ? rep.wind_dir_compass : null;
     var pop = (rep.pop_pct !== undefined && rep.pop_pct !== null) ? rep.pop_pct : null;
+    var hour = rep.weather_hour || {};
+    var hourPv = (hour.precip_in !== undefined && hour.precip_in !== null) ? Number(hour.precip_in).toFixed(2) : null;
+    var scope = (rep.id && document.getElementById(rep.id)) || null;
+    if (!scope) return;                       // card not in the DOM (yet) -> nothing to paint
 
     if (wSpeed != null) {
         window.currentWindMph = wSpeed;
@@ -127,17 +135,17 @@ function applyReportWeather(rep) {
     }
 
     if (airT != null) {
-        document.querySelectorAll('.air-temp').forEach(function (el) { el.innerText = airT; });
+        scope.querySelectorAll('.air-temp').forEach(function (el) { el.innerText = airT; });
     }
     if (wSpeed != null) {
-        // The pill markup now renders a single "mph" unit; this just paints the
-        // arrow + value (fixes the old double "mphmph" from pill + this line).
-        var windTxt = (wDir ? (WIND_ARROWS[wDir] || wDir) + ' ' : '') + Math.round(wSpeed) + ' mph';
-        document.querySelectorAll('.wind-val').forEach(function (el) { el.innerText = windTxt; });
+        // Arrow + the 16-point direction TEXT + the single "mph" unit.
+        var windTxt = (wDir ? (WIND_ARROWS[wDir] || wDir) + ' ' + wDir + ' ' : '') + Math.round(wSpeed) + ' mph';
+        scope.querySelectorAll('.wind-val').forEach(function (el) { el.innerText = windTxt; });
     }
-    document.querySelectorAll('.precip-pop').forEach(function (el) { el.innerText = (pop != null) ? pop : '--'; });
+    scope.querySelectorAll('.precip-pop').forEach(function (el) { el.innerText = (pop != null) ? pop : '--'; });
+    scope.querySelectorAll('.precip-vol').forEach(function (el) { el.innerText = (hourPv != null) ? hourPv : '--'; });
 
-    logDebug('Weather painted from report: Air ' + (airT == null ? '--' : airT) + 'F, Wind ' + (wSpeed == null ? '--' : windTxt) + ', PoP ' + (pop == null ? '--' : pop) + '%', 'NET');
+    logDebug('Weather painted (' + (rep.title || rep.id) + '): Air ' + (airT == null ? '--' : airT) + 'F, Wind ' + (wSpeed == null ? '--' : Math.round(wSpeed) + ' mph ' + (wDir || '')) + ', PoP ' + (pop == null ? '--' : pop) + '%', 'NET');
 }
 
 // --- PHASE 2: HATCHERY ESCAPEMENT TRACKING ---

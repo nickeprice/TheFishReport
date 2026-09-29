@@ -559,6 +559,30 @@ async function httpChecks() {
     (reports.length === 4 && day0.tide_curve && day0.species_calendar)
       ? ok('API returns 4 report days with tide_curve + species_calendar', `days=${reports.length}`)
       : fail('API returns 4 report days with tide_curve + species_calendar', `days=${reports.length}`);
+
+    // --- WS-4: WEATHER IS PER-DAY, NOT ONE "NOW" SNAPSHOT ----------------------------
+    // Every day must carry its OWN reference-hour weather plus its own 24 hourly rows, the
+    // pill label must NAME that hour block ("3-4 PM" today, "6-7 AM" once fishing can start),
+    // and the days must actually DIFFER - a single snapshot stamped on all four is the bug
+    // this replaced. The popup's metric keys are cross-checked against the payload here, so
+    // a renamed field cannot silently break a pill.
+    {
+      const wh = reports.map((d) => d.weather_hour || null);
+      const labels = wh.map((h) => (h && h.label) || '--');
+      const temps = reports.map((d) => d.air_temp_f);
+      const rowKeys = Object.keys((reports[0].weather_hourly || [])[0] || {});
+      const hourlySrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'telemetry', 'hourly.js'), 'utf8');
+      const popupKeys = [...hourlySrc.matchAll(/^\s{4}'([a-z_]+)':/gm)].map((m) => m[1]);
+      const perDay = wh.every((h) => h && h.label && h.iso) &&
+        reports.every((d) => Array.isArray(d.weather_hourly) && d.weather_hourly.length === 24);
+      const distinct = new Set(labels).size > 1 && new Set(temps).size > 1;
+      const keysOk = popupKeys.length === 6 && popupKeys.every((k) => rowKeys.includes(k));
+      (perDay && distinct && keysOk)
+        ? ok('weather is per-day (reference hour + 24 hourly rows)',
+             `${labels.join(' / ')} · temps ${temps.map((t) => Math.round(t)).join('/')}° · popup keys covered`)
+        : fail('weather is per-day (reference hour + 24 hourly rows)',
+               `perDay=${perDay} distinct=${distinct} keysOk=${keysOk} labels=[${labels.join(',')}] rows=${reports.map((d) => (d.weather_hourly || []).length).join(',')}`);
+    }
     // Own-gauge water quality: the report exposes water_temp_f + turbidity_fnu
     // (may be null when the station doesn't report them — the UI hides then).
     ('water_temp_f' in day0 && 'turbidity_fnu' in day0)

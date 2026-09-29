@@ -182,6 +182,60 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       `docs/tackle_measurements.csv` deliberately keeps its `cheater-12` measurement row.
       Verified: sanity **120/120** (`v2.03.19`) incl. a new assertion for all three facts.
 
+## CURRENT SPRINT — WS-4 weather + WS-8a science (approved 2026-09-29, Act mode)
+
+Full outline agreed with the user before acting. Execute in order; mark `- [x]` only after the
+Verify step passes; **commit + push at each phase end**; bump `sw.js` VERSION when shell files
+change.
+
+### LOCKED DECISIONS
+- WS-7 community reading = the sonar NOTE is hidden (sonar still moves the zone); the Catch Log
+  board is untouched.
+- Trend line: REMOVE the `.zone-trend` strip/marker; KEEP the gradient on the estimate number.
+- Bullets: both panels unify to 0.68rem / `#d1d5db` (drop the dim `.hud-note` variant).
+- Precip Vol pill = HOURLY (that block's precip); daily total stays internal for the Gear Sim.
+- 24hr river reference hour = SUNRISE (fallback 6 AM).
+- Wind = arrow AND direction text (`↗ NE 9 mph`).
+- Popup = clicked metric only, full 24-HOUR swipeable strip, auto-scrolled to the reference hour.
+- Depth: derive `D = A/W`, cross-check `D = Q/(W·V)`, expose `spotDepthFt` as a same-reach estimate.
+- "Where to fish" line shows BOTH on- and off-target.
+- [x] Phase 1 — WS-7 corrections: `index.html` (delete `.zone-trend` + `#hud-zone-mark`, static note →
+  plain `<li>`), `src/styles.css` (delete `.zone-trend*` and `.hud-changes li.hud-note`), `zone.js`
+  (`paintZoneHud` drops the marker, keeps the number colour; `zoneTrend` drops `pct`; plain `<li>`),
+  `sanity_pass.js` (keep the colour-gradient checks, drop the marker-% checks, add "no `.zone-trend`
+  / no `.hud-note`" guards), `sw.js` VERSION.
+  Verified: `node sanity_pass.js` **120/120**; `sw.js` `v2.03.20` — `zoneTrend()` returns
+  `{offset, ratio, color}`, both panels render plain `<li>` at one style, and the new guard proves
+  the strip/variant cannot return.
+- [ ] Phase 2 — WS-4 per-day weather: `api/water_report.py` (add `cloudcover,wind_speed_10m,
+  wind_direction_10m` to the hourly request; per-day REFERENCE HOUR: today = hour containing now,
+  future = `lines_in` hour / sunrise / 12 PM; new `weather_hour` object + `weather_hourly` 24 rows;
+  keep `rain`/`cloud_pct` for physics — `press_delta` re-anchors to the reference hour, a deliberate
+  change further demoted in WS-8a), `report.js` (block-label sub-line, wind `↗ NE 9 mph`, tappable
+  pill), `water.js` (repaint scoped to the ACTIVE card + popup renderer), `daynav.js` (re-paint
+  weather on day change), `index.html`/`styles.css` (popup + swipeable strip), `sanity_pass.js`.
+  Potential bug: per-day fields must stay `null` when the hourly slice is missing → `--`, never
+  fabricated; the repaint must NOT touch the other cards.
+  Verify: `python3 -m py_compile api/water_report.py`; `node sanity_pass.js --quiet`; manual
+  `/api/water_report` → 4 distinct blocks.
+- [ ] Phase 3 — WS-8a scientific model: `inputs.js` (thermal-optimum curve: `<45` torpid · `45–50`
+  cool · `50–60` optimal · `60–65` warming · `>65` thermal stress — replaces `≥55 → "rise"`),
+  `zone.js` (demote the ±3.0/3.5 pressure shift; add turbidity [own-gauge, null → no term] and
+  time-of-day/light terms; new `whereToFish()` = depth-of-fish + lie + light/turbidity),
+  `continuity.js` (`depthAtGauge(flow, siteId)` = `a/w`; `spotDepthFt()` same-reach
+  `{value, provenance, uncertainty}`), `src/data/channel_measurements.js` (expose per-point
+  area/width), `solver.js`/`drift.js` (render the "where to fish" bullet), `sanity_pass.js`.
+  Potential bug: the frozen baselines run REPORT-LESS, so they must NOT move; pin the new curve
+  instead of re-pinning old numbers.
+  Verify: `node sanity_pass.js --quiet` + `node --check`.
+- [ ] Phase 4 — deferred (separate confirm): WS-8b (persist the DEM width@height cross-section →
+  real spot depth; crepuscular light curve; velocity lie buckets; re-enable the community-sonar
+  calibrator — a product decision).
+- [ ] Still queued: **WS-5** private favourite spots + map (`favorite_spots` migration, RLS
+  default-deny).
+- Guardrails for every wire: own-gauge only · `null` → `--` · estimates carry provenance +
+  uncertainty · never a fabricated spot number · `textContent` for user/data text.
+
 ## ACTIVE — measured tackle data → **P1 DONE 2026-09-28**
 
 `docs/tackle_measurements.csv` now holds **185 rows** (was 38): foam 4 · bead 6 · hook 4 ·

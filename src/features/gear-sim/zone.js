@@ -175,13 +175,12 @@ function zoneColor(hgt, zone) {
     return gradeColor(Math.abs(q - center) / half);
 }
 
-// The strike-zone TREND: how far today's zone sits from the 4.0"-12.0" base. FULL_SCALE is
-// the largest stack the weather rules in computeStrikeZone() can build - falling 3.5 + cloud
-// 1.5 + rain 1.0 + warm 1.0 = 7.0" deeper, rising 3.0 + sun 1.5 + cold 1.0 = 5.5" shallower -
-// so the marker walks RIGHT for a deeper zone and LEFT for a shallower one, the colour is
-// green at the base -> yellow at half scale -> red at full scale, and the offset is
-// quantised to 0.1" so the colour and the printed range agree. A community pull can saturate
-// the scale (it is not bounded by the weather rules), hence the clamps.
+// The strike-zone ESTIMATE GRADIENT: how far today's zone sits from the 4.0"-12.0" base, used to
+// colour the estimate number itself (green at the base -> yellow at half scale -> red at full).
+// FULL_SCALE is the largest stack the weather rules in computeStrikeZone() can build - falling
+// 3.5 + cloud 1.5 + rain 1.0 + warm 1.0 = 7.0" deeper, rising 3.0 + sun 1.5 + cold 1.0 = 5.5"
+// shallower. The offset is quantised to 0.1" so the colour and the printed range agree. A
+// community pull can saturate the scale (it is not bounded by the weather rules), hence the clamp.
 var ZONE_TREND_FULL_SCALE = 7.0;
 
 function zoneTrend(zone) {
@@ -189,35 +188,24 @@ function zoneTrend(zone) {
     var offset = Math.round((((zone.min + zone.max) / 2) - baseMid) * 10) / 10;
     var ratio = Math.abs(offset) / ZONE_TREND_FULL_SCALE;
     if (ratio > 1) ratio = 1;
-    var pct = 50 + ((offset / ZONE_TREND_FULL_SCALE) * 50);
-    if (pct < 0) pct = 0;
-    if (pct > 100) pct = 100;
-    return { offset: offset, ratio: ratio, pct: pct, color: gradeColor(ratio) };
+    return { offset: offset, ratio: ratio, color: gradeColor(ratio) };
 }
 
-// Paint the WHOLE left panel from a zone: the range (coloured by the trend), the trend
-// marker on its gradient line, and ONE BULLET PER REASON. Shared by the live preview below
-// and by runSim()'s paintSimHud(), so the panel can never be half-updated.
+// Paint the WHOLE left panel from a zone: the estimate (coloured by the gradient) and ONE
+// BULLET PER REASON. Shared by the live preview below and by runSim()'s paintSimHud(), so the
+// panel can never be half-updated.
 function paintZoneHud(zone) {
     var trend = zoneTrend(zone);
     var range = document.getElementById('hud-zone');
     if (range) {
         range.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
-        range.style.color = trend.color;          // the trend colour IS the estimate's colour
-    }
-    var mark = document.getElementById('hud-zone-mark');
-    if (mark) {
-        mark.style.left = trend.pct.toFixed(1) + '%';
-        mark.style.backgroundColor = trend.color;
-        mark.title = (trend.offset >= 0 ? '+' : '') + trend.offset.toFixed(1) +
-            '" vs the 4.0" - 12.0" base';
+        range.style.color = trend.color;          // the gradient IS the estimate's colour
     }
     var ul = document.getElementById('hud-zone-notes');
     if (ul) {
         ul.innerHTML = '';
         zoneNotes(zone).forEach(function (n) {
-            var li = document.createElement('li');
-            li.className = 'hud-note';
+            var li = document.createElement('li');   // plain li: same bullets as the line-height panel
             li.textContent = n;                    // data text -> textContent, never innerHTML
             ul.appendChild(li);
         });

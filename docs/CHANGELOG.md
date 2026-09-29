@@ -4,6 +4,18 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — HUD correction: gradient on the estimate only + one bullet style
+Two direct user corrections. The Strike Zone Estimate keeps its colour gradient on the **number**, but
+the separate red-yellow-green strand with the sliding marker is **gone** (`index.html` strip +
+`#hud-zone-mark`, the `.zone-trend*` CSS, `zoneTrend()`'s `pct`, and the marker code in
+`paintZoneHud()`), so `zoneTrend()` now returns just `{offset, ratio, color}`. Both HUD panels also
+share **one** bullet style: the strike-zone reasons no longer use the smaller/dimmer `.hud-note`
+variant (0.62rem / `#9ca3af`) that read as hard to read — every bullet under either estimate is now
+0.68rem / `#d1d5db`, and `paintZoneHud()` renders plain `<li>`s exactly like `paintSimHud()` does.
+`sw.js` VERSION → `v2.03.20`. **120/120 GREEN** — the marker-percentage assertions became colour-only
+checks, plus a new guard that neither the trend strip nor the dim bullet variant can return.
+- Key files: `index.html`, `src/styles.css`, `src/features/gear-sim/zone.js`, `sanity_pass.js`.
+
 ## 2026-09-29 — Label fixes: bead fields lose "(Presentation)", Cheater float is "Cheater 10"
 Two direct user corrections. The bead labels are now plain **`Bead Material`** / **`Bead Size`**
 (both tabs) — the `(Presentation)` suffix came from the 2026-09-28 relabel that wanted to

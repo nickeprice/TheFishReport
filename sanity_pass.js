@@ -200,11 +200,15 @@ function staticIntegrity() {
          'Strike Zone Estimate / Line Height Estimate, both in <ul> bullets')
     : fail('HUD caps say "Estimate" and both note lists are bullets',
            'cap wording or bullet list changed');
-  (/id="hud-zone-mark"/.test(html) && /\.zone-trend \{[^}]*linear-gradient\(to right/.test(cssSrc))
-    ? ok('strike-zone trend line present and graded red-yellow-green-yellow-red',
-         'marker on a gradient strip; paintZoneHud() positions it')
-    : fail('strike-zone trend line present and graded red-yellow-green-yellow-red',
-           'trend markup or CSS missing');
+  // WS-7 correction (direct user ask): the gradient lives on the ESTIMATE NUMBER only — the
+  // separate trend strip + marker were unwanted, and the strike-zone bullets no longer use the
+  // dim/smaller variant (both HUD panels now render ONE bullet style).
+  (!/zone-trend/.test(html) && !/zone-trend/.test(cssSrc) &&
+   !/hud-note/.test(html) && !/hud-note/.test(cssSrc))
+    ? ok('strike-zone gradient is on the estimate only (no strip, one bullet style)',
+         'no .zone-trend / #hud-zone-mark; no .hud-note variant')
+    : fail('strike-zone gradient is on the estimate only (no strip, one bullet style)',
+           'a trend strip or the dim bullet variant came back');
   // The community note must stay OFF the HUD even though the sonar still moves the zone.
   (fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')
     .includes('Recent community catches holding') &&
@@ -1068,23 +1072,23 @@ function behaviorChecks(done) {
     const tHalf = zoneTrend({ min: 7.5, max: 15.5 });
     const tFull = zoneTrend({ min: 11, max: 19 });
     const tShallow = zoneTrend({ min: 1, max: 9 });
-    eqz('base', [tBase.offset, tBase.pct, tBase.color].join('|'), '0|50|hsl(140, 72%, 46%)');
-    eqz('half scale', [tHalf.offset, tHalf.pct, tHalf.color].join('|'), '3.5|75|hsl(52, 72%, 46%)');
-    eqz('full scale', [tFull.offset, tFull.pct, tFull.color].join('|'), '7|100|hsl(0, 72%, 46%)');
-    eqz('shallow side', String(tShallow.pct < 50 && tShallow.pct > 0 && tShallow.color !== tBase.color), 'true');
+    eqz('base', [tBase.offset, tBase.color].join('|'), '0|hsl(140, 72%, 46%)');
+    eqz('half scale', [tHalf.offset, tHalf.color].join('|'), '3.5|hsl(52, 72%, 46%)');
+    eqz('full scale', [tFull.offset, tFull.color].join('|'), '7|hsl(0, 72%, 46%)');
+    eqz('shallow side', [tShallow.offset, String(tShallow.color !== tBase.color)].join('|'), '-3|true');
     eqz('ratio clamped', String(zoneTrend({ min: 20, max: 28 }).ratio) + '|' +
       String(zoneTrend({ min: -4, max: 4 }).ratio), '1|1');
     eqz('0.1" step ignored', zoneTrend({ min: 4.04, max: 12.04 }).color, tBase.color);
-    eqz('0.1" step taken', String(zoneTrend({ min: 4.1, max: 12.1 }).pct > 50), 'true');
+    eqz('0.1" step taken', String(zoneTrend({ min: 4.1, max: 12.1 }).color !== tBase.color), 'true');
     // The line-height grade must be byte-identical after sharing the grade helper.
     eqz('lh centre', zoneColor(8.0, { min: 4, max: 12 }), 'hsl(140, 72%, 46%)');
     eqz('lh edge', zoneColor(12.0, { min: 4, max: 12 }), 'hsl(0, 72%, 46%)');
     badZone.length === 0
-      ? ok('strike-zone HUD: one bullet per reason + a graded trend line',
+      ? ok('strike-zone HUD: one bullet per reason + a graded estimate',
            'community note hidden · "On target" when nothing shifted · green base -> yellow half -> red full, 0.1" steps')
-      : fail('strike-zone HUD: one bullet per reason + a graded trend line', badZone.join(' '));
+      : fail('strike-zone HUD: one bullet per reason + a graded estimate', badZone.join(' '));
   } catch (e) {
-    fail('strike-zone HUD: one bullet per reason + a graded trend line', String(e.message).split('\n')[0]);
+    fail('strike-zone HUD: one bullet per reason + a graded estimate', String(e.message).split('\n')[0]);
   }
 
   // --- P4b: the brand changes the community REPLAY ----------------------------

@@ -1,8 +1,8 @@
 /**
- * src/shared/forms.js - shared rod / line / field form helpers used by BOTH
+ * src/shared/forms.js - shared line / field form helpers used by BOTH
  * the Gear Sim and the Catch Log (keep the two in sync when adding a field).
- * public: syncSelect(), getRodLengthFt(), formatRodLength(), onRodChange(),
- *         setFieldValue(), LB_OPTIONS, updateLbOptions(), onLineMatChange()
+ * public: syncSelect(), setFieldValue(), LB_OPTIONS, updateLbOptions(),
+ *         onLineMatChange()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 function syncSelect(baseId, fromLog) {
@@ -11,34 +11,6 @@ function syncSelect(baseId, fromLog) {
     if (!a || !b) return;
     if (fromLog) a.value = b.value; else b.value = a.value;
     logDebug("Synced Field: " + baseId, "STATE");
-}
-
-// Rod length is entered as two boxes (feet + inches) so 9'8" works.
-function getRodLengthFt() {
-    var ft = getNum('rod-ft');
-    var inch = getNum('rod-in');
-    if (ft <= 0 && inch <= 0) return 9.0;
-    return ft + (inch / 12);
-}
-
-function formatRodLength(totalFt) {
-    var whole = Math.floor(totalFt + 0.0001);
-    var inch = Math.round((totalFt - whole) * 12);
-    if (inch === 12) { whole += 1; inch = 0; }
-    return whole + "'" + inch + '"';
-}
-
-// Rod change mirrors the ft/in boxes between the two tabs. There is no leader
-// auto-fill any more — leader length is a free input the angler controls.
-function onRodChange(fromLog) {
-    if (fromLog) {
-        setFieldValue('rod-ft', getStr('rod-ft-log'));
-        setFieldValue('rod-in', getStr('rod-in-log'));
-    } else {
-        setFieldValue('rod-ft-log', getStr('rod-ft'));
-        setFieldValue('rod-in-log', getStr('rod-in'));
-    }
-    logDebug('Rod length: ' + formatRodLength(getRodLengthFt()), 'STATE');
 }
 
 function setFieldValue(id, value) {

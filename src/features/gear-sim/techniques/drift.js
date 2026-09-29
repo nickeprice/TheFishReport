@@ -27,7 +27,6 @@ var DRIFT_TECHNIQUE = {
         var weightOz = rig.weightOz, ldLen = rig.ldLen, ldMat = rig.ldMat, ldLb = rig.ldLb;
         var mlMat = rig.mlMat, mlLb = rig.mlLb, hook = rig.hook, yarn = rig.yarn;
         var foam = rig.foam, foam2 = rig.foam2, bdMat = rig.bdMat, bdSz = rig.bdSz;
-        var rodFt = rig.rodFt;
 
         // 2. Fluid dynamics (LOCKED: drag coefficient is always 1.0) -------------------
         // Every component counts: leader diameter (sqrt lb x material), coupled
@@ -81,7 +80,7 @@ var DRIFT_TECHNIQUE = {
             suggestions.push('Try this: ' + best.foam.label + ' + ' + best.leader + ' ft leader + ' + best.weight + ' oz lead -> projects ' + best.hgt.toFixed(1) + '" of line height.');
         }
         if (species && species !== 'None') {
-            suggestions.push('Targeting ' + species + ' at ' + flow + ' CFS on a ' + formatRodLength(rodFt) + ' rod with a ' + ldMat + ' ' + ldLb + 'lb leader.');
+            suggestions.push('Targeting ' + species + ' at ' + flow + ' CFS with a ' + ldMat + ' ' + ldLb + 'lb leader.');
         }
 
         return {

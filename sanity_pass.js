@@ -344,6 +344,21 @@ function staticIntegrity() {
   (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 6 resting rows each', `${gearRows} rows total`)
     : fail('both gear forms use 6 resting rows each', `${gearRows} rows found`);
+
+  // Rod length was REMOVED 2026-09-28 (it moved no number — see memory-bank/activeContext.md).
+  // This guard exists because the removal was once instructed, acknowledged and then silently
+  // dropped, so a stray form field or a resurrected code path must fail loudly instead.
+  {
+    const rodHits = [];
+    if (/rod-ft|rod-in|Rod Length/.test(html)) rodHits.push('index.html');
+    for (const p of localScriptPaths()) {
+      const s = fs.readFileSync(path.join(ROOT, p), 'utf8');
+      if (/rodFt|getRodLengthFt|formatRodLength|onRodChange|rod_ft/.test(s)) rodHits.push(p);
+    }
+    rodHits.length === 0
+      ? ok('rod length is fully removed', 'no rod-ft / rodFt / rod_ft in index.html or any loaded script')
+      : fail('rod length is fully removed', 'still referenced by: ' + rodHits.join(', '));
+  }
   // Region registry (UPDATE 3.0 Phase 1.2/1.3). The registry file is the ONE source of
   // truth: the frontend loads it as a classic script and api/water_report.py reads the
   // SAME file (strict-JSON payload, sliced marker -> final semicolon). Assert that both
@@ -670,7 +685,7 @@ function behaviorChecks(done) {
       .map((p) => fs.readFileSync(path.join(ROOT, p), 'utf8')).join('\n');
     eval(extraSrc);
     const rig = {
-      flow: 1040, weightOz: 0.5, rodFt: 9, ldLen: 8, ldMat: 'mono', ldLb: 12,
+      flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
       mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
     };

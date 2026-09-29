@@ -32,7 +32,6 @@ where table_schema = 'public' and table_name = 'catches' order by ordinal_positi
 | `foam` | `foam` | source of truth for corky size (`corky_size` was dropped) |
 | `foam2` | `foam_2` | second float |
 | `bdMat` / `bdSz` | `bead_material`, `bead_size` | |
-| `rodFt` | `rod_ft` | |
 | `mlMat` / `mlLb` | `mainline_mat`, `mainline_lb` | |
 | `gauge` | `gauge_height` | |
 | `barometer` | `barometer` | |

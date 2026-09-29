@@ -57,8 +57,8 @@ this file**, or the pass fails.
 - **nav.js** — `switchTab(tabId)`, `resetToToday()`
 - **format.js** — `normalizeFeedRow(row)`, `formatCatchTime(value)`, `escapeHtml(value)`,
   `escapeJsString(value)`, `newUuid()`
-- **forms.js** — `syncSelect(baseId, fromLog)`, `getRodLengthFt()`, `formatRodLength()`,
-  `onRodChange()`, `setFieldValue()`, `LB_OPTIONS`, `updateLbOptions()`, `onLineMatChange()`
+- **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`, `LB_OPTIONS`,
+  `updateLbOptions()`, `onLineMatChange()`
 - **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`,
   `idbDelete(store, key)`
 - **refresh.js** — `AUTO_REFRESH_MS`, `silenceableRefresh()`, `startAutoRefresh()`, `refreshNow()`
@@ -93,7 +93,6 @@ this file**, or the pass fails.
 - **solver.js** — `readRigFromForm()`, `loadCalibrationData(flow, species)`,
   `buildSimStats(rig, out)`, `paintSimHud(rig, out, stats)`
 - **sim.js** — `runSim()`
-- **debounce.js** — `initGearSimInputDebounce()`
 
 ## src/features/catch-log
 - **outbox.js** — `outboxLoad()`, `outboxAll()`, `outboxPending()`, `outboxAdd(row)`,

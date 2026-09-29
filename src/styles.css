@@ -55,10 +55,8 @@ label { font-size: 0.65rem; color: #aaa; margin-bottom: 3px; text-transform: upp
 .gear-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .gear-row-3 { grid-template-columns: repeat(3, 1fr); }
 .gear-row .field { display: flex; flex-direction: column; min-width: 0; }
-/* Paired feet / inches entry (rod length) */
-.dual-input { display: flex; align-items: center; gap: 4px; }
-.dual-input input { flex: 1 1 0; min-width: 0; width: 100%; text-align: center; padding: 7px 4px; }
-.dual-input span { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+/* Paired feet / inches entry — REMOVED with rod length (2026-09-28): .dual-input had
+   no other user, so the rule is gone rather than left as dead CSS. */
 select { max-width: 100%; min-width: 0; }
 
 /* FORCE 16px font-size to prevent iOS zoom */

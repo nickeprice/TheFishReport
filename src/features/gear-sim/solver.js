@@ -14,7 +14,6 @@ function readRigFromForm() {
     return {
         flow: getCurrentFlow(),                 // derived from the live water report
         weightOz: getNum('weight'),
-        rodFt: getRodLengthFt(),
         ldLen: getNum('ld-len'),
         ldMat: getStr('ld-mat'),
         ldLb: getNum('ld-lb') || REF_LB_TEST,
@@ -50,7 +49,6 @@ async function loadCalibrationData(flow, species) {
 function buildSimStats(rig, out) {
     return {
         flow: rig.flow,
-        rodFt: rig.rodFt,
         weight: rig.weightOz,
         ldLen: rig.ldLen,
         ldMat: rig.ldMat,

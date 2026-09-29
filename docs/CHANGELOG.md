@@ -4,6 +4,45 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Remove rod length (the instruction that evaporated)
+The instruction was given in the previous session — *"additionally im saying lets remove the rod
+length"* (20:56Z) and *"drop the `rod_ft` db column"* (21:05Z) — and answered with *"Confirmed on
+the column — I'll drop `rod_ft` (migration, applied and verified live)."* **It was never done:** no
+migration existed, `public.catches.rod_ft` was still live, and the app was still writing it. The
+chat pivoted to velocity/widths and the promise vanished, which is exactly why the field was still
+on screen. Recovered from the Cline session log (`logs/20260928T120538/…/1-Cline.log`) and executed.
+
+Why removal was safe — measured, not assumed: the drift technique was run at 9'0" / 9'8" / 12'0"
+and all 24 scalar outputs compared. `hgt`, `score`, `dragPerFt`, `lift`, bottom/true velocity and
+the strike zone were identical to the last digit. Rod length was only ever echoed in one suggestion
+sentence, yet it was a REQUIRED field that blocked both the sim and catch logging.
+
+Removed: both form rows (`index.html`) · `getRodLengthFt`/`formatRodLength`/`onRodChange`
+(`forms.js`) · rig save/restore + tab mirroring (`rig.js`) · the required-field gate (`zone.js`) ·
+the `rodFt` read (`solver.js`) · the catch payload (`catch-log/log.js`) · the write map and
+`asMyCatchRow` (`supabase.js`) · the rod clause in the drift suggestion (the sentence keeps its
+species/flow/leader context, so the frozen 3-suggestion shape is unchanged). The dead fallout went
+too: with `flow`/`distance` already gone, `gear-sim/debounce.js`'s id list was empty, so the module
+is **deleted** (`index.html` + `SHELL_FILES` + `app.js`) along with the unused `.dual-input` CSS.
+`sw.js` VERSION → `v2.03.07`.
+
+`20260928235500_drop_rod_ft.sql` recreates `get_global_calibration` without `rod_ft` (a RETURNS
+TABLE signature cannot be altered in place — 42P13 — and dropping the function drops its ACL, so it
+is re-granted to anon/authenticated/service_role), then drops the column. Applied and verified
+live: **0** `%rod%` columns on `catches`, **0** hits in the RPC signature and body, `service_role`
+grant intact, and the RPC still returns its row.
+
+`sanity_pass.js` now carries a **guard** (`rod length is fully removed`) asserting no
+`rod-ft`/`rod-in`/`Rod Length` in `index.html` and no `rodFt`/`getRodLengthFt`/`formatRodLength`/
+`onRodChange`/`rod_ft` in any loaded script — because this is the second time the field outlived a
+decision to remove it. Verified: sanity **106/106 GREEN** (39 modules, load order still ending with
+`app.js`).
+- Key files: `index.html`, `src/shared/forms.js`, `src/features/gear-sim/{rig,zone,solver}.js`,
+  `src/features/gear-sim/techniques/drift.js`, `src/features/gear-sim/debounce.js` (deleted),
+  `src/features/catch-log/log.js`, `src/services/supabase.js`, `src/styles.css`, `sw.js`,
+  `sanity_pass.js`, `supabase/migrations/20260928235500_drop_rod_ft.sql`, `docs/CONTRACT_CATCH.md`,
+  `docs/CONTRACT_TECHNIQUE.md`, `docs/SYMBOLS.md`, `README.md`.
+
 ## 2026-09-28 — Temporal audit, honest velocity display, near-you continuity, and the v^2 drag bump
 Four connected changes, all prompted by one fair question: *are we mixing dates and calling it
 "now"?* We were, so it was measured rather than assumed.

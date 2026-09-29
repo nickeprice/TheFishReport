@@ -28,8 +28,6 @@ function missingRigFields() {
     for (var i = 0; i < RIG_REQUIRED.length; i++) {
         if (getStr(RIG_REQUIRED[i].id) === '') missing.push(RIG_REQUIRED[i].label);
     }
-    // Rod length is a paired ft + in entry — blank in BOTH boxes means unset.
-    if (getStr('rod-ft') === '' && getStr('rod-in') === '') missing.push('Rod Length');
     return missing;
 }
 

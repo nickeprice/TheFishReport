@@ -70,7 +70,6 @@ async function logData() {
         mlMat: getStr('ml-mat'),
         mlLb: getNum('ml-lb'),
         weight: getNum('weight'),
-        rodFt: getRodLengthFt(),
         hook: hookValue,
         yarn: getNum('yarn'),
         foam: foamRaw,

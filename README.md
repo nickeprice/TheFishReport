@@ -30,7 +30,7 @@ src/
     ui.js                   debounce + the toast stack
     nav.js                  switchTab / resetToToday
     format.js               feed-row normalise, time format, escaping, newUuid
-    forms.js                rod/line/material/field sync (shared by BOTH tabs)
+    forms.js                line/material/field sync (shared by BOTH tabs)
     idb.js                  tiny promise wrapper over IndexedDB
     refresh.js / pwa.js     auto-refresh; service-worker registration + deep links
   features/

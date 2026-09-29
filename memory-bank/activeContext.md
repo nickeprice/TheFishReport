@@ -28,6 +28,68 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
 - [ ] **H4. (PARKED — optional, lowest priority) de-monolith `sanity_pass.js`** (850 lines) —
       split the static-preflight / vm-runtime / dev-server sections into helpers.
 
+## ACTIVE — REMOVE rod length (instruction RECOVERED from session 1790604718924_nudti)
+
+**Why this block exists:** the instruction was given twice in the previous chat —
+"additionally im saying lets remove the rod length" (2026-09-28 20:56Z) and
+"drop the rod_ft db column" (21:05Z). The agent replied
+"Confirmed on the column — I'll drop `rod_ft` (migration, applied and verified live)"
+and then **never did it**: no migration file exists, `public.catches.rod_ft` is still
+live (`numeric`), and the app still writes it. It evaporated when the conversation
+pivoted. It is written down here so it cannot happen again. Evidence: Cline session log
+`logs/20260928T120538/window1/exthost/output_logging_20260928T122955/1-Cline.log`.
+Also confirmed measured: rod length changes **no** Gear Sim number (24 scalar fields
+identical across 9'0" / 9'8" / 12'0" — only the prose suggestion echoed it).
+
+- [x] **R1. Delete the rod inputs from BOTH tabs** — `index.html` (Gear Sim + Catch Log
+      "Row 1"). Weight keeps the row, so the frozen `gearRows === 12` guard still holds.
+      Potential bug: the row is shared "Rod Length + Weight" — deleting the whole row
+      would break the 6-rows-per-form assertion and drop the Weight control.
+      Verified: the row comment now reads "Row 1: Weight"; sanity's "both gear forms use
+      6 resting rows each" is still green (12 rows), and `grep -i rod index.html` is empty.
+- [x] **R2. Remove the rod code paths** — `forms.js` (`getRodLengthFt`,
+      `formatRodLength`, `onRodChange`), `rig.js` (save/restore, both tabs),
+      `zone.js` (required-field gate), `solver.js` (`readRigFromForm` + `buildSimStats`),
+      `catch-log/log.js` (payload), `techniques/drift.js` (read + the
+      "Targeting … on a 9'0" rod …" suggestion).
+      Potential bug: the drift suggestion goes 3 → 2, which the frozen baseline pins.
+      Verified: the sentence was kept and only the rod clause dropped ("Targeting Chinook at
+      1040 CFS with a mono 12lb leader."), so the frozen 3-suggestion shape needs no re-pin
+      and the useful species/flow/leader context survives.
+- [x] **R3. Stop writing/reading `rod_ft`** — `services/supabase.js` (write map + `asMyCatchRow`).
+      Potential bug: writing a dropped column 400s (PGRST204), so this MUST land before R5.
+      Verified: both the write map and `asMyCatchRow` no longer mention `rod_ft`; the code
+      change landed before the migration (see R5).
+- [x] **R4. Dead-code fallout** — with `flow`/`distance` already gone, `debounce.js`'s id
+      list becomes empty, so the module is dead: delete it from `index.html`,
+      `sw.js` `SHELL_FILES`, and `app.js`; drop the now-unused `.dual-input` CSS.
+      Potential bug: missing any of the three references = ReferenceError at bootstrap;
+      `sw.js VERSION` bump is required because the shell changed.
+      Verified: file `git rm`'d; index.html tag, `SHELL_FILES` entry and the `app.js` call all
+      gone; parity check green at **39 modules**; `VERSION` → `v2.03.07`.
+- [x] **R5. Migration: drop `public.catches.rod_ft`** + recreate
+      `get_global_calibration` without it (RETURNS TABLE cannot be altered → drop+create,
+      and dropping the function drops its ACL → re-grant). Apply with
+      `npx supabase db push --yes < /dev/null`, then verify live.
+      Potential bug: 42P13 on an in-place signature change; a bare column drop would
+      break the still-deployed old client that writes `rodFt`.
+      Verified LIVE: `20260928235500_drop_rod_ft` recorded applied; 0 `%rod%` columns on
+      `catches`; 0 hits for `rod_ft` in the RPC signature and body; `service_role` grant
+      intact; `select count(*) from get_global_calibration(1040, null)` → 1 row.
+- [x] **R6. Guard + docs** — `sanity_pass.js`: fixture loses `rodFt`, plus a NEW guard asserting
+      `rod-ft`/`getRodLengthFt`/`rod_ft` appear nowhere in `index.html` or any loaded script so
+      the field cannot silently return. (No suggestion re-pin was needed — the sentence kept its
+      context, count stayed 3.) Updated `CONTRACT_CATCH.md`, `CONTRACT_TECHNIQUE.md`,
+      `SYMBOLS.md`, `README.md`, `docs/CHANGELOG.md`.
+      Verification: `node sanity_pass.js` GREEN; live `information_schema` shows no
+      `%rod%` column; `get_global_calibration` returns no `rod_ft`.
+      Verified: sanity **106/106 GREEN** with the new guard firing
+      (`rod length is fully removed — no rod-ft / rodFt / rod_ft in index.html or any
+      loaded script`); docs updated (`CONTRACT_CATCH`, `CONTRACT_TECHNIQUE`, `SYMBOLS`,
+      `README`, `CHANGELOG`).
+
+
+
 ## ACTIVE — measured gauge velocity (USGS field measurements) — SHIPPED 2026-09-28
 
 - [x] **M1. Ingest USGS field measurements** — `scripts/fetch_channel_measurements.py` pulls

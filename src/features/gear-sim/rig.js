@@ -9,8 +9,6 @@ var RIG_STORE_KEY = 'puyallup_last_rig';
 function saveRig() {
     try {
         var rig = {
-            rodFt: getStr('rod-ft'),
-            rodIn: getStr('rod-in'),
             mlMat: getStr('ml-mat'),
             mlLb: getStr('ml-lb'),
             ldLen: getStr('ld-len'),
@@ -42,14 +40,12 @@ function restoreRig() {
         var el = document.getElementById(id);
         if (el && val !== undefined && val !== null && val !== '') el.value = String(val);
     }
-    set('rod-ft', rig.rodFt); set('rod-in', rig.rodIn);
     set('ml-mat', rig.mlMat); set('ml-lb', rig.mlLb);
     set('ld-len', rig.ldLen); set('ld-mat', rig.ldMat); set('ld-lb', rig.ldLb);
     set('weight', rig.weight); set('hook', rig.hook); set('yarn', rig.yarn);
     set('foam', rig.foam); set('foam2', rig.foam2);
     set('bd-mat', rig.bdMat); set('bd-sz', rig.bdSz);
     // Mirror to the Catch Log duplicated controls.
-    set('rod-ft-log', rig.rodFt); set('rod-in-log', rig.rodIn);
     set('ml-mat-log', rig.mlMat); set('ml-lb-log', rig.mlLb);
     set('ld-len-log', rig.ldLen); set('ld-mat-log', rig.ldMat); set('ld-lb-log', rig.ldLb);
     set('weight-log', rig.weight); set('hook-log', rig.hook); set('yarn-log', rig.yarn);

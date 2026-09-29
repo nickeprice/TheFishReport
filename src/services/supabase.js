@@ -174,7 +174,6 @@ function toCatchRow(payload) {
         foam_2: payload.foam2 || null,
         bead_material: payload.bdMat || null,
         bead_size: payload.bdSz,
-        rod_ft: (payload.rodFt !== undefined && payload.rodFt !== null) ? payload.rodFt : null,
         mainline_mat: payload.mlMat || null,
         mainline_lb: (payload.mlLb !== undefined && payload.mlLb !== null) ? payload.mlLb : null,
         gauge_height: (payload.gauge !== undefined && payload.gauge !== null) ? payload.gauge : null,
@@ -326,7 +325,6 @@ async function fetchGlobalCalibration(flow, species) {
                 foam: r.foam,
                 bdMat: (r.bead_mat !== undefined) ? r.bead_mat : r.bead_material,
                 bdSz: (r.bead_size !== undefined) ? r.bead_size : null,
-                rodFt: (r.rod_ft !== undefined) ? r.rod_ft : null,
                 dist: null,  // `cast_distance_ft` was dropped 2026-09-28 (always NULL)
                 waterTempF: (r.water_temp_f !== undefined) ? r.water_temp_f : null,
                 windSpeedMph: (r.wind_speed_mph !== undefined) ? r.wind_speed_mph : null,

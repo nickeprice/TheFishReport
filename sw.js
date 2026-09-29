@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.06';
+const VERSION = 'v2.03.07';
 const SHELL_CACHE = 'prc-shell-' + VERSION;
 const API_CACHE = 'prc-api-' + VERSION;
 const ASSET_CACHE = 'prc-assets-' + VERSION;
@@ -64,7 +64,6 @@ const SHELL_FILES = [
     '/src/features/catch-log/board.js',
     '/src/features/catch-log/mycatches.js',
     '/src/features/catch-log/log.js',
-    '/src/features/gear-sim/debounce.js',
     '/src/features/station/picker.js',
     '/src/features/station/search.js',
     '/src/shared/refresh.js',

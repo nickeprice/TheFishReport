@@ -43,7 +43,7 @@ Registered in `registry.js` as `GEAR_TECHNIQUES[id] = MY_TECHNIQUE;`.
 
 ### `rig` (built by `readRigFromForm()` in `solver.js`)
 
-`flow`, `weightOz`, `rodFt`, `ldLen`, `ldMat`, `ldLb`, `mlMat`, `mlLb`, `hook`
+`flow`, `weightOz`, `ldLen`, `ldMat`, `ldLb`, `mlMat`, `mlLb`, `hook`
 (`0` = 1/0, `-1` = 2/0), `yarn`, `foam` (parsed record: `{key, lift, label}`),
 `foam2`, `bdMat`, `bdSz`, `species`.
 

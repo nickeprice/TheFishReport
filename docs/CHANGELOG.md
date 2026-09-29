@@ -4,6 +4,32 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-28 — Audit of the rod-length chat: three promised items had been dropped
+Re-read the source session (`1790604718924_nudti`) end-to-end instead of trusting the memory notes,
+and diffed every instruction against the live repo. Most of that chat did ship — Planetary Computer
+STAC, USGS channel measurements, the width dual-method router, the temporal audit, honest velocity
+display, near-you continuity, and the v² drag bump. But **three things were acknowledged and never
+done**, all found only by reading the transcript:
+
+1. **The tackle CSV inventory was never expanded.** The user caught it himself (msg 1469: "were
+   clearly missing alot of things right now") and the fix was agreed explicitly — derive the rows
+   from the form: foam 4 · leader 12 · mainline 9 · bead 8 · hook 4 · yarn 1 = **38**. The CSV still
+   held 16, and because the converter doubles as the measurement progress tracker, it was
+   under-reporting the checklist as if it were nearly done. Now 38.
+2. **The bead label was never disambiguated.** "Bead Material / Bead Size" is the *presentation*
+   bead on the leader, not the mainline stop bead (msg 1482: "we should make that label explicit so
+   nobody logs the wrong one"). Relabelled `(Presentation)` in both tabs.
+3. **The weight-shape roadmap line was never written.** Rod length and weight-shape were parked
+   together but differently: rod length was *deleted*, weight-shape was to be *recorded* as a
+   deferred data dependency (msg 1476). It never was; now accuracy-roadmap item (e).
+
+Re-confirmed as open-by-design (documented, not missed): the `blownOut` 3.5 threshold contract bump,
+and the spot-width source that leaves `spotWidthRatio()` at 1.0.
+
+Verified: `python3 scripts/tackle_csv_to_json.py --check` → **"checked 38 item(s)"**; sanity
+**107/107 GREEN**; `sw.js` VERSION → `v2.03.09`.
+- Key files: `docs/tackle_measurements.csv`, `index.html`, `memory-bank/activeContext.md`, `sw.js`.
+
 ## 2026-09-28 — Gear box order: the instructed 2-up flow (follow-up to rod removal)
 Removing rod length left the form's field ORDER wrong. The same instruction block (session
 `1790604718924_nudti`, msg 1477) specified: row 1 mainline material + mainline lb test, row 2

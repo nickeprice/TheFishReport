@@ -99,6 +99,20 @@ identical across 9'0" / 9'8" / 12'0" — only the prose suggestion echoed it).
       delta being the two `gear-row-3` classes (every id/for/onchange/placeholder/type/option
       byte-identical); the 3-up rule deleted from `src/styles.css`; `sw.js` → `v2.03.08`; sanity
       **107/107 GREEN** with the new `gear box order is the instructed 2-up flow (both tabs)` guard.
+- [x] **R8. Audit the rest of the rod-length chat for dropped instructions** — the R7 miss was
+      assumed to be isolated, so the source session was re-read end-to-end and every instruction
+      diffed against the repo instead of trusting the memory notes. Most of it shipped (Planetary
+      Computer STAC, USGS channel measurements, the width dual-method router, the temporal audit,
+      honest velocity, near-you continuity, v² drag). **Three were acknowledged and silently
+      skipped**, and all three are now done: the tackle CSV inventory was never expanded to the
+      agreed 38 rows (converter said "checked 16"), the presentation-bead label was never
+      disambiguated from the mainline stop bead, and the weight-shape roadmap line was never
+      written (now accuracy-roadmap item (e)).
+      Potential bug: the CSV doubles as the measurement progress tracker, so an incomplete
+      inventory under-reports what the user still has to measure — it looks like progress.
+      Verified: `python3 scripts/tackle_csv_to_json.py --check` → **"checked 38 item(s)"**; sanity
+      **107/107 GREEN**; the two open-by-design items re-confirmed as such, not as misses
+      (`blownOut` 3.5 contract bump · spot width, so `spotWidthRatio()` still returns 1.0).
 
 
 
@@ -228,6 +242,14 @@ heuristic*, not a physics simulation, and these are the false truths that bound 
   and the empirical anchor that could have fixed it (community sonar) is dead code.
 - (d) **Yarn is modelled as lift** though synthetic yarn is ~neutrally buoyant; line
   *density* (the reason fluoro gets down) is not modelled at all.
+- (e) **Weight shape / density / drag is not modelled at all** — `anchorScale = 0.7 + 0.6·oz` is a
+  dimensionless fudge that reads mass only, so a slinky (drags like a parachute) and a cannonball
+  score identically, even though weight-shape is real physics. Deferred *until the hold-bottom
+  model lands* — that is the trigger, not "someday": then measure `shape`/`density`/
+  `projected_area`/`cd` per lead, add the weight to `totalDragPerFt`, and replace `anchorScale`
+  with a real hold-or-drag model. Mass needs no measurement (the oz label *is* the mass), which is
+  why the CSV deliberately carries no weight category. Promised 2026-09-28 (msg 1476) and recorded
+  here on 2026-09-28 after an audit found it had been dropped.
 
 Groundwork scaffolded: `docs/CONTRACT_TACKLE.md` (measurement protocol + template) →
 `src/data/tackle.json`. The model has **never been validated against a measured presentation

@@ -17,6 +17,16 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — Gear Sim HUD v2 (chat ask, same session): line **brands list "Generic" first**
+  (display only — the value stays the library string so matching/ids are untouched), the **Strike
+  Zone Estimate grew a trend line** (red-yellow-**green**-yellow-red strip, marker walks right for a
+  deeper zone, number coloured on the same grade: green at the 4"–12" base → yellow at half scale →
+  red at 7.0", 0.1" steps), **one bullet per row** on both panels, the **community-catch note is
+  hidden** while the sonar still pulls the zone, **"On target"** is a single row, and the rig bullets
+  are short rows (the `Targeting <species>…` line is gone). `zoneNotes()` + `paintZoneHud()` replace
+  `zoneWhyText()`; both panels share `gradeColor()`. Frozen drift suggestion count deliberately
+  re-pinned 3 → 2. `sw.js` `v2.03.18`, **119/119**.
+
 - 2026-09-29 — Gear Sim HUD polish (chat ask, same session as WS-3): both panels are **centred**
   (label, number, notes) and both notes are **bulleted** (the left "why it moved" note was a plain
   `div`), the caps read **Strike Zone Estimate:** / **Line Height Estimate:**, and the sticky banner

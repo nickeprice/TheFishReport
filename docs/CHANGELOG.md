@@ -4,6 +4,31 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — HUD v2: bulleted reasons, a strike-zone trend line, "Generic" first
+Six product asks in one pass. **Brands:** the generic fallback row is now ALWAYS the first brand
+option and reads **"Generic"** — DISPLAY ONLY, the `<option>` value stays the library's
+`Generic average`, because that string is what (material, brand, lb) matching, `tackleLineFind()`,
+a restored rig and the DB ids all round-trip through. **Strike Zone Estimate:** gained a TREND
+LINE — a red-yellow-**green**-yellow-red strip whose marker walks right for a deeper zone and left
+for a shallower one, with the estimate's number coloured on the same grade: green at the
+4.0"-12.0" base, yellow at half scale, red at full (7.0" = the largest stack the weather rules in
+`computeStrikeZone()` can build), quantised to 0.1" so a 0.04" move cannot flip the colour.
+**Bullets:** one bullet PER ROW on both panels (the zone reasons were joined into one wrapped
+sentence) — new `zoneNotes()` returns an array and `paintZoneHud()` renders it, shared by the live
+preview (`refreshZonePreview`) and `runSim()`'s `paintSimHud`, so the panel can't be
+half-updated. **Community:** the community-catch note is still produced by
+`computeStrikeZone()` (the sonar still pulls the zone) but `zoneNotes()` filters it out — the
+effect is kept, the display is gone. **On target:** a single `On target` row on both panels, no
+explanation. **Rig bullets:** the drift suggestions are now short rows and the
+`Targeting <species> at <flow> CFS …` line is gone (it said nothing to change). `zoneWhyText()` is
+replaced by `zoneNotes()`, and the hue maths both panels use is extracted into `gradeColor(d)` so
+they can never disagree (`zoneColor()` output is byte-identical). `sw.js` VERSION → `v2.03.18`.
+**119/119 GREEN** — 2 new static + 1 new runtime assertion, and the frozen drift baseline's
+suggestion count is DELIBERATELY re-pinned **3 → 2** (the same hgt/score/velocity/zone values).
+- Key files: `src/shared/tackle.js`, `src/features/gear-sim/{zone,solver}.js`,
+  `src/features/gear-sim/techniques/drift.js`, `index.html`, `src/styles.css`, `sanity_pass.js`,
+  `docs/SYMBOLS.md`.
+
 ## 2026-09-29 — Gear Sim HUD: centred, bulleted, and labelled as an estimate
 `Strike Zone:` → **`Strike Zone Estimate:`** and `Line Height:` → **`Line Height Estimate:`**. Both
 HUD panels are now text-centre — label, number, and the notes beneath them — so the two halves read

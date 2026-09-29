@@ -15,18 +15,21 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1 + WS-2 committed; WS-3 + WS-6 verified, pending this commit)
+## HANDOFF — 2026-09-29 (WS-1 + WS-2 committed; WS-3 + WS-6 + WS-7 verified, pending this commit)
 
 WS-1 (GPS modal stays open) and WS-2 (Gear Sim HUD = Strike Zone + colour-graded Line Height
 + suggestions, no score / no BOTTOM CURRENT / no bottom box) shipped in `3e7259b`. WS-3
-(both tabs → the 7-row / 15-field material→brand→lb-test cascade) and WS-6 (HUD polish:
-centred panels, bulleted notes, "… Estimate:" caps, clearance above the first row) are DONE
-and verified: `node sanity_pass.js` → **116/116**; `sw.js` `v2.03.17`. Touched: `index.html`,
-`src/styles.css`, `src/shared/tackle.js`, `src/features/gear-sim/{rig,zone}.js`,
+(both tabs → the 7-row / 15-field material→brand→lb-test cascade), WS-6 (HUD polish: centred
+panels, bulleted notes, "… Estimate:" caps, clearance above the first row) and WS-7 (HUD v2:
+"Generic" first, strike-zone trend line, one bullet per row, community note hidden, "On target"
+rows, trimmed rig bullets) are DONE and verified: `node sanity_pass.js` → **119/119**;
+`sw.js` `v2.03.18`. Touched: `index.html`, `src/styles.css`, `src/shared/tackle.js`,
+`src/features/gear-sim/{rig,zone,solver}.js`, `src/features/gear-sim/techniques/drift.js`,
 `sanity_pass.js`, `docs/SYMBOLS.md`, `docs/CHANGELOG.md`, `sw.js`, `memory-bank/*`.
 NEXT: **WS-4** (per-day weather, issue #2). Then WS-5 (private favourite spots + migration).
-Still owed: a by-hand browser pass over the Gear Sim (the cascade is proven by the recording-DOM
-harness in `sanity_pass.js`, and the HUD CSS by rule, not by paint).
+Two things owed: a by-hand browser pass over the Gear Sim HUD (the cascade is proven by the
+recording-DOM harness, the CSS by rule — not by paint), and confirmation of the WS-7 community
+interpretation (the sonar NOTE hidden, not the Catch Log board).
 
 ## Instruction ledger — chat asks persisted to `.clinerules`
 - [x] **2026-09-29 — "commit" / "push" both mean commit AND push.** Persisted to `.clinerules`
@@ -133,6 +136,45 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       bullets are in the markup, and the centring/separation CSS rules exist (`sw.js`
       `v2.03.17`). **Still owed: a by-hand browser look** (CSS is asserted by rule, not painted).
 
+
+### WS-7 — Gear Sim HUD v2 (chat ask 2026-09-29, later in the WS-6 session)
+- [x] Six asks: (1) the generic line brand is ALWAYS the first brand option and reads
+      **"Generic"** (DISPLAY ONLY — the option value stays the library's "Generic average" so
+      (material, brand, lb) matching, `tackleLineFind`, the saved rig and the DB ids are all
+      untouched); (2) the Strike Zone Estimate gets a **trend line**, graded green at the
+      4"-12" base → yellow at half scale → red at full scale, 0.1" steps (full scale = 7.0",
+      the largest stack the weather rules in `computeStrikeZone()` can build); (3) **one bullet
+      per row** on both panels (the zone reasons used to be joined into a single sentence);
+      (4) the **community-catch note is NOT displayed** while the sonar still pulls the zone;
+      (5) on target ⇒ a single **"On target"** row, no explanation — same for line height;
+      (6) the rig bullets drop the "Targeting <species>…" line so they only ever say what the
+      zone is doing / what to change.
+      Files: `src/shared/tackle.js`, `src/features/gear-sim/{zone,solver}.js`,
+      `src/features/gear-sim/techniques/drift.js`, `index.html`, `src/styles.css`,
+      `sanity_pass.js`, `sw.js`, docs.
+      Potential bug: the frozen `drift` baseline asserts **3 suggestions** — dropping the
+      species line moves it to 2, which is DELIBERATE and must be re-pinned with the reason
+      recorded (never silently).
+      Verify: `node sanity_pass.js --quiet`; new assertions for the trend gradient, the
+      one-row-per-reason notes, the hidden community note and the generic-first brand order.
+      ⚠ INTERPRETATION to confirm: "remove the community catches section … allow it to effect
+      the strike zone estimate but lets not show this" was read as *the sonar NOTE in the zone
+      bullets* (the only place community catches are shown alongside their effect on the zone),
+      NOT the Catch Log's public "Everyone" board — see the follow-up note below.
+      Verified (DONE 2026-09-29, sanity **119/119**, `sw.js` `v2.03.18`): 3 NEW assertions —
+      the trend maths on the REAL `zoneTrend()` (base 8.0" mid ⇒ offset 0 / pct 50 /
+      `hsl(140,…)`; +3.5" ⇒ pct 75 / `hsl(52,…)`; +7" ⇒ pct 100 / `hsl(0,…)`; the shallow side
+      grades too; the ratio clamps at 1 for an out-of-scale zone; a 0.04" move is ignored and a
+      0.1" move is not) plus `zoneColor()` parity after the `gradeColor()` extraction, the REAL
+      `zoneNotes()` (4 notes in ⇒ 2 rows out, community + summary filtered, `[]`/`null` ⇒
+      `On target`), and the generic-first brand order with `Generic` as its display text in the
+      cascade harness. Plus the frozen `drift` baseline deliberately re-pinned to 2 suggestions
+      with the reason inline. `zoneWhyText()` deleted; `paintZoneHud()` is now the single
+      painter for both the live preview and `runSim()`.
+      **Follow-up owed:** a by-hand browser look (the trend strip's paint and the marker
+      position can only be judged visually), and the user's confirmation of the community
+      interpretation above — if they meant the Catch Log's public board, that is a separate,
+      much larger change (auth/board removal) and must NOT be started on this reading.
 
 ## ACTIVE — measured tackle data → **P1 DONE 2026-09-28**
 

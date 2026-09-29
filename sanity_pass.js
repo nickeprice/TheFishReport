@@ -190,17 +190,29 @@ function staticIntegrity() {
     : fail('dead .gear-grid / .run-footer rules removed', 'stale CSS found');
 
   // Gear Sim HUD wording + bullets (direct user instruction, 2026-09-29): both numbers are
-  // ESTIMATES, and every line under them is a bulleted note — the right panel's rig changes
-  // always were, the left "why it moved" note used to be a plain div. Pin the wording, the
-  // bullet containers and the two CSS rules that make it read right (centred panels, and
-  // clearance between the sticky banner and the first gear row).
+  // ESTIMATES, both note lists are bulleted (one ROW per point), and the strike zone carries
+  // a TREND LINE whose marker is placed by paintZoneHud(). Pin the wording, the containers
+  // and the grade rule, so a silent revert fails here.
   (html.includes('<span class="hud-cap">Strike Zone Estimate:</span>') &&
    html.includes('<span class="hud-cap">Line Height Estimate:</span>') &&
-   /<li id="hud-zone-why"/.test(html) && /<ul id="hud-changes"/.test(html))
-    ? ok('HUD caps say "Estimate" and both notes are bulleted',
+   /id="hud-zone-notes"/.test(html) && /<ul id="hud-changes"/.test(html))
+    ? ok('HUD caps say "Estimate" and both note lists are bullets',
          'Strike Zone Estimate / Line Height Estimate, both in <ul> bullets')
-    : fail('HUD caps say "Estimate" and both notes are bulleted',
+    : fail('HUD caps say "Estimate" and both note lists are bullets',
            'cap wording or bullet list changed');
+  (/id="hud-zone-mark"/.test(html) && /\.zone-trend \{[^}]*linear-gradient\(to right/.test(cssSrc))
+    ? ok('strike-zone trend line present and graded red-yellow-green-yellow-red',
+         'marker on a gradient strip; paintZoneHud() positions it')
+    : fail('strike-zone trend line present and graded red-yellow-green-yellow-red',
+           'trend markup or CSS missing');
+  // The community note must stay OFF the HUD even though the sonar still moves the zone.
+  (fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')
+    .includes('Recent community catches holding') &&
+   /ZONE_NOTE_HIDDEN = \/\^\(Strike zone shifted\|Recent community catches holding\)\//.test(
+     fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')))
+    ? ok('community-catch note is computed but hidden from the HUD',
+         'zone.notes keeps it; zoneNotes() filters it out')
+    : fail('community-catch note is computed but hidden from the HUD', 'filter missing');
   (/\.hud-panel \{[^}]*text-align: center/.test(cssSrc) &&
    /\.hud-changes \{[^}]*list-style-position: inside/.test(cssSrc) &&
    /#tab-gear-sim #hud \+ \.bucket \{[^}]*padding-top: 1[0-9]px/.test(cssSrc))
@@ -779,15 +791,20 @@ function behaviorChecks(done) {
     const near = (a, b) => Math.abs(a - b) < 1e-6;
     // Re-pinned 2026-09-28 (P3): the measured line diameters shift this reference rig by
     // -0.006% on height and -0.018% on score (see the frozen-baseline block above).
+    // Re-pinned 2026-09-29 (WS-7): the suggestion LIST is a deliberate product change - the
+    // long paragraphs became short rows and the "Targeting <species> at <flow> CFS …" line
+    // is gone (it said nothing to change), so this rig now yields 2 rows ("Too low …" +
+    // "Try this: …") instead of 3. hgt / score / velocity / zone are unchanged.
     const okT = t.id === 'drift' &&
       near(got.hgt, 2.8867637713966774) && near(got.score, 4.499043697128505) &&
       near(got.velocity.bottom, 2.442952438) &&
       got.zone.min === 4 && got.zone.max === 12 && got.blownOut === false &&
-      got.suggestions.length === 3;
+      got.suggestions.length === 2 &&
+      /^Too low at 2\.9"/.test(got.suggestions[0]) && /^Try this: /.test(got.suggestions[1]);
     okT
-      ? ok('drift technique reproduces the frozen solver output', 'hgt 2.887", score 4.499, 3 suggestions')
+      ? ok('drift technique reproduces the frozen solver output', 'hgt 2.887", score 4.499, 2 short rows')
       : fail('drift technique reproduces the frozen solver output',
-             `hgt=${got.hgt} score=${got.score} zone=${got.zone.min}-${got.zone.max} sugg=${got.suggestions.length}`);
+             `hgt=${got.hgt} score=${got.score} zone=${got.zone.min}-${got.zone.max} sugg=${got.suggestions.length} [${got.suggestions.join(' | ')}]`);
   } catch (e) {
     fail('drift technique reproduces the frozen solver output', String(e.message).split('\n')[0]);
   }
@@ -919,6 +936,13 @@ function behaviorChecks(done) {
     selects['ml-mat'].value = 'braid';
     ctx.onLinePartChange('ml-mat');
     eq('braid brands', String(selects['ml-brand'].options.length - 1), '7');
+    // WS-7: the generic row is ALWAYS the first brand, and it DISPLAYS as "Generic" while its
+    // VALUE stays the library's "Generic average" - the value is what matching round-trips on.
+    const gOpt = selects['ml-brand'].options[1];
+    eq('generic first', String(!!gOpt && /^generic/i.test(gOpt.value)) + '|' +
+      (gOpt ? gOpt.textContent : 'none'), 'true|Generic');
+    const sOpt = selects['ml-brand'].options.filter((o) => o.value === 'Sufix 832 Advanced Superline')[0];
+    eq('brand label', sOpt ? sOpt.textContent : 'missing', 'Sufix 832 Advanced Superline');
     eq('braid lb', vals('ml-lb'), ',20,30,40');
     selects['ml-brand'].value = 'Sufix 832 Advanced Superline';
     ctx.onLinePartChange('ml-brand');
@@ -1005,6 +1029,49 @@ function behaviorChecks(done) {
       : fail('a saved rig restores through the cascade (parents first)', bad2.join(' '));
   } catch (e) {
     fail('tackle cascade drives the gear form (both tabs)', String(e.message).split('\n')[0]);
+  }
+
+  // --- WS-7: the zone panel reads as a LIST, with a graded trend --------------------
+  // The gear sources (inputs / physics / sonar / zone) are already eval'd above, so these are
+  // the REAL functions. The asks: one bullet per reason (never one joined sentence), "On
+  // target" when nothing is shifting the zone, the community note NOT shown even though the
+  // sonar still moves the zone, and a trend graded green at the 4"-12" base -> yellow at half
+  // scale -> red at full scale, quantised to 0.1" (so a 0.04" move cannot flip the colour).
+  try {
+    const badZone = [];
+    const eqz = (label, got, want) => { if (got !== want) badZone.push(`${label}=[${got}] want [${want}]`); };
+    const zoneRows = zoneNotes({ notes: [
+      'Barometer rising 0.03 inHg: fish pin down (lockjaw).',
+      'Heavy cloud cover (100%): fish feel safe riding higher.',
+      'Recent community catches holding near 9.4" (3 fish): zone pulled +0.6" toward feeding fish.',
+      'Strike zone shifted +2.0" to 6.0" - 14.0".'
+    ] });
+    eqz('one row per reason', String(zoneRows.length), '2');
+    eqz('weather only', String(/community|Strike zone shifted/i.test(zoneRows.join(' '))), 'false');
+    eqz('on target', zoneNotes({ notes: [] }).join('|'), 'On target');
+    eqz('no zone object', zoneNotes(null).join('|'), 'On target');
+
+    const tBase = zoneTrend({ min: 4, max: 12 });
+    const tHalf = zoneTrend({ min: 7.5, max: 15.5 });
+    const tFull = zoneTrend({ min: 11, max: 19 });
+    const tShallow = zoneTrend({ min: 1, max: 9 });
+    eqz('base', [tBase.offset, tBase.pct, tBase.color].join('|'), '0|50|hsl(140, 72%, 46%)');
+    eqz('half scale', [tHalf.offset, tHalf.pct, tHalf.color].join('|'), '3.5|75|hsl(52, 72%, 46%)');
+    eqz('full scale', [tFull.offset, tFull.pct, tFull.color].join('|'), '7|100|hsl(0, 72%, 46%)');
+    eqz('shallow side', String(tShallow.pct < 50 && tShallow.pct > 0 && tShallow.color !== tBase.color), 'true');
+    eqz('ratio clamped', String(zoneTrend({ min: 20, max: 28 }).ratio) + '|' +
+      String(zoneTrend({ min: -4, max: 4 }).ratio), '1|1');
+    eqz('0.1" step ignored', zoneTrend({ min: 4.04, max: 12.04 }).color, tBase.color);
+    eqz('0.1" step taken', String(zoneTrend({ min: 4.1, max: 12.1 }).pct > 50), 'true');
+    // The line-height grade must be byte-identical after sharing the grade helper.
+    eqz('lh centre', zoneColor(8.0, { min: 4, max: 12 }), 'hsl(140, 72%, 46%)');
+    eqz('lh edge', zoneColor(12.0, { min: 4, max: 12 }), 'hsl(0, 72%, 46%)');
+    badZone.length === 0
+      ? ok('strike-zone HUD: one bullet per reason + a graded trend line',
+           'community note hidden · "On target" when nothing shifted · green base -> yellow half -> red full, 0.1" steps')
+      : fail('strike-zone HUD: one bullet per reason + a graded trend line', badZone.join(' '));
+  } catch (e) {
+    fail('strike-zone HUD: one bullet per reason + a graded trend line', String(e.message).split('\n')[0]);
   }
 
   // --- P4b: the brand changes the community REPLAY ----------------------------

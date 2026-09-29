@@ -2,8 +2,8 @@
  * src/features/gear-sim/zone.js - rig requirements (no defaults), the strike
  * zone, and the best-rig search that moves the presentation into the zone.
  * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(),
- *         computeStrikeZone(), refreshZonePreview(), zoneWhyText(), zoneColor(),
- *         bestZoneRig()
+ *         computeStrikeZone(), gradeColor(), zoneColor(), zoneTrend(), zoneNotes(),
+ *         paintZoneHud(), refreshZonePreview(), bestZoneRig()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // Required gear fields — no defaults, so anything the angler has never entered
@@ -138,41 +138,97 @@ function computeStrikeZone(sonar) {
     return zone;
 }
 
-// The one-line "why is it not the 4"-12" base" explanation for the HUD's left panel:
-// every zone.shift reason the weather + community data produced, or an honest baseline
-// line when nothing moved it. The "Strike zone shifted ..." summary note is dropped here
-// because the panel already prints the resulting range.
-function zoneWhyText(zone) {
-    var reasons = (zone && zone.notes) ? zone.notes.filter(function (n) {
-        return n.indexOf('Strike zone shifted') !== 0;
+// The HUD's left-panel bullets: ONE ROW PER REASON the zone moved off the 4"-12" base, in
+// the order the rules fired, so the panel reads as a list instead of one wrapped sentence.
+// Two notes are deliberately NOT shown: the "Strike zone shifted ..." summary (the panel
+// already prints the resulting range) and the community-catch note - the sonar still pulls
+// the zone in computeStrikeZone(), we simply don't display it.
+// Nothing is shifting the zone -> a single "On target" row, no explanation.
+var ZONE_NOTE_HIDDEN = /^(Strike zone shifted|Recent community catches holding)/;
+
+function zoneNotes(zone) {
+    var notes = (zone && zone.notes) ? zone.notes.filter(function (n) {
+        return !ZONE_NOTE_HIDDEN.test(String(n));
     }) : [];
-    if (!reasons.length) return 'Base 4.0" - 12.0" \u2014 nothing in the current conditions is shifting it.';
-    return reasons.join(' ');
+    return notes.length ? notes : ['On target'];
 }
 
-// Line-height colour, graded red -> yellow -> green as the presentation nears the MIDDLE
-// of the strike zone, in 0.1" micro-steps so the colour and the printed number always
-// agree: centre = green (hue 140) · 50% to centre = yellow (hue 52) · edge and beyond =
-// red (hue 0). Fully geometric - a rig can be "in the zone" and still only amber at its edge.
-function zoneColor(hgt, zone) {
-    var center = (zone.min + zone.max) / 2;
-    var half = Math.max(0.5, (zone.max - zone.min) / 2);
-    var q = Math.round(hgt * 10) / 10;               // 0.1" micro-step
-    var d = Math.abs(q - center) / half;             // 0 at the centre, 1 at the edge
+// THE shared colour grade: d = 0 (best / on target) -> 1 (worst / furthest from the target).
+// Green (hue 140) at the target, yellow (52) at the halfway point, red (0) at the edge and
+// beyond. BOTH HUD panels use it - the line height grades the distance to the zone MIDDLE,
+// the strike-zone trend grades the distance from the 4"-12" BASE - so "green is good" can
+// never mean two different things.
+function gradeColor(d) {
+    if (!(d > 0)) d = 0;
     if (d > 1) d = 1;
     var t = d * 2;                                    // 0..2
     var hue = (t <= 1) ? (140 - 88 * t) : (52 - 52 * (t - 1));
     return 'hsl(' + Math.round(hue) + ', 72%, 46%)';
 }
 
-// Keeps the HUD strike-zone panel live: fires on date switches and when the water
-// report lands, so the zone is correct before the angler presses RUN SIMULATION.
-function refreshZonePreview() {
-    var zone = computeStrikeZone();
+// Line-height colour. Purely geometric, in 0.1" micro-steps so the colour and the printed
+// number always agree: a rig can be "in the zone" and still only amber at its edge.
+function zoneColor(hgt, zone) {
+    var center = (zone.min + zone.max) / 2;
+    var half = Math.max(0.5, (zone.max - zone.min) / 2);
+    var q = Math.round(hgt * 10) / 10;               // 0.1" micro-step
+    return gradeColor(Math.abs(q - center) / half);
+}
+
+// The strike-zone TREND: how far today's zone sits from the 4.0"-12.0" base. FULL_SCALE is
+// the largest stack the weather rules in computeStrikeZone() can build - falling 3.5 + cloud
+// 1.5 + rain 1.0 + warm 1.0 = 7.0" deeper, rising 3.0 + sun 1.5 + cold 1.0 = 5.5" shallower -
+// so the marker walks RIGHT for a deeper zone and LEFT for a shallower one, the colour is
+// green at the base -> yellow at half scale -> red at full scale, and the offset is
+// quantised to 0.1" so the colour and the printed range agree. A community pull can saturate
+// the scale (it is not bounded by the weather rules), hence the clamps.
+var ZONE_TREND_FULL_SCALE = 7.0;
+
+function zoneTrend(zone) {
+    var baseMid = (BASE_ZONE_MIN + BASE_ZONE_MAX) / 2;
+    var offset = Math.round((((zone.min + zone.max) / 2) - baseMid) * 10) / 10;
+    var ratio = Math.abs(offset) / ZONE_TREND_FULL_SCALE;
+    if (ratio > 1) ratio = 1;
+    var pct = 50 + ((offset / ZONE_TREND_FULL_SCALE) * 50);
+    if (pct < 0) pct = 0;
+    if (pct > 100) pct = 100;
+    return { offset: offset, ratio: ratio, pct: pct, color: gradeColor(ratio) };
+}
+
+// Paint the WHOLE left panel from a zone: the range (coloured by the trend), the trend
+// marker on its gradient line, and ONE BULLET PER REASON. Shared by the live preview below
+// and by runSim()'s paintSimHud(), so the panel can never be half-updated.
+function paintZoneHud(zone) {
+    var trend = zoneTrend(zone);
     var range = document.getElementById('hud-zone');
-    if (range) range.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
-    var why = document.getElementById('hud-zone-why');
-    if (why) why.innerText = zoneWhyText(zone);
+    if (range) {
+        range.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
+        range.style.color = trend.color;          // the trend colour IS the estimate's colour
+    }
+    var mark = document.getElementById('hud-zone-mark');
+    if (mark) {
+        mark.style.left = trend.pct.toFixed(1) + '%';
+        mark.style.backgroundColor = trend.color;
+        mark.title = (trend.offset >= 0 ? '+' : '') + trend.offset.toFixed(1) +
+            '" vs the 4.0" - 12.0" base';
+    }
+    var ul = document.getElementById('hud-zone-notes');
+    if (ul) {
+        ul.innerHTML = '';
+        zoneNotes(zone).forEach(function (n) {
+            var li = document.createElement('li');
+            li.className = 'hud-note';
+            li.textContent = n;                    // data text -> textContent, never innerHTML
+            ul.appendChild(li);
+        });
+    }
+}
+
+// Keeps the HUD strike-zone panel live: fires on date switches and when the water report
+// lands, so the zone is correct before the angler presses RUN SIMULATION. This is the
+// WEATHER-ONLY preview (no community pull); runSim() repaints it with the sonar zone.
+function refreshZonePreview() {
+    paintZoneHud(computeStrikeZone());
 }
 
 // ==================================================================================

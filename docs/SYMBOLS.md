@@ -60,6 +60,7 @@ this file**, or the pass fails.
 - **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`
 - **tackle.js** — `tackleLoad()`, `tackleItems(type)`, `tackleLineById(id)`,
   `tackleLineByMatLb(mat, lb)`, `tackleRowLine(row, role)` (brand id -> else material+lb),
+  `isGenericBrand()`, `brandLabel()` (displays "Generic"), `brandOrder()` (generic first),
   `populateTacklePickers()`, `tackleLineBrands(mat, role)`, `tackleLineLbs(mat, brand, role)`,
   `tackleLineFind(mat, brand, lb)`, `cascadeLine(role)`, `resolveLineId(role)`,
   `onLinePartChange(fieldId, fromLog)`, `onWeightShapeChange(baseId, fromLog)`,
@@ -93,7 +94,9 @@ this file**, or the pass fails.
 - **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()`
 - **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `computeStrikeZone()`,
-  `refreshZonePreview()`, `zoneWhyText()`, `zoneColor()`, `bestZoneRig()`
+  `gradeColor()`, `zoneColor()`, `zoneTrend()`, `zoneNotes()`, `paintZoneHud()`,
+  `refreshZonePreview()`, `bestZoneRig()` — the HUD zone panel (trend line + one bullet per
+  reason; the community note is filtered out) and the colour grade shared with line height
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

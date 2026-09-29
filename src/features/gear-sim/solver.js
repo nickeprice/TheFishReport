@@ -84,11 +84,10 @@ function buildSimStats(rig, out) {
 function paintSimHud(rig, out, stats) {
     var hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
 
-    // LEFT panel: the strike zone + why it moved off the 4"-12" base.
-    var eZone = document.getElementById('hud-zone');
-    if (eZone) eZone.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"';
-    var eWhy = document.getElementById('hud-zone-why');
-    if (eWhy) eWhy.innerText = zoneWhyText(zone);
+    // LEFT panel: the strike zone, its trend colour/marker and ONE BULLET PER REASON it
+    // moved off the 4"-12" base. Same painter as the live preview, so the panel is whole
+    // (paintZoneHud is in zone.js).
+    paintZoneHud(zone);
 
     // RIGHT panel: the angler's line height, colour-graded toward the zone MIDDLE in
     // 0.1" steps (green = dead centre, yellow = halfway, red = at/beyond the edge), with

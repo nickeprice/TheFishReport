@@ -9,7 +9,8 @@
  * changed.
  *
  * public: TACKLE, tackleLoad(), tackleItems(), tackleLineById(), tackleLineByMatLb(),
- *         tackleRowLine(), populateTacklePickers(), cascadeLine(role), resolveLineId(role),
+ *         tackleRowLine(), isGenericBrand(), brandLabel(), brandOrder(),
+ *         populateTacklePickers(), cascadeLine(role), resolveLineId(role),
  *         onLinePartChange(fieldId, fromLog), onWeightShapeChange(baseId, fromLog),
  *         onBeadMatChange(fieldId, fromLog), tackleLineBrands(mat, role),
  *         tackleLineLbs(mat, brand, role), tackleLineFind(mat, brand, lb),
@@ -46,8 +47,30 @@ function tackleLineById(id) {
 // before the pickers existed): prefer the `generic` average row for that size.
 // NOTE the brand TEXT is "Generic average" (a display string), so match on it
 // case-insensitively rather than on an exact slug.
+// "Generic average" is the library's averaged fallback row, matched case-insensitively
+// because the brand is a display string, not a slug.
+function isGenericBrand(brand) {
+    return /^generic/i.test(String(brand || ''));
+}
+
 function isGenericLine(it) {
-    return /^generic/i.test(String((it && it.brand) || ''));
+    return isGenericBrand(it && it.brand);
+}
+
+// The brand picker shows the library's own spelling, EXCEPT the synthetic fallback row:
+// the CSV calls it "Generic average", the angler should read "Generic". DISPLAY ONLY - the
+// <option> VALUE stays the library string, because that value is what (material, brand, lb)
+// matching, a restored rig and tackleLineFind() all round-trip through.
+function brandLabel(brand) {
+    return isGenericBrand(brand) ? 'Generic' : String(brand);
+}
+
+// Generic FIRST - it is the averaged row for that size, i.e. the honest default when the
+// angler's own line is not in the library. Everything else stays A-Z.
+function brandOrder(a, b) {
+    var ga = isGenericBrand(a), gb = isGenericBrand(b);
+    if (ga !== gb) return ga ? -1 : 1;
+    return String(a).localeCompare(String(b));
 }
 
 function tackleLineByMatLb(mat, lb) {
@@ -110,7 +133,7 @@ function tackleLineBrands(mat, role) {
         seen[it.brand] = true;
         out.push(String(it.brand));
     });
-    return out.sort(function (a, b) { return a.localeCompare(b); });
+    return out.sort(brandOrder);
 }
 
 // LB tests on offer for a (material, brand) pair (blank parent -> the union).
@@ -155,7 +178,7 @@ function mirrorValue(baseId) {
 function cascadeLine(role) {
     var mat = getStr(lineField(role, 'mat'));
     fillBothSelects(lineField(role, 'brand'),
-        tackleLineBrands(mat, role).map(function (b) { return { value: b, text: b }; }));
+        tackleLineBrands(mat, role).map(function (b) { return { value: b, text: brandLabel(b) }; }));
     fillBothSelects(lineField(role, 'lb'),
         tackleLineLbs(mat, getStr(lineField(role, 'brand')), role)
             .map(function (lb) { return { value: String(lb), text: lb + ' lb' }; }));

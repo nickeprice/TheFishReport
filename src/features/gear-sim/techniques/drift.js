@@ -54,9 +54,11 @@ var DRIFT_TECHNIQUE = {
         if (score < 0) score = 0;
         if (score > 5) score = 5;
 
-        // 4. Build the suggestions: what to change to get into the zone ---------------
-        // Rig Adjustments only: your current state + the exact gear to tie on. No
-        // calibration meta-talk - the community data already moved the zone above.
+        // 4. Build the suggestions: SHORT rows, one per bullet -------------------------
+        // Only "what the zone is doing to you" + "what to change": no calibration
+        // meta-talk, no re-statement of the form (the community data already moved the
+        // zone above). An ON-TARGET rig gets a single "On target" row - a paragraph of
+        // explanation is noise when there is nothing to change.
         var suggestions = [];
         var best = bestZoneRig(zone, velocity.bottom, ldLb, ldMat, mlLb, mlMat, foam.key, weightOz, ldLen, yarn, hook, bdMat, bdSz, foam2.lift);
 
@@ -64,26 +66,17 @@ var DRIFT_TECHNIQUE = {
             // Report the true measured ft/s when we have it, matching the HUD (the solver's
             // own scale is internal calibration units, not something to quote at an angler).
             var shownBed = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
-            suggestions.push('BLOWN OUT: the bed is running ' + shownBed.toFixed(1) + ' ft/s with only ' + weightOz + ' oz of lead. Step up to 3/4 oz or 1 oz, or fish a slower seam.');
+            suggestions.push('BLOWN OUT: bed running ' + shownBed.toFixed(1) + ' ft/s at ' + weightOz + ' oz - step up to 3/4 or 1 oz, or fish a slower seam.');
         } else if (hgt < zone.min) {
-            var lowWhy = (sonar && sonar.center !== null && sonar.center > (zone.min + zone.max) / 2)
-                ? 'Weather and recent catches show fish holding higher in the column'
-                : 'Fish are holding off the bottom';
-            suggestions.push('Presentation pinned at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"). ' + lowWhy + '. Add buoyancy: bigger Corky, more yarn, or a longer leader.');
+            suggestions.push('Too low at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - add lift: bigger corky, more yarn, or a longer leader.');
         } else if (hgt > zone.max) {
-            var highWhy = (sonar && sonar.center !== null && sonar.center < (zone.min + zone.max) / 2)
-                ? 'Weather and recent catches show fish pinned tight to the bottom'
-                : 'Fish are holding tight to the bottom';
-            suggestions.push('Floating over fish at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"). ' + highWhy + '. Cut lift: smaller Corky, less yarn, heavier lead, or a shorter leader.');
+            suggestions.push('Too high at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - cut lift: smaller corky, less yarn, heavier lead, or a shorter leader.');
         } else {
-            suggestions.push('On target: ' + hgt.toFixed(1) + '" sits inside today\'s ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '" strike zone.');
+            suggestions.push('On target');
         }
 
         if (best && !blownOut && score < 5.0) {
             suggestions.push('Try this: ' + best.foam.label + ' + ' + best.leader + ' ft leader + ' + best.weight + ' oz lead -> projects ' + best.hgt.toFixed(1) + '" of line height.');
-        }
-        if (species && species !== 'None') {
-            suggestions.push('Targeting ' + species + ' at ' + flow + ' CFS with a ' + ldMat + ' ' + ldLb + 'lb leader.');
         }
 
         return {

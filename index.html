@@ -113,8 +113,14 @@
         <div class="hud-panels">
             <div class="hud-panel">
                 <div class="hud-line"><span class="hud-cap">Strike Zone Estimate:</span> <span id="hud-zone" class="hud-val">4.0" - 12.0"</span></div>
-                <ul class="hud-changes">
-                    <li id="hud-zone-why" class="hud-note">Baseline 4.0" - 12.0" &mdash; no water report loaded yet.</li>
+                <!-- TREND LINE: the strip reads red - yellow - GREEN - yellow - red, green being the
+                     4.0"-12.0" base; paintZoneHud() walks the marker right for a deeper zone and
+                     left for a shallower one and colours it on the same grade as the number. -->
+                <div class="zone-trend" aria-hidden="true"><span id="hud-zone-mark"></span></div>
+                <!-- One bullet PER REASON (rebuilt by paintZoneHud()); "On target" when nothing is
+                     shifting the zone. Community-catch influence is NOT shown. -->
+                <ul id="hud-zone-notes" class="hud-changes">
+                    <li class="hud-note">Baseline 4.0" - 12.0" &mdash; no water report loaded yet.</li>
                 </ul>
             </div>
             <div class="hud-panel">

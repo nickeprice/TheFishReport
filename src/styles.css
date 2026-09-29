@@ -50,6 +50,14 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 .hud-changes { margin: 4px 0 0 0; padding: 0; text-align: center; list-style-position: inside; }
 .hud-changes li { font-size: 0.68rem; color: #d1d5db; line-height: 1.35; margin-bottom: 3px; }
 .hud-changes li.hud-note { font-size: 0.62rem; color: #9ca3af; }
+/* Strike-zone TREND LINE: red - yellow - GREEN - yellow - red, green being the 4.0"-12.0"
+   base, with the live marker on it (0.1" steps). The colours come from gradeColor() in
+   paintZoneHud(), so the marker, the number and the line height grade cannot disagree. */
+.zone-trend { position: relative; height: 4px; margin: 6px 2px 6px 2px; border-radius: 2px;
+    background: linear-gradient(to right, hsl(0, 72%, 46%), hsl(52, 72%, 46%),
+        hsl(140, 72%, 46%), hsl(52, 72%, 46%), hsl(0, 72%, 46%)); }
+.zone-trend span { position: absolute; top: -3px; width: 4px; height: 10px; margin-left: -2px;
+    border-radius: 2px; background: hsl(140, 72%, 46%); }
 
 .bucket { padding: 0 12px 16px 12px; }
 .row { display: flex; gap: 8px; margin-bottom: 8px; }

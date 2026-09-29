@@ -119,9 +119,10 @@ function depthAtGauge(flow, siteId) {
     }
 
     return {
-        value: mid,                       // ft
-        minFt: ds[0],
-        maxFt: ds[ds.length - 1],
+        value: mid,                       // ft - the central (median) estimate
+        minFt: ds[0],                     // the MEASURED band: shallowest row in the window
+        maxFt: ds[ds.length - 1],         // ...and the deepest. Reported to the angler as a
+                                          // range (WS-8b a2) instead of one bare number.
         spreadFt: (ds[ds.length - 1] - ds[0]) / 2,
         spreadPct: (mid > 0) ? ((ds[ds.length - 1] - ds[0]) / 2) / mid : 0,
         crossCheckPct: worst,
@@ -141,13 +142,17 @@ function spotDepthFt(flow, siteId) {
     var d = depthAtGauge(flow, siteId);
     if (!d) {
         return {
-            value: null, atGauge: false, ratio: 1.0, ratioMeasured: false,
+            value: null, bandLow: null, bandHigh: null, atGauge: false, ratio: 1.0, ratioMeasured: false,
             gaugeWidthFt: gaugeWidthFt(siteId), uncertainty: SAME_REACH_UNCERTAINTY,
             source: 'none'
         };
     }
     return {
-        value: d.value,
+        value: d.value,                   // central estimate (ft)
+        // WS-8b a2: the MEASURED BAND, i.e. what the gauge's own cross-section rows actually
+        // span in this flow window. The HUD leads with this; `value` is its centre.
+        bandLow: d.minFt,
+        bandHigh: d.maxFt,
         atGauge: true,
         ratio: 1.0,                       // depth is not scaled by the width ratio
         ratioMeasured: false,

@@ -17,6 +17,17 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **WS-8b (a2): depth as a measured BAND**: `spotDepthFt()` now exposes
+  `bandLow`/`bandHigh` (the measured min/max of the same USGS rows the median comes from) and
+  `zone.js` `depthBandText()` renders `'2.1-4.1 ft'` — or a single number when the band is
+  degenerate, `null` when there is no measurement. The summary reads *"in about 2.1-4.1 ft at 1040
+  CFS (gauge measurement, ±20% for spot vs gauge)"*: the band IS the measurement spread, and the
+  ±20% is now purely the same-reach factor (your spot is not the gauge) instead of a max() of the
+  two. Nisqually 2.1-4.1 ft @1040 → 3.9-4.5 @3000; Puyallup 2.3-3.5; Carbon 2.2-2.9. Median
+  unchanged, no physics moved. `sw.js` `v2.03.26`, **136/136**. a1 (DEM section) declined on the
+  numbers — the terrarium z15 profile matches the USGS width on 1 of 5 rivers and is 1.5-4× off on
+  the rest; a real section waits for a dated 1 m 3DEP source.
+
 - 2026-09-29 — **HUD restructure: two banners + ONE summary** (direct user ask): the Gear Sim HUD is
   now **Strike Zone banner → Line Height banner → one cohesive paragraph** ("what the fish are doing
   and where": outcome by net shift, the two strongest drivers in plain words, the depth of water

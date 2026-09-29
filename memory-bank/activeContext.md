@@ -15,21 +15,26 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (WS-1/2/3/5/6/7 + Phases 1–3 + WS-8b(b1); **“a” is the only open call**)
+## HANDOFF — 2026-09-29 (all approved work shipped; **no open decisions** — verify by eye)
 
-Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-6 (HUD
-polish), WS-7 (HUD v2 + label addendum), **Phase 1** (gradient on the estimate only + one bullet
-style, `37fb1ed`), **Phase 2** (WS-4 per-day reference-hour weather + wind direction text +
-tappable 24-hour popup, `880753d`), **Phase 3** (WS-8a: thermal-optimum curve, own-gauge colour,
-reference-hour light, demoted barometer, measured `A/W` gauge depth, the "where to fish" row),
-**WS-5** (private favourite spots: `favorite_spots` + RLS default-deny, client CRUD, the modal
-list, the map star layer) and **WS-8b b1** (light brackets anchored to the day's sunrise/sunset).
-Current state: sanity **134/134**, `sw.js` `v2.03.24`, `origin/main` clean.
+Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-5 (private
+favourite spots + RLS default-deny), WS-6/WS-7 (HUD, then superseded by the restructure below),
+**Phase 1** (gradient on the estimate only), **Phase 2** (WS-4 per-day reference-hour weather +
+wind direction text + tappable 24-hour popup, `880753d`), **Phase 3** (WS-8a: thermal-optimum
+curve, own-gauge colour, reference-hour light, demoted barometer, measured `A/W` gauge depth),
+**WS-8b b1** (light brackets on the day's sunrise/sunset), **HUD restructure** (two banners + one
+cohesive summary + off-target-only changes) and **WS-8b a2** (depth as a measured band).
+Current state: sanity **136/136**, `sw.js` `v2.03.26`, `origin/main` clean.
 
-**NEXT = the `a` decision** (see PHASE 4 DECISIONS below): the user asked for the a1-vs-a2 case and
-has not picked yet. Recommendation on file is **a2** (report the measured depth BAND instead of a
-single median — ~10 lines, no new data source). Everything else in issues #1–#3 is shipped, and
-b2 / c2 / d3 are recorded as DECLINED-by-design so nobody re-opens them by accident.
+**NEXT = nothing queued.** Every sub-item of Phase 4 has a decision recorded (b1 shipped; b2, c2,
+d3 declined-by-design with reasons; a resolved as a2). The only open items are OUTSIDE the code:
+1. **A browser pass** — the HUD restructure is the one to eyeball (banner spacing, how the summary
+   paragraph wraps on a phone, the yellow change rows), plus the saved-spot list, the weather
+   popup and the map star layer.
+2. **One interpretation to confirm** (1-line fix if wrong): the two banners are stacked with the
+   summary BELOW both; if the summary was meant to live under the Line Height banner, it is a block
+   move in `index.html` + the CSS order, no JS change.
+3. **a1 stays open by design** and needs a dated 1 m 3DEP/lidar source before it is worth doing.
 
 Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
 per-day weather by the live API + sanity, the popup CSS by rule, the where-to-fish row and the
@@ -341,20 +346,19 @@ NON-builds, not oversights.
       hooking-location field + column + RPC return). Verified en route: the RPC already returns
       everything the replay needs, because heights are RECOMPUTED by `presentationHeightInches()`
       — no `line_height_in` column is required.
-- [ ] **a — PENDING the user's pick (a1 vs a2).** The a1-vs-a2 case was delivered 2026-09-29:
-      **a1's datum "blocker" was WRONG** — USGS publishes a surveyed site altitude
-      (`monitoring-locations`: `altitude 3.49`, `vertical_datum NAVD88`, `altitude_accuracy
-      0.03`), so a DEM↔NAVD88↔gage-height chain is constructible. The case against a1 is the DEM
-      itself: the terrarium z15 profile (~3.25 m/px) reproduces the USGS width on **1 of 5**
-      rivers (Puyallup 202.3 vs 215 ft), is **+52%** on the Nisqually (267.6 vs 176) and **4×** on
-      the Carbon/White (256.4 vs 63; 479.7 vs 119) — and the Carbon is only ~6 pixels wide at that
-      resolution. So a1 would REPLACE hand-measured, datum-free `A/W` with a section that is
-      1.5–4× wrong on 4 of 5 rivers, likely making the published number worse than today's
-      ±20–32%. Recommendation: **a2** (report the measured depth BAND — e.g. Nisqually @1040 =
-      2.1–4.1 ft — ~10 lines in `continuity.js`, no new data source), and park a real DEM/lidar
-      section until a DATED 1 m 3DEP source (which `river_widths.js`'s own header recommends).
-      ⚠ If a1 is chosen anyway, it must NOT be presented as a measured spot depth, and the
-      uncertainty must grow rather than shrink.
+- [x] **a — RESOLVED: a2 shipped (2026-09-29).** The depth is reported as the **measured band** the
+      gauge's own USGS rows span, with the median as its centre: `spotDepthFt()` gained
+      `bandLow`/`bandHigh`, `zone.js` gained `depthBandText()` (a degenerate band collapses to one
+      number; no measurement -> `null`, never invented), the summary now reads *"in about 2.1-4.1 ft
+      at 1040 CFS (gauge measurement, ±20% for spot vs gauge)"*, and the `whereToFish()` detail
+      carries the median AND the band. The `±20%` is now purely the same-reach factor instead of a
+      max() of two spreads. `sw.js` `v2.03.26`, sanity **136/136** (band maths pinned on the real
+      rows: Nisqually 2.140449438202247–4.142857142857143 median 3.159825238772607; Puyallup
+      2.3-3.5 ft; degenerate -> one number; missing -> null). Median unchanged, so no physics moved.
+      **a1 was declined** — see the CHANGELOG entry for the numbers (the DEM matches the USGS width
+      on 1 of 5 rivers and is 1.5–4× off on the rest; the datum chain was NOT the blocker).
+      ⚠ a1's real path stays open by design: a DEM/lidar section waits for a **dated 1 m 3DEP
+      source** (which `river_widths.js`'s header already recommends).
 - [ ] Still queued: nothing from issues #1–#3 — WS-5 shipped 2026-09-29 (`favorite_spots` + RLS
   default-deny + the modal list + the map star layer). Phase 4 / WS-8b is the only open item and
   it needs a product confirm.

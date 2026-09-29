@@ -346,6 +346,18 @@ function zoneTrend(zone) {
 // ==================================================================================
 var LIE_SOFT_FTS = 1.5;     // true ft/s at the gauge: below this the bed is soft
 var LIE_FAST_FTS = 3.0;     // above this the bed is pushy
+var DEPTH_BAND_MIN_FT = 0.2;   // a band narrower than this reads as one number, not "3.2-3.2 ft"
+
+// '2.1-4.1 ft' when the gauge's own rows really do span a range, else '3.2 ft'. Never invents
+// one: a missing/one-row band collapses to the single measured value.
+function depthBandText(spot) {
+    if (!spot || !(spot.value > 0)) return null;
+    var low = Number(spot.bandLow), high = Number(spot.bandHigh);
+    if (isFinite(low) && isFinite(high) && (high - low) >= DEPTH_BAND_MIN_FT && low > 0) {
+        return low.toFixed(1) + '-' + high.toFixed(1) + ' ft';
+    }
+    return spot.value.toFixed(1) + ' ft';
+}
 
 function positionParts(zone, hgt) {
     var flow = (typeof getCurrentFlow === 'function') ? getCurrentFlow() : null;
@@ -355,14 +367,25 @@ function positionParts(zone, hgt) {
     var mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
     var out = { depth: null, lie: null, liePlain: null, line: null, depthParts: null, bed: null, unc: null };
 
-    // Depth of water they are holding in, from the gauge's measured cross-section. The
-    // uncertainty is the WORSE of the two honest spreads: the same-reach factor (the spot
-    // is not the gauge) and the cross-section's own row-to-row spread.
+    // Depth of water they are holding in, from the gauge's measured cross-section. WS-8b a2:
+    // the HUD LEADS WITH THE BAND the gauge's own rows span in this flow window (the honest
+    // measurement spread), with the median as the single-value fallback; the +/-20% that stays
+    // beside it is the SEPARATE same-reach factor (the angler's spot is not the gauge).
     if (spot && spot.value > 0 && mid !== null) {
-        out.unc = Math.max(spot.uncertainty || 0, spot.spreadPct || 0);
-        out.depthParts = { midIn: mid, ft: spot.value, pct: Math.round(out.unc * 100), flow: flow };
+        var band = depthBandText(spot);
+        out.unc = spot.uncertainty || SAME_REACH_UNCERTAINTY;
+        out.depthParts = {
+            midIn: mid,
+            ft: spot.value,
+            band: band,
+            bandLow: spot.bandLow,
+            bandHigh: spot.bandHigh,
+            spreadPct: spot.spreadPct,
+            pct: Math.round(out.unc * 100),
+            flow: flow
+        };
         out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + spot.value.toFixed(1) +
-            ' ft of water (gauge cross-section, \u00b1' + out.depthParts.pct + '%)';
+            ' ft of water (gauge measurements ' + band + ', \u00b1' + out.depthParts.pct + '%)';
     } else {
         out.depth = 'no measured cross-section at this gauge, so no spot depth';
     }
@@ -473,9 +496,10 @@ function fishOutlook(zone, hgt) {
     // 3 + 4. Where they are, and where the angler's line sits.
     var p = positionParts(z, hgt);
     if (p.depthParts) {
-        sentences.push('They are holding about ' + p.depthParts.midIn.toFixed(1) + '" off the bed, in ~' +
-            p.depthParts.ft.toFixed(1) + ' ft of water at ' + Math.round(p.depthParts.flow) +
-            ' CFS (measured at the gauge, \u00b1' + p.depthParts.pct + '%).');
+        // WS-8b a2: lead with the BAND the gauge's own rows span, not one bare number.
+        sentences.push('They are holding about ' + p.depthParts.midIn.toFixed(1) + '" off the bed, in about ' +
+            p.depthParts.band + ' at ' + Math.round(p.depthParts.flow) +
+            ' CFS (gauge measurement, \u00b1' + p.depthParts.pct + '% for spot vs gauge).');
     } else {
         sentences.push('There is no depth measurement for this gauge, so there is no depth to quote.');
     }

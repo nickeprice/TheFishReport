@@ -95,8 +95,9 @@ this file**, or the pass fails.
   `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a)
 - **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
   `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (same-reach estimate + spread);
-  `depthAtGauge(flow, siteId)` (`D = A/W`, cross-checked by `Q/(W·V)`), `spotDepthFt(flow, siteId)`
-  — the same-reach DEPTH estimate (`value: null` = unmeasured) (WS-8a)
+  `depthAtGauge(flow, siteId)` (`D = A/W` median, cross-checked by `Q/(W·V)`; `minFt`/`maxFt` are
+  the MEASURED BAND), `spotDepthFt(flow, siteId)` — the same-reach DEPTH estimate with
+  `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2)
 - **physics.js** — `lineDiameterScale`, `beadDrag`/`beadSink`, `hookDrag`, `yarnDrag`,
   `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `presentationHeightInches()`
 - **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,

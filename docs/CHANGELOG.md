@@ -4,6 +4,36 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — WS-8b (a2): the depth is a MEASURED BAND, not one bare number
+The Gear Sim's depth sentence no longer presents a single figure as if it were *the* depth. The
+gauge's own USGS field rows span a range in any flow window — at the Nisqually @1040 CFS the six
+nearest rows run **2.14–4.14 ft** (median 3.16), and at 3000 CFS they tighten to 3.87–4.54 ft — so
+the HUD now leads with the range and keeps the median as its centre.
+
+- `continuity.js` — `spotDepthFt()` exposes `bandLow`/`bandHigh` (the measured min/max of the same
+  rows the median comes from; `null` when the gauge has no cross-section, so no band can be
+  fabricated). `depthAtGauge()` already had `minFt`/`maxFt`; they are now documented as THE band.
+- `zone.js` — new `depthBandText(spot)`: `'2.1-4.1 ft'` when the rows genuinely span ≥0.2 ft, else
+  the single value (`'3.2 ft'`), so a one-row window can never read "3.2-3.2 ft"; `null` when there
+  is no measurement. `positionParts().depthParts` carries the band, and the summary sentence becomes
+  *"They are holding about 9.9" off the bed, in about 2.1-4.1 ft at 1040 CFS (gauge measurement,
+  ±20% for spot vs gauge)."* The `±20%` is now cleanly the SAME-REACH factor (your spot is not the
+  gauge) instead of a max() of two different spreads — the measurement spread is visible as the band
+  itself, which is what the old `±32%` was fudging. The `whereToFish()` detail keeps the median AND
+  adds the band: *"hold ~9.9" up in ~3.2 ft of water (gauge measurements 2.1-4.1 ft, ±20%)"*.
+- Why not a1 (the DEM cross-section): a1 would *replace* these hand-measured cross-sections with a
+  z15 (~3.25 m/px) profile that reproduces the USGS width on only 1 of 5 rivers (+52 % Nisqually,
+  4× Carbon/White) — the published number would likely get worse. USGS does publish a surveyed
+  NAVD88 site altitude (`altitude 3.49 ft`, ±0.03), so the datum chain was never the real blocker;
+  the DEM's fidelity is. A DEM/lidar section waits for a **dated 1 m 3DEP source**
+  (`river_widths.js`'s own header already recommends exactly that).
+- `sw.js` `v2.03.26`. **136/136 GREEN** — a new assertion pins the band maths on the REAL rows
+  (Nisqually 2.140449438202247–4.142857142857143 with the median between them, text `2.1-4.1 ft`;
+  Puyallup `2.3-3.5 ft`), that a degenerate band collapses to one number, that a missing band is
+  `null` and never invented, and the updated depth sentence in the summary. The median itself is
+  unchanged (the frozen depth values still hold), so no physics moved.
+- Key files: `src/features/gear-sim/{continuity,zone}.js`, `sanity_pass.js`, `sw.js`, `docs/SYMBOLS.md`.
+
 ## 2026-09-29 — HUD restructure: two banners + ONE "where the fish are" summary (direct user ask)
 The Gear Sim HUD no longer explains itself. Instead of a bullet per technical reason under each
 estimate, it now reads top-to-bottom as: **banner 1 = Strike Zone Estimate**, **banner 2 = Line

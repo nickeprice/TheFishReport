@@ -918,15 +918,38 @@ function behaviorChecks(done) {
              `N=${dN && dN.value} Hi=${dHi && dHi.value} Puy=${dPuy && dPuy.value} ` +
              `x=${dN && dN.crossCheckPct} rows=${dN && dN.rows}/${dN && dN.gaugeRows}`);
 
+    // WS-8b a2: the angler is shown the BAND the gauge's own rows span, not one bare number.
+    // The band is the measured min/max of that window; a degenerate (single-value) band must
+    // collapse to one number rather than read "3.2-3.2 ft", and a missing one stays null.
+    const spotN = spotDepthFt(1040, '12089500');
+    const spotPuy = spotDepthFt(1040, '12101500');
+    const bandOk = Math.abs(spotN.bandLow - 2.140449438202247) < 1e-9 &&
+      Math.abs(spotN.bandHigh - 4.142857142857143) < 1e-9 &&
+      spotN.bandLow < spotN.value && spotN.value < spotN.bandHigh &&
+      depthBandText(spotN) === '2.1-4.1 ft' &&
+      depthBandText(spotPuy) === '2.3-3.5 ft' &&
+      // One row (or a razor-thin spread) -> a single number, never "3.2-3.2 ft".
+      depthBandText({ value: 3.2, bandLow: 3.2, bandHigh: 3.2 }) === '3.2 ft' &&
+      depthBandText({ value: 3.2, bandLow: 3.14, bandHigh: 3.26 }) === '3.2 ft' &&
+      depthBandText({ value: null, bandLow: null, bandHigh: null }) === null &&
+      depthBandText(null) === null;
+    bandOk
+      ? ok('the depth is reported as a measured band, not one bare number',
+           'Nisqually 2.1-4.1 ft (median 3.16), Puyallup 2.3-3.5 ft (median 3.33); a degenerate band collapses to one number; none -> null')
+      : fail('the depth is reported as a measured band, not one bare number',
+             `N=[${spotN.bandLow},${spotN.value},${spotN.bandHigh}] Puy=[${spotPuy.bandLow},${spotPuy.value},${spotPuy.bandHigh}] ` +
+             `text=${depthBandText(spotN)}/${depthBandText(spotPuy)} degenerate=${depthBandText({ value: 3.2, bandLow: 3.2, bandHigh: 3.2 })}`);
+
     // (3) Nothing measured -> NO depth number. A missing/unknown gauge must stay null, and
     // spotDepthFt() must still carry the same-reach provenance velocityAtSpot() carries.
     const noSite = spotDepthFt(1040, null);
     const nullOk = depthAtGauge(1040, null) === null && depthAtGauge(1040, '99999999') === null &&
-      noSite.value === null && noSite.atGauge === false && noSite.source === 'none' &&
+      noSite.value === null && noSite.bandLow === null && noSite.bandHigh === null &&
+      noSite.atGauge === false && noSite.source === 'none' &&
       noSite.uncertainty === 0.2 && noSite.ratioMeasured === false;
     nullOk
       ? ok('no measured cross-section -> a null depth, never a fabricated number',
-           'unknown/null siteId -> value null, atGauge false, source none, +/-20% same-reach spread kept')
+           'unknown/null siteId -> value + band null, atGauge false, source none, +/-20% same-reach spread kept')
       : fail('no measured cross-section -> a null depth, never a fabricated number', JSON.stringify(noSite));
 
     // (4) "Where to fish" - depth + lie + colour, ON and OFF target, and the honest empty path.
@@ -941,14 +964,15 @@ function behaviorChecks(done) {
     global.localStorage.getItem = realGetItem;
     const whereOk = /^Where to fish: /.test(bare) && /no measured cross-section/.test(bare) &&
       !/ft of water/.test(bare) && !/\d+ ft of water/.test(bare) &&
-      /hold ~8\.0" up in ~3\.2 ft of water \(gauge cross-section, \u00b132%\)/.test(offTgt) &&
+      // WS-8b a2: the detail clause now carries the measured BAND beside the +/-20% same-reach factor.
+      /hold ~8\.0" up in ~3\.2 ft of water \(gauge measurements 2\.1-4\.1 ft, \u00b120%\)/.test(offTgt) &&
       /bed 1\.5 ft\/s: soft water, fish spread over the flats and riffle lips/.test(offTgt) &&
       /your line at 2\.9" is 5\.1" below that band/.test(offTgt) &&
       /your line at 8\.0" is in that band/.test(onTgt) &&
       /coloured water \(32\.0 FNU\) puts them shallower, closer to cover/.test(dirty);
     whereOk
       ? ok('"where to fish" carries depth + lie + colour, on AND off target',
-           'no gauge -> no depth number; with the Nisqually -> "hold ~8.0" up in ~3.2 ft ... +/-32%"; in/out of band')
+           'no gauge -> no depth number; with the Nisqually -> "hold ~8.0" up in ~3.2 ft ... (gauge measurements 2.1-4.1 ft, +/-20%)"; in/out of band')
       : fail('"where to fish" carries depth + lie + colour, on AND off target',
              `${bare} || ${offTgt} || ${onTgt} || ${dirty}`);
   } catch (e) {
@@ -1499,7 +1523,7 @@ function behaviorChecks(done) {
     global.localStorage.getItem = (k) => (k === 'active_station' ? JSON.stringify({ id: '12101500' }) : null);
     const outlookStn = fishOutlook(sonarZone, 8.0);
     global.localStorage.getItem = realGetItem2;
-    eqz('depth sentence', String(/holding about 10\.0" off the bed, in ~3\.3 ft of water at 1040 CFS \(measured at the gauge, \u00b120%\)\./.test(outlookStn)), 'true');
+    eqz('depth sentence', String(/holding about 10\.0" off the bed, in about 2\.3-3\.5 ft at 1040 CFS \(gauge measurement, \u00b120% for spot vs gauge\)\./.test(outlookStn)), 'true');
     eqz('lie sentence', String(/Soft water, so they are spread over the flats and riffle lips\./.test(outlookStn)), 'true');
     eqz('line in band', String(/Your line at 8\.0" is in that band\./.test(outlookStn)), 'true');
     eqz('five sentences', String(outlookStn.split('. ').length), '5');

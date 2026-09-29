@@ -100,13 +100,14 @@ braid 40 +3.1%, fluoro 12 −1.4%, reference rig −0.03%.
 
 **TWO GAPS FOUND — gap 2 is now CLOSED, gap 1 is still open:**
 
-1. **STILL OPEN — the picked BRAND never reaches the sim.** `totalDragPerFt`/`leaderDragPerFt`/
-   `mainlineDragPerFt` take `(lbTest, mat)` only, so `lineDiameterScale()` resolves to the
-   **generic** row for that size. The brand picker is currently display/persistence only. To
-   consume brand-specific diameters, thread the diameter (or the line id) through those three
-   functions from `readRigFromForm()`/`sonar.js`/`drift.js`/`zone.js` **and** update the
-   `totalDragPerFt` call sites inside `sanity_pass.js` (lines ~689-696) — that is the real
-   baseline-touching edit the user asked to review.
+1. **CLOSED 2026-09-28 (commit `c1011b7`).** `totalDragPerFt` / `leaderDragPerFt` /
+   `mainlineDragPerFt` / `lineDiameterScale` now take an OPTIONAL diameter; `readRigFromForm()`
+   resolves the picker id to its measured mm and `drift.js` passes it, so a picked brand line
+   drives the drag. Omitted (community catch rows, the frozen baselines) -> generic row, so
+   **nothing moved and no re-pin was needed**. A new sanity check proves the diameter reaches the
+   term. STILL GENERIC ON PURPOSE: `sonar.js` replays (community rows carry no brand) and
+   `zone.js`'s `bestZoneRig` sweep — thread the sweep too if a solver *suggestion* should honour
+   the brand rather than the generic row.
 2. **CLOSED 2026-09-28 (commit `07f5e89`).** The frozen-baseline block now evals
    `src/shared/tackle.js` and loads `src/data/tackle.json`, so it exercises the MEASURED path
    instead of the proxy fallback. Evidence that this is real coverage: with the library loaded
@@ -122,9 +123,13 @@ braid 40 +3.1%, fluoro 12 −1.4%, reference rig −0.03%.
 0.12 → 0.16); the weight shape/density (`anchorScale = 0.7 + 0.6*oz` is still a mass-only fudge —
 the weight `area_cm2`/`cd` are also still unmeasured, which is P1b).
 
-**Immediate next step:** gap 2 first (make the suite see the real path), then gap 1 (thread the
-brand/diameter), then the remaining units above, then **P4** (migration for the line ids + weight
-shape). Nothing is mid-flight: tree clean, app runs, sanity green.
+**Immediate next step:** **P4** — the migration, which needs the column decision: add
+`leader_line_id` / `mainline_line_id` / `weight_shape` ALONGSIDE the existing mat/lb columns
+(recommended: small, idempotent, old catches stay readable) or replace them. Then optionally:
+thread the brand into `zone.js`'s sweep, and consume the last measured units (yarn 0.01/in vs the
+0.15 constant, `BEAD_DENSITY.soft` 0.55 -> ~1.0, hook size 2's 0.16, and the weight
+mass/area/density in place of `anchorScale = 0.7 + 0.6*oz`). Nothing is mid-flight: tree clean,
+app runs, sanity 109/109, and `--check` reports 185/185 complete.
 
 
 

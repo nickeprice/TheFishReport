@@ -57,6 +57,12 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   aggregated into a season view (Level 2). And the deeper "Level 2" learning — re-fitting the
   env weights / thermal + light curves / baseline band from real catch volume — is NOT built; it
   needs hundreds of rows and a deliberate contract bump (which re-pins the frozen baselines).
+- **External guardrail recorded (2026-09-30):** Burke et al. 2013 (PLoS ONE 8:e54134) — 31 marine
+  indicators forecasting adult RETURN ABUNDANCE, not in-river behavior, so nothing was imported.
+  Two lessons kept: temperature (SST) is the top-weighted driver (corroborates our env weights),
+  and multivariate models overfit (randomized indicators still gave R²>0.9), so Level 2 needs a
+  real sample size + a train/validation split before any re-fit. Cited in `sonar.js` +
+  `ROADMAP.md` §3.2. No model code changed.
 
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 

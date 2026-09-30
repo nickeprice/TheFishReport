@@ -18,6 +18,9 @@
 // ABSENT: they move surface conditions and activity timing, not the depth at which a river fish
 // holds, so the sim ignores them and so does this. DECLARED constants, not fitted - the same
 // honesty rule the sim's own terms follow. (A later level can re-fit these from real catch data.)
+// Temperature leading is corroborated by Burke et al. 2013 (PLoS ONE 8:e54134): across 31 marine
+// indicators, SST was the highest-weighted predictor of adult salmon returns - a different
+// question than ours, but the same "temperature drives salmon" first-order result.
 var ENV_MATCH_WEIGHTS = {
     tempF:          0.30,
     lightCloud:     0.20,

@@ -4,6 +4,15 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Recorded Burke et al. 2013 as a Level 2 guardrail (no model change)
+Burke et al. 2013 (*Multivariate Models of Adult Pacific Salmon Returns*, PLoS ONE 8:e54134)
+combines 31 marine indicators to forecast adult **return abundance** — a different question from
+the Gear Sim's in-river strike zone, so none of its PCA/PCR/MCA machinery was imported. Two things
+were kept: its result that **temperature (SST) is the highest-weighted driver** (corroborating the
+sim's temperature-leads weighting), and its warning that multivariate models **overfit**
+(randomized indicators still gave R² > 0.9) — the guardrail for the Level 2 re-fit. Cited in
+`sonar.js` and `docs/ROADMAP.md` §3.2. **No model code changed.**
+
 ## 2026-09-30 — Sonar + sim become ONE learning machine; tide joins the model; dead code removed
 Three product decisions from the user drove this: **(a)** the community sonar must match on the
 SAME variables the sim uses, **(b)** tide belongs in the Gear Sim, **(c)** the sim must keep a

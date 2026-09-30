@@ -17,6 +17,11 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **Recorded an external study as a Level 2 guardrail (no code).** Burke et al. 2013
+  (PLoS ONE 8:e54134) — return-abundance forecasting from 31 marine indicators — corroborates
+  temperature as the first-order salmon driver, and its randomized-indicators R²>0.9 warns against
+  re-fitting our env weights with little data. Cited in `sonar.js` + `ROADMAP.md` §3.2.
+
 - 2026-09-30 — **Sonar + sim = one learning machine; tide in the model; dead code removed.** The
   community sonar matched catches on temp/**wind/moon** while the sim placed the zone from
   temp/light/cloud/turbidity/barometer/rain — two brains, and wind/moon do not move vertical

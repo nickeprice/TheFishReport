@@ -107,6 +107,11 @@ feature built from *your own* logged flow/tide/weather/gear data.
     the filter would have been invisible; and the gate meant something real ("mouth-hooked fish
     only"). Superseded 2026-09-30 by the user's call to drop the filter outright (no
     hooking-location field) and remove the floor.
+- **Level 2 overfitting guardrail (Burke et al. 2013, PLoS ONE 8:e54134).** Before Level 2
+  re-fits the env weights / thermal + light curves from catch data, require a minimum sample
+  size AND a train/validation split. That study combined 31 ocean indicators over 11 years and
+  still hit R^2 > 0.9 when the indicators were randomized - many variables + little data =
+  spurious fits. Our catch table holds ~1 row, so re-fitting now would fabricate precision.
 - Files: `src/features/season/`.
 
 ### 3.3 Crews + friends leaderboard

@@ -17,6 +17,13 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **Recorded 3 new migration studies (Keefer 2025/2004; Fukushima & Rand 2023) (no code).**
+  Of the user's five, two were already in. **Keefer 2025** (Willamette, 909 tags) + **Keefer 2004**
+  (Columbia/Snake dams, >12,000 tags) both find **LOWER discharge → FASTER migration** → **re-disproves
+  the freshet from the flow side**; their "warm → faster" **reconciles the thermal block as a NON-LINEAR
+  curve** (rate ↑ to ~18–20 °C, then impair/block/kill). **Fukushima & Rand 2023** is ⚠️ **not Chinook**
+  (Sakhalin taimen) → out-of-scope note.
+
 - 2026-09-30 — **"RM 7.9" + thermal block CONFIRMED; freshet trigger DISPROVEN (no code).** Read all five
   primary PDFs. **RM 7.9 is real** — the *"MIT 42nd Ave S Bridge RM7.9"* station (kcr2880) and
   **Southgate Creek (RM 7.9)** (Blueprint), inside the **RM 4.7–8.5 transition zone**. Criterion

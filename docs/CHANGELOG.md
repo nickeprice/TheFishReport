@@ -4,6 +4,22 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Recorded 3 new migration studies (Keefer 2025/2004; Fukushima & Rand 2023) (no code)
+
+User-provided set of five; two were already recorded (Keefer 2018 → §1, Peterson 2017 → §7).
+**Keefer et al. 2025** (TAFS; Willamette spring-run — 23-yr counts at Willamette Falls + **909
+radio-tagged** fish): *"moved upstream faster when river temperatures were higher and discharge was
+lower"*; runs migrated earlier in warm, low-flow years; main-stem 25–50 km/d vs tributaries <10 km/d.
+**Keefer et al. 2004** (TAFS 133(6):1413; Columbia/Snake dams, **>12,000** tags): most fish passed each
+dam in <2 d; spring–summer Chinook faster as temperature/date increased; **fastest in low-discharge
+years**; steelhead and fall Chinook **slowed in warm water**. **Net:** both find **LOWER discharge →
+FASTER migration**, which **re-disproves the freshet trigger from the flow side**, and their
+"warm → faster" **reconciles** with the thermal block as a **non-linear curve** (rate rises to
+~18–20 °C, then impairs 18–20 / blocks 21–22 / kills 22+). **Fukushima & Rand 2023** (Ecol. Evol.
+13:e10101) is ⚠️ **not a Chinook study** — Sakhalin taimen — recorded out-of-scope (temperature + water
+level as timing cues only; no threshold). `LITERATURE.md` §7 + Out of scope, `ROADMAP.md` §3.11. No code
+change.
+
 ## 2026-09-30 — "RM 7.9" + the thermal block CONFIRMED; the freshet trigger DISPROVEN (no code)
 
 Read all five primary documents (PDFKit). **"RM 7.9" is real**: kcr2880's station list contains *"MIT

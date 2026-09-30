@@ -105,6 +105,15 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   (FB 117(3):258–271 — Puget Sound adults retreat to cool marine water). **Freshet = DISPROVEN**:
   0× "freshet" in all five docs + Peterson 2017 (2/11 yrs, no gain > 700 cfs) + Hasler 2014
   ("unclear", needed 2× flow). **Stall-vs-Run is temperature-gated, not flow-gated.**
+- **3 more migration studies recorded (2026-09-30, no code).** Of the user's five, two were already in
+  (`Keefer 2018` → §1, `Peterson 2017` → §7). **New:** `Keefer et al. 2025` (TAFS; Willamette, 909 tags)
+  — *"moved upstream faster when river temperatures were higher and discharge was lower"*; `Keefer et al.
+  2004` (TAFS 133:1413; Columbia/Snake dams, >12,000 tags) — fastest in **low-discharge** years,
+  steelhead + fall Chinook slowed in warm water. **Net: LOWER discharge → FASTER migration**, which
+  **re-disproves the freshet from the flow side**, and their "warm → faster" **reconciles with the thermal
+  block as a NON-LINEAR curve** (rate ↑ to ~18–20 °C, then impair 18–20 / block 21–22 / kill 22+).
+  ⚠️ `Fukushima & Rand 2023` is **not Chinook** (Sakhalin taimen) → recorded out-of-scope; the user's
+  "Rand et al." label and the `10.1093/tafs/8081683` DOI (404) are both noted in `LITERATURE.md`.
 
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 

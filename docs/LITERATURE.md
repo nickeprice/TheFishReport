@@ -99,11 +99,24 @@ encodes — rather than supplying a strike-zone threshold.
 | Naylor et al. 2025, "Prespawn Migration Patterns of Adult Spring Chinook Salmon in the Terminal Reaches of a Highly Altered Interior Stream", Northwest Science 98(2) (doi:10.3955/046.098.0205) | Spring Chinook (Grande Ronde, OR), radio tags + a move/hold Hidden-Markov model. **Higher temperature → more movement**; three tactics — rapid move to cold, **sprint**, **stall**; **stalling in the warmest reaches = highest prespawn mortality**; holding above thermal tolerance → mortality. | Corroborating (temperature dominant); move/hold nuance is for the mental model, no depth number |
 | Keefer et al. 2018, PLoS ONE 13:e0204274 | (duplicate of §1) | already in §1 |
 | Damborg, Stiff, Hyatt, Stockwell, Brown & Till 2020, "Water temperature, river discharge, and adult Chinook salmon migration observations in the Stamp/Somass watershed, 1986–2012", Can. MS Rep. Fish. Aquat. Sci. 3026 | Vancouver Island Chinook, 27-yr series. **"Low flow" < 20 cms and "high flow" > 80 cms** bracket the migration window; low-flow frequency rising since the 1980s. | Corroborating (flow-regime boundaries) |
+| Keefer, Naughton, Blubaugh, Clabough & Caudill 2025, "River environment effects on adult migration phenology and rate of spring-run Chinook Salmon", TAFS | Willamette River (OR) spring-run: 23-yr daily counts at Willamette Falls + **909 radio-tagged** fish across 13 reaches. **"moved upstream faster when river temperatures were higher and discharge was lower"**; runs migrated **earlier in warm, low-flow years**; mean-May conditions best predicted median timing (early May–mid-June); main-stem **25–50 km/d** vs tributaries **<10 km/d**; stock identity not significant after accounting for temp + discharge; results aligned across Yukon/Columbia/Snake. *(DOI unconfirmed — the cited `10.1093/tafs/8081683` returned 404.)* | **Corroborating + new nuance (low flow → faster)** |
+| Keefer, Peery, Bjornn, Jepson & Stuehrenberg 2004, "Hydrosystem, Dam, and Reservoir Passage Rates of Adult Chinook Salmon and Steelhead in the Columbia and Snake Rivers", TAFS 133(6):1413–1432 | **>12,000** radio-tagged adults past Columbia/Snake dams. Most fish passed each dam in **< 2 d**; spring–summer Chinook migrated **faster as temperature and date increased**; **fastest in low-discharge years**; steelhead **slowed dramatically at summer temperature peaks, then sped up as rivers cooled**; fall Chinook also **slowed in warm water**; temperature explained more between-year variation than discharge. | **Corroborating (flow/temp); dam-passage dynamics = out of scope** |
 
 **Candidate — flow-regime boundaries (NOT built).** Two independent studies land on **~20 cms (~706 cfs)**
 as a "more water stops helping migration" plateau, with a high-flow bound at **80 cms**. Real concept,
 but **different rivers and units (cms vs our cfs)**, and it is *migration activity*, not *holding
 depth* — so no threshold transfers. Gate: a Puget-Sound-relevant number or the notebook residual.
+
+**Reconciliation — temperature is NON-LINEAR (recorded 2026-09-30).** Keefer 2025/2004 say warm water
+*speeds* migration, while Keefer 2018 and §8 say warm water *blocks* it. Both are true on ONE curve:
+warmer water raises migration rate **up to ~18–20 °C**, then temperature **impairs (18–20 °C)**,
+**blocks (21–22 °C)** and **kills (22 °C+)**. So "warm → faster" holds only inside the tolerable
+window; past ~18 °C the behaviour inverts to hold/stall. Consistent with `thermalOptimum()`'s stress
+onset and the §8 thresholds — **no model change**, but it is why a naive "warm ⇒ move" reading is wrong.
+
+**The freshet trigger is re-disproven from the flow side.** Two independent Keefer papers (2025 and
+2004) find **LOWER discharge → FASTER migration** — the *opposite* of a freshet cueing a run. That stacks
+on the pulse-flow disproof (§8) and Damborg's ~20 cms plateau.
 
 ## 8. Puget Sound regional drivers — the app's own rivers (GREY-LIT; thermal thresholds VERIFIED)
 
@@ -206,6 +219,16 @@ the thresholds are verified above and the flow trigger is disproven — so the o
 - **Reference, not fitted.** Every number here is literature-derived (declared). Nothing is fitted to our own data.
 
 ## Out of scope — recorded, deliberately NOT used
+
+**Fukushima & Rand 2023, "Individual variation in spawning migration timing in a salmonid fish —
+Exploring roles of environmental and social cues", Ecology and Evolution 13(5):e10101**
+(doi:10.1002/ece3.10101). ⚠️ **Not a Chinook study** — the species is **Sakhalin taimen (*Parahucho
+perryi*)**, an endangered salmonid, in northern Japan. Adult spring migration: **water temperature and
+water level near the river mouth ~1 week before arrival** explained between-year run timing **for females
+but not males**; **no** conspicuous social/conspecific effect; concluded individual-specific
+responsiveness to environmental cues. Kept only as a **weak, species-adjacent** note that temperature +
+water level are timing cues — it supplies no threshold and does not transfer to adult Chinook holding
+depth. *(Listed as "Rand et al. 2023" when provided; first author is Fukushima.)*
 
 **Burke et al. 2013, "Multivariate Models of Adult Pacific Salmon Returns", PLoS ONE 8:e54134.**
 Combines **31 marine indicators** to forecast adult **return abundance** a year ahead (PCA/PCR/MCA).

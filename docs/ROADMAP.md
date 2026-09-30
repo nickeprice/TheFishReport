@@ -247,7 +247,13 @@ Two independent in-river adult-Chinook studies plateau at **~20 cms (~706 cfs)**
 (NAJFM 37:78; Stanislaus) found migration activity stops rising above ~20 m³/s, and Damborg et al. 2020
 (Can. MS Rep. 3026; Vancouver Island) bracket the migration window as low flow < 20 cms, high flow
 > 80 cms. Naylor et al. 2025 (NW Science 98:2) adds the move/sprint/stall tactics and that warm-reach
-stalling is the mortality path. Gate: a Puget-Sound-relevant number or the notebook residual — the
+stalling is the mortality path. **Keefer et al. 2025** (TAFS; Willamette, 909 radio tags) and **Keefer
+et al. 2004** (TAFS 133:1413; Columbia/Snake, >12,000 tags) add the decisive direction: **LOWER
+discharge → FASTER migration** (*"moved upstream faster when river temperatures were higher and discharge
+was lower"*) — extra flow does **not** help, which **re-disproves the freshet trigger from the flow
+side** (on top of the pulse-flow disproof in §3.12). Their "warm → faster" result also reconciles with
+the thermal block: migration **rate** rises up to **~18–20 °C**, then inverts to hold/stall —
+**temperature is non-linear**. Gate: a Puget-Sound-relevant number or the notebook residual — the
 units (cms) and rivers differ, and it is migration *activity*, not holding depth. See `LITERATURE.md` §7.
 
 ### 3.12 "Stall vs. Run" thermal run-timing signal (recorded 2026-09-30, NOT built)

@@ -4,6 +4,20 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Derived the run-timing slope from public DART data (route A) → NULL; do not build
+
+To unblock #1 (dynamic run calendar) without the paywalled Keefer slope, we **derived it ourselves**
+from **Columbia Basin Research DART** public CSVs: day-of-year of 50% adult Chinook passage at
+**Bonneville + Willamette Falls** (1996–2024) regressed on **pre-run water temperature/flow at The
+Dalles** (USGS 14105700), across **six specifications** to test robustness. **Every one came back
+non-significant** (|t| < 2, r² ≈ 0.00–0.02), and the single larger value (**+10.5 d/°C**, Willamette
+Falls) is **positive** — warmer → *later* — the **opposite** of Keefer/Anderson & Beer, so it is
+reverse causality, not a usable signal. **Verdict: do NOT build a temperature-driven date shift.**
+This independently reproduces **Anderson & Beer 2009** (environment ≈ 15.5 % of run-timing variance,
+stock composition 62 %), also recorded in `LITERATURE.md` §7. #1 becomes a genuine Level-2 problem
+(trained model + real sample), not a missing number. `ROADMAP.md` §3.13. No shipped-code change
+(the #2/#3 thermal-band + run-status builds are in the preceding entry).
+
 ## 2026-09-30 — Literature applied to TWO non-strike-zone surfaces (bands + run status)
 
 The migration literature mostly measures **timing/rate**, so it also improves surfaces the strike zone

@@ -114,6 +114,15 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   block as a NON-LINEAR curve** (rate ↑ to ~18–20 °C, then impair 18–20 / block 21–22 / kill 22+).
   ⚠️ `Fukushima & Rand 2023` is **not Chinook** (Sakhalin taimen) → recorded out-of-scope; the user's
   "Rand et al." label and the `10.1093/tafs/8081683` DOI (404) are both noted in `LITERATURE.md`.
+- **Non-linear / run-timing reconcile recorded + the slope DERIVED and REJECTED.** Keefer 2025/2004 say
+  warm speeds migration; Keefer 2018 + §8 say warm blocks it — reconciled as ONE curve (rate rises to
+  ~18–20 °C, then impairs 18–20 / blocks 21–22 / kills 22+). **Anderson & Beer 2009** recorded:
+  environment explains only **~15.5 %** of run-timing variance (stock composition **62 %**).
+  **Route A (derived the #1 slope ourselves from DART public data, 1996–2024, six specs) — all null**
+  (|t| < 2; the one hit is positive = warm→*later*, contradicting the literature = reverse causality).
+  **Verdict: do NOT build a temperature-driven date shift**; the feature is a real Level-2/model
+  problem, not a missing number. `ROADMAP.md` §3.13.
+
 - **Literature applied to TWO non-strike-zone surfaces (2026-09-30).** Built:
   (a) **`inputs.js` thermal band top-end** — `THERMAL_BANDS` now splits the old `stress (>68F)` into
   **stress 68–70 / block 70–71.6 (21–22C) / lethal >71.6 (22C+)**, from kcr1532 + kcr2880. **Shifts

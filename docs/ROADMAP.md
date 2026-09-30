@@ -285,12 +285,31 @@ zone does not cover. Three candidates were identified; two are now built.
 - **BUILT — thermal RUN status in the Fishing Outlook (#2).** `buildFishingHero()` now leads with a
   run-state reason when the own-gauge probe is **≥21 °C (block)** or **≥22 °C (lethal)** — a *"are the
   fish even here"* signal, separate from the strike zone; no reading → no claim.
-- **NOT built — dynamic run calendar (#1).** The species calendar's `peak_window`/`peak_date` are
-  **static**; **Keefer et al. 2025** (Willamette, 909 tags) shows runs shift **earlier in warm,
-  low-flow years**. Gate: the numeric phenology **slope** (days earlier per °C), which the abstract
-  does not give. **Full text not reachable on 2026-09-30** — `academic.oup.com` returns 403 and the
-  UIdaho VERSO record is a JS-only shell. #1 stays blocked until the slope is sourced
-  (interlibrary copy, author request, or a phenology-regression paper). See `LITERATURE.md` §7.
+**Candidate — dynamic run calendar (derived, NOT built; the derivation says DO NOT BUILD).**
+`peak_window`/`peak_date` in the region registry are static, and Keefer et al. 2025 shows runs shift
+earlier in warm, low-flow years — so the natural feature is a **temperature-driven date shift**. The
+paywalled slope was blocked, so we **derived it ourselves from DART public data** (Columbia Basin
+Research: daily passage counts at Bonneville/Willamette Falls + water temperature/flow at The Dalles,
+USGS 14105700), regressing **day-of-year of 50% passage on pre-run water temperature** across
+1996–2024. **Six specifications all came back null**:
+
+| spec | slope (days/°C) | SE | t | r² |
+|---|---|---|---|---|
+| A. fall Chinook, temp 6/1–8/15 | +0.35 | 0.67 | 0.53 | 0.016 |
+| B. fall Chinook, temp 7/1–9/15 | +0.59 | 1.00 | 0.59 | 0.020 |
+| C. spring Chinook, temp 3/1–5/31 | +0.49 | 3.45 | 0.14 | 0.001 |
+| D. fall Chinook, whole-run temp | +0.21 | 0.51 | 0.41 | 0.009 |
+| E. Willamette Falls fall Chinook | **+10.5** | 5.10 | 2.05 | 0.21 |
+| F. fall Chinook, temp 7/15–8/15 | +0.10 | 0.82 | 0.12 | 0.0004 |
+
+**Conclusion: DO NOT BUILD a temperature-driven date shift.** No slope is significant (all |t| < 2),
+and the one larger value (E) is **positive** — warmer → *later* — the opposite of the literature
+(Keefer/Anderson & Beer), i.e. reverse causality from the run warming its own window, not a usable
+signal. This *independently reproduces* **Anderson & Beer's** finding (environment explains only
+**~15.5 %** of run-timing variance, stock composition **62 %**). The feature is blocked on a real,
+Puget-specific relationship that would need a trained model + real sample size — the same Level 2
+gate as the rest of the notebook, not just a missing number. Method: `/tmp/dart_flow.py` style
+spec, public CSVs, no invented inputs.
 
 ## 4. Suggested phasing within 4.0
 

@@ -17,6 +17,13 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **Derived the #1 phenology slope from DART public data — and it's NULL.** Regressed
+  day-of-year of 50% passage on pre-run water temp (The Dalles) for Bonneville/WFF fall+spring Chinook,
+  1996–2024, **six specifications — all |t| < 2**; the only larger value (+10.5 d/°C) points *backwards*
+  (warm→later) = reverse causality. **Independently reproduces Anderson & Beer's 62%/15.5% split.**
+  Verdict: **do NOT build the temperature-driven date shift** (it's a Level-2 model problem, not a
+  missing number). `ROADMAP.md` §3.13.
+
 - 2026-09-30 — **Literature applied to two NON-strike-zone surfaces (code).** (a) `inputs.js` thermal
   band top-end split: **stress 68–70 / block 70–71.6 (21–22C) / lethal >71.6 (22C+)** from kcr1532 +
   kcr2880 — **shifts unchanged (−2.00) so no baseline moves** (sanity edge pin updated). (b) `hero.js`

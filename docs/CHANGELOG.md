@@ -44,6 +44,18 @@ per-route delegation: `/api/nearby_stations?lat=47.2&lon=-122.31` → 200 (1,487
 - Key files: `api/nearby_stations.py` (new), `scripts/dev_server.py`, `sanity_pass.js`,
   `docs/CONTRACT.md`, `README.md`, `memory-bank/techContext.md`.
 
+## 2026-09-29 — Ledger audit (2 stale boxes) + spot-feature findings parked
+Two `- [ ]` boxes were still unticked for work that HAD shipped (WS-4's per-day reference-hour weather
+and tap-to-expand hourly popup, and the "nothing queued from issues #1–#3" status line). A fresh chat
+reads an unticked box as open work, so both are now `- [x]` with the reason recorded inline. No code
+changed.
+
+The four spot-feature findings the user asked to defer went to
+`memory-bank/activeContext.md` → Backlog → **S1–S5** (the report erasing a spot's name; a spot
+changing nothing but where the weather is forecast; tide absent from the model entirely; nothing
+closing the loop from catches; plus the smaller polish list). Each carries the file/line evidence so
+a future session does not have to re-derive it.
+
 
 User report: a screenshot of the Station tab with **both** errors showing — "Could not load nearby
 gauges" on the map and "Could not reach the gauge lookup" under the spot controls — with the saved

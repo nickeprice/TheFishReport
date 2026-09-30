@@ -96,6 +96,11 @@ the map → tap the map** → the star appears AND the row should read `flow: <g
 the map note should count nearest gauges instead of erroring. The existing "So" spot still says
 "flow from the nearest gauge" — opening it once resolves and persists its gauge.
 
+**PARKED at the user's explicit call (2026-09-29):** the spot-feature findings **S1–S5** in the
+Backlog section below (`- [ ]`) — the report erasing a spot's name, a spot changing nothing but the
+weather, tide missing from the model entirely, and no loop closure from catches. Do NOT start them
+without a new call.
+
 ## HANDOFF — 2026-09-29 (all approved work + summary/biology/rig-advice corrections shipped)
 
 Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), **WS-5**
@@ -189,7 +194,10 @@ Five workstreams, execute in order. Each: files · Potential Bugs (1 line) · Ve
       Still owed: a real-browser pass on both tabs (the harness proves the logic, not the DOM).
 
 ### WS-4 — Per-day weather forecast (issue #2)
-- [ ] `api/water_report.py`, `telemetry/report.js`, `telemetry/daynav.js`, `services/water.js` —
+- [x] **WS-4 — SHIPPED 2026-09-29** (ticked during the 2026-09-29 ledger audit: the HANDOFF and
+      `progress.md` both record per-day reference-hour weather + the tap-to-expand hourly popup as
+      delivered, but this box was left unticked — a `- [ ]` a fresh chat would read as open work).
+      `api/water_report.py`, `telemetry/report.js`, `telemetry/daynav.js`, `services/water.js` —
       backend emits per-`forecast_date` weather (Open-Meteo daily/hourly) instead of one
       `current` snapshot; frontend paints weather from `reportsData[activeDateOffset]` in
       `updateActiveDateUI()` (not `reports[0]`).
@@ -544,9 +552,9 @@ NON-builds, not oversights.
       on 1 of 5 rivers and is 1.5–4× off on the rest; the datum chain was NOT the blocker).
       ⚠ a1's real path stays open by design: a DEM/lidar section waits for a **dated 1 m 3DEP
       source** (which `river_widths.js`'s header already recommends).
-- [ ] Still queued: nothing from issues #1–#3 — WS-5 shipped 2026-09-29 (`favorite_spots` + RLS
-  default-deny + the modal list + the map star layer). Phase 4 / WS-8b is the only open item and
-  it needs a product confirm.
+- [x] **Nothing queued from issues #1–#3** (closed 2026-09-29): WS-1/2/3 shipped, WS-5 shipped
+      2026-09-29 (`favorite_spots` + RLS default-deny + the modal list + the map star layer), and
+      Phase 4 / WS-8b is the only open item — it needs a product confirm.
 - Guardrails for every wire: own-gauge only · `null` → `--` · estimates carry provenance +
   uncertainty · never a fabricated spot number · `textContent` for user/data text.
 
@@ -980,6 +988,49 @@ Exempt by rule: `src/data/*` (`washington.js` 254, `wdfw_rules.json` 11,222).
       started by design.
 
 ## Backlog — parked, do NOT build without an explicit call
+
+**Spot-feature findings — PARKED 2026-09-29 at the user's explicit call** (*"lets park all these
+ideas for a later time"*). Found by reading the code, not guessed; each is evidence-backed, so a
+future chat can start from here instead of re-deriving it.
+
+- [ ] **S1. The report ERASES a spot's name.** `src/features/telemetry/report.js:24` sets
+      `#active-station-name` from the station record (a spot passes its label via
+      `selectPreset(id, lat, lon, label, false)`), then `:59-60` overwrites it with the API's
+      `first.site_name` → "SMOOTH OPERATOR" becomes "PUYALLUP RIVER AT PUYALLUP, WA", and the badge
+      reads `📌 USGS: 12101500` with nothing marking it as YOUR spot. A spot-opened report is
+      therefore pixel-identical to picking that gauge preset. Cheapest fix, biggest legibility win.
+      Potential bug: the badge's `isGps` branch is the only "kind" the UI understands, so a third
+      kind (spot) needs a deliberate value, not `isGps: false`.
+- [ ] **S2. A spot changes nothing but WHERE the weather is forecast.** By contract
+      (`docs/CONTRACT.md`: weather at the point, flow/runs/legal/tides at the gauge) AND because the
+      depth band is a per-GAUGE reach average (`src/data/channel_measurements.js`), the strike-zone
+      guidance at a spot is byte-identical to the guidance at its gauge. The missing input is what
+      the spot IS (pool tail / riffle lip / log jam / bank seam / backwater / tidewater flat) — the
+      app's own beginner copy already says "the tail of a pool" but never asks which one you are at.
+- [ ] **S3. Tide is absent from the model entirely** — `grep -i tide src/features/gear-sim/**` → **0
+      hits** (tide exists only in `telemetry/{tide,report,hero}.js` + the registry's waterbody→tide
+      pairing), and nothing in `activeContext`/`ROADMAP` recorded it as a known gap. The Puyallup at
+      Puyallup is a TIDAL reach (paired tide station = Tacoma), so the water at a saved point swings
+      ~12 ft twice a day while the HUD says "hold ~11.7″ in ~3.3 ft of water" with no tide term.
+      Honest scope: the USGS gauge-height datum and the NOAA tide datum are different, so no
+      per-spot depth offset may be INVENTED — awareness only (filling/draining, rate, where the day's
+      extremes fall) unless a datum relationship is ever established. Touching the zone maths is a
+      deliberate contract bump (pinned terms + frozen baselines), so it needs sign-off.
+- [ ] **S4. Nothing closes the loop.** `activeContext` already names it: *"The model has never been
+      validated against a measured presentation height — that feedback loop is the single
+      highest-value missing piece,"* and the community-sonar anchor is dead code (see the open
+      product decision above). Spots + catches are the two datasets that could close it: a nullable
+      `spot_id` on `catches` (additive, same pattern as P4's `mainline_line_id`) plus an optional
+      presented-depth field on the log form.
+- [ ] **S5. Smaller spot polish (parked with the rest):** guard `saveCurrentSpot()` against a
+      silently wrong location (`mapCenter()` falls back to the last-selected station — or the default
+      Puyallup centre on a fresh install — so "Save this spot" can save 30 mi away while looking
+      right; the `!loc` check never fires because `mapCenter()` always returns an array) · rename /
+      edit a spot (same-id upsert already supported) · spot `notes` (the column is plumbed through
+      `toSpotRow()` and the select list but nothing ever sets it) · re-resolve a STALE gauge (the
+      resolved gauge is frozen on the row) · route spot saves through the existing IndexedDB outbox
+      (catches already queue durably; a spot save in a dead zone just fails today) · persist the
+      `· N mi away` distance so it survives a reload.
 
 **Future ideas** (features): a data-freshness gate for `wdfw_rules.json` plus a
 regulation-change alert · a *source-status honesty panel* (which upstream is down, and why,

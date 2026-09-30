@@ -17,6 +17,19 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **Ledger audit + spot findings parked.** Ticked two stale `- [ ]` boxes for work that
+  HAD shipped (WS-4 per-day weather/hourly popup), because a fresh chat reads an unticked box as open
+  work. Then parked, at the user's explicit call, the four spot-feature findings found by reading the
+  code: **S1** the report ERASES a spot's name (`report.js:24` sets it from the label, `:59-60`
+  overwrites it with the API's `site_name`, and the badge says `📌 USGS:` — a spot-opened report is
+  pixel-identical to the gauge preset); **S2** a spot changes nothing but WHERE the weather is
+  forecast, because the depth band is a per-gauge reach average, so the strike-zone advice is
+  identical to the gauge's — the missing input is what the spot IS (pool tail, riffle lip, log jam);
+  **S3** tide is absent from the model entirely (`grep -i tide src/features/gear-sim/**` → 0 hits)
+  while the Puyallup at Puyallup swings ~12 ft twice a day on a tidal reach — awareness only, no
+  invented datum offsets; **S4** nothing closes the loop (catches never validate the model). Detail
+  lives in `memory-bank/activeContext.md` Backlog → S1–S5.
+
 - 2026-09-29 — **ROOT CAUSE of the phone's /api failures: `/api/nearby_stations` was never
   deployed.** The debug trail showed a **Vercel** 404 (`NOT_FOUND pdx1::…`) while `/api/water_report`
   answered 200 on the same device; `curl` against `thefishreport.vercel.app` confirmed 404 vs 200.

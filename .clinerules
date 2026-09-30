@@ -90,6 +90,10 @@
   + the last ~20 lines of `docs/CHANGELOG.md`. Not full history.
 
 # Docs map
+- `README.md` = the **GitHub landing page** (scope, architecture, how to run). Refresh it **in the
+  SAME commit** as any change to user-facing behavior, the waterbody list, or the run instructions —
+  nothing else keeps it honest (it drifted: the docs table missed `LITERATURE.md`, and the intro
+  claimed 5 rivers while 15 ship).
 - `memory-bank/*` = orientation · `AGENTS.md` + `.clinerules` = rules
 - `docs/SYMBOLS.md` = file -> public API index (find a function without opening files)
 - `docs/CONTRACT.md` / `_REGIONS` / `_TECHNIQUE` / `_CATCH` = data + API contracts

@@ -73,7 +73,9 @@ this file**, or the pass fails.
   `populateTacklePickers()`, `tackleLineBrands(mat, role)`, `tackleLineLbs(mat, brand, role)`,
   `tackleLineFind(mat, brand, lb)`, `cascadeLine(role)`, `resolveLineId(role)`,
   `onLinePartChange(fieldId, fromLog)`, `onWeightShapeChange(baseId, fromLog)`,
-  `onBeadMatChange(fieldId, fromLog)`, `tackleWeightOz(shape)`, `tackleBeadSizes(mat)` —
+  `onBeadMatChange(fieldId, fromLog)`, `tackleWeightOz(shape)`,
+  `tackleWeightRow(shapeLabel, oz)` (the ONE row a picker pair names), `tackleWeightArea(shapeLabel, oz)`
+  (`area_cm2` or `null`), `tackleBeadSizes(mat)` —
   the CASCADE (material -> brand -> lb test, weight type -> amount, bead material -> size)
   over `src/data/tackle.json`; the picks resolve into the hidden `ml-line`/`ld-line` id
 - **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`
@@ -104,7 +106,12 @@ this file**, or the pass fails.
   the MEASURED BAND), `spotDepthFt(flow, siteId)` — the same-reach DEPTH estimate with
   `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2)
 - **physics.js** — `lineDiameterScale`, `beadDrag`/`beadSink`, `hookDrag`, `yarnDrag`,
-  `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `presentationHeightInches()`
+  `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `weightAreaScale(shapeLabel, oz)`,
+  `presentationHeightInches()` — `weightAreaScale()` replaced the old unitless
+  `anchorScale = 0.7 + 0.6·oz` (P3): it reads the picked weight's measured `area_cm2` and
+  returns `massResponse(oz) × (area/area_ref)`, anchored so the 1/2 oz lead barrel is exactly
+  `1.0`. An unknown shape degrades to the old mass-only formula, so legacy rigs and cloud
+  rows are unmoved.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

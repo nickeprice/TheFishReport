@@ -175,6 +175,26 @@ The web output is wrapped, not replaced. The PWA path stays.
 
 ### 3.9 Model accuracy — the measurement-free path
 
+**Layer 0 — weight SHAPE and DENSITY in the drag term. ✅ SHIPPED (2026-09-30).**
+The leader-drag "anchor" term was `anchorScale = 0.7 + 0.6 · oz` — a dimensionless read of
+**mass alone**, so a slinky (a tube of shot, drags like a parachute) and a cannonball of the
+same oz scored **identically**, and a tungsten weight (which is ~30% smaller than the same-oz
+lead one, and therefore displaces less) was indistinguishable from lead. That was recorded here
+as a known false truth. It is now `weightAreaScale(shapeLabel, oz)` in
+`src/features/gear-sim/physics.js`, which reads the picked weight row's measured `area_cm2`
+(the P1/P1b library) and returns `massResponse(oz) × (area / area_ref)`. **Anchored to the
+reference rig** — the 1/2 oz lead barrel is exactly `1.0` — so no frozen baseline moved and only
+the *response* to shape/density changed. Measured effect at 1040 CFS, 1/2 oz, otherwise
+identical rig: slinky drag `9.80 → 24.80` (presentation height `5.40″ → 2.51″`), rubber-sleeved
+teardrop `15.79`, lead cannonball `10.02`, tungsten barrel `7.56` (height rises to `6.65″`).
+`weightShape` is threaded form → `readRigFromForm()` → technique registry → physics; an
+**absent** shape (a legacy rig, or a cloud calibration row, which has no weight-shape column
+yet) degrades to *exactly* the old formula, so nothing pre-P3 moves. Sanity **149/149** (+6).
+**Still open:** `cd` remains locked at 1.0, and the library's weight areas are geometry-
+ESTIMATED rather than caliper-measured — the same limitation recorded in
+`docs/CONTRACT_TACKLE.md`. The `blownOut` 3.5 threshold is untouched and still wants its own
+bump (it was tuned against the old velocity model).
+
 The Gear Sim is a deterministic heuristic, and its accuracy ceiling is set by **data +
 physics, not hardware**: velocity came from one empirical fit (`0.25 · Q^0.4`) applied to
 every river, which overstated the Puyallup's mean velocity ~2.3× and under-predicted how

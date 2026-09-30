@@ -14,7 +14,8 @@
  *         onLinePartChange(fieldId, fromLog), onWeightShapeChange(baseId, fromLog),
  *         onBeadMatChange(fieldId, fromLog), tackleLineBrands(mat, role),
  *         tackleLineLbs(mat, brand, role), tackleLineFind(mat, brand, lb),
- *         tackleWeightOz(shape), tackleBeadSizes(mat)
+ *         tackleWeightOz(shape), tackleWeightRow(shapeLabel, oz),
+ *         tackleWeightArea(shapeLabel, oz), tackleBeadSizes(mat)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 var TACKLE = null;
@@ -243,6 +244,37 @@ function tackleWeightOz(shape) {
         out.push({ value: String(oz), text: m[0].replace(/\s+/g, ' ').trim() });
     });
     return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
+}
+
+// Resolve the ONE measured weight row a picker pair names: (shape_label, nominal oz).
+// That pair is exactly the identity CONTRACT_TACKLE.md guarantees is unique - every
+// shape_label exists at every oz - which is why a rubber-sleeve variant and its bare
+// metal sibling stay separate rows without `shape` having to do a second job.
+//
+// Match on the NOMINAL oz parsed from the label (the same OZ_LABEL_RE the picker list
+// uses), never on mass_g: a sleeved row weighs MORE than its nominal oz, so mass would
+// pick the wrong sibling. Returns null when the pair names no row (library not loaded,
+// no shape picked, or a legacy rig) - callers must treat null as "no information", not
+// as a zero.
+function tackleWeightRow(shapeLabel, oz) {
+    if (!shapeLabel || !oz) return null;
+    var found = null;
+    tackleItems('weight').forEach(function (it) {
+        if (it.shape_label !== shapeLabel) return;
+        var m = String(it.label || '').match(OZ_LABEL_RE);
+        if (!m) return;
+        var nominal = Number(m[1]) / (m[2] ? Number(m[2]) : 1);
+        if (Math.abs(nominal - Number(oz)) < 1e-9) found = it;
+    });
+    return found;
+}
+
+// Projected (broadside) area in cm2 of the picked weight, or null. Kept separate from
+// tackleWeightRow() so the physics module never has to know the library's field names.
+function tackleWeightArea(shapeLabel, oz) {
+    var row = tackleWeightRow(shapeLabel, oz);
+    var area = row ? Number(row.area_cm2) : 0;
+    return area > 0 ? area : null;
 }
 
 // Bead size: the bead rows the material owns. "None" is the ABSENCE of a bead, so its 0

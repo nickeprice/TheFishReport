@@ -155,7 +155,16 @@ That alone replaces every unitless constant with real units.
 ## After you fill it in
 
 `src/data/tackle.json` is the machine-readable result, read by the Gear Sim so `rigLift()` /
-`totalDragPerFt()` take real units instead of tuned coefficients. It is **not committed yet**:
-it appears alongside the physics rewrite (and then joins `sw.js` SHELL_FILES with a VERSION
-bump), so the repo never ships data without a consumer.
+`totalDragPerFt()` take real units instead of tuned coefficients. It **is committed and already in
+`sw.js` `SHELL_FILES`** (`/src/data/tackle.json`), so the offline shell and the sim load it with no
+network — the older claim here that it "is not committed yet" went stale when P1 shipped.
+
+**Consumption status (updated with P3, 2026-09-30):** `diameter_mm` (line) is consumed by
+`lineDiameterScale()`; the weight rows' `area_cm2` is now consumed by `weightAreaScale()` in
+`src/features/gear-sim/physics.js`, which replaced the old unitless `anchorScale = 0.7 + 0.6·oz`
+fudge. The new scale is **anchored to the reference rig** — it returns exactly `1.0` for the
+calibration weight (1/2 oz lead barrel), so the frozen baselines do not move and only the
+*response* to shape/density changes (a slinky now drags like a parachute, a tungsten weight cuts
+water). `density_g_cm3` and `cd` remain recorded but **not yet consumed**: density enters only via
+the geometry that produced `area_cm2`, and `cd` is still effectively locked at 1.0 by the sim.
 

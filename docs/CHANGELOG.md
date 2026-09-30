@@ -4,6 +4,30 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — P3: the weight's REAL geometry enters the drag term (slinky vs cannonball fixed)
+
+The leader-drag "anchor" was `anchorScale = 0.7 + 0.6 · oz` — mass alone, so a slinky (drags
+like a parachute) and a cannonball of the same oz scored **identically** and tungsten was
+indistinguishable from lead (a known false truth, `activeContext` §accuracy (e)). Replaced with
+`weightAreaScale(shapeLabel, oz)` = `massResponse(oz) × (area_cm2 / area_ref)`, reading the
+P1/P1b weight library. **Anchored to the reference rig** (1/2 oz lead barrel ⇒ exactly `1.0`),
+so **no frozen baseline moved** — the same trick `REF_DIAMETER_MM` plays for line. An ABSENT
+shape degrades to *exactly* the old formula, so legacy rigs and cloud calibration rows (which
+have no weight-shape column) are byte-identical. Measured, at 1040 CFS / 1/2 oz / same rig:
+slinky drag `9.80 → 24.80` (height `5.40″ → 2.51″`), rubber-sleeved teardrop `15.79`, lead
+cannonball `10.02`, tungsten barrel `7.56` (height `6.65″`).
+
+New: `tackleWeightRow(shapeLabel, oz)` / `tackleWeightArea()` in `src/shared/tackle.js` (keyed on
+the `(shape_label, nominal oz)` identity, never `mass_g` — sleeved rows weigh more than nominal).
+`weightShape` is threaded `readRigFromForm()` → technique registry → `totalDragPerFt()`, appended
+as a **trailing** parameter at all 5 call sites so no positional argument could shift silently.
+Also reconciled: `20260930120000_sonar_env_snapshot` is **APPLIED + VERIFIED LIVE** (10 columns),
+**P1b is COMPLETE** (60/60 weight rows carry `area_cm2` + `cd`; `--check` lists none incomplete),
+and `tackle.json` **is** already in `SHELL_FILES`. `sw.js` `v2.03.37`; sanity **149/149** (+6).
+
+Still open (recorded, not silently implied): `cd` stays locked at 1.0; weight areas are
+geometry-ESTIMATED, not caliper-measured; the `blownOut` 3.5 threshold wants its own bump.
+
 ## 2026-09-30 — Derived the run-timing slope from public DART data (route A) → NULL; do not build
 
 To unblock #1 (dynamic run calendar) without the paywalled Keefer slope, we **derived it ourselves**

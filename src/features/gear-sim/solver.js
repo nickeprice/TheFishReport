@@ -21,6 +21,10 @@ function readRigFromForm() {
     return {
         flow: getCurrentFlow(),                 // derived from the live water report
         weightOz: getNum('weight'),
+        // The picked weight's TYPE (shape_label). Physics reads its measured area_cm2, so
+        // a slinky and a cannonball at the same oz stop scoring identically. Blank -> the
+        // term degrades to exactly the old mass-only formula.
+        weightShape: getStr('weight-shape'),
         ldLen: getNum('ld-len'),
         ldMat: getStr('ld-mat'),
         ldLb: getNum('ld-lb') || REF_LB_TEST,
@@ -59,6 +63,7 @@ function buildSimStats(rig, out) {
     return {
         flow: rig.flow,
         weight: rig.weightOz,
+        weightShape: rig.weightShape,
         ldLen: rig.ldLen,
         ldMat: rig.ldMat,
         ldLb: rig.ldLb,

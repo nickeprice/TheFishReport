@@ -842,7 +842,8 @@ function bestZoneRig(zone, rig, vel) {
                             for (var w = 0; w < passes[p].weights.length; w++) {
                                 var wt = passes[p].weights[w];
                                 var drag = totalDragPerFt(bed, rig.ldLb, rig.ldMat, rig.mlLb, rig.mlMat, wt,
-                                    HOOK_OPTIONS[h], YARN_OPTIONS[y], rig.bdMat, beads[b]);
+                                    HOOK_OPTIONS[h], YARN_OPTIONS[y], rig.bdMat, beads[b],
+                                    0, 0, rig.weightShape);
                                 for (var l = 0; l < passes[p].leaders.length; l++) {
                                     var len = passes[p].leaders[l];
                                     var hgt = presentationHeightInches(lift, len, drag);

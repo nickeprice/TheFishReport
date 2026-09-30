@@ -3,7 +3,7 @@
  * height. Drag coefficient is LOCKED at 1.0: dragCoeff stays 1.0 by default.
  * Every output is a pure function of its arguments (deterministic physics).
  * public: lineDiameterScale, beadDrag/beadSink, hookDrag, yarnDrag,
- *         mainlineDragPerFt, leaderDragPerFt, totalDragPerFt,
+ *         mainlineDragPerFt, leaderDragPerFt, totalDragPerFt, weightAreaScale,
  *         presentationHeightInches
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
@@ -80,10 +80,39 @@ function mainlineDragPerFt(bottomVelocity, mlLb, mlMat, mlDia) {
 // Hydrodynamic drag per foot of leader. Scales with bed velocity, true line
 // diameter (sqrt of lb test x material factor) and how hard the lead pins the
 // leader down. Heavier lead sweeps the leader flatter, so height falls.
-function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat, ldDia) {
+//
+// The anchor is a REPLACEMENT for the old pure-mass fudge, not a removal of mass from the
+// model. `anchorScale` used to be `0.7 + 0.6 * weightOz` - a dimensionless read of MASS
+// alone, so a slinky (drags like a parachute) and a cannonball of the same oz scored
+// identically. Mass response is real and is KEPT; what changes is that the weight's
+// measured geometry now MODULATES it, so shape and density matter too.
+//
+//   anchorScale = massResponse(oz) * (area_row / area_ref)
+//
+// ANCHORED to the reference rig on purpose (the same trick REF_DIAMETER_MM plays for
+// line): the calibration weight - the 1/2 oz LEAD BARREL - sits at ratio exactly 1.0, and
+// massResponse(0.5) is exactly 1.0, so the frozen baselines do not move. Only the
+// RESPONSE to shape / density / material changes. A tungsten weight is ~30% smaller than
+// the same-oz lead one, so it now displaces less and drags less; a slinky's tube catches
+// far more water than a barrel's. See docs/CONTRACT_TACKLE.md.
+//
+// When the row cannot be resolved (no shape picked yet, a legacy rig, the library not
+// loaded, a cloud catch row with no shape column) the ratio is 1.0 and the term degrades
+// to EXACTLY the old mass-only formula - so nothing that predates this change moves.
+var WT_AREA_REF = 1.363;    // cm2 - area_cm2 of the 1/2 oz LEAD BARREL, the calibration weight
+var WT_AREA_SCALE_MIN = 0.4, WT_AREA_SCALE_MAX = 3.0;   // damp a mis-parsed/absurd row
+
+function weightAreaScale(shapeLabel, weightOz) {
+    var massResponse = 0.7 + (0.6 * Number(weightOz || 0));
+    var area = (typeof tackleWeightArea === 'function') ? tackleWeightArea(shapeLabel, weightOz) : null;
+    var ratio = area ? Math.min(WT_AREA_SCALE_MAX, Math.max(WT_AREA_SCALE_MIN, area / WT_AREA_REF)) : 1.0;
+    return massResponse * ratio;
+}
+
+function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat, ldDia, weightShape) {
     var velocityScale = Math.pow(bottomVelocity / REF_VELOCITY, 2);   // v^2, see mainlineDragPerFt
     var diameterScale = lineDiameterScale(lbTest, ldMat || 'copoly', ldDia);
-    var anchorScale = 0.7 + (0.6 * weightOz);   // heavier lead sweeps the leader flatter
+    var anchorScale = weightAreaScale(weightShape, weightOz);
     var drag = DRAG_REF * velocityScale * diameterScale * anchorScale * dragCoeff;
     return Math.max(0.05, drag);
 }
@@ -94,8 +123,13 @@ function leaderDragPerFt(bottomVelocity, lbTest, weightOz, dragCoeff, ldMat, ldD
 // ldDia / mlDia are the rig's PICKED line diameters in mm (optional: omitted means
 // "resolve material+lb to the generic library row", which is what community catch
 // rows and the solver's sweep both want).
-function totalDragPerFt(bottomVelocity, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarnInches, bdMat, bdSz, ldDia, mlDia) {
-    return leaderDragPerFt(bottomVelocity, ldLb, weightOz, 1.0, ldMat, ldDia)
+// weightShape is the picked weight's shape_label (also optional, and TRAILING on
+// purpose: this function is called positionally from five sites, so appending is the
+// only change that cannot silently shift an existing argument). Omitted -> the anchor
+// term degrades to EXACTLY the old mass-only formula, which is what a community catch
+// row (no weight-shape column) and a legacy rig must get.
+function totalDragPerFt(bottomVelocity, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarnInches, bdMat, bdSz, ldDia, mlDia, weightShape) {
+    return leaderDragPerFt(bottomVelocity, ldLb, weightOz, 1.0, ldMat, ldDia, weightShape)
         + mainlineDragPerFt(bottomVelocity, mlLb, mlMat, mlDia)
         + beadDrag(bdMat, bdSz) + hookDrag(hook) + yarnDrag(yarnInches);
 }

@@ -17,6 +17,16 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **P3: the weight's real geometry enters the drag term.** `anchorScale = 0.7+0.6·oz`
+  (mass alone — a slinky and a cannonball scored identically) is replaced by
+  `weightAreaScale()` reading the measured `area_cm2` of the picked weight row, **anchored to the
+  reference rig** (1/2 oz lead barrel ⇒ `1.0`) so **no frozen baseline moved**. Effect at 1040 CFS
+  / 1/2 oz: slinky drag `9.80 → 24.80` (height `5.40″ → 2.51″`), tungsten barrel `7.56`. An absent
+  shape degrades to exactly the old formula, so legacy rigs + cloud rows are unmoved. Also
+  reconciled: the sonar migration is **applied + verified live**, **P1b was already complete**
+  (60/60 weight rows have `area_cm2`/`cd`), and `tackle.json` is already in `SHELL_FILES`.
+  `sw.js` `v2.03.37`; sanity **149/149**.
+
 - 2026-09-30 — **Derived the #1 phenology slope from DART public data — and it's NULL.** Regressed
   day-of-year of 50% passage on pre-run water temp (The Dalles) for Bonneville/WFF fall+spring Chinook,
   1996–2024, **six specifications — all |t| < 2**; the only larger value (+10.5 d/°C) points *backwards*

@@ -25,6 +25,9 @@ var DRIFT_TECHNIQUE = {
         var dbArray = env.dbArray || [];
         var species = env.species;
         var weightOz = rig.weightOz, ldLen = rig.ldLen, ldMat = rig.ldMat, ldLb = rig.ldLb;
+        // The picked weight TYPE. Drives the leader drag through the weight's measured
+        // area, so shape/density finally matter (a slinky parachutes, tungsten cuts).
+        var weightShape = rig.weightShape;
         var mlMat = rig.mlMat, mlLb = rig.mlLb, hook = rig.hook, yarn = rig.yarn;
         var foam = rig.foam, foam2 = rig.foam2, bdMat = rig.bdMat, bdSz = rig.bdSz;
         // The PICKED lines' real diameters. 0 means "no brand-specific pick", and the
@@ -35,7 +38,7 @@ var DRIFT_TECHNIQUE = {
         // Every component counts: leader diameter (sqrt lb x material), coupled
         // mainline, bead sphere + material sink, hook mass/gap, yarn skirt.
         var velocity = hydraulicVelocity(flow, env.siteId);
-        var dragPerFt = totalDragPerFt(velocity.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz, ldDia, mlDia);
+        var dragPerFt = totalDragPerFt(velocity.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz, ldDia, mlDia, weightShape);
         // Foam 1 + Foam 2 both contribute buoyancy (two corkies lift more).
         var lift = rigLift(foam.lift + foam2.lift, yarn, hook, bdMat, bdSz);
         var hgt = presentationHeightInches(lift, ldLen, dragPerFt);

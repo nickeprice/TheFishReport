@@ -850,10 +850,57 @@ function behaviorChecks(done) {
     Math.abs((dA - dB) - wantDiff) < 1e-9
       ? ok('picked line diameter reaches the drag term', '0.31 vs 0.29mm = DRAG_REF*vScale*d/REF')
       : fail('picked line diameter reaches the drag term', `got ${dA - dB} want ${wantDiff}`);
+
+    // --- P3 (2026-09-30): the weight's SHAPE now reaches the drag term -----------------
+    // Before P3 the anchor term was `0.7 + 0.6*oz`, a read of MASS alone, so a slinky (a
+    // tube full of shot, drags like a parachute) and a cannonball of the same oz scored
+    // IDENTICALLY. These assertions exist so that false truth cannot come back.
+    const wtRow = tackleWeightRow('Lead Barrel', 0.5);
+    wtRow && wtRow.id === 'weight-lead-barrel-1-2'
+      ? ok('the weight library resolves a (shape, oz) pair to ONE row', 'Lead Barrel 1/2 oz -> ' + wtRow.id)
+      : fail('the weight library resolves a (shape, oz) pair to ONE row', 'got ' + (wtRow && wtRow.id));
+    tackleWeightRow('Lead Barrel', 7) === null && tackleWeightRow('', 0.5) === null
+      ? ok('an unresolvable weight pair returns null, never a guess', 'bad oz + blank shape -> null')
+      : fail('an unresolvable weight pair returns null, never a guess', 'expected null');
+
+    // The ANCHOR: the calibration weight must sit at exactly 1.0, or every frozen
+    // baseline above moves. massResponse(0.5) * (1.363/1.363) === 1.0.
+    weightAreaScale('Lead Barrel', 0.5) === 1.0
+      ? ok('the reference weight anchors weightAreaScale at exactly 1.0', 'Lead Barrel 1/2 oz -> 1.0')
+      : fail('the reference weight anchors weightAreaScale at exactly 1.0', 'got ' + weightAreaScale('Lead Barrel', 0.5));
+
+    // An unresolved/absent shape must degrade to EXACTLY the old mass-only formula, so a
+    // legacy rig, a cloud catch row and the pre-P3 behaviour are all byte-identical.
+    const legacy = (oz) => 0.7 + 0.6 * oz;
+    [0.25, 0.5, 0.75, 1].every((oz) => Math.abs(weightAreaScale(null, oz) - legacy(oz)) < 1e-12)
+      ? ok('an unknown weight shape keeps the legacy mass-only response', 'oz 0.25/0.5/0.75/1 all match')
+      : fail('an unknown weight shape keeps the legacy mass-only response', 'degraded formula drifted');
+
+    // THE POINT OF P3: at the SAME oz, shape and material now change the drag. A slinky
+    // catches far more water than a cannonball; a tungsten weight, being ~30% smaller than
+    // the same-oz lead one, catches less. Measured library areas: slinky 4.224, lead
+    // cannonball 1.403, tungsten barrel 0.956 (all at 1/2 oz).
+    const slinky = weightAreaScale('Lead Slinky (shot in tubing)', 0.5);
+    const ball = weightAreaScale('Lead Cannonball', 0.5);
+    const tung = weightAreaScale('Tungsten Barrel', 0.5);
+    slinky > ball * 1.5 && ball > tung * 1.2
+      ? ok('weight SHAPE and DENSITY reach the drag term at equal oz',
+          `slinky ${slinky.toFixed(3)} > cannonball ${ball.toFixed(3)} > tungsten ${tung.toFixed(3)}`)
+      : fail('weight SHAPE and DENSITY reach the drag term at equal oz',
+          `slinky ${slinky} ball ${ball} tungsten ${tung}`);
+
+    // ...and it must actually move the END RESULT, not just an intermediate scale: the same
+    // rig with a slinky must present LOWER (more drag) than with a tungsten barrel.
+    const rigDrag = (shape) => totalDragPerFt(vb, 12, 'mono', 15, 'mono', 0.5, 2, 0, 'hard', 6, 0, 0, shape);
+    const lift = rigLift(parseFoam('10').lift, 1, 2, 'hard', 6);
+    const hSlinky = presentationHeightInches(lift, 8, rigDrag('Lead Slinky (shot in tubing)'));
+    const hTung = presentationHeightInches(lift, 8, rigDrag('Tungsten Barrel'));
+    hSlinky < hTung
+      ? ok('the picked weight shape reaches the presentation height', `slinky ${hSlinky.toFixed(3)}" < tungsten ${hTung.toFixed(3)}"`)
+      : fail('the picked weight shape reaches the presentation height', `slinky ${hSlinky}" vs tungsten ${hTung}"`);
   } catch (e) {
     fail('gear-sim physics is deterministic (frozen baseline)', String(e.message).split('\n')[0]);
   }
-
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),
   // not just the primitives, so moving the solver into techniques/drift.js and

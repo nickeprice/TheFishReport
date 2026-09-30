@@ -149,12 +149,19 @@ function communitySonar(dbArray, flow, species, siteId) {
         var lb = (ldLine && ldLine.lb_test) ? ldLine.lb_test : (row.ldLb || row.leader_lb || REF_LB_TEST);
         var ldMat = (ldLine && ldLine.material) ? ldLine.material : (row.ldMat || row.leader_material || 'copoly');
         var wt = (row.weight !== undefined && row.weight !== null) ? row.weight : 0.5;
+        // The weight TYPE (shape_label). A cloud calibration row does not carry one yet -
+        // get_global_calibration has no weight-shape column - so an absent value degrades
+        // the anchor term to exactly the old mass-only formula, i.e. the pre-P3 behaviour
+        // for every existing cloud row. A LOCAL outbox catch DOES carry it, so a replayed
+        // offline catch keeps its real shape.
+        var wtShape = (row.weightShape !== undefined && row.weightShape !== null && row.weightShape !== '')
+            ? String(row.weightShape) : null;
         var mlLb = (mlLine && mlLine.lb_test) ? mlLine.lb_test : (row.mlLb || row.mainline_lb || 0);
         var mlMat = (mlLine && mlLine.material) ? mlLine.material : (row.mlMat || row.mainline_mat || 'braid');
         // 0 means "no explicit diameter" -> lineDiameterScale() falls back to generic/by-lb.
         var ldDia = (ldLine && ldLine.diameter_mm) ? ldLine.diameter_mm : 0;
         var mlDia = (mlLine && mlLine.diameter_mm) ? mlLine.diameter_mm : 0;
-        var drag = totalDragPerFt(bedVel, lb, ldMat, mlLb, mlMat, wt, hookNum, row.yarn || 0, bdMat, bdSzRaw, ldDia, mlDia);
+        var drag = totalDragPerFt(bedVel, lb, ldMat, mlLb, mlMat, wt, hookNum, row.yarn || 0, bdMat, bdSzRaw, ldDia, mlDia, wtShape);
         var h = presentationHeightInches(lift, row.ldLen, drag);
         if (isFinite(h) && h > 0) {
             heights.push(h);

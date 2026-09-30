@@ -48,11 +48,18 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
 - [x] **Migration `20260930120000_sonar_env_snapshot`** — adds `cloud_pct`, `rain_in`,
       `turbidity_fnu`, `barometer_delta`, `tide_stage_ft`, `tide_trend`, `light_shift`; recreates
       `get_global_calibration` returning those + `line_height_in`/`zone_min_in`/`zone_max_in`.
-      RLS + `SECURITY DEFINER` preserved. **NOT YET APPLIED** (verified absent read-only) — the
-      client must not ship before it lands (PostgREST 400 / PGRST204).
+      RLS + `SECURITY DEFINER` preserved. **APPLIED + VERIFIED LIVE (read-only, 2026-09-30)** — all
+      10 columns exist on `public.catches` (`cloud_pct`, `rain_in`, `turbidity_fnu`,
+      `barometer_delta`, `tide_stage_ft`, `tide_trend`, `light_shift`, `line_height_in`,
+      `zone_min_in`, `zone_max_in`), so the PostgREST 400 / PGRST204 hazard is closed and the
+      client that writes them is safe to ship. (This line previously read NOT YET APPLIED; the
+      migration was applied in the same session that shipped the client, so the two never
+      diverged in production.)
 - [x] **Cleanup** — removed `debounce()`, `showDay()`, `fallbackStation()`, `idbDelete()` + their
       `SYMBOLS.md` and sanity entries. Zero behaviour change.
-- `sw.js` `v2.03.34`; sanity **143/143** (was 141: −1 debounce, +3 tide/signature/pull).
+- `sw.js` `v2.03.36` at the end of this block (recorded here as `v2.03.34` when the sonar work
+      landed; `v2.03.35`/`36` were the follow-on literature commits); sanity **143/143** (was 141:
+      −1 debounce, +3 tide/signature/pull).
 - **PARKED for the next level:** the notebook's residual is captured + logged but not yet
   aggregated into a season view (Level 2). And the deeper "Level 2" learning — re-fitting the
   env weights / thermal + light curves / baseline band from real catch volume — is NOT built; it
@@ -696,11 +703,38 @@ rig; the 6 mm corky and 2/4 mm beads are below scale resolution so their values 
       rows, all missing `area_cm2`); JSON round-trip derives corky 0.4993 / cheater 0.428 /
       bead 0.9982; `node sanity_pass.js --quiet` 107/107; the throwaway generator was deleted
       and `src/data/tackle.json` was NOT committed (it ships with P3).
-- [ ] **P1b. Weights still need `area_cm2` + `cd`** — mass (oz→g), density (lead 11.34 /
-      tungsten 19.3) and shape are in, but the drag half is not, so `--check` flags all 60.
-      Measure the broadside silhouette (graph paper + photo) per shape; `cd` is a standard per
-      shape (sphere 0.47 · cylinder ≈1.0 · teardrop ≈0.3). Rubber-sleeved rows are separate
-      items and drag differently from bare ones.
+- [x] **P1b. Weights `area_cm2` + `cd` — COMPLETE** (closes the box that opened 2026-09-28).
+      All **60 weight rows** carry `mass_g`, `density_g_cm3`, `area_cm2`, `cd` and `shape`:
+      `python3 scripts/tackle_csv_to_json.py --check` → `checked 185 item(s)` with **no incomplete
+      rows** (the run that used to flag all 60). The values are **ESTIMATED from geometry**, not
+      caliper-measured: volume comes exactly from the row's own `mass_g` ÷ metal density, and the
+      only assumption is each shape's aspect ratio (slinky 5, pencil 3, teardrop 2, barrel 1,
+      cannonball = sphere) + a 0.8 mm rubber wall on the sleeved variants. Consequence recorded in
+      `docs/CONTRACT_TACKLE.md`: a slinky's density is the shot-packed effective 0.64 × 11.34 =
+      **7.26 g/cm³**, and a tungsten weight is ~30% smaller than the same-oz lead one.
+      **P3 is therefore UNBLOCKED** — the drag half of the weight library now exists to be consumed.
+
+- [x] **P3 (DONE 2026-09-30) — the weight's real geometry enters the drag term.**
+      Plan locked with the user: **Option A (anchor to the reference rig)** so no frozen
+      baseline moves, matching the `REF_DIAMETER_MM` precedent. Steps: (P3.1) add
+      `tackleWeightRow(shapeLabel, oz)` + `tackleWeightArea()` to `src/shared/tackle.js`, keyed
+      on the `(shape_label, nominal oz)` identity and never `mass_g`; (P3.2) replace
+      `physics.js:'anchorScale'` with `weightAreaScale()` reading `area_cm2`;
+      (P3.3) append `weightShape` as a TRAILING param of `totalDragPerFt` and fix all 5 call
+      sites (`drift.js:38`, `zone.js:844`, `sonar.js:157`, `sanity_pass.js:825/847`);
+      (P3.4) thread it from `solver.js:readRigFromForm()`; (P3.5) new sanity assertions incl.
+      the slinky-vs-cannonball divergence; (P3.6) docs + `sw.js` bump.
+      ⚠ Two traps found and handled: (i) the reference area is the 1/2 oz **lead barrel** =
+      `1.363 cm²`, NOT the cannonball's 1.4026 (a first pass used the wrong row and moved every
+      baseline by `1/1.4 %`); (ii) the old `anchorScale` carried the legitimate MASS response,
+      so the new scale must be `massResponse(oz) × (area/area_ref)` — a neutral `1.0` fallback
+      silently deleted the mass term and drifted 4 baseline rows. An unresolvable shape must
+      degrade to the old formula exactly.
+      Verified: sanity **149/149**; reference-rig drag `9.795588` unchanged to 6 dp; legacy
+      0.25 oz drag `8.670588` unchanged; same-oz type now diverges (slinky `24.80` > teardrop
+      `15.79` > cannonball `10.02` > tungsten `7.56`). `sw.js` `v2.03.37`.
+      **Still open:** `cd` locked at 1.0; weight areas geometry-ESTIMATED not measured;
+      `blownOut` 3.5 threshold untouched.
 
 ### Design LOCKED with the user 2026-09-28 (do not relitigate — execute)
 

@@ -137,28 +137,55 @@ async function refreshStationMap(center) {
 var _spotPickOn = false;
 
 function startSpotPick() {
-    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim() : '';
-    if (!label) {
-        spotsStatus('Type a name above first, then tap the map where your spot is.');
-        if (typeof showToast === 'function') showToast('Name this spot first, then tap the map.', 'warn', 5000);
+    // A spot belongs to a private account, so starting the pick without a session would be a
+    // dead end - say so instead of arming a tap that cannot save.
+    if (!spotsSignedIn()) {
+        spotsStatus('Start a session on the Catch Log tab first \u2014 spots save to your private account.');
+        if (typeof showToast === 'function') showToast('Start a session on the Catch Log tab first.', 'warn', 5000);
         return;
     }
+    // THE MAP IS THIS BUTTON'S JOB: it used to refuse when the map had not been opened yet,
+    // which read as "the button does nothing" (the map only exists after the map button).
+    openSpotPickMap();
+}
+
+// Open the map if it is not up yet, then arm the next tap as the spot.
+async function openSpotPickMap() {
     if (!_stationMap || !window.L) {
-        spotsStatus('Open the map first, then tap it to place your spot.');
+        spotsStatus('Loading the map\u2026');
+        try { await showStationMap(); } catch (e) {}
+    }
+    if (!_stationMap || !window.L) {
+        spotsStatus('Map unavailable (offline or CDN blocked) \u2014 use the presets or GPS instead.');
         return;
     }
     _spotPickOn = true;
-    spotsStatus('Tap the map where your spot is.');
+    spotsStatus('Now tap the map where your spot is.');
     if (_stationMap.getContainer) _stationMap.getContainer().style.cursor = 'crosshair';
     _stationMap.once('click', onSpotPick);
+    // The name can come first or on the tap (the pick asks for it if it is still empty), so
+    // nudge the field rather than blocking the pick.
+    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim() : '';
+    if (!label) {
+        var input = document.getElementById('spot-label');
+        if (input && input.focus) input.focus();
+    }
 }
 
 async function onSpotPick(e) {
     _spotPickOn = false;
     if (_stationMap && _stationMap.getContainer) _stationMap.getContainer().style.cursor = '';
     if (!e || !e.latlng) return;
+    if (!spotsSignedIn()) { spotsStatus('Start a session on the Catch Log tab first.'); return; }
+    // Name it now if it was not named first: the tap is the moment the angler knows where it is.
     var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX) : '';
-    if (!label) { spotsStatus('Name this spot first, then tap the map.'); return; }
+    if (!label) {
+        var typed = window.prompt('Name this spot', 'My spot');
+        if (typed == null) { spotsStatus('Cancelled \u2014 tap the map again when you are ready.'); return; }
+        label = String(typed).trim().slice(0, SPOT_LABEL_MAX);
+        if (!label) { spotsStatus('A spot needs a name \u2014 tap the map again.'); return; }
+        setFieldValue('spot-label', label);
+    }
     spotsStatus('Saving\u2026');
     var id = await saveSpotAt(e.latlng.lat, e.latlng.lng, label);
     if (!id) { spotsStatus('Could not save that spot.'); return; }

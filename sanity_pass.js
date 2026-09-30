@@ -1245,13 +1245,15 @@ function behaviorChecks(done) {
 
     eval(fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'spots.js'), 'utf8'));
 
-    // (a) signed out: no list, no save row, an explanation — and the save must not touch
-    // the network. saveCurrentSpot() returns before its first await, so this is sync.
+    // (a) signed out: no list, an explanation, and the controls must still be VISIBLE - hiding
+    // them is exactly why "Place a spot on the map" was invisible (2026-09-29 fix). The save
+    // must not touch the network. saveCurrentSpot() returns before its first await, so this is sync.
     global.AuthState = { signedIn: false, name: '' };
     let wrote = 0;
     global.Supa = { saveFavoriteSpot: () => { wrote++; return { ok: true }; } };
     renderFavoriteSpots();
-    const signedOutOk = recEls['spot-save-row'].hidden === true &&
+    const controlsStayVisible = !('spot-save-row' in recEls);
+    const signedOutOk = controlsStayVisible &&
       /^Start a session/.test(recEls['spot-status'].textContent) &&
       recEls['favorite-spots'].children.length === 0;
     saveCurrentSpot();
@@ -1273,7 +1275,7 @@ function behaviorChecks(done) {
       const span = r.children[0] && r.children[0].children[0];
       return span ? span.textContent : '';
     });
-    const listOk = recEls['spot-save-row'].hidden === false && rows.length === 2 &&
+    const listOk = controlsStayVisible && rows.length === 2 &&
       rows[0].className === 'spot-row' && labels[0] === 'Blue Creek run' && labels[1] === 'Lower Nisqually' &&
       /^flow: Puyallup River at Puyallup, WA/.test(metas[0]) && /^flow: Nisqually River at McKenna/.test(metas[1]) &&
       recEls['favorite-spots'].innerHTML === '' &&
@@ -1291,7 +1293,7 @@ function behaviorChecks(done) {
 
     (signedOutOk && guardOk && listOk && loggedCoords.length === 0)
       ? ok('the saved-spot list shows my spots only, and never leaks coordinates',
-           'signed out -> hidden save row + explanation + no write; 2 rows rendered as text with their gauge; no lat/lon in the log')
+           'signed out -> controls still VISIBLE + explanation + no write; 2 rows rendered as text with their gauge; no lat/lon in the log')
       : fail('the saved-spot list shows my spots only, and never leaks coordinates',
              `signedOut=${signedOutOk} guard=${guardOk} wrote=${wrote} list=${listOk} ` +
              `rows=${rows.length} labels=[${labels.join(' | ')}] metas=[${metas.join(' | ')}] coords=${loggedCoords.join(';')}`);
@@ -1345,15 +1347,20 @@ function behaviorChecks(done) {
     })();
 
     // Static wiring: the point IS the spot (its own coords saved, its gauge resolved), a point
-    // with no gauge is not refused, unreachable stays distinct from "none nearby", and the map
-    // exposes a picker.
+    // with no gauge is not refused, unreachable stays distinct from "none nearby", the pick
+    // button OPENS the map itself and refuses clearly without a session, and an unnamed pick
+    // asks for the name on the tap.
     const wireOk = /async function saveSpotAt\(lat, lon, label\)/.test(spotsSrc) &&
       /await resolveSpotStation\(Number\(lat\), Number\(lon\), want \? want\.id : null\)/.test(spotsSrc) &&
       /latitude: Number\(lat\),\s*\n\s*longitude: Number\(lon\)/.test(spotsSrc) &&
       /stationId: station \? station.id : null/.test(spotsSrc) &&
       /if \(!gaugeId\) \{/.test(spotsSrc) && !/That spot has no gauge saved/.test(spotsSrc) &&
       /return \{ ok: false \};/.test(spotsSrc) && /resolved\.ok && resolved\.station/.test(spotsSrc) &&
+      !/saveRow\.hidden/.test(spotsSrc) && !/id="spot-save-row" hidden/.test(pageHtml) &&
       /function startSpotPick\(\)/.test(mapSrc) && /\.once\('click', onSpotPick\)/.test(mapSrc) &&
+      /async function openSpotPickMap\(\)/.test(mapSrc) && /await showStationMap\(\)/.test(mapSrc) &&
+      /if \(!spotsSignedIn\(\)\) \{[\s\S]{0,200}spotsStatus\(/.test(mapSrc) &&
+      /window\.prompt\('Name this spot'/.test(mapSrc) &&
       /onclick="startSpotPick\(\)"/.test(pageHtml) && /Place a spot on the map/.test(pageHtml);
 
     (nearOk && gaugeTextOk && wireOk)

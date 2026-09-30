@@ -114,8 +114,9 @@ function spotRowEl(spot) {
 // label, which is user text.
 function renderFavoriteSpots() {
     var box = document.getElementById('favorite-spots');
-    var saveRow = document.getElementById('spot-save-row');
-    if (saveRow) saveRow.hidden = !spotsSignedIn();
+    // The save/pick controls stay VISIBLE even without a session: hiding them made "Place a
+    // spot on the map" invisible, which read as a broken feature. The status line explains
+    // what a session is for, and startSpotPick() refuses with a reason.
     if (!box) return;
     box.innerHTML = '';
     if (!spotsSignedIn()) {

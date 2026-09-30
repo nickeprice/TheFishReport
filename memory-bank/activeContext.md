@@ -370,6 +370,22 @@ change.
       gauge nearby shows no flow rather than borrowing the app's default river (`site` omitted would
       silently fall back to it). Weather IS the spot's own, because the report takes lat/lon.
       Owed by eye: the picker's crosshair/cursor behaviour and the star appearing after a save.
+- [x] **FIX (same day): "map select still not working".** Two blockers, both fatal on their own:
+      (1) the pick button lived inside `#spot-save-row`, which `renderFavoriteSpots()` HID unless a
+      session existed → the button was not on screen at all; the controls are now always visible
+      (the `hidden` attribute is gone from `index.html`) and `startSpotPick()` refuses with a reason
+      instead. (2) `_stationMap` only exists after "Show Nearest Rivers on a Map", so tapping the
+      picker first answered "Open the map first…" → `startSpotPick()` now calls `openSpotPickMap()`,
+      which opens the map itself (`await showStationMap()`), shows "Loading the map…", then arms the
+      tap with a crosshair. Also: a session gate up front (3), and an unnamed tap now prompts for the
+      name instead of rejecting the tap.
+      Flow: **My Saved Spots → 📍 Place a spot on the map → map opens → tap your spot → star appears.**
+      Verified: sanity **138/138** — the WS-5 assertion that pinned the row as HIDDEN was inverted to
+      prove `renderFavoriteSpots()` never touches it (the exact bug), and the picker wiring now pins
+      the session gate, `openSpotPickMap()` + `await showStationMap()`, and the prompt fallback.
+      `sw.js` `v2.03.32`.
+      ⚠ Still owed by eye: I could only verify this by reading the wiring — the tap path itself needs
+      a real device/browser (Leaflet's click inside the modal).
 
 ## BEGINNER COPY — 2026-09-29 (direct user ask)
 

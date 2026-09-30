@@ -4,6 +4,37 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — FIX: "Place a spot on the map" did nothing (two blockers)
+User report: *"map select still not working"*. Two independent defects, either of which alone made
+the button look dead — plus a third that would have failed at the last step.
+
+1. **The controls were hidden without a session.** `renderFavoriteSpots()` set
+   `#spot-save-row.hidden = !spotsSignedIn()`, and the new pick button lives in that row — so
+   without a guest session the button was not on screen at all. The controls are now ALWAYS
+   visible (the `hidden` attribute is gone from the markup too); the status line explains what a
+   session is for and `startSpotPick()` refuses with a reason instead of silently hiding.
+2. **The picker required a map that only the OTHER button opens.** `_stationMap` is created by
+   `showStationMap()`, so tapping the picker first answered "Open the map first…" — from the
+   angler's side, a button that does nothing. `startSpotPick()` now calls `openSpotPickMap()`,
+   which OPENS the map itself (awaiting `showStationMap()`), shows "Loading the map…", and only
+   then arms the tap with a crosshair cursor. If Leaflet genuinely cannot load, it says so.
+3. **No session check in the picker** — the save would have surfaced a raw Supabase error. The
+   gate is now in `startSpotPick()` up front and again in `onSpotPick()`.
+Also: an unnamed pick no longer rejects the tap — if the name field is empty when the map is
+tapped, it asks (prompt, as the app's catch edit already does) and proceeds; the label field is
+focused when the picker arms so naming-first still works.
+
+Flow now: **My Saved Spots → 📍 Place a spot on the map → the map opens → tap your spot → (name it
+if you didn't) → the star appears and the row reads "flow: <gauge> · N mi away"**.
+
+`sw.js` `v2.03.32`. **138/138 GREEN** — the WS-5 runtime assertion that pinned the row as HIDDEN was
+inverted (it now proves `renderFavoriteSpots()` never touches `#spot-save-row`, which is what the bug
+was), and the picker's static wiring now pins the session gate, `openSpotPickMap()` + `await
+showStationMap()`, the prompt fallback, and the absence of `hidden` on the row in `index.html`.
+NOTE: that inverted assertion also fixed a cascade — the old one threw on a missing recording
+element and left the DOM stub installed, which then failed the unrelated toast/deep-link checks.
+- Key files: `src/features/map/{map,spots}.js`, `index.html`, `sanity_pass.js`, `sw.js`.
+
 ## 2026-09-29 — A saved spot is a LAT/LON you pick on the map (not a gauge pin)
 Direct user correction: *"its not save a guage pin i want to be able to save a lon and lat spot on a
 map as a fishing spot so i can pull the data for that"*. The old flow could only save the **current

@@ -47,7 +47,9 @@
              public.favorite_spots keeps every spot visible only to the session that saved
              it, and nothing here ever reaches the public feed or a telemetry payload. -->
         <h3 class="modal-subtitle" style="margin-top: 25px;">My Saved Spots (private)</h3>
-        <div id="spot-save-row" hidden>
+        <!-- Always visible: a hidden control reads as a broken feature. Saving needs a session,
+             and the status line says so (see renderFavoriteSpots / startSpotPick). -->
+        <div id="spot-save-row">
             <div class="search-row">
                 <input type="text" id="spot-label" aria-label="Name this fishing spot" maxlength="60" placeholder="Name this spot (e.g. Blue Creek run)" style="min-height: 44px;">
                 <button onclick="saveCurrentSpot()" style="min-height: 44px; padding: 10px 15px;">Save this spot</button>

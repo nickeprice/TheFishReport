@@ -424,7 +424,7 @@ function positionParts(zone, hgt) {
     var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
     var near = (typeof velocityAtSpot === 'function') ? velocityAtSpot(flow, siteId) : null;
     var mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
-    var out = { depth: null, lie: null, lieTarget: null, line: null, depthParts: null, bed: null, unc: null };
+    var out = { depth: null, lie: null, liePlain: null, line: null, linePlain: null, depthParts: null, bed: null, unc: null };
 
     // Depth of water they are holding in, from the gauge's measured cross-section. WS-8b a2:
     // the HUD LEADS WITH THE BAND the gauge's own rows span in this flow window (the honest
@@ -449,30 +449,34 @@ function positionParts(zone, hgt) {
         out.depth = 'no measured cross-section at this gauge, so no spot depth';
     }
 
-    // The lie: what the bed velocity says about the water holding them. TWO forms - `lie`
-    // carries the number for the detail string, `lieTarget` is the plain "where to fish it"
-    // phrase the summary prints.
+    // The lie: what the bed velocity says about the water holding them. THREE forms - `lie`
+    // carries the number for the detail string, `liePlain` is the beginner phrase the summary
+    // prints (no jargon: no "seam", no "riffle lips", no ft/s).
     if (near && typeof near.bottom === 'number') {
         out.bed = near.bottom;
         if (near.bottom > LIE_FAST_FTS) {
             out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: the lie is behind boulders, wood and cut banks';
-            out.lieTarget = 'pushy water, so target behind boulders, wood and cut banks';
+            out.liePlain = 'the slower pockets behind rocks, logs and cut banks';
         } else if (near.bottom >= LIE_SOFT_FTS) {
             out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: the lie is the seam beside the current tongue';
-            out.lieTarget = 'moderate flow, so target the seam beside the current tongue';
+            out.liePlain = 'the edge where the slow water meets the faster current';
         } else {
             out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: soft water, fish spread over the flats and riffle lips';
-            out.lieTarget = 'soft water, so target the flats and riffle lips';
+            out.liePlain = 'calm, shallow water along the gentle edges and the tail of a pool';
         }
     }
 
-    // The angler's line against that band (only when a solved height is supplied).
+    // The angler's line against that band (only when a solved height is supplied): `line` for
+    // the detail string, `linePlain` for the summary.
     if (mid !== null && typeof hgt === 'number' && isFinite(hgt) && zone) {
         if (hgt >= zone.min && hgt <= zone.max) {
             out.line = 'your line at ' + hgt.toFixed(1) + '" is in that band';
+            out.linePlain = 'Your rig is right where the fish are.';
         } else {
             out.line = 'your line at ' + hgt.toFixed(1) + '" is ' + Math.abs(hgt - mid).toFixed(1) + '" ' +
                 (hgt < zone.min ? 'below' : 'above') + ' that band';
+            out.linePlain = 'Your rig is sitting much ' + (hgt < zone.min ? 'lower' : 'higher') +
+                ' than the fish, so it is not where they are.';
         }
     }
     return out;
@@ -498,26 +502,42 @@ function whereToFish(zone, hgt) {
 }
 
 // ==================================================================================
-// THE SUMMARY (direct user asks: 2026-09-29 restructure, then this trim)
+// THE SUMMARY (direct user asks: 2026-09-29 restructure, then the beginner rewrite)
 //
-// TWO sentences, max: WHERE the fish are (how high off the bed, in what depth of water,
-// and which piece of water to target) and WHERE THE ANGLER'S LINE sits against that band.
+// TWO sentences, max, written for someone who has never fished: what the fish are likely
+// doing and where to look, then whether the angler's rig is where they are.
 //
-// What is deliberately NOT here any more:
-//   * the driver list ("Most of that is the heavy cloud and the falling barometer") - the
-//     angler asked for the outcome, not the weather lecture; every reason still lands in
-//     `zone.notes` and therefore in the debug trail;
-//   * any claim that the fish are FEEDING. Adult salmon in the river are not feeding -
-//     they are staging, and a fly gets taken out of reaction/territory, not hunger. The
-//     copy says "quick to take", "holding", "pinned down" and never "feeding".
+// NO JARGON IN HERE. The reader of this paragraph does not know what an inch of line
+// height is, what CFS means, what a gauge is, or what "riffle lips" are. So this text
+// carries no numbers except a plainly-worded depth, no "line height", no provenance.
+//
+// WHAT HAPPENED TO THE PRECISION (deliberate, not lost): the depth band, the flow, the
+// gauge and the +/-20% all still exist on `positionParts()`/`whereToFish()`, which the
+// debug trail prints. The HUD's job is the plain-English headline; the log's job is the
+// numbers. Same data, two audiences.
+//
+// Also deliberately NOT here: the driver list ("Most of that is the heavy cloud...") and
+// any claim that the fish are FEEDING - in-river adults stage, they do not feed, and a fly
+// gets taken out of reaction/territory. "More willing to grab" is the hedge for that.
 // ==================================================================================
 var OUTLOOK_BANDS = [
-    { min:  2.0,      tag: 'Fish are up and quick to take' },
-    { min:  0.7,      tag: 'Fish are holding above the base zone' },
-    { min: -0.7,      tag: 'Fish are sitting in the base zone' },
-    { min: -2.0,      tag: 'Fish are pinned down and slow' },
-    { min: -Infinity, tag: 'Fish are deep and locked up' }
+    { min:  2.0,      tag: 'Fish are likely holding higher in the water and more willing to grab' },
+    { min:  0.7,      tag: 'Fish are likely holding a bit higher than usual' },
+    { min: -0.7,      tag: 'Fish are about where you would normally expect them' },
+    { min: -2.0,      tag: 'Fish are holding deep and staying tight' },
+    { min: -Infinity, tag: 'Fish are holding deep and not very active' }
 ];
+
+// '2-4 feet deep' from the measured band (whole feet: the reader does not need decimals).
+function plainDepthText(p) {
+    if (!p || !p.depthParts) return null;
+    var low = Number(p.depthParts.bandLow), high = Number(p.depthParts.bandHigh);
+    var lo = (isFinite(low) && low > 0) ? Math.floor(low) : Math.floor(Number(p.depthParts.ft));
+    var hi = (isFinite(high) && high > 0) ? Math.ceil(high) : Math.ceil(Number(p.depthParts.ft));
+    if (!isFinite(lo) || !isFinite(hi) || hi <= 0) return null;
+    if (hi <= lo) hi = lo + 1;                       // never "3-3 feet deep"
+    return lo + '-' + hi + ' feet deep';
+}
 
 function fishOutlook(zone, hgt) {
     var z = zone || { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, report: null };
@@ -526,23 +546,24 @@ function fishOutlook(zone, hgt) {
     var sentences = [];
 
     if (!z.report) {
-        // No report -> nothing to claim about behaviour. Say what is being shown.
-        sentences.push('No water report loaded yet, so this is the plain 4" - 12" base zone.');
+        // No report -> nothing to claim about behaviour. Say what is being shown, plainly.
+        sentences.push('No water report loaded yet, so this is just the standard starting estimate.');
     } else {
         var tag = OUTLOOK_BANDS[OUTLOOK_BANDS.length - 1].tag;
         for (var i = 0; i < OUTLOOK_BANDS.length; i++) {
             if (shift >= OUTLOOK_BANDS[i].min) { tag = OUTLOOK_BANDS[i].tag; break; }
         }
-        if (p.depthParts) {
-            sentences.push(tag + ': sitting about ' + p.depthParts.midIn.toFixed(1) + '" off the bed in about ' +
-                p.depthParts.band + ' at ' + Math.round(p.depthParts.flow) + ' CFS (gauge measurement, \u00b1' +
-                p.depthParts.pct + '%)' + (p.lieTarget ? ' \u2014 ' + p.lieTarget : '') + '.');
-        } else {
-            sentences.push(tag + '.');
+        var deep = plainDepthText(p);
+        var one = tag;
+        if (p.liePlain || deep) {
+            one += ' \u2014 look for ' + (p.liePlain || 'the calmer water');
+            if (deep) one += ' (about ' + deep + ')';
         }
+        sentences.push(one + '.');
     }
-    // Sentence 2: the line against that band (only once a rig is solved).
-    if (p.line) sentences.push(p.line.charAt(0).toUpperCase() + p.line.slice(1) + '.');
+
+    // Sentence 2: is the angler's rig where the fish are? (only once a rig is solved)
+    if (p.linePlain) sentences.push(p.linePlain);
 
     return sentences.join(' ');
 }
@@ -638,6 +659,38 @@ function rigChangeList(best, rig) {
     if (Number(best.leader) !== Number(rig.ldLen)) out.push('a ' + best.leader + ' ft leader');
     if (Number(best.weight) !== Number(rig.weightOz)) out.push(best.weight + ' oz lead');
     return out;
+}
+
+// THE SAME CHANGES IN PLAIN WORDS, for the HUD (direct user ask: a reader who does not know
+// the tackle or the terms should still be able to act). Direction only - no sizes, no brands,
+// no numbers: "a bigger corky" says what to do without asking the reader to know what a
+// "Cheater 10 float" is. The precise list above still goes to the debug trail.
+function rigChangePlain(best, rig) {
+    var up = [];
+    if (best.foam.key !== rig.foam.key) up.push(best.foam.lift > rig.foam.lift ? 'a bigger corky' : 'a smaller corky');
+    if (best.foam2.key !== rig.foam2.key) {
+        if (best.foam2.key === '0') up.push('drop the second corky');
+        else if (rig.foam2.key === '0') up.push('a second corky');
+        else up.push(best.foam2.lift > rig.foam2.lift ? 'a bigger second corky' : 'a smaller second corky');
+    }
+    if (Number(best.hook) !== Number(rig.hook)) {
+        // A lighter hook sinks less, so it lifts the rig: hookSink decreases as the size grows.
+        up.push(hookSink(best.hook) < hookSink(rig.hook) ? 'a smaller hook' : 'a bigger hook');
+    }
+    if (Number(best.yarn) !== Number(rig.yarn)) up.push(Number(best.yarn) > Number(rig.yarn) ? 'more yarn' : 'less yarn');
+    if (Number(best.bdSz) !== Number(rig.bdSz)) {
+        up.push(beadSink(rig.bdMat, best.bdSz) < beadSink(rig.bdMat, rig.bdSz) ? 'a lighter bead' : 'a heavier bead');
+    }
+    if (Number(best.leader) !== Number(rig.ldLen)) up.push(Number(best.leader) > Number(rig.ldLen) ? 'a longer leader' : 'a shorter leader');
+    if (Number(best.weight) !== Number(rig.weightOz)) up.push(Number(best.weight) > Number(rig.weightOz) ? 'more weight' : 'less weight');
+    return up;
+}
+
+// 'a, b and c' - a plain-language list.
+function joinPlain(items) {
+    if (!items || !items.length) return '';
+    if (items.length === 1) return items[0];
+    return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
 }
 
 function bestZoneRig(zone, rig, vel) {

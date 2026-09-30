@@ -17,6 +17,18 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **Beginner copy** (direct user ask): the HUD summary is now **two plain sentences for
+  someone who has never fished** ("Fish are likely holding higher in the water and more willing to
+  grab — look for calm, shallow water along the gentle edges and the tail of a pool (about 2-5 feet
+  deep). Your rig is sitting much lower than the fish, so it is not where they are.") and the advice
+  is plain too ("Your rig is running low — raise it: a bigger corky, a second corky, or more yarn" /
+  "Try this: a bigger corky and a second corky — that should get you much closer"). No inches, CFS,
+  gauge, ±%, brand names or projected heights on screen; the precise version moved to the debug trail
+  (`whereToFish()`, `out.rigChanges`). The plain `Try this` is capped at two changes and says "much
+  closer" when the full fix needs more, so the projection is never claimed for a partial list.
+  **Beginner/Advanced toggle recorded as a future feature** (`ROADMAP` §3.10), and the wording says
+  **corky** (not float). `sw.js` `v2.03.30`, **137/137** with a new jargon guard.
+
 - 2026-09-29 — **WS-8b (b2′) shipped: the light term rides the sun's real elevation.** After the user
   asked why b2 was never attempted, the curve was rebuilt on the correct driver (not a feeding
   curve): `solarElevationDeg()` from the payload's own sunrise/sunset midpoint + the date's

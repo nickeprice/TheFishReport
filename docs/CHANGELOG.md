@@ -4,6 +4,59 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — Beginner copy: the HUD summary and the rig advice are now written for a non-angler
+Direct user ask, quoting the real output: *"this should be a 1-2 sentence summary like youre talking
+to a person who has no idea what they are doing fishing they dont know the terms they dont know
+heights or gagues or anything next simplify the try this section as well"*.
+
+**Before** (the same solve):
+> Fish are up and quick to take: sitting about 9.0" off the bed in about 2.2-4.4 ft at 971 CFS (gauge
+> measurement, ±20%) — soft water, so target the flats and riffle lips. Your line at 1.1" is 7.9"
+> below that band.
+> Too low at 1.1" (zone 5.0" - 13.0") - change the corky first: bigger corky, or a second corky, then
+> more yarn, a smaller bead, a smaller hook - or a longer leader / less lead.
+> Try this: a second Cheater 10 float, yarn at 3" -> projects 8.9" of line height.
+
+**Now:**
+> Fish are likely holding higher in the water and more willing to grab — look for calm, shallow water
+> along the gentle edges and the tail of a pool (about 2-5 feet deep). Your rig is sitting much lower
+> than the fish, so it is not where they are.
+> • Your rig is running low — raise it: a bigger corky, a second corky, or more yarn — or a longer leader.
+> • Try this: a bigger corky and a second corky — that should get you much closer.
+
+Gone from the HUD: inches of line height, the depth band, CFS, "gauge", "±%", "off the bed",
+"your line", "riffle lips", "seam", brand names, sizes, and the projected height.
+
+- `zone.js` — `OUTLOOK_BANDS` tags are plain outcomes ("likely holding higher in the water and more
+  willing to grab" … "holding deep and not very active"); `positionParts()` now also returns
+  `liePlain` ("calm, shallow water along the gentle edges and the tail of a pool") and `linePlain`
+  ("Your rig is right where the fish are." / "…sitting much lower than the fish, so it is not where
+  they are."); `plainDepthText()` renders the measured band as whole feet ("2-5 feet deep");
+  `fishOutlook()` emits the two plain sentences. New `rigChangePlain()` turns the solver's change
+  list into directions ("a bigger corky", "a second corky", "more yarn", "a lighter bead") with no
+  sizes or brands, and `joinPlain()` reads it as a sentence.
+- `drift.js` — plain remedy rows ("Your rig is running low — raise it: a bigger corky, a second
+  corky, or more yarn — or a longer leader"), a plain blown-out row, and a plain `Try this`. The
+  plain list is **capped at two changes** because a beginner can act on two, and when the full
+  solution needs more it says *"that should get you much closer"* instead of claiming the full
+  projection — the projection belongs to the WHOLE set, so claiming it for a partial list would be a
+  lie. Five changes are still there on `out.rigChangesPlain`.
+- **The precision did not disappear — it moved.** `whereToFish()` (depth band, flow, ±%, ft/s) is
+  unchanged and `solver.js` now also logs `out.rigChanges` (brands, sizes, projected height), so the
+  debug trail carries exactly what left the screen. Same data, two audiences.
+- `docs/ROADMAP.md` — **§3.10 "Copy mode: Beginner / Advanced"** records the toggle as a deliberate
+  FUTURE feature (not built): the two renderings are already produced side by side on every solve, so
+  it would be a render-time choice plus a persisted setting.
+- `sw.js` `v2.03.30`. **137/137 GREEN** — the copy assertions were re-pinned (five plain outcome
+  bands, the "where to look" clause, the whole-feet depth, the plain line clause, the tag-only path
+  with no station, the plain no-report sentence) and a NEW guard fails the build if the summary ever
+  contains `CFS`, `gauge`, `off the bed`, `your line`, `ft of water`, `line height`, `strike zone`,
+  `base zone` or `±` again. The frozen PHYSICS baseline is untouched (hgt 2.887", score 4.499,
+  2 suggestion rows).
+- Key files: `src/features/gear-sim/{zone,solver}.js`,
+  `src/features/gear-sim/techniques/drift.js`, `sanity_pass.js`, `sw.js`,
+  `docs/{ROADMAP,SYMBOLS,CONTRACT_TECHNIQUE}.md`.
+
 ## 2026-09-29 — WS-8b (b2′): the light term rides the sun's REAL ELEVATION (b2 was declined before; this supersedes it)
 The user asked why b2 (the "crepuscular curve") was never attempted: the honest answer was that
 nothing had failed — b1 was my recommendation off a menu, and my stated reason for declining b2

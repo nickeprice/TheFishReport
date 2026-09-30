@@ -211,6 +211,25 @@ physics wants `v²`.
 cross-section *average* velocity at that gauge — never the velocity in one specific seam.
 Without a local measurement that last ~±30% is unknowable, and the UI must keep saying so.
 
+### 3.10 Copy mode: Beginner / Advanced (future, NOT built)
+
+Recorded 2026-09-29 as a deliberate future feature, at the user's request.
+
+The Gear Sim's on-screen copy is now **beginner-first**: the summary paragraph, the "rig is
+running low/high" row and the "Try this" advice are written for someone who has never fished
+(no inches of line height, no CFS, no gauge, no brand names, no "riffle lips"). The precise
+version - depth band, flow, ±%, brand + size + projected height - still exists and is written
+to the DEBUG TRAIL by `paintSimHud()` (`out.rigChanges`, `whereToFish()`).
+
+A **toggle** would let an experienced angler read the precise strings in the HUD itself - e.g.
+a "Details: Beginner / Advanced" switch in the Gear Sim, persisted like the rig (`localStorage`),
+defaulting to Beginner. It is NOT built because nothing has asked for it yet, and the data for it
+already exists: `rigChangeList()` (precise) and `rigChangePlain()` (plain) are produced side by
+side on every solve, so the switch is a render-time choice, not a second model.
+
+Cost when it is wanted: one persisted setting + a branch in `paintSimHud()`/`fishOutlook()`, plus
+the sanity assertions for both renderings. No physics, no contract change.
+
 ## 4. Suggested phasing within 4.0
 
 1. **Accounts + RLS tier** (unblocks everything social).

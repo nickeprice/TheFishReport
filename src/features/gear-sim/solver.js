@@ -128,5 +128,7 @@ function paintSimHud(rig, out, stats) {
         // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
         // debug trail is where they survive in full - including the community-sonar note.
         (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +
+        (out.rigChanges && out.rigChanges.length ? ' | precise rig changes: ' + out.rigChanges.join(', ') +
+            ' -> ' + hgt.toFixed(1) + '"' : '') +
         (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
 }

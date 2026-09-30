@@ -65,38 +65,49 @@ var DRIFT_TECHNIQUE = {
         var best = bestZoneRig(zone, rig, velocity);
 
         if (blownOut) {
-            // Report the true measured ft/s when we have it, matching the HUD (the solver's
-            // own scale is internal calibration units, not something to quote at an angler).
-            var shownBed = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
-            suggestions.push('BLOWN OUT: bed running ' + shownBed.toFixed(1) + ' ft/s at ' + weightOz + ' oz - step up to 3/4 or 1 oz, or fish a slower seam.');
+            // Plain words: what to DO, not what the numbers are (the ft/s and the oz still go to
+            // the debug trail via solver.js).
+            suggestions.push('The water is running too fast for your rig \u2014 add more weight, or fish a slower spot.');
         } else if (hgt < zone.min) {
-            suggestions.push('Too low at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - change the corky first: bigger corky, or a second corky, then more yarn, a smaller bead, a smaller hook - or a longer leader / less lead.');
+            suggestions.push('Your rig is running low \u2014 raise it: a bigger corky, a second corky, or more yarn \u2014 or a longer leader.');
         } else if (hgt > zone.max) {
-            suggestions.push('Too high at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - change the corky first: smaller corky, or drop the second corky, then less yarn, a bigger bead, a bigger hook - or a shorter leader / more lead.');
+            suggestions.push('Your rig is running high \u2014 lower it: a smaller corky, drop the second corky, or less yarn \u2014 or a shorter leader.');
         }
         // ON TARGET -> NO suggestion rows at all (direct user ask, 2026-09-29): the summary
-        // above the list already says the line is in the band, so an "On target" row is noise.
+        // above the list already says the rig is where the fish are, so an "On target" row is noise.
 
+        var plainChanges = [];
         if (best && !blownOut && score < 5.0) {
-            // Name ONLY what changes, in the order the angler would make the changes.
-            var changes = (typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
-            if (changes.length) {
-                suggestions.push('Try this: ' + changes.join(', ') + ' -> projects ' + best.hgt.toFixed(1) + '" of line height.');
+            // Plain directions only, in the order the angler would make the changes, and only
+            // what actually changes. The precise list (brands, sizes, projected height) rides
+            // out on `out.rigChanges` for the debug trail.
+            plainChanges = (typeof rigChangePlain === 'function') ? rigChangePlain(best, rig) : [];
+            if (plainChanges.length) {
+                // A beginner can act on TWO changes, not five. When the full solution needs more,
+                // say "closer" - the projection belongs to the WHOLE set, so claiming it for a
+                // partial list would be a lie. (The full list is on out.rigChangesPlain.)
+                var shown = plainChanges.slice(0, 2);
+                var capped = plainChanges.length > shown.length;
+                suggestions.push('Try this: ' + joinPlain(shown) + ' \u2014 ' + (capped
+                    ? 'that should get you much closer.'
+                    : 'that should put your rig ' + (hgt < zone.min ? 'up' : 'down') + ' where the fish are.'));
             }
         }
 
         // 5. The "where to fish" row (WS-8a) and the cohesive SUMMARY (restructured
         // 2026-09-29): `whereToFish` is the provenance-heavy detail for the log/return,
-        // `outlook` is the one paragraph the HUD prints under the two banners. Neither is
-        // pushed into `suggestions` - where the FISH are is not "what to change" - which
-        // keeps the frozen suggestion baseline untouched.
+        // `outlook` is the plain 2-sentence summary the HUD prints under the two banners.
+        // Neither is pushed into `suggestions` - where the FISH are is not "what to change" -
+        // which keeps the frozen suggestion baseline untouched. `rigChanges` is the PRECISE
+        // version of the plain advice (brands, sizes, projected height) for the debug trail.
         var where = (typeof whereToFish === 'function') ? whereToFish(zone, hgt) : null;
         var outlook = (typeof fishOutlook === 'function') ? fishOutlook(zone, hgt) : null;
+        var precise = (best && typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
 
         return {
             velocity: velocity, dragPerFt: dragPerFt, lift: lift, hgt: hgt, blownOut: blownOut,
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
-            whereToFish: where, outlook: outlook
+            whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges
         };
     }
 };

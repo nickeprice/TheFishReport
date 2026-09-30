@@ -351,6 +351,30 @@ change.
       This RESOLVES the "interpretation to confirm" item in the handoff: the summary belongs under
       BOTH banners.
 
+## BEGINNER COPY — 2026-09-29 (direct user ask)
+
+- [x] **The HUD summary and the rig advice are beginner-first.** The user quoted the live output and
+      asked for "a 1-2 sentence summary like you're talking to a person who has no idea what they are
+      doing fishing… they don't know the terms, they don't know heights or gauges", plus a simplified
+      "Try this". Shipped: `zone.js` (plain `OUTLOOK_BANDS` tags, `liePlain`/`linePlain` in
+      `positionParts()`, `plainDepthText()` for whole-foot depth, `rigChangePlain()` + `joinPlain()`,
+      and `fishOutlook()` emitting the two plain sentences); `drift.js` (plain remedy rows, plain
+      blown-out row, plain `Try this` **capped at two changes** with "that should get you much
+      closer" when the full fix needs more — the projection belongs to the whole set); `solver.js`
+      logs `out.rigChanges` so the precise version stays in the debug trail.
+      Verify: `node sanity_pass.js --quiet` → **137/137**. The copy assertions were re-pinned and a NEW
+      guard fails the build if the summary contains `CFS`, `gauge`, `off the bed`, `your line`,
+      `ft of water`, `line height`, `strike zone`, `base zone` or `±` again. Frozen PHYSICS untouched
+      (hgt 2.887", score 4.499, 2 rows). `sw.js` `v2.03.30`.
+      ⚠ PRODUCT CALL on record: the precision (depth band, flow, ±%, ft/s, brands, sizes) MOVED from
+      the screen to the debug trail — deliberate, not a dropped guardrail. The banners still say
+      "Estimate".
+- [x] **Beginner/Advanced toggle → recorded as a FUTURE feature**, per the user's instruction:
+      `docs/ROADMAP.md` **§3.10 "Copy mode: Beginner / Advanced"**. Not built; the two renderings
+      (`rigChangeList` vs `rigChangePlain`) are already produced side by side on every solve, so it
+      would be a render-time choice + one persisted setting.
+- Naming: the advice says **"corky"**, not "float" (user's call).
+
 ## PHASE 4 DECISIONS — 2026-09-29 (user call, Act mode)
 
 The user was given the four sub-items with their evidence and chose: **b1 yes, c2 no, d3 no, and

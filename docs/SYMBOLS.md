@@ -106,7 +106,8 @@ this file**, or the pass fails.
   `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `depthBandText()`,
   `positionParts()`, `whereToFish()` (detail string), `fishOutlook()` (the 2-sentence HUD summary),
   `paintZoneHud(zone, outlook)`, `refreshZonePreview()`, `bestZoneRig(zone, rig, vel)`,
-  `beadSizeOptions()`, `foamShort()`, `rigChangeList()` —
+  `beadSizeOptions()`, `foamShort()`, `rigChangeList()` (precise), `rigChangePlain()` +
+  `joinPlain()` (beginner), `plainDepthText()` —
   the HUD: two estimate banners + the summary paragraph, and the colour grade shared with line
   height. The report terms are the WS-8a set: demoted barometer ±1.2", thermal curve, own-gauge
   colour/gauge terms, and the LIGHT term keyed on the sun's real elevation (`solarElevationDeg()`,

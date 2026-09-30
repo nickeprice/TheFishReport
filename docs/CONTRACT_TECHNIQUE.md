@@ -73,18 +73,22 @@ fallback — and passes the diameter into `totalDragPerFt`.
 }
 ```
 
-`outlook` is what the HUD prints under the two estimate banners: TWO sentences — where the fish are
-(how high off the bed, in what depth of water, which piece of water to target) and where the
-angler's line sits against that band (`zone.js` `fishOutlook()`). It deliberately carries NO driver
-list and never claims the fish are feeding (in-river salmon are staging; a fly is taken out of
-reaction). `whereToFish` is the provenance-heavy DETAIL string for the log and this return value.
-Neither is a `suggestions` entry — where the FISH are is not "what to change".
+`outlook` is what the HUD prints under the two estimate banners: **TWO plain sentences for a
+beginner** — what the fish are likely doing and where to look ("look for calm, shallow water along
+the gentle edges and the tail of a pool (about 2-5 feet deep)"), then whether the rig is where they
+are (`zone.js` `fishOutlook()`). It carries NO driver list, no inches, no CFS, no gauge, no ±%, and
+never claims the fish are feeding (in-river salmon stage; a fly is taken out of reaction).
+`whereToFish` is the provenance-heavy DETAIL string — depth band, flow, ±%, ft/s — and
+`rigChanges` / `rigChangesPlain` are the precise / plain change lists; all three go to the debug
+trail, which is where the numbers left the screen to.
 
-`suggestions` is **empty when the rig is on target**, and when it is off target the first row is the
-remedy ORDER ("change the corky first: bigger corky, or a second corky, then more yarn, a smaller
-bead, a smaller hook — or a longer leader / less lead") and the `Try this:` row names ONLY the
-components that change, in the order an angler changes them: **corky → second corky → hook → yarn →
-bead → leader → lead**. `bestZoneRig(zone, rig, vel)` enforces that with two passes (see zone.js).
+`suggestions` is **empty when the rig is on target**. Off target it is plain language: the remedy
+row ("Your rig is running low — raise it: a bigger corky, a second corky, or more yarn — or a longer
+leader") and a `Try this:` row naming at most TWO changes, in the order an angler makes them
+(**corky → second corky → hook → yarn → bead → leader → lead**). When the full solution needs more
+than two, the row says "that should get you much closer" rather than claiming the whole projection.
+`bestZoneRig(zone, rig, vel)` enforces the priority with two passes (see zone.js); a
+Beginner/Advanced toggle is recorded as a future feature in `docs/ROADMAP.md` §3.10.
 
 ## Rules
 

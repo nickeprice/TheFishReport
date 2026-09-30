@@ -857,7 +857,7 @@ function behaviorChecks(done) {
       near(got.velocity.bottom, 2.442952438) &&
       got.zone.min === 4 && got.zone.max === 12 && got.blownOut === false &&
       got.suggestions.length === 2 &&
-      /^Too low at 2\.9"/.test(got.suggestions[0]) && /^Try this: /.test(got.suggestions[1]);
+      /^Your rig is running low/.test(got.suggestions[0]) && /^Try this: /.test(got.suggestions[1]);
     okT
       ? ok('drift technique reproduces the frozen solver output', 'hgt 2.887", score 4.499, 2 short rows')
       : fail('drift technique reproduces the frozen solver output',
@@ -869,9 +869,9 @@ function behaviorChecks(done) {
     const rigOn = Object.assign({}, rig, { ldLen: 6, weightOz: 0.25, foam: parseFoam('10') });
     const gotOn = t.compute(rigOn, { flow: 1040, species: 'Chinook', dbArray: [] });
     (gotOn.suggestions.length === 0 && gotOn.hgt >= gotOn.zone.min && gotOn.hgt <= gotOn.zone.max &&
-     /Your line at 4\.8" is in that band\./.test(String(gotOn.outlook)))
+     /Your rig is right where the fish are\./.test(String(gotOn.outlook)))
       ? ok('an on-target rig gets no suggestion rows at all',
-           'hgt 4.810" inside the 4"-12" zone -> 0 suggestions; the summary states the line is in that band')
+           'hgt 4.810" inside the 4"-12" zone -> 0 suggestions; the summary states the rig is where the fish are')
       : fail('an on-target rig gets no suggestion rows at all',
              `hgt=${gotOn.hgt} zone=${gotOn.zone.min}-${gotOn.zone.max} sugg=${gotOn.suggestions.length} ` +
              `[${gotOn.suggestions.join(' | ')}] outlook=${gotOn.outlook}`);
@@ -1112,11 +1112,13 @@ function behaviorChecks(done) {
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
     };
     const wsOut = gearTechnique().compute(wsRig, { flow: 1040, species: 'Chinook', dbArray: [] });
-    const wsWireOk = /^Fish are holding above the base zone\./.test(wsPainted) &&
+    const wsWireOk = /^Fish are likely holding a bit higher than usual\./.test(wsPainted) &&
       /Most of that is/.test(wsPainted) === false && String(wsPainted).split('. ').length <= 2 &&
       /^Where to fish: /.test(wsOut.whereToFish) &&
-      /No water report loaded yet, so this is the plain 4" - 12" base zone\./.test(wsOut.outlook) &&
-      wsOut.suggestions.length === 2 && /^Too low at 2\.9"/.test(wsOut.suggestions[0]) &&
+      /No water report loaded yet, so this is just the standard starting estimate\./.test(wsOut.outlook) &&
+      wsOut.suggestions.length === 2 && /^Your rig is running low/.test(wsOut.suggestions[0]) &&
+      /^Try this: [^,]+,? and [^,]+ \u2014 that should /.test(wsOut.suggestions[1]) &&
+      wsOut.rigChanges.length === 2 && wsOut.rigChangesPlain.length === 2 &&
       Math.abs(wsOut.hgt - 2.8867637713966774) < 1e-9;
     const zoneSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/zone.js'), 'utf8');
     const solverSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/solver.js'), 'utf8');
@@ -1127,6 +1129,7 @@ function behaviorChecks(done) {
       /ZONE_TREND_FULL_SCALE = 7\.0/.test(zoneSrc) && /id === 'hud-where'/.test(solverSrc + zoneSrc) === false &&
       /paintZoneHud\(zone, out\.outlook\)/.test(solverSrc) && /fishOutlook\(zone, hgt\)/.test(driftSrc) &&
       /suggestions\.push\('On target'\)/.test(driftSrc) === false &&
+      /rigChangePlain\(best, rig\)/.test(driftSrc) && /joinPlain\(shown\)/.test(driftSrc) &&
       /window\.turbidityFnu = hasTurb/.test(waterSrc);
     (wsWireOk && wsStaticOk)
       ? ok('the summary paragraph is painted, and the frozen suggestion count did not move',
@@ -1593,28 +1596,30 @@ function behaviorChecks(done) {
     const outlookStn = fishOutlook(sonarZone, 8.0);
     global.localStorage.getItem = realGetItem2;
     const noStn = fishOutlook(sonarZone);
-    // Direct user ask: TWO sentences, no driver list, and never a claim that they are feeding.
+    // Direct user ask: 1-2 sentences a NON-ANGLER can act on. No jargon, no CFS, no gauge,
+    // no inches, no "line height" - and never a claim that they are feeding.
     eqz('two sentences', String(outlookStn.split('. ').length), '2');
-    eqz('outcome tag', String(/^Fish are up and quick to take: /.test(outlookStn)), 'true');
-    eqz('depth + band inline', String(/sitting about 10\.0" off the bed in about 2\.3-3\.5 ft at 1040 CFS \(gauge measurement, \u00b120%\)/.test(outlookStn)), 'true');
-    eqz('targets the lie', String(/\u2014 soft water, so target the flats and riffle lips\./.test(outlookStn)), 'true');
-    eqz('line clause', String(/Your line at 8\.0" is in that band\.$/.test(outlookStn)), 'true');
-    eqz('no driver list', String(/Most of that is/.test(outlookStn)), 'false');
+    eqz('outcome tag', String(/^Fish are likely holding higher in the water and more willing to grab/.test(outlookStn)), 'true');
+    eqz('says where to look', String(/\u2014 look for calm, shallow water along the gentle edges and the tail of a pool/.test(outlookStn)), 'true');
+    eqz('plain depth', String(/\(about 2-4 feet deep\)/.test(outlookStn)), 'true');
+    eqz('line clause', String(/Your rig is right where the fish are\.$/.test(outlookStn)), 'true');
+    eqz('no jargon in the summary',
+      String(/CFS|gauge|off the bed|your line|ft of water|line height|strike zone|base zone|\u00b1/i.test(outlookStn)), 'false');
     eqz('never claims feeding', String(/feed/i.test(outlookStn)), 'false');
     eqz('community wording never shown', String(/community/i.test(outlookStn)), 'false');
     eqz('no station -> tag only, no invented depth [' + noStn + ']',
-      String(/^Fish are up and quick to take\.$/.test(noStn)), 'true');
+      String(/^Fish are likely holding higher in the water and more willing to grab\.$/.test(noStn)), 'true');
 
     // Each outcome band, by net shift (tags only - no station, so no depth clause).
     const bandOf = (s) => fishOutlook({ min: 4 + s, max: 12 + s, shift: s, report: {}, notes: [] }).replace(/\.$/, '');
-    eqz('band 2.0', bandOf(2.0), 'Fish are up and quick to take');
-    eqz('band 0.8', bandOf(0.8), 'Fish are holding above the base zone');
-    eqz('band 0', bandOf(0), 'Fish are sitting in the base zone');
-    eqz('band -1', bandOf(-1), 'Fish are pinned down and slow');
-    eqz('band -3', bandOf(-3), 'Fish are deep and locked up');
+    eqz('band 2.0', bandOf(2.0), 'Fish are likely holding higher in the water and more willing to grab');
+    eqz('band 0.8', bandOf(0.8), 'Fish are likely holding a bit higher than usual');
+    eqz('band 0', bandOf(0), 'Fish are about where you would normally expect them');
+    eqz('band -1', bandOf(-1), 'Fish are holding deep and staying tight');
+    eqz('band -3', bandOf(-3), 'Fish are holding deep and not very active');
     // No report -> one plain sentence, no invented behaviour.
     const noReport = fishOutlook({ min: 4, max: 12, shift: 0, notes: [], report: null });
-    eqz('no report', String(/^No water report loaded yet, so this is the plain 4" - 12" base zone\.$/.test(noReport)), 'true');
+    eqz('no report', String(/^No water report loaded yet, so this is just the standard starting estimate\.$/.test(noReport)), 'true');
     // The live preview has no rig, so it must not claim anything about a line.
     eqz('no rig -> no line sentence',
       String(/Your line/.test(fishOutlook({ min: 4, max: 12, shift: 0, notes: [], report: {} }))), 'false');

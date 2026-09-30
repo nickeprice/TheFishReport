@@ -252,18 +252,19 @@ units (cms) and rivers differ, and it is migration *activity*, not holding depth
 
 ### 3.12 "Stall vs. Run" thermal run-timing signal (recorded 2026-09-30, NOT built)
 
-**Thermal numbers partly VERIFIED (2026-09-30).** Green/Duwamish: the **WA Ecology criterion for the
-Lower Green is 63.5 °F (17.5 °C)**; observed **Lower Green summer temps are 70–72 °F (21.1–22.2 °C)**,
-sometimes **> 74 °F (lethal)**, and July 2015 exceeded the lethal threshold at almost every mainstem
-site in the **lower 45 miles**. So the "20–21 °C block / < 18 °C" framing is real — but the **"< 18 °C"
-is the regulatory criterion, not a measured behavioural trigger**. Adults **do** stage in Puget Sound
-estuaries, and the mechanism now has peer-reviewed anchors: **Strange 2013** (adult Chinook residence
-in a *stratified estuary* — the salt-wedge hold) and **Strange 2010** (upper thermal limits to adult
-migration, Klamath). **Still unverified:** the **RM 7.9** figure and the **15–25 % freshet** trigger
-(not in any readable source), and the **Nisqually "adults cross on flood tide"** claim — the USGS
-Nisqually work is **juvenile**-focused. Gate: a source for the freshet trigger + the RM 7.9 figure
-before hard-coding; the run-timing advisory stays a reach-level (estuary) idea, not a strike-zone term.
-See `LITERATURE.md` §8.
+**Thermal thresholds VERIFIED (2026-09-30).** King County's June 2004 *Green-Duwamish Watershed
+Temperature Monitoring Report* (kcr1532) states the operative categories verbatim: ***18–20 °C =
+"impairment to salmon migration"; 21–22 °C = "temperature related blockage to migration"*** (four
+Ecology 2002 categories; ~23–25 °C = lethality). Measured stations CO1/GRT02 at **21.5 / 21.4 °C** were
+called "potential for **blockage to migration**". The named **"Migration and Rearing" criterion** is
+**17.5 °C** for the Lower Green (RM 11–42.3), **16 °C** Upper Green (RM 42.3–59.1), **21 °C** Duwamish
+(mouth–RM 11). Observed Lower Green summer temps **70–72 °F (21.1–22.2 °C)**, **> 74 °F lethal**; July
+2015 exceeded lethal at nearly every mainstem site in the lower 45 miles. Adults **do** stage in Puget
+Sound estuaries (EoPS/Quinn 2025 — Green River Soos Creek); anchors **Strange 2013** (stratified-estuary
+residence) + **Strange 2010** (upper thermal limits to migration, Klamath). **Still unverified:** the
+**"RM 7.9"** figure (the source uses RM 11/42.3/59.1) and the **"15–25 % freshet"** trigger (**0
+occurrences of "freshet"** in the sources) — plus the **Nisqually adult flood-tide** claim (USGS work
+is juvenile). The gate now narrows to the **freshet trigger only**. See `LITERATURE.md` §8.
 
 ## 4. Suggested phasing within 4.0
 

@@ -17,6 +17,15 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **WRIA 9 thermal thresholds CONFIRMED from the primary source (no code).** King County's
+  June 2004 *Green-Duwamish Watershed Temperature Monitoring Report* (kcr1532) states it verbatim:
+  *"18–20 °C … impairment to salmon migration; 21–22 °C … a temperature related blockage to
+  migration"* (Ecology 2002). Measured CO1/GRT02 at **21.5/21.4 °C** → "blockage to migration"; 29
+  stations 18–21 °C → "impairment"; 23.1 °C → "lethality". Named **"Migration and Rearing" criterion =
+  17.5 °C** (Lower Green, RM 11–42.3), 16 °C (Upper), 21 °C (Duwamish). Read via **PDFKit/`osascript`**
+  (the PDFs will not `zlib`-decompress) — recipe recorded in `AGENTS.md`. Still open: "RM 7.9" and the
+  "15–25 % freshet" trigger (0 hits).
+
 - 2026-09-30 — **WRIA 9 verification pass on the "Stall vs. Run" numbers (no code).** Confirmed from
   readable sources: **WA Ecology criterion for the Lower Green = 63.5 °F (17.5 °C)**; observed summer
   temps **70–72 °F (21.1–22.2 °C)**, **> 74 °F lethal**, **July 2015 > lethal at nearly every mainstem

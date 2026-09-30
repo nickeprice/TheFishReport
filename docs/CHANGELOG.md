@@ -4,6 +4,22 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — WRIA 9 thermal thresholds CONFIRMED from the primary source (no code)
+
+Read the actual WRIA 9 / King County documents (PDFKit via `osascript` — their streams will not
+`zlib`-decompress). **King County's June 2004 *Green-Duwamish Watershed Temperature Monitoring Report*
+(kcr1532) states the thresholds verbatim:** *"average temperatures in the range of **18–20 °C** may
+periodically pose **impairment** to salmon migration while temperatures in the range of **21–22 °C** may
+result in a temperature related **blockage to migration**"* (four Ecology 2002 categories; lethality
+above). Measured: CO1 (Covington Ck) **21.5 °C** / GRT02 (Springbrook Ck) **21.4 °C** → "potential for
+**blockage to migration**"; 29 stations at **18–21 °C** → "**impairment**"; one at **23.1 °C** →
+"**lethality**". The named **"Migration and Rearing" criterion** is **17.5 °C** (Lower Green, RM
+11–42.3), **16 °C** (Upper Green, RM 42.3–59.1), **21 °C** (Duwamish, mouth–RM 11). The WRIA 9 deck
+likewise lists "**Delayed migration**" + "**Direct lethality**" under Adult Upstream Migration.
+**Still NOT verified:** the "RM 7.9" figure and the "15–25 % freshet" trigger (**0 occurrences of
+"freshet"** in the sources). `LITERATURE.md` §8 + `ROADMAP.md` §3.12 updated; `AGENTS.md` gains the
+PDFKit extraction recipe. No code change.
+
 ## 2026-09-30 — WRIA 9 verification pass on the "Stall vs. Run" numbers (no code)
 
 Ran the verification gate on `LITERATURE.md` §8. **Confirmed** from readable sources: the **WA Ecology

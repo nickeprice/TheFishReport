@@ -59,6 +59,19 @@ python3 -m py_compile api/water_report.py scripts/dev_server.py scripts/scrape_w
 
 There is no committed test runner. The README describes the expected browser validation surface, including accessibility-label integrity, deep links, debounce behavior, toasts, and empty states.
 
+**Reading PDF sources.** This machine has no `pdftotext`/`mutool`/`gs`/`qpdf` and the system Python has no PyObjC — but **`osascript`'s JavaScript bridge ships full PDFKit**, which reads PDFs directly (including owner-password-only files whose raw streams will not `zlib`-decompress):
+
+```bash
+cat > /tmp/pdf.jxa <<'JXA'
+ObjC.import('Quartz'); ObjC.import('Foundation');
+function run(argv){ var d=$.PDFDocument.alloc.initWithURL($.NSURL.fileURLWithPath(argv[0]));
+  return ObjC.unwrap(d.string)||''; }
+JXA
+osascript -l JavaScript /tmp/pdf.jxa /path/to/report.pdf > /tmp/report.txt
+```
+
+Two gotchas: some county hosts (`govlink.org`, `kingcounty.gov`) return **404 to `curl` unless you pass `-A 'Mozilla/5.0'`**, and chart-only slides/figures extract as empty `￼` — the numbers in *those* need OCR or the underlying report text.
+
 ## Data and network boundaries
 
 - Live sources include USGS NWIS, Open-Meteo, NOAA tides, WDFW Socrata, the WDFW rules source, and Supabase.

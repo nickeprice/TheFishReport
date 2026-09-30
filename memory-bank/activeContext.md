@@ -88,6 +88,15 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   figure + **15–25 % freshet** trigger (WRIA 9 PDFs return as raw bytes to our tooling), and the
   **Nisqually adult flood-tide** claim (the USGS Nisqually work is **juvenile**). Re-framed: "< 18 °C"
   is the *regulatory criterion*, not a measured behavioural trigger.
+  **UPDATE (same day) — thresholds CONFIRMED from the primary source.** Read *kcr1532* (King County,
+  June 2004) via **PDFKit through `osascript`** (the PDFs will not `zlib`-decompress). Verbatim:
+  *"**18–20 °C** … periodically pose **impairment** to salmon migration; **21–22 °C** … a temperature
+  related **blockage to migration**"* (Ecology 2002). Measured CO1/GRT02 at **21.5/21.4 °C** =
+  "blockage to migration"; **29 stations 18–21 °C** = "impairment"; one at 23.1 °C = "lethality". Named
+  **"Migration and Rearing" criterion = 17.5 °C** (Lower Green, RM 11–42.3), 16 °C (Upper Green,
+  RM 42.3–59.1), 21 °C (Duwamish, mouth–RM 11). WRIA 9 deck lists "Delayed migration" + "Direct
+  lethality" for adult upstream migration. **Still open:** "RM 7.9" (source uses RM 11/42.3/59.1) and
+  the "15–25 % freshet" trigger (**0 occurrences of "freshet"**).
 
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 

@@ -105,7 +105,7 @@ as a "more water stops helping migration" plateau, with a high-flow bound at **8
 but **different rivers and units (cms vs our cfs)**, and it is *migration activity*, not *holding
 depth* — so no threshold transfers. Gate: a Puget-Sound-relevant number or the notebook residual.
 
-## 8. Puget Sound regional drivers — the app's own rivers (GREY-LIT; partly verified — see pass below)
+## 8. Puget Sound regional drivers — the app's own rivers (GREY-LIT; thermal thresholds VERIFIED)
 
 Region-specific, directly on the rivers the app serves (USGS 12101500 Puyallup, 12113000 Auburn,
 12089500 McKenna). Sources are **WRIA 9 / King County DNRP / USGS** technical reports, not the
@@ -121,6 +121,20 @@ before hard-coding.
 **Verification pass (2026-09-30) — what the sources actually say.**
 
 *Confirmed from readable sources.*
+- **The thermal block is a named, numeric, sourced phenomenon.** King County's June 2004
+  *Green-Duwamish Watershed Temperature Monitoring Report* (kcr1532; full text read via PDFKit)
+  applies four Ecology (2002) categories, verbatim: *"average temperatures in the range of
+  **18–20 °C** may periodically pose **impairment** to salmon migration while temperatures in the
+  range of **21–22 °C** may result in a temperature related **blockage to migration**"* — with
+  lethality above. Measured: **CO1 (Covington Ck) 21.5 °C** and **GRT02 (Springbrook Ck) 21.4 °C** →
+  "potential for **blockage to migration**"; **29 further stations at 18–21 °C** → "potential for
+  **impairment**"; one at **23.1 °C** → "potential for **lethality**". The report carries dedicated
+  sections *3.1.3 Exceedances Critical to Migration* and *4.2.3 Potential Impacts to Salmonid
+  Migration / 4.2.3.1 Potential Lethality*. ✅ **This confirms the "20–21 °C thermal block".**
+- **The "< 18 °C" figure is the named "Migration and Rearing" criterion**, by segment: **Upper Green
+  (RM 42.3–59.1) = 16 °C**, **Lower Green (RM 11–42.3) = 17.5 °C**, **Duwamish (mouth–RM 11) =
+  21 °C** (17.5 °C appears as the *"Salmon/trout … migration"* criterion in Figs. 7/9/11/13/16/18 —
+  the same 63.5 °F American Rivers quotes). ✅ **Confirms the "< 18 °C" figure.**
 - The **WA Ecology temperature criterion for the Lower Green is 63.5 °F = 17.5 °C** ("healthy
   maximum"). *("A River with a Fever Threatens Native Salmon", American Rivers, 2016-11-09.)*
 - **Observed Lower Green summer temps are 70–72 °F (21.1–22.2 °C)**, sometimes **> 74 °F (23.3 °C,
@@ -138,11 +152,12 @@ before hard-coding.
   Chinook salmon: evidence from the Klamath River basin", *Trans. Am. Fish. Soc.* 139:1091–1108.
 
 *NOT verified — do not build on these.*
-- The **RM 7.9** specific figure and the **15–25 % freshet** trigger: **not found** in any readable
-  source. The WRIA 9 white papers are PDFs this environment cannot read — there is no
-  `pdftotext`/`mutool`/`gs`/`qpdf` and no PyObjC, and the PDF streams carry **no `78` zlib header**
-  (i.e. they are encrypted), so a local `zlib` extraction fails too. **To close this:** paste the
-  relevant passage from *Green River Temperature and Salmon* (WRIA 9, 2017-02-28) or install poppler.
+- The **"RM 7.9"** figure: **not found** in any source read — King County segments the river at
+  **RM 11 / 42.3 (Flaming Geyser) / 59.1**, and RM 7.9 would fall inside the *Duwamish* reach
+  (mouth–RM 11). Treat "RM 7.9" as **unverified** and do not publish it.
+- The **"15–25 % freshet"** trigger: **zero occurrences of "freshet"** in the full text of both the
+  2004 monitoring report and the WRIA 9 temperature deck. **Unsupported — do not code it.**
+  *(PDF sources here are readable via PDFKit through `osascript`; see `AGENTS.md` → Validation.)*
 - The **Nisqually "adults cross on flood tide"** claim: the USGS Nisqually work is explicitly
   **juvenile** — "as **juvenile Fall Chinook salmon are dependent on the estuary**" (USGS WFRC, Puget
   Sound Fall Chinook Estuarine Utilization / Nisqually otolith studies). The *adult* version is

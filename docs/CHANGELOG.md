@@ -4,6 +4,29 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — In-river literature recorded + thermal bands re-anchored to the 20°C stress onset
+Went looking for studies on **in-river** adult salmon migration/holding (flow, temperature, tide,
+depth/velocity, light) — the domain that actually maps to the strike zone. Curated ~15 in
+`docs/LITERATURE.md`, grouped by the model's own variables, each tagged implemented / corroborating
+/ candidate / not-implemented, with two honesty caveats (Columbia is a dammed system vs our
+free-flowing Puget Sound rivers; migration ≠ holding).
+
+- **Implemented change — the thermal bands.** `THERMAL_BANDS`/`thermalOptimum()` move to the
+  measured thresholds: optimal `50–64°F` (was 50–60), `delay 64–68°F` (was `warming 60–65`), stress
+  `>68°F = 20°C` (was >65). The 20°C stress onset is from Keefer et al. 2018 (68% of steelhead
+  reached ≥20°C), Goniea et al. 2006 and Salinger & Anderson 2006. **Contract bump**: the frozen
+  `wzCold` baseline moves (61°F now reads as *optimal*, so −4.45″ → −2.70″); `sanity_pass.js`
+  re-pinned (edges array + note regex + shift). `wzHot`/`wzMax`/the 7.0″ scale unchanged.
+  `sw.js v2.03.35`.
+- **Citations only (no behaviour change):** the tide term's direction is "selective tidal stream
+  transport" (Levy & Cadenhead; Smith et al.); the light term's direction is corroborated by Keefer
+  et al. 2013.
+- **Recorded, NOT implemented — the warm × light interaction.** Keefer 2013 shows adults shift more
+  nocturnal when warm; the *inference* (warm + bright → fish deeper than the two independent terms
+  predict) is an extrapolation that double-counts existing terms and cannot yet be validated, so it
+  is a **candidate** gated on the notebook residual, not a term. (Burke 2013's overfitting warning
+  applies: don't add guessed structure on little data.)
+
 ## 2026-09-30 — Recorded Burke et al. 2013 as a Level 2 guardrail (no model change)
 Burke et al. 2013 (*Multivariate Models of Adult Pacific Salmon Returns*, PLoS ONE 8:e54134)
 combines 31 marine indicators to forecast adult **return abundance** — a different question from

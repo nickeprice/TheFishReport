@@ -131,6 +131,12 @@ function turbidityTerm() {
 // declared here rather than dressed up as a fitted model - we have no catch data to fit. The
 // amplitude is unchanged, so nothing got more aggressive; a December noon (a 20 deg sun) now reads
 // as the weak light it is instead of being scored like a July midday.
+//
+// Direction corroborated by Keefer et al. 2013 ("Context-dependent diel behavior of
+// upstream-migrating anadromous fishes"): adults migrate more at NIGHT and shift MORE nocturnal
+// when warm - i.e. dark -> active/up. The warm x light INTERACTION (fish deeper on warm, bright
+// days) is a recorded CANDIDATE in docs/LITERATURE.md, deliberately NOT implemented: the notebook
+// residual must show it before a term is added.
 var LIGHT_LOW_SHIFT = 1.00;      // sun at/under the horizon edge
 var LIGHT_BRIGHT_SHIFT = -0.75;  // sun genuinely high
 var LIGHT_SUN_DARK_DEG = 3;      // <= this elevation: full low-light lift
@@ -241,6 +247,11 @@ function lightTerm(block, rep) {
 // measured flow, which stays authoritative. No tide curve for this station -> no term at all
 // (never invented). Only the stage and its trend are used; the ~12 ft Puyallup swing is not
 // converted into a velocity, because the gauge never measured that.
+//
+// The direction is corroborated by the tide literature: "selective tidal stream transport" -
+// adult salmon ride the FLOOD tide upstream and hold on the EBB (Levy & Cadenhead, Fraser River
+// sockeye; Smith et al., river entry peaks on the flood). Our sign convention matches. See
+// docs/LITERATURE.md.
 // ==================================================================================
 var TIDE_RISING_SHIFT = 1.00;    // flood: fish move up with the push
 var TIDE_FALLING_SHIFT = -1.00;  // ebb: fish drop back to deeper water

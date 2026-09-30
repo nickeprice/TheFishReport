@@ -171,7 +171,8 @@
 
 - 2026-09-29 — **WS-8a science model** (issue #2 follow-on): the Gear Sim's environment is rebuilt.
   The single `≥55F → rise` rule (backwards above the comfort band) becomes `thermalOptimum()` with
-  five bands — `<45` torpid / `45–50` cool / `50–60` optimal / `60–65` warming / `>65` stress — the
+  five bands — `<45` torpid / `45–50` cool / `50–64` optimal / `64–68` delay / `>68` stress
+  (= 20C, **revised** 2026-09-30 to the measured stress onset) — the
   barometer is **demoted** +3.5/−3.0 → **±1.2"**, and two terms join it: **own-gauge turbidity**
   (`window.turbidityFnu`, null → no term) and **light from the report's reference hour** (never the
   clock — that would make the solver non-deterministic). Depth is now **measured**: `depthAtGauge()`

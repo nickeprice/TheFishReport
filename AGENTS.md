@@ -6,6 +6,7 @@
   focus** (`activeContext.md`), system patterns, tech context, progress.
 - `docs/SYMBOLS.md` — file → public API index. Locate a function without opening files.
 - `docs/CONTRACT.md` / `_REGIONS` / `_TECHNIQUE` / `_CATCH` — data + API contracts.
+- `docs/LITERATURE.md` — the peer-reviewed studies anchoring the strike-zone thresholds.
 - `docs/ROADMAP.md` — forward plan (Update 4.0). `docs/ARCHIVE*.md` + `docs/CHANGELOG.md`
   — history.
 

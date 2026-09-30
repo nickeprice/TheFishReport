@@ -920,7 +920,8 @@ function behaviorChecks(done) {
     // (1) The thermal curve: every band edge, and null -> no term at all (the old rule was a
     // single ">= 55F -> rise", which pointed the wrong way above the comfort band).
     const edges = [[44, 'torpid', -1.5], [45, 'cool', -0.75], [49.9, 'cool', -0.75], [50, 'optimal', 0.75],
-      [59.9, 'optimal', 0.75], [60, 'warming', -1], [65, 'warming', -1], [65.5, 'stress', -2], [70, 'stress', -2]];
+      [59.9, 'optimal', 0.75], [63.9, 'optimal', 0.75], [64, 'delay', -1], [68, 'delay', -1],
+      [68.1, 'stress', -2], [70, 'stress', -2]];
     const badEdges = edges.filter(([t, band, sh]) => {
       const b = thermalOptimum(t);
       return !b || b.band !== band || b.shift !== sh;
@@ -928,7 +929,7 @@ function behaviorChecks(done) {
     const noTemp = thermalOptimum(null) === null && thermalOptimum(undefined) === null && thermalOptimum(NaN) === null;
     (badEdges.length === 0 && noTemp)
       ? ok('thermal-optimum curve replaces "warm water = rise"',
-           'torpid <45 / cool 45-50 / optimal 50-60 / warming 60-65 / stress >65, null -> no term')
+           'torpid <45 / cool 45-50 / optimal 50-64 / delay 64-68 / stress >68 (20C), null -> no term')
       : fail('thermal-optimum curve replaces "warm water = rise"', `${JSON.stringify(badEdges)} noTemp=${noTemp}`);
 
     // (2) Depth is the gauge's OWN measured cross-section: median of the six rows nearest today's
@@ -1044,18 +1045,18 @@ function behaviorChecks(done) {
     const wzMax = computeStrikeZone();
     global.turbidityFnu = null;
     global.waterTempF = null;
-    const wzTermsOk = Math.abs(wzHot.shift - 5.45) < 1e-9 && Math.abs(wzCold.shift + 4.45) < 1e-9 &&
+    const wzTermsOk = Math.abs(wzHot.shift - 5.45) < 1e-9 && Math.abs(wzCold.shift + 2.70) < 1e-9 &&
       Math.abs(wzBare.shift - 1.2) < 1e-9 && Math.abs(wzColour.shift - 0.75) < 1e-9 &&
       Math.abs(wzMax.shift - 6.7) < 1e-9 && zoneTrend(wzMax).ratio < 1 &&
       /Low light \(5-6 AM\): fish hold higher and are quicker to take/.test(wzHotNotes) &&
-      /Water 52F \(50-60F band\)/.test(wzHotNotes) &&
+      /Water 52F \(50-64F band\)/.test(wzHotNotes) &&
       /High sun \(1-2 PM\): fish hold deep and tight/.test(wzColdNotes) &&
-      /Water 61F \(60-65F band\): fish slide to the coolest, fastest water/.test(wzColdNotes) &&
+      /Water 61F \(50-64F band\): fish hold high in the column and take a fly/.test(wzColdNotes) &&
       /Coloured water \(32\.0 FNU\): fish move up and closer to cover/.test(wzColour.notes.join(' | ')) &&
       wzBareNotes.indexOf('FNU') === -1 && wzBareNotes.indexOf('light') === -1;
     wzTermsOk
       ? ok('zone terms: demoted barometer, own-gauge colour, reference-hour light',
-           '+5.45" stacked, -4.45" the other way, alone the barometer is 1.2"; no probe/hour -> no term; the 6.7" ceiling still fits 7.0"')
+           '+5.45" stacked, -2.70" the other way (61F reads as optimal now), alone the barometer is 1.2"; no probe/hour -> no term; the 6.7" ceiling still fits 7.0"')
       : fail('zone terms: demoted barometer, own-gauge colour, reference-hour light',
              `hot=${wzHot.shift} cold=${wzCold.shift} bare=${wzBare.shift} colour=${wzColour.shift} ` +
              `max=${wzMax.shift} ratio=${zoneTrend(wzMax).ratio} | ${wzBareNotes}`);

@@ -208,19 +208,21 @@ function rigLift(foamLift, yarnInches, hook, bdMat, bdSz) {
 //
 // WORDING: an adult salmon in the river is NOT feeding - it is staging, and a fly gets taken
 // out of reaction/territory. So no band says "feeding"; they say hold/hold high/respond.
-// Bands (deg F): <45 torpid | 45-50 cool | 50-60 optimal | 60-65 warming | >65 stress.
-// 65 itself reads as WARMING; stress starts above it.
+// Bands (deg F): <45 torpid | 45-50 cool | 50-64 optimal | 64-68 delay | >68 stress.
+// 68 itself reads as DELAY; stress starts above it. 68F = 20C is the measured onset of thermal
+// stress, with 18-20C (64-68F) the delay zone - Keefer et al. 2018 (PLoS ONE 13:e0204274),
+// Goniea et al. 2006 and Salinger & Anderson 2006 (both TAFS). See docs/LITERATURE.md.
 // ==================================================================================
 var THERMAL_BANDS = [
     { band: 'torpid',  range: 'under 45', shift: -1.50, label: 'too cold to be active',
       note: 'fish sit tight to the bottom and rarely move.' },
     { band: 'cool',    range: '45-50',    shift: -0.75, label: 'cool but catchable',
       note: 'fish hold low and respond slowly.' },
-    { band: 'optimal', range: '50-60',    shift:  0.75, label: 'prime range',
+    { band: 'optimal', range: '50-64',    shift:  0.75, label: 'prime range',
       note: 'fish hold high in the column and take a fly.' },
-    { band: 'warming', range: '60-65',    shift: -1.00, label: 'above the optimum',
+    { band: 'delay',   range: '64-68',    shift: -1.00, label: 'thermal delay',
       note: 'fish slide to the coolest, fastest water - riffle tailouts and deep pool tails.' },
-    { band: 'stress',  range: 'over 65',  shift: -2.00, label: 'thermal stress',
+    { band: 'stress',  range: 'over 68',  shift: -2.00, label: 'thermal stress',
       note: 'fish stack in the deepest, most oxygenated pockets.' }
 ];
 
@@ -230,8 +232,8 @@ function thermalOptimum(tempF) {
     var b;
     if (t < 45) b = THERMAL_BANDS[0];
     else if (t < 50) b = THERMAL_BANDS[1];
-    else if (t < 60) b = THERMAL_BANDS[2];
-    else if (t <= 65) b = THERMAL_BANDS[3];
+    else if (t < 64) b = THERMAL_BANDS[2];
+    else if (t <= 68) b = THERMAL_BANDS[3];
     else b = THERMAL_BANDS[4];
     return { band: b.band, range: b.range, shift: b.shift, label: b.label, note: b.note, tempF: t };
 }

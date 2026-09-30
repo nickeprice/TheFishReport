@@ -93,6 +93,7 @@
 - `memory-bank/*` = orientation · `AGENTS.md` + `.clinerules` = rules
 - `docs/SYMBOLS.md` = file -> public API index (find a function without opening files)
 - `docs/CONTRACT.md` / `_REGIONS` / `_TECHNIQUE` / `_CATCH` = data + API contracts
+- `docs/LITERATURE.md` = the studies behind the environment model (thresholds + provenance)
 - `docs/ROADMAP.md` (Update 4.0) · `docs/ARCHIVE_UPDATE_3.0.md` (completed blueprint)
 - `docs/ARCHIVE.md` + `docs/CHANGELOG.md` = history / audit trail
 

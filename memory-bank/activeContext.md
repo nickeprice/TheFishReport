@@ -393,7 +393,9 @@ change.
   the helper insertion (the module still compiled because the orphan body was absorbed into the
   function above), and `pressure` was double-converted (fixed by keeping `pressure_hpa` raw).
 - [x] Phase 3 — WS-8a scientific model: `inputs.js` (`THERMAL_BANDS` + `thermalOptimum(tempF)`:
-  `<45` torpid · `45–50` cool · `50–60` optimal · `60–65` warming · `>65` stress, 65 = warming,
+  `<45` torpid · `45–50` cool · `50–64` optimal · `64–68` delay · `>68` stress (= 20C; **revised**
+  2026-09-30 from `50–60`/`60–65 warming`/`>65` to the measured 20C stress onset — see
+  `docs/LITERATURE.md`),
   null probe → no term — replaces `≥55 → "rise"`), `zone.js` (barometer demoted +3.5/−3.0 → ±1.2;
   new `getTurbidityFnu()` + `turbidityTerm()` [own-gauge, null → no term] and `refHourBlock()` +
   `lightTerm()` [report reference hour, NOT the clock — a clock would make `computeStrikeZone()`

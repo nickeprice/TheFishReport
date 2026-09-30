@@ -4,6 +4,21 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Recorded Luis & Pasternack 2023 (confluence micro-habitat); conveyance/Froude planned as a candidate
+User-provided study, directly on-topic (in-river). **Luis & Pasternack 2023**, *Fisheries Research*
+262:106634, doi:10.1016/j.fishres.2023.106634 — adult Chinook at the Feather–Yuba confluence select
+**lower velocity** and **deeper, higher-conveyance** water; detection rate best predicted by
+conveyance + temperature + turbidity; milling ↔ all hydraulics + turbidity; backtracking ↔ higher
+temperature; **nothing** predicted upstream swimming.
+
+- **Corroborates** our velocity-refuge premise, thermal term and turbidity term — no model change.
+- **New candidates recorded (NOT built): conveyance (`Q/W`) and Froude (`V/√(g·D)`).** Both are
+  computable today from `getCurrentFlow()`, `gaugeWidthFt()`, `hydraulicVelocity()` and
+  `depthAtGauge()`. Blocked on **thresholds**: the paper publishes correlation, not numeric cutoffs,
+  so a term would require inventing one. Gate = a numeric preference from the hydraulic literature
+  or the notebook residual. See `docs/LITERATURE.md` §6 + `ROADMAP.md` §3.9.
+- Citation added to `continuity.js` (the velocity module). **No code behaviour change.**
+
 ## 2026-09-30 — In-river literature recorded + thermal bands re-anchored to the 20°C stress onset
 Went looking for studies on **in-river** adult salmon migration/holding (flow, temperature, tide,
 depth/velocity, light) — the domain that actually maps to the strike zone. Curated ~15 in

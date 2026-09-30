@@ -57,6 +57,36 @@ consistently deeper than predicted; only then add a term.
 | --- | --- | --- |
 | Brett 1973 (critical swimming speed vs size/temperature, foundational); Clark et al. 2008 (temperature → pink/sockeye performance); "A review of adult salmon maximum swim performance" (2023, CJFAS); "Estimating Adult Pacific Salmon Energy Use…" (2022) | Swim-speed limits and energy cost vs temperature | **Not implemented** — the drag coefficient is locked at 1.0 and the physics is deterministic by contract. These inform the *interpretation* of velocity, not the solver. |
 
+## 6. Hydraulics / confluence habitat — CANDIDATE (conveyance, Froude)
+
+| Study | Finding | Status |
+| --- | --- | --- |
+| Luis & Pasternack 2023, "Local hydraulics influence habitat selection and swimming behavior in adult California Central Valley Chinook salmon at a large river confluence", *Fisheries Research* 262:106634 (doi:10.1016/j.fishres.2023.106634) | At the Feather–Yuba confluence (12 DIDSON sites, two 4-day flow periods, Feather:Yuba ratios 8.66 / 4.02): **detection rate** best predicted by **conveyance (m²/s) + temperature + turbidity** (p < 0.001); fish were attracted to **lower velocity** despite higher discharge at reach scale; **deeper + higher conveyance** drew fish but **depth alone was not** a predictor; **milling** ↔ all hydraulics + higher turbidity; **backtracking** ↔ **higher temperature** (p < 0.01); **no model predicted upstream swimming**. | **Corroborates** our velocity-refuge premise, thermal term and turbidity term. Conveyance/Froude = **candidate**. |
+
+**Why it corroborates:** the study independently finds adults select **low-velocity**, **deeper**
+water and respond to **temperature** (retreat when warm) and **turbidity** — the same directions our
+strike zone already encodes. It also carries an honesty lesson: **nothing predicted upstream
+swimming**, so "where they hold" is more tractable than "where they go".
+
+**The candidate — conveyance and Froude number.** Both are computable TODAY from data we already
+hold, with no new inputs:
+
+- **Conveyance** `≈ Q / W` (ft²/s): flow (`getCurrentFlow()`) ÷ routed gauge width (`gaugeWidthFt(siteId)`).
+- **Froude** `= V / √(g·D)` (dimensionless, `g = 32.174 ft/s²`): bed velocity (`hydraulicVelocity`)
+  ÷ √(depth × g), depth from `depthAtGauge(flow, siteId)` — `continuity.js` / `inputs.js`.
+
+**Why it is NOT a term yet — no threshold.** The study reports that conveyance *correlates* with
+detection rate but publishes **no numeric thresholds** (no preferred m²/s or Froude value), so wiring
+it into the strike zone would mean inventing a cutoff — exactly what the "never fabricate" rule
+forbids. Two further caveats: it is a **confluence** study (junction hydraulics, not a general
+reach) in a **regulated Central Valley** system, and its responses (detection, milling, backtracking)
+are *migration behaviour*, not vertical holding depth.
+
+**Gate to promote it:** a numeric Froude/conveyance preference from the hydraulic-habitat literature
+(Pasternack's group has Froude work, though much of it is *spawning* habitat, not holding) **or** the
+notebook residual showing our zone is systematically off at high/low conveyance. Until then:
+documented, not wired.
+
 ## Honesty caveats (do not drop these)
 
 - **System mismatch.** Most thermal/dam studies are **Columbia/Snake** — a *dammed, impounded* system with ladders and reservoirs. Our rivers (Puyallup/White/Carbon/Green/Nisqually) are **free-flowing Puget Sound** streams. The **Goetz** (Puget Sound Chinook) and **sockeye-estuary** papers are the most directly on-point; Columbia thermal *thresholds* transfer, dam *dynamics* do not.

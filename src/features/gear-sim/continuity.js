@@ -14,6 +14,11 @@
  * endpoint, or a client-side DEM read) the honest answer is the gauge value LABELLED as a
  * same-reach estimate - never a fabricated spot number.
  *
+ * The premise that fish hold in LOWER-velocity water is corroborated in the hydraulic-habitat
+ * literature: Luis & Pasternack 2023 (Fisheries Research 262:106634) found migrating Chinook
+ * selected lower velocity and deeper, higher-conveyance water at a river confluence. See
+ * docs/LITERATURE.md §6 (and its conveyance/Froude candidate).
+ *
  * public: gaugeWidthFt(siteId), spotWidthRatio(siteId), velocityAtSpot(flow, siteId),
  *         depthAtGauge(flow, siteId), spotDepthFt(flow, siteId)
  * Classic script (global scope). Loaded BEFORE src/app.js.

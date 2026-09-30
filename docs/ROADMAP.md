@@ -213,6 +213,15 @@ physics wants `v²`.
 cross-section *average* velocity at that gauge — never the velocity in one specific seam.
 Without a local measurement that last ~±30% is unknowable, and the UI must keep saying so.
 
+**Candidate — conveyance and Froude number (recorded 2026-09-30, NOT built).** Luis & Pasternack
+2023 (*Fisheries Research* 262:106634; `docs/LITERATURE.md` §6) found migrating Chinook at a
+confluence select **lower velocity** and **deeper, higher-conveyance** water, with detection rate
+best predicted by **conveyance + temperature + turbidity**. Both metrics are computable today —
+conveyance `≈ Q/W` (`getCurrentFlow()` ÷ `gaugeWidthFt()`), Froude `= V/√(g·D)`
+(`hydraulicVelocity` ÷ √(`depthAtGauge`·g)) — but the paper publishes **no thresholds**, so adding a
+term would mean inventing a cutoff. Gate: a numeric preference from the hydraulic-habitat literature
+or the notebook residual. Build only then.
+
 ### 3.10 Copy mode: Beginner / Advanced (future, NOT built)
 
 Recorded 2026-09-29 as a deliberate future feature, at the user's request.

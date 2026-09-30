@@ -25,8 +25,9 @@ sunrise/sunset; depth as the measured BAND), the **HUD restructure** (two banner
 and the **2026-09-29 corrections** (2-sentence summary, no "feeding" anywhere, corky-first rig
 advice). Current state: sanity **137/137**, `sw.js` `v2.03.27`, `origin/main` clean.
 
-**NEXT = verify by eye.** No decisions are pending; every Phase 4 sub-item is recorded (b1 + a2
-shipped; b2/c2/d3 declined-by-design with reasons; a1 waits on a dated 1 m 3DEP source).
+**NEXT = verify by eye.** No decisions are pending; every Phase 4 sub-item is recorded (b1 → then
+**b2′ shipped** on the user's challenge; a2 shipped; c2 + d3 declined-by-design with reasons; a1 waits
+on a dated 1 m 3DEP source).
 1. **Browser pass** — `python3 scripts/dev_server.py 8000` → `http://127.0.0.1:8000/index.html`.
    Look at: the Gear Sim HUD (two banners SIDE BY SIDE — zone left, line right — then the 2-sentence
    summary and the corky-first change rows full width beneath), the saved-spot list + map star layer,
@@ -363,9 +364,20 @@ NON-builds, not oversights.
       carries no term; a day with no solar times falls back to the fixed clock brackets. `sw.js`
       `v2.03.24`, sanity **134/134** (new assertion pins the parser AND the December-vs-September
       contrast at the same clock hour).
-- [x] **b2 — DECLINED (user).** A fitted crepuscular curve implies an amplitude we cannot fit
-      (no local catch dataset: 1 row live). Recorded as declined-by-design; the b1 bracket is the
-      honest ceiling until there is data to fit against.
+- [x] **b2 — SUPERSEDED by b2′ (SHIPPED 2026-09-29) after the user asked why it was never attempted.**
+      The original record below said "declined"; that was my recommendation, not a blocker — and the
+      stronger reason to be careful is now on file: a classic crepuscular curve is a FEEDING curve,
+      and in-river salmon stage rather than feed, so it would have repeated the biology error fixed
+      the same day. What shipped instead keys the light term on the sun's REAL ELEVATION
+      (`zone.js` `solarElevationDeg()` from the payload's own sunrise/sunset midpoint + the date's
+      declination + station latitude, so no timezone/DST maths), ramping +1.00" (dark, <= 3°) to 0.00"
+      (30°) to -0.75" (>= 50°). Endpoints unchanged; the seasonal consequence is the point (a 20°
+      December noon reads +0.40" instead of "high sun -0.75"). No more cliffs: the 2026-09-29 day is
+      monotone with a max 0.40" step (b1 jumped 1.75"). `sw.js` `v2.03.29`, sanity **137/137**, and
+      the report-less fixtures did NOT move (+5.45") so the frozen baselines are intact.
+      Original record (kept for honesty): *"b2 — DECLINED (user). A fitted crepuscular curve implies
+      an amplitude we cannot fit (no local catch dataset: 1 row live)."* — the dataset point stands;
+      the fitting premise was wrong, and the curve never had to be fitted to begin with.
 - [x] **c2 — DECLINED (user): the lie call stays at 3 buckets** (1.5 / 3.0 ft/s). The number it
       reads is the GAUGE's bed velocity times a spot ratio still stuck at 1.0, so finer buckets
       would only make more specific claims from the same single figure. Revisit when a

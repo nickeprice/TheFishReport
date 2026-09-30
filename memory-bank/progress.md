@@ -17,6 +17,15 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **WS-8b (b2′) shipped: the light term rides the sun's real elevation.** After the user
+  asked why b2 was never attempted, the curve was rebuilt on the correct driver (not a feeding
+  curve): `solarElevationDeg()` from the payload's own sunrise/sunset midpoint + the date's
+  declination + station latitude, ramping **+1.00" (dark/≤3°) → 0.00" (30°) → −0.75" (≥50°)**.
+  Endpoints unchanged, but the shape is fixed: 2026-09-29 is now monotone with a **0.40" max step**
+  (b1 jumped 1.75"), and a **20° December noon reads +0.40"** instead of "high sun −0.75". No
+  timezone/DST maths; thresholds declared as chosen, not fitted; fixed brackets kept as the
+  fallback. `sw.js` `v2.03.29`, **137/137**, frozen report-less baselines unmoved.
+
 - 2026-09-29 — **HUD layout: banners side by side** (direct user ask): Strike Zone Estimate on the
   **LEFT**, Line Height Estimate on the **RIGHT**, each centred in its own half (label above the
   number; cap 0.78rem, value 1.2rem bold so the number reads at a glance), with a **vertical**

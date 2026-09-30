@@ -76,7 +76,15 @@ function refHourBlock() {
     if (!wh) return null;
     var m = wh.iso ? /T(\d{2}):/.exec(String(wh.iso)) : null;
     if (!m) return null;
-    return { hour: Number(m[1]), label: wh.label || '' };
+    // The date rides along too: the light term needs it for the solar declination (WS-8b b2').
+    var d = wh.iso ? /(\d{4})-(\d{2})-(\d{2})/.exec(String(wh.iso)) : null;
+    return {
+        hour: Number(m[1]),
+        label: wh.label || '',
+        year: d ? Number(d[1]) : null,
+        month: d ? Number(d[2]) : null,
+        day: d ? Number(d[3]) : null
+    };
 }
 
 // Turbidity bands (FNU, own gauge). Dirty water hides the fish from above, so they
@@ -104,23 +112,37 @@ function turbidityTerm() {
     return null;
 }
 
-// Light term from the reference hour block. Low light (dawn / dusk / dark) lifts fish in the
-// column; high overhead sun pins them down.
+// Light term from the reference hour block, keyed on the SUN'S REAL ELEVATION.
 //
-// WS-8b(b1): the brackets are ANCHORED TO THE DAY'S OWN SUNRISE/SUNSET instead of to fixed
-// clock hours. The old `h < 7 || h >= 19` / `h in 10..16` version was only right by
-// accident of season: a December 4-5 PM block (real dusk) got NO term, and a July 9 AM
-// block (full sun) got none either. Sunrise/sunset are in the payload per day
-// ("6:30 AM" strings), so the brackets move with the season for free. Still a three-way
-// bracket - a fitted crepuscular CURVE remains WS-8b and was declined (we have no local
-// catch data to fit an amplitude against, so a curve would only look more precise).
+// WS-8b (b2'): b1 replaced fixed clock hours with sunrise/sunset offsets but was still a THREE-STEP
+// function (+1.00 / 0 / -0.75), which produced cliffs the light does not have: at 47N in late
+// September the 8-9 AM block scored the same +1.00 as a pitch-dark 5-6 AM, and the zone jumped
+// 1.75" between consecutive hour blocks. A step function is a lookup table wearing a costume.
 //
-// A day whose payload carries no solar times falls back to the fixed clock brackets,
-// because a missing sunrise must degrade rather than silently delete the term.
-var LIGHT_LOW_SHIFT = 1.00;
-var LIGHT_BRIGHT_SHIFT = -0.75;
-var LIGHT_EDGE_MINUTES = 90;     // within 1.5 h of sunrise/sunset = low light
-var LIGHT_CORE_MINUTES = 180;    // >= 3 h inside the solar day = high sun
+// Now the term is DERIVED GEOMETRY, not a fitted curve: the sun's elevation comes from the payload's
+// OWN sunrise/sunset (which anchor solar noon, so no timezone/DST maths is needed) plus the day's
+// declination, and the shift is a monotone ramp on that elevation. The ENDPOINTS are unchanged from
+// b1 - a truly dark hour still gets +1.00, a genuinely overhead sun still gets -0.75 - so what
+// changed is only the shape BETWEEN them.
+//
+// WHY THIS IS THE HONEST VERSION: the driver is light level, and solar elevation IS light level (a
+// clock offset is only a proxy for it). The thresholds below are CHOSEN, not measured, and they are
+// declared here rather than dressed up as a fitted model - we have no catch data to fit. The
+// amplitude is unchanged, so nothing got more aggressive; a December noon (a 20 deg sun) now reads
+// as the weak light it is instead of being scored like a July midday.
+var LIGHT_LOW_SHIFT = 1.00;      // sun at/under the horizon edge
+var LIGHT_BRIGHT_SHIFT = -0.75;  // sun genuinely high
+var LIGHT_SUN_DARK_DEG = 3;      // <= this elevation: full low-light lift
+var LIGHT_SUN_NEUTRAL_DEG = 30;  // ramps to neutral here
+var LIGHT_SUN_FULL_DEG = 50;     // and to the full high-sun penalty here
+var LIGHT_SHIFT_STEP = 0.05;     // quantised: the zone model cannot resolve finer than this
+// The app's own default station latitude (same as the map's default centre). Duplicated here
+// because zone.js loads BEFORE map.js, and a light term is not worth a load-order dependency.
+var LIGHT_DEFAULT_LAT = 47.195;
+
+// Fixed-bracket FALLBACK only (used when a day's payload carries no solar times at all).
+var LIGHT_EDGE_MINUTES = 90;
+var LIGHT_CORE_MINUTES = 180;
 
 // '6:30 AM' -> 390 (minutes past midnight). null when unparseable.
 function parseClockMinutes(text) {
@@ -132,27 +154,74 @@ function parseClockMinutes(text) {
     return (h * 60) + Number(m[2]);
 }
 
-// `block` = {hour, label} from refHourBlock(); `rep` = that day's report (sunrise/sunset).
-function lightTerm(block, rep) {
+// Solar declination for a DATE (NOAA approximation). Date only - no clock, no timezone.
+function solarDeclinationDeg(year, month, day) {
+    if (!year || !month || !day) return null;
+    var doy = Math.floor((Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 0)) / 86400000);
+    var g = (2 * Math.PI / 365) * (doy - 1 + 0.5);
+    return (0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) +
+        0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g)) * 180 / Math.PI;
+}
+
+// The latitude of the gauge being reported on (the angler's station), or the app default.
+function activeStationLat() {
+    try {
+        var st = JSON.parse(localStorage.getItem('active_station') || 'null');
+        if (st && st.lat != null && isFinite(Number(st.lat))) return Number(st.lat);
+    } catch (e) {}
+    return LIGHT_DEFAULT_LAT;
+}
+
+// The sun's elevation for the middle of that hour block, in degrees. null when the day has no
+// usable solar times (then lightTerm falls back to the fixed brackets).
+function solarElevationDeg(block, rep) {
     if (!block || block.hour === null || block.hour === undefined || isNaN(block.hour)) return null;
-    var h = Number(block.hour);
-    var mid = (h + 0.5) * 60;                       // the block's midpoint, in minutes
     var sunrise = parseClockMinutes(rep && rep.sunrise);
     var sunset = parseClockMinutes(rep && rep.sunset);
+    var decl = solarDeclinationDeg(block.year, block.month, block.day);
+    if (sunrise === null || sunset === null || sunset <= sunrise || decl === null) return null;
+    var lat = activeStationLat();
+    // Sunrise/sunset are in the SAME wall-clock frame as the block's hour, so their midpoint IS
+    // solar noon for this day - which is why no timezone maths is needed here.
+    var solarNoon = (sunrise + sunset) / 2;
+    var hourAngle = (15 * (((block.hour + 0.5) * 60) - solarNoon) / 60) * Math.PI / 180;
+    var rad = lat * Math.PI / 180, drad = decl * Math.PI / 180;
+    var s = Math.sin(rad) * Math.sin(drad) + Math.cos(rad) * Math.cos(drad) * Math.cos(hourAngle);
+    return Math.asin(Math.max(-1, Math.min(1, s))) * 180 / Math.PI;
+}
 
-    if (sunrise !== null && sunset !== null && sunset > sunrise) {
-        var sinceSunrise = mid - sunrise;
-        var untilSunset = sunset - mid;
-        if (sinceSunrise <= LIGHT_EDGE_MINUTES || untilSunset <= LIGHT_EDGE_MINUTES) {
-            return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish hold higher and are quicker to take.' };
+// `block` = {hour, label, year, month, day} from refHourBlock(); `rep` = that day's report.
+function lightTerm(block, rep) {
+    if (!block) return null;
+    var elev = solarElevationDeg(block, rep);
+
+    if (elev !== null) {
+        var shift;
+        if (elev <= LIGHT_SUN_DARK_DEG) {
+            shift = LIGHT_LOW_SHIFT;
+        } else if (elev <= LIGHT_SUN_NEUTRAL_DEG) {
+            shift = LIGHT_LOW_SHIFT * (LIGHT_SUN_NEUTRAL_DEG - elev) / (LIGHT_SUN_NEUTRAL_DEG - LIGHT_SUN_DARK_DEG);
+        } else if (elev <= LIGHT_SUN_FULL_DEG) {
+            shift = LIGHT_BRIGHT_SHIFT * (elev - LIGHT_SUN_NEUTRAL_DEG) / (LIGHT_SUN_FULL_DEG - LIGHT_SUN_NEUTRAL_DEG);
+        } else {
+            shift = LIGHT_BRIGHT_SHIFT;
         }
-        if (sinceSunrise >= LIGHT_CORE_MINUTES && untilSunset >= LIGHT_CORE_MINUTES) {
-            return { shift: LIGHT_BRIGHT_SHIFT, label: 'high sun', note: 'fish hold deep and tight.' };
-        }
-        return null;                                 // the twilight shoulder: no term
+        // Quantise (1/20 = the 0.05 step) so the shift is a clean 2-decimal number, not a
+        // float artefact of multiplying by 0.05.
+        shift = Math.round(shift * 20) / 20;
+        if (shift === 0) return null;                 // exactly neutral: no term, no note
+        return {
+            shift: shift,
+            elevDeg: Math.round(elev * 10) / 10,
+            label: shift > 0 ? 'low light' : 'high sun',
+            note: shift > 0 ? 'fish hold higher and are quicker to take.' : 'fish hold deep and tight.'
+        };
     }
 
-    // No solar times on this day -> the fixed brackets (previous behaviour).
+    // No solar times on this day -> the old fixed brackets, so a missing sunrise degrades
+    // instead of silently deleting the term.
+    if (block.hour === null || block.hour === undefined || isNaN(block.hour)) return null;
+    var h = Number(block.hour);
     if (h < 7 || h >= 19) {
         return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish hold higher and are quicker to take.' };
     }

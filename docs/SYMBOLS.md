@@ -109,8 +109,10 @@ this file**, or the pass fails.
   `beadSizeOptions()`, `foamShort()`, `rigChangeList()` —
   the HUD: two estimate banners + the summary paragraph, and the colour grade shared with line
   height. The report terms are the WS-8a set: demoted barometer ±1.2", thermal curve, own-gauge
-  colour, and a light term bracketed against THAT DAY's sunrise/sunset (`parseClockMinutes()`,
-  `lightTerm(block, rep)` — WS-8b b1). `zone.notes` still records every reason for the log.
+  colour/gauge terms, and the LIGHT term keyed on the sun's real elevation (`solarElevationDeg()`,
+  `solarDeclinationDeg()`, `activeStationLat()`, `lightTerm(block, rep)` — WS-8b b2′, monotone ramp
+  with no clock cliffs; the fixed brackets survive as the fallback). `zone.notes` still records every
+  reason for the log.
   **The rig search is two-pass**: leader/lead fixed first (corky → 2nd corky → hook → yarn → bead),
   leader/lead only as the fallback.
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`

@@ -1034,34 +1034,53 @@ function behaviorChecks(done) {
              `hot=${wzHot.shift} cold=${wzCold.shift} bare=${wzBare.shift} colour=${wzColour.shift} ` +
              `max=${wzMax.shift} ratio=${zoneTrend(wzMax).ratio} | ${wzBareNotes}`);
 
-    // WS-8b (b1): the light brackets ride the DAY'S OWN sunrise/sunset, so the same clock
-    // hour means different things in December and July. The old fixed brackets were only
-    // right by accident of season: a December 4-5 PM block is real dusk and got no term.
+    // WS-8b (b2'): the light term is keyed on the sun's REAL ELEVATION, so the same clock hour
+    // means different things in December and July, the ramp is monotone, and there are no cliffs
+    // between consecutive hour blocks. Endpoints unchanged from b1: dark = +1.00", overhead = -0.75".
     const clockOk = parseClockMinutes('6:30 AM') === 390 && parseClockMinutes('12:05 PM') === 725 &&
       parseClockMinutes('12:30 AM') === 30 && parseClockMinutes('6:55 PM') === 1135 &&
       parseClockMinutes('--') === null && parseClockMinutes(null) === null;
+    const near = (a, b) => Math.abs(a - b) < 1e-9;
     reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '7:45 AM', sunset: '4:20 PM',
       weather_hour: { iso: '2026-12-10T16:00', label: '4-5 PM' } }];
-    const wzDusk = computeStrikeZone();
+    const wzDusk = computeStrikeZone();                     // sun 2 deg BELOW the horizon
     reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '7:00 AM', sunset: '6:55 PM',
       weather_hour: { iso: '2026-09-30T16:00', label: '4-5 PM' } }];
-    const wzShoulder = computeStrikeZone();
+    const wzShoulder = computeStrikeZone();                 // sun ~22 deg up: graded, not a cliff
     reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '5:20 AM', sunset: '9:00 PM',
       weather_hour: { iso: '2026-07-10T12:00', label: '12-1 PM' } }];
-    const wzNoon = computeStrikeZone();
-    const wzLightOk = clockOk && Math.abs(wzDusk.shift - 1.0) < 1e-9 &&
+    const wzNoon = computeStrikeZone();                     // sun ~64 deg: the full penalty
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0, sunrise: '7:45 AM', sunset: '4:20 PM',
+      weather_hour: { iso: '2026-12-10T12:00', label: '12-1 PM' } }];
+    const wzDecNoon = computeStrikeZone();                  // a 20 deg December noon is NOT July
+    const wzLightOk = clockOk && near(wzDusk.shift, 1.0) && near(wzShoulder.shift, 0.3) &&
+      near(wzNoon.shift, -0.75) && near(wzDecNoon.shift, 0.4) &&
       /Low light \(4-5 PM\): fish hold higher and are quicker to take/.test(wzDusk.notes.join(' | ')) &&
-      wzShoulder.shift === 0 && wzShoulder.notes.join(' | ').indexOf('light') === -1 &&
-      Math.abs(wzNoon.shift + 0.75) < 1e-9 &&
-      /High sun \(12-1 PM\): fish hold deep and tight/.test(wzNoon.notes.join(' | '));
+      /Low light \(4-5 PM\)/.test(wzShoulder.notes.join(' | ')) &&
+      /High sun \(12-1 PM\): fish hold deep and tight/.test(wzNoon.notes.join(' | ')) &&
+      // Monotone climb then fall, and NO cliff between neighbouring hour blocks (b1 jumped 1.75").
+      (function () {
+        const rep = { sunrise: '7:05 AM', sunset: '6:52 PM' };
+        const seq = [];
+        for (let h = 5; h <= 20; h++) {
+          const t = lightTerm({ hour: h, label: '', year: 2026, month: 9, day: 29 }, rep);
+          seq.push(t ? t.shift : 0);
+        }
+        let jump = 0;
+        for (let i = 1; i < seq.length; i++) jump = Math.max(jump, Math.abs(seq[i] - seq[i - 1]));
+        let mono = true;
+        for (let i = 1; i <= 7; i++) if (seq[i] > seq[i - 1]) mono = false;      // falls to noon
+        for (let i = 9; i < seq.length; i++) if (seq[i] < seq[i - 1]) mono = false; // rises after
+        return jump <= 0.45 && mono;
+      })();
     wzLightOk
-      ? ok('light brackets ride the day\'s sunrise/sunset, not the clock',
-           'December 4-5 PM = low light (+1.0"), September 4-5 PM = neutral shoulder, July noon = high sun (-0.75"); unparseable solar -> fallback')
-      : fail('light brackets ride the day\'s sunrise/sunset, not the clock',
-             `clock=${clockOk} dusk=${wzDusk.shift} shoulder=${wzShoulder.shift} noon=${wzNoon.shift} | ${wzShoulder.notes.join(' | ')}`);
+      ? ok('the light term rides the sun\'s real elevation (no cliffs, seasonal)',
+           'December dusk +1.00", September 4-5 PM +0.30", July noon -0.75", December noon +0.40"; whole-day ramp monotone with a max 0.40" step')
+      : fail('the light term rides the sun\'s real elevation (no cliffs, seasonal)',
+             `clock=${clockOk} dusk=${wzDusk.shift} sepPM=${wzShoulder.shift} julNoon=${wzNoon.shift} decNoon=${wzDecNoon.shift}`);
   } catch (e) {
     fail('zone terms: demoted barometer, own-gauge colour, reference-hour light', String(e.message).split('\n')[0]);
-    fail('light brackets ride the day\'s sunrise/sunset, not the clock', String(e.message).split('\n')[0]);
+    fail('the light term rides the sun\'s real elevation (no cliffs, seasonal)', String(e.message).split('\n')[0]);
   }
 
 

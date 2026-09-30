@@ -4,6 +4,45 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — WS-8b (b2′): the light term rides the sun's REAL ELEVATION (b2 was declined before; this supersedes it)
+The user asked why b2 (the "crepuscular curve") was never attempted: the honest answer was that
+nothing had failed — b1 was my recommendation off a menu, and my stated reason for declining b2
+("no catch data to fit an amplitude") was true but weak, because an amplitude does not have to be
+fitted. The stronger reason — which the user's own biology correction sharpened — is that a classic
+crepuscular curve is a *feeding*-behaviour curve, and in-river salmon are staging, not feeding. So
+the curve was rebuilt on the correct driver instead.
+
+**What shipped.** `zone.js` computes the sun's elevation for the reference hour and ramps the light
+term on it:
+
+```
+elevation <= 3°      ->  +1.00"   (dark)
+3°  ->  30°          ->  +1.00" -> 0.00"
+30° ->  50°          ->   0.00" -> -0.75"
+elevation >= 50°     ->  -0.75"   (genuinely overhead)
+```
+
+- **No timezone or DST maths**: `solarElevationDeg()` uses the payload's OWN sunrise/sunset, whose
+  midpoint IS solar noon for that day, plus the date's declination (`solarDeclinationDeg()`, NOAA
+  approximation, date only) and the station latitude (`activeStationLat()`). Deterministic, and the
+  same numbers on any device.
+- **Endpoints unchanged**: a dark hour is still +1.00" and a genuinely overhead sun still -0.75", so
+  nothing got more aggressive — only the shape between them changed.
+- **Seasonal, because it should be**: a December noon at 47°N is a **20°** sun and now reads +0.40"
+  (weak light) instead of b1's "high sun -0.75"; a July noon (64°) keeps the full -0.75".
+- **The cliffs are gone.** b1 was a three-step function: on 2026-09-29 the 8-9 AM block scored the
+  same +1.00" as a pitch-dark 5-6 AM, and consecutive hour blocks jumped up to **1.75"**. The ramp
+  over the same day is monotone (falls to noon, rises after) with a max adjacent step of **0.40"**.
+- **The thresholds are CHOSEN, not measured**, and the header says so plainly rather than dressing
+  them up as a fitted model. The fixed clock brackets survive as the FALLBACK for a day whose
+  payload carries no solar times, so a missing sunrise degrades instead of deleting the term.
+
+`sw.js` `v2.03.29`. **137/137 GREEN** — the b1 bracket assertion was replaced by the elevation test:
+December dusk +1.00", September 4-5 PM +0.30" (was 0.00), July noon -0.75", December noon +0.40"
+(was -0.75"), plus a whole-day property check (monotone both sides of noon, no step > 0.45"). The
+report-less fixtures are unchanged (+5.45"), i.e. the frozen baselines did not move.
+- Key files: `src/features/gear-sim/zone.js`, `sanity_pass.js`, `sw.js`, `docs/SYMBOLS.md`.
+
 ## 2026-09-29 — HUD layout: the two banners sit SIDE BY SIDE again (zone left, line right)
 Direct user ask: *"for the banner strike zone should still be left, and line height should still be
 to the right side centered in their zones, and summary and adjustments should be below this"*.

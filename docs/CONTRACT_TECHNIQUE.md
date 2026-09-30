@@ -73,12 +73,18 @@ fallback — and passes the diameter into `totalDragPerFt`.
 }
 ```
 
-`outlook` is what the HUD prints under the two estimate banners: the outcome, the two biggest
-drivers in plain words, the depth of water the fish are holding in, the lie, and the angler's own
-line against that band (`zone.js` `fishOutlook()`). `whereToFish` is the provenance-heavy DETAIL
-string for the log and this return value. Neither is a `suggestions` entry — where the FISH are is
-not "what to change" — and `suggestions` is **empty when the rig is on target** (no "On target"
-padder row: the summary already states the line is in the band).
+`outlook` is what the HUD prints under the two estimate banners: TWO sentences — where the fish are
+(how high off the bed, in what depth of water, which piece of water to target) and where the
+angler's line sits against that band (`zone.js` `fishOutlook()`). It deliberately carries NO driver
+list and never claims the fish are feeding (in-river salmon are staging; a fly is taken out of
+reaction). `whereToFish` is the provenance-heavy DETAIL string for the log and this return value.
+Neither is a `suggestions` entry — where the FISH are is not "what to change".
+
+`suggestions` is **empty when the rig is on target**, and when it is off target the first row is the
+remedy ORDER ("change the corky first: bigger corky, or a second corky, then more yarn, a smaller
+bead, a smaller hook — or a longer leader / less lead") and the `Try this:` row names ONLY the
+components that change, in the order an angler changes them: **corky → second corky → hook → yarn →
+bead → leader → lead**. `bestZoneRig(zone, rig, vel)` enforces that with two passes (see zone.js).
 
 ## Rules
 

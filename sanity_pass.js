@@ -1015,7 +1015,7 @@ function behaviorChecks(done) {
     const wzTermsOk = Math.abs(wzHot.shift - 5.45) < 1e-9 && Math.abs(wzCold.shift + 4.45) < 1e-9 &&
       Math.abs(wzBare.shift - 1.2) < 1e-9 && Math.abs(wzColour.shift - 0.75) < 1e-9 &&
       Math.abs(wzMax.shift - 6.7) < 1e-9 && zoneTrend(wzMax).ratio < 1 &&
-      /Low light \(5-6 AM\): fish feed up in the column/.test(wzHotNotes) &&
+      /Low light \(5-6 AM\): fish hold higher and are quicker to take/.test(wzHotNotes) &&
       /Water 52F \(50-60F band\)/.test(wzHotNotes) &&
       /High sun \(1-2 PM\): fish hold deep and tight/.test(wzColdNotes) &&
       /Water 61F \(60-65F band\): fish slide to the coolest, fastest water/.test(wzColdNotes) &&
@@ -1044,7 +1044,7 @@ function behaviorChecks(done) {
       weather_hour: { iso: '2026-07-10T12:00', label: '12-1 PM' } }];
     const wzNoon = computeStrikeZone();
     const wzLightOk = clockOk && Math.abs(wzDusk.shift - 1.0) < 1e-9 &&
-      /Low light \(4-5 PM\): fish feed up in the column/.test(wzDusk.notes.join(' | ')) &&
+      /Low light \(4-5 PM\): fish hold higher and are quicker to take/.test(wzDusk.notes.join(' | ')) &&
       wzShoulder.shift === 0 && wzShoulder.notes.join(' | ').indexOf('light') === -1 &&
       Math.abs(wzNoon.shift + 0.75) < 1e-9 &&
       /High sun \(12-1 PM\): fish hold deep and tight/.test(wzNoon.notes.join(' | '));
@@ -1087,8 +1087,8 @@ function behaviorChecks(done) {
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
     };
     const wsOut = gearTechnique().compute(wsRig, { flow: 1040, species: 'Chinook', dbArray: [] });
-    const wsWireOk = /^Fish are sitting above the base zone and feeding\./.test(wsPainted) &&
-      /Most of that is the falling barometer\./.test(wsPainted) &&
+    const wsWireOk = /^Fish are holding above the base zone\./.test(wsPainted) &&
+      /Most of that is/.test(wsPainted) === false && String(wsPainted).split('. ').length <= 2 &&
       /^Where to fish: /.test(wsOut.whereToFish) &&
       /No water report loaded yet, so this is the plain 4" - 12" base zone\./.test(wsOut.outlook) &&
       wsOut.suggestions.length === 2 && /^Too low at 2\.9"/.test(wsOut.suggestions[0]) &&
@@ -1270,6 +1270,60 @@ function behaviorChecks(done) {
   } catch (e) {
     fail('the saved-spot list shows my spots only, and never leaks coordinates', String(e.message).split('\n')[0]);
   }
+
+    // --- WS-8b: the rig search proposes what anglers actually change --------------
+    // Direct user ask: "you always suggest corky size leader length and lead but for the most
+    // part people change their leader length and lead size not as often so lets adjust corky
+    // first, add a second corky, second hook size, yarn, beads - lets focus on those things
+    // before the others". So PASS 1 must solve with tackle only whenever it can, the change
+    // list must come out in that priority order, and leader/lead may only appear as the
+    // fallback when no tackle swap reaches the zone.
+    try {
+        const badRig = [];
+        const eqr = (label, got, want) => { if (got !== want) badRig.push(`${label}=[${got}] want [${want}]`); };
+        const baseRig = {
+            flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
+            mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+            foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
+        };
+        // Bead options come from the library, and what is tied on is always in the list.
+        eqr('hard beads', beadSizeOptions('hard', 6).join(','), '2,4,6,8');
+        eqr('soft beads', beadSizeOptions('soft', 6).join(','), '6,8');
+        eqr('no bead', beadSizeOptions('none', 0).join(','), '0');
+        eqr('foam naming', [foamShort(parseFoam('10')), foamShort(parseFoam('c12')), foamShort(parseFoam('0'))].join('|'),
+            'Corky 10|Cheater 10 float|None');
+
+        // (1) The frozen reference rig is 2.89" (too low). Tackle alone fixes it, and the
+        // suggestion starts with the corky.
+        const vel1 = hydraulicVelocity(1040, null);
+        const zone1 = { min: 4, max: 12 };
+        const best1 = bestZoneRig(zone1, baseRig, vel1);
+        const ch1 = rigChangeList(best1, baseRig);
+        eqr('tackle-only reaches the zone', String(best1.hgt >= 4 && best1.hgt <= 12), 'true');
+        eqr('corky leads the list', ch1[0], 'Cheater 10 float');
+        eqr('no leader/lead in a tackle fix', String(/leader|lead/.test(ch1.join(' '))), 'false');
+        eqr('tackle fix projection', best1.hgt.toFixed(1), '8.1');
+
+        // (2) Priority ORDER: a rig that needs three swaps lists them corky -> second corky
+        // -> hook, in that order, and never reorders.
+        const rigD = Object.assign({}, baseRig, { foam: parseFoam('12'), foam2: parseFoam('0'), hook: -1, bdMat: 'soft', bdSz: 8 });
+        const bestD = bestZoneRig(zone1, rigD, hydraulicVelocity(1040, null));
+        eqr('priority order', rigChangeList(bestD, rigD).join(' + '), 'Corky 10 + a second Corky 10 + hook size 1/0');
+
+        // (3) At 8000 CFS the drag beats every tackle combination, so the fallback fires and
+        // leader/lead come LAST in the list.
+        const rigHi = Object.assign({}, baseRig, { weightOz: 0.75, ldLen: 10, foam: parseFoam('0'), foam2: parseFoam('0'), bdSz: 8 });
+        const bestHi = bestZoneRig(zone1, rigHi, hydraulicVelocity(8000, null));
+        const chHi = rigChangeList(bestHi, rigHi);
+        eqr('fallback fires at 8000 CFS', String(chHi[chHi.length - 1]), '0.25 oz lead');
+        eqr('fallback lists leader/lead last', String(/leader/.test(chHi.join(' ')) || chHi[chHi.length - 1].indexOf('lead') !== -1), 'true');
+        badRig.length === 0
+            ? ok('the rig search changes the corky first and only falls back to leader/lead',
+                 'tackle-only fix for the frozen rig (Cheater 10 float -> 8.1"), priority order corky > 2nd corky > hook > yarn > bead, leader/lead only when nothing else reaches the zone')
+            : fail('the rig search changes the corky first and only falls back to leader/lead', badRig.join(' '));
+    } catch (e) {
+        fail('the rig search changes the corky first and only falls back to leader/lead', String(e.message).split('\n')[0]);
+    }
 
   // --- P4b: the PICKED brand must reach the ROW -------------------------------
   // The three identity columns are only worth their migration if the client writes them, so
@@ -1506,43 +1560,39 @@ function behaviorChecks(done) {
     const sonarZone = {
       min: 6, max: 14, shift: 2,
       report: { cfs: 1040 },
-      terms: [
-        { key: 'cloud', dir: 'high', shift: 1.5, driver: 'the heavy cloud' },
-        { key: 'pressure', dir: 'fall', shift: 1.2, driver: 'the falling barometer' },
-        { key: 'turbidity', dir: 'coloured', shift: 0.75, driver: 'the colour in the water' }
-      ],
-      notes: ['Recent community catches holding near 9.4" (3 fish): zone pulled +0.6" toward feeding fish.']
+      notes: ['Recent community catches holding near 9.4" (3 fish): zone pulled +0.6" toward holding fish.']
     };
-    const outlook = fishOutlook(sonarZone, 8.0);
-    eqz('up band', String(/^Fish are up and feeding hard\./.test(outlook)), 'true');
-    eqz('top two drivers', String(/Most of that is the heavy cloud and the falling barometer\./.test(outlook)), 'true');
-    eqz('third driver dropped', String(/the colour in the water/.test(outlook)), 'false');
-    eqz('community wording never shown', String(/community/i.test(outlook)), 'false');
-    // Depth + lie need a station, exactly like the app: stub the active station, then restore.
+    // Depth/lie need a station, exactly like the app: stub the active station, then restore.
     const realGetItem2 = global.localStorage.getItem;
     global.localStorage.getItem = (k) => (k === 'active_station' ? JSON.stringify({ id: '12101500' }) : null);
     const outlookStn = fishOutlook(sonarZone, 8.0);
     global.localStorage.getItem = realGetItem2;
-    eqz('depth sentence', String(/holding about 10\.0" off the bed, in about 2\.3-3\.5 ft at 1040 CFS \(gauge measurement, \u00b120% for spot vs gauge\)\./.test(outlookStn)), 'true');
-    eqz('lie sentence', String(/Soft water, so they are spread over the flats and riffle lips\./.test(outlookStn)), 'true');
-    eqz('line in band', String(/Your line at 8\.0" is in that band\./.test(outlookStn)), 'true');
-    eqz('five sentences', String(outlookStn.split('. ').length), '5');
+    const noStn = fishOutlook(sonarZone);
+    // Direct user ask: TWO sentences, no driver list, and never a claim that they are feeding.
+    eqz('two sentences', String(outlookStn.split('. ').length), '2');
+    eqz('outcome tag', String(/^Fish are up and quick to take: /.test(outlookStn)), 'true');
+    eqz('depth + band inline', String(/sitting about 10\.0" off the bed in about 2\.3-3\.5 ft at 1040 CFS \(gauge measurement, \u00b120%\)/.test(outlookStn)), 'true');
+    eqz('targets the lie', String(/\u2014 soft water, so target the flats and riffle lips\./.test(outlookStn)), 'true');
+    eqz('line clause', String(/Your line at 8\.0" is in that band\.$/.test(outlookStn)), 'true');
+    eqz('no driver list', String(/Most of that is/.test(outlookStn)), 'false');
+    eqz('never claims feeding', String(/feed/i.test(outlookStn)), 'false');
+    eqz('community wording never shown', String(/community/i.test(outlookStn)), 'false');
+    eqz('no station -> tag only, no invented depth [' + noStn + ']',
+      String(/^Fish are up and quick to take\.$/.test(noStn)), 'true');
 
-    // Each outcome band, by net shift.
-    const bandOf = (s) => fishOutlook({ min: 4 + s, max: 12 + s, shift: s, report: {}, terms: [], notes: [] }).split('. ')[0];
-    eqz('band 2.0', bandOf(2.0), 'Fish are up and feeding hard');
-    eqz('band 0.8', bandOf(0.8), 'Fish are sitting above the base zone and feeding');
-    eqz('band 0', bandOf(0), 'Fish are right where you would expect them today');
-    eqz('band -1', bandOf(-1), 'Fish are pinned down and slow to move');
+    // Each outcome band, by net shift (tags only - no station, so no depth clause).
+    const bandOf = (s) => fishOutlook({ min: 4 + s, max: 12 + s, shift: s, report: {}, notes: [] }).replace(/\.$/, '');
+    eqz('band 2.0', bandOf(2.0), 'Fish are up and quick to take');
+    eqz('band 0.8', bandOf(0.8), 'Fish are holding above the base zone');
+    eqz('band 0', bandOf(0), 'Fish are sitting in the base zone');
+    eqz('band -1', bandOf(-1), 'Fish are pinned down and slow');
     eqz('band -3', bandOf(-3), 'Fish are deep and locked up');
-    // No report and no terms must stay plain, and must never invent a driver.
-    const noReport = fishOutlook({ min: 4, max: 12, shift: 0, terms: [], notes: [], report: null });
-    eqz('no report', String(/^No water report loaded yet/.test(noReport)), 'true');
-    const noTerms = fishOutlook({ min: 4, max: 12, shift: 0, terms: [], notes: [], report: {} });
-    eqz('no terms', String(/Nothing in the conditions is pushing them either way\./.test(noTerms)), 'true');
+    // No report -> one plain sentence, no invented behaviour.
+    const noReport = fishOutlook({ min: 4, max: 12, shift: 0, notes: [], report: null });
+    eqz('no report', String(/^No water report loaded yet, so this is the plain 4" - 12" base zone\.$/.test(noReport)), 'true');
     // The live preview has no rig, so it must not claim anything about a line.
     eqz('no rig -> no line sentence',
-      String(/Your line/.test(fishOutlook({ min: 4, max: 12, shift: 0, terms: [], notes: [], report: {} }))), 'false');
+      String(/Your line/.test(fishOutlook({ min: 4, max: 12, shift: 0, notes: [], report: {} }))), 'false');
     // The old bullet machinery is gone for good.
     eqz('no zoneNotes()', String(typeof zoneNotes), 'undefined');
     eqz('no ZONE_NOTE_HIDDEN', String(typeof ZONE_NOTE_HIDDEN), 'undefined');

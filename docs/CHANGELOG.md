@@ -4,6 +4,51 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — HUD summary trimmed to 2 sentences, no "feeding", and the rig advice now changes the CORKY first
+Three direct user corrections in one pass.
+
+**1. The summary is now TWO sentences: where the fish are, and where your line sits.** The driver
+sentence ("Most of that is the heavy cloud and the falling barometer") is GONE — the angler asked
+for the outcome, not the weather lecture. `fishOutlook()` now emits
+*"Fish are up and quick to take: sitting about 12.4" off the bed in about 2.1-4.4 ft at 915 CFS
+(gauge measurement, ±20%) — soft water, so target the flats and riffle lips. Your line at 3.1" is
+9.3" below that band."* The outcome tag carries the behaviour, the colon-clause carries the height
++ the measured depth BAND + where to fish it, and the second sentence is the line. The structured
+`zone.terms`/`driver` plumbing that fed the deleted sentence went with it (dead data removed);
+every raw reason still lands in `zone.notes` and therefore in the debug trail.
+
+**2. No more "feeding" — salmon in the river are staging, not feeding.** Correct: an adult
+salmon/steelhead on its way up is not there to eat, and a fly gets taken out of
+reaction/territory. Every angler-facing claim was rewritten: `THERMAL_BANDS` labels/notes
+('too cold to be active', 'cool but catchable', 'prime range' → 'fish hold high in the column and
+take a fly', 'fish hold low and respond slowly'), the low-light note ('fish hold higher and are
+quicker to take'), the community-sonar note ('toward holding fish'), and the outcome tags
+('quick to take', 'holding', 'pinned down', 'locked up'). A sanity assertion now fails the build
+if the word 'feed' reappears in the produced summary.
+
+**3. The rig advice changes the CORKY first.** The user's point: people swap corky/yarn/hook/beads
+on the bank and set leader length + lead weight once. `bestZoneRig(zone, rig, vel)` is now a
+TWO-PASS search: PASS 1 holds the angler's leader and lead fixed and sweeps corky × second corky ×
+yarn × hook × bead size (bead sizes from the library via `tackleBeadSizes`); PASS 2 — leader/lead
+free — runs ONLY when no tackle swap can reach the zone. Cost = distance from the zone middle plus
+a small per-component penalty, cheapest-to-change first, so the advice is the smallest edit that
+works. `rigChangeList()` names ONLY what changes, in the change order:
+*"Try this: Cheater 10 float, a second Corky 10 → projects 8.1" of line height."* The too-low /
+too-high rows were reordered to match ("change the corky first: bigger corky, or a second corky,
+then more yarn, a smaller bead, a smaller hook — or a longer leader / less lead").
+Verified across cases: the frozen reference rig (2.89") is fixed with tackle only; a soft-bead
+2/0-hook rig (1.16") needs corky + second corky + hook in that order; a heavy 8000 CFS rig cannot
+be fixed by tackle at all, so the fallback correctly appends "0.25 oz lead" LAST. `foamShort()`
+also names a Cheater honestly ("Cheater 10 float", not "corky").
+
+`sw.js` `v2.03.27`. **137/137 GREEN** — the summary assertions were rewritten for the 2-sentence
+shape (tag, inline depth band, target phrase, line clause, no driver list, no feeding, no
+community wording, tag-only when the gauge has no cross-section), and a new block pins the search:
+library bead options, foam naming, a tackle-only fix for the frozen rig, the priority order for a
+three-swap rig, and the leader/lead fallback firing at 8000 CFS.
+- Key files: `src/features/gear-sim/{zone,inputs}.js`,
+  `src/features/gear-sim/techniques/drift.js`, `sanity_pass.js`, `sw.js`, `docs/{SYMBOLS,CONTRACT_TECHNIQUE}.md`.
+
 ## 2026-09-29 — WS-8b (a2): the depth is a MEASURED BAND, not one bare number
 The Gear Sim's depth sentence no longer presents a single figure as if it were *the* depth. The
 gauge's own USGS field rows span a range in any flow window — at the Nisqually @1040 CFS the six

@@ -15,26 +15,24 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
-## HANDOFF — 2026-09-29 (all approved work shipped; **no open decisions** — verify by eye)
+## HANDOFF — 2026-09-29 (all approved work + summary/biology/rig-advice corrections shipped)
 
-Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), WS-5 (private
-favourite spots + RLS default-deny), WS-6/WS-7 (HUD, then superseded by the restructure below),
-**Phase 1** (gradient on the estimate only), **Phase 2** (WS-4 per-day reference-hour weather +
-wind direction text + tappable 24-hour popup, `880753d`), **Phase 3** (WS-8a: thermal-optimum
-curve, own-gauge colour, reference-hour light, demoted barometer, measured `A/W` gauge depth),
-**WS-8b b1** (light brackets on the day's sunrise/sunset), **HUD restructure** (two banners + one
-cohesive summary + off-target-only changes) and **WS-8b a2** (depth as a measured band).
-Current state: sanity **136/136**, `sw.js` `v2.03.26`, `origin/main` clean.
+Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), **WS-5**
+(private favourite spots + RLS default-deny), **Phase 1/2/3** (gradient-on-estimate; WS-4 per-day
+reference-hour weather + hourly popup; WS-8a thermal curve / own-gauge colour / sun-anchored light /
+demoted barometer / measured `A/W` gauge depth), **WS-8b b1 + a2** (light on the day's
+sunrise/sunset; depth as the measured BAND), the **HUD restructure** (two banners + one summary)
+and the **2026-09-29 corrections** (2-sentence summary, no "feeding" anywhere, corky-first rig
+advice). Current state: sanity **137/137**, `sw.js` `v2.03.27`, `origin/main` clean.
 
-**NEXT = nothing queued.** Every sub-item of Phase 4 has a decision recorded (b1 shipped; b2, c2,
-d3 declined-by-design with reasons; a resolved as a2). The only open items are OUTSIDE the code:
-1. **A browser pass** — the HUD restructure is the one to eyeball (banner spacing, how the summary
-   paragraph wraps on a phone, the yellow change rows), plus the saved-spot list, the weather
-   popup and the map star layer.
+**NEXT = verify by eye.** No decisions are pending; every Phase 4 sub-item is recorded (b1 + a2
+shipped; b2/c2/d3 declined-by-design with reasons; a1 waits on a dated 1 m 3DEP source).
+1. **Browser pass** — `python3 scripts/dev_server.py 8000` → `http://127.0.0.1:8000/index.html`.
+   Look at: the Gear Sim HUD (two banners, the 2-sentence summary wrapping on a phone, the
+   corky-first change rows), the saved-spot list + map star layer, the weather popup.
 2. **One interpretation to confirm** (1-line fix if wrong): the two banners are stacked with the
-   summary BELOW both; if the summary was meant to live under the Line Height banner, it is a block
-   move in `index.html` + the CSS order, no JS change.
-3. **a1 stays open by design** and needs a dated 1 m 3DEP/lidar source before it is worth doing.
+   summary BELOW both; if it belongs under the Line Height banner it is a block move in
+   `index.html` + CSS order, no JS change.
 
 Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
 per-day weather by the live API + sanity, the popup CSS by rule, the where-to-fish row and the
@@ -317,6 +315,33 @@ change.
       BELOW both (not the summary owned by the line-height banner). If the intent was the latter,
       the fix is one block move in `index.html` + the CSS order — no JS change.
       Note: the frozen drift baseline did NOT move (off-target rig still 2 suggestions, hgt 2.887").
+
+## HUD SUMMARY + RIG ADVICE CORRECTIONS — 2026-09-29 (direct user ask)
+
+- [x] **Three corrections in one pass, all shipped.** The user's words: *"this is still to much
+      information and why are we saying feeding dont salmon stop feeding after then enter the
+      river … we need a short 1-2 sentence summary of where the fish are, and where to taget …
+      you always suggest corky size leader length and lead but for the most part people change
+      their leader length and lead size not as often so lets adjust corky first add a second
+      corky second hook size yarn beads lets forcus on those things before the others"*.
+      1. **Summary = 2 sentences** (where they are + where your line sits). The driver sentence and
+         the `zone.terms`/`driver` data that fed it were REMOVED. `zone.notes` still carries every
+         reason → the debug trail.
+      2. **No "feeding" anywhere in angler copy.** In-river salmon are staging; a fly is taken out
+         of reaction. Rewritten in `THERMAL_BANDS` (labels+notes), the low-light note, the
+         community-sonar note and the outcome tags; a sanity assertion fails if 'feed' returns in
+         the produced summary.
+      3. **Rig advice changes the CORKY first**: `bestZoneRig(zone, rig, vel)` is two-pass (leader +
+         lead FIXED → sweep corky × 2nd corky × yarn × hook × bead; leader/lead free ONLY if no
+         tackle swap reaches the zone), and `rigChangeList()` names only what changes in the order
+         corky → 2nd corky → hook → yarn → bead → leader → lead. Remedy rows reordered to match.
+      Verify: `node sanity_pass.js --quiet` → **137/137** (new block pins library bead options, foam
+      naming, the tackle-only fix for the frozen rig (Cheater 10 float → 8.1"), the priority order
+      for a 3-swap rig, and the leader/lead fallback firing at 8000 CFS; summary assertions rewritten
+      for the 2-sentence shape incl. "never claims feeding").
+      ⚠ NOTE for the next session: this commit touched `computeStrikeZone` heavily, and an early
+      regex-based edit duplicated + deleted blocks (caught by the harness, fixed). The zone terms are
+      pinned: +5.45 / −4.45 / 1.2 alone / 0.75 colour / 6.7 ceiling — if those move, something broke.
 
 ## PHASE 4 DECISIONS — 2026-09-29 (user call, Act mode)
 

@@ -59,7 +59,10 @@ var DRIFT_TECHNIQUE = {
         // off target (an on-target rig gets no rows: the summary above the list already says
         // the line is in the band). No calibration meta-talk, no re-statement of the form.
         var suggestions = [];
-        var best = bestZoneRig(zone, velocity.bottom, ldLb, ldMat, mlLb, mlMat, foam.key, weightOz, ldLen, yarn, hook, bdMat, bdSz, foam2.lift);
+        // WS-8b (a2/c/d follow-up): the search now proposes what an angler actually changes -
+        // corky, second corky, hook, yarn, bead - and falls back to leader/lead only when no
+        // tackle swap can reach the zone (see bestZoneRig() in zone.js).
+        var best = bestZoneRig(zone, rig, velocity);
 
         if (blownOut) {
             // Report the true measured ft/s when we have it, matching the HUD (the solver's
@@ -67,15 +70,19 @@ var DRIFT_TECHNIQUE = {
             var shownBed = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
             suggestions.push('BLOWN OUT: bed running ' + shownBed.toFixed(1) + ' ft/s at ' + weightOz + ' oz - step up to 3/4 or 1 oz, or fish a slower seam.');
         } else if (hgt < zone.min) {
-            suggestions.push('Too low at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - add lift: bigger corky, more yarn, or a longer leader.');
+            suggestions.push('Too low at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - change the corky first: bigger corky, or a second corky, then more yarn, a smaller bead, a smaller hook - or a longer leader / less lead.');
         } else if (hgt > zone.max) {
-            suggestions.push('Too high at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - cut lift: smaller corky, less yarn, heavier lead, or a shorter leader.');
+            suggestions.push('Too high at ' + hgt.toFixed(1) + '" (zone ' + zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '") - change the corky first: smaller corky, or drop the second corky, then less yarn, a bigger bead, a bigger hook - or a shorter leader / more lead.');
         }
         // ON TARGET -> NO suggestion rows at all (direct user ask, 2026-09-29): the summary
         // above the list already says the line is in the band, so an "On target" row is noise.
 
         if (best && !blownOut && score < 5.0) {
-            suggestions.push('Try this: ' + best.foam.label + ' + ' + best.leader + ' ft leader + ' + best.weight + ' oz lead -> projects ' + best.hgt.toFixed(1) + '" of line height.');
+            // Name ONLY what changes, in the order the angler would make the changes.
+            var changes = (typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
+            if (changes.length) {
+                suggestions.push('Try this: ' + changes.join(', ') + ' -> projects ' + best.hgt.toFixed(1) + '" of line height.');
+            }
         }
 
         // 5. The "where to fish" row (WS-8a) and the cohesive SUMMARY (restructured

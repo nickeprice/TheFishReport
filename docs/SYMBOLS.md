@@ -103,13 +103,16 @@ this file**, or the pass fails.
 - **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()`
 - **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `getTurbidityFnu()`,
-  `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `positionParts()`,
-  `whereToFish()` (detail string), `fishOutlook()` (the ONE HUD summary paragraph),
-  `paintZoneHud(zone, outlook)`, `refreshZonePreview()`, `bestZoneRig()` —
+  `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `depthBandText()`,
+  `positionParts()`, `whereToFish()` (detail string), `fishOutlook()` (the 2-sentence HUD summary),
+  `paintZoneHud(zone, outlook)`, `refreshZonePreview()`, `bestZoneRig(zone, rig, vel)`,
+  `beadSizeOptions()`, `foamShort()`, `rigChangeList()` —
   the HUD: two estimate banners + the summary paragraph, and the colour grade shared with line
   height. The report terms are the WS-8a set: demoted barometer ±1.2", thermal curve, own-gauge
   colour, and a light term bracketed against THAT DAY's sunrise/sunset (`parseClockMinutes()`,
   `lightTerm(block, rep)` — WS-8b b1). `zone.notes` still records every reason for the log.
+  **The rig search is two-pass**: leader/lead fixed first (corky → 2nd corky → hook → yarn → bead),
+  leader/lead only as the fallback.
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

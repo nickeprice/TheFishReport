@@ -84,10 +84,10 @@ function refHourBlock() {
 // angler-facing colour classes, and the shifts stay small - colour is a modifier, not
 // the driver (the thermal curve and the barometer lead).
 var TURBIDITY_BANDS = [
-    { max: 8,        shift: -0.50, label: 'clear',       driver: 'the clear water' },
-    { max: 20,       shift:  0.25, label: 'light stain', driver: 'the light stain in the water' },
-    { max: 50,       shift:  0.75, label: 'coloured',    driver: 'the colour in the water' },
-    { max: Infinity, shift:  1.25, label: 'dirty',       driver: 'the dirty water' }
+    { max: 8,        shift: -0.50, label: 'clear' },
+    { max: 20,       shift:  0.25, label: 'light stain' },
+    { max: 50,       shift:  0.75, label: 'coloured' },
+    { max: Infinity, shift:  1.25, label: 'dirty' }
 ];
 
 function turbidityTerm() {
@@ -98,15 +98,14 @@ function turbidityTerm() {
             var where = (TURBIDITY_BANDS[i].shift > 0)
                 ? 'fish move up and closer to cover.'
                 : 'fish are spooky - they sit deep and tight.';
-            return { shift: TURBIDITY_BANDS[i].shift, label: TURBIDITY_BANDS[i].label,
-                driver: TURBIDITY_BANDS[i].driver, fnu: fnu, note: where };
+            return { shift: TURBIDITY_BANDS[i].shift, label: TURBIDITY_BANDS[i].label, fnu: fnu, note: where };
         }
     }
     return null;
 }
 
-// Light term from the reference hour block. Low light (dawn / dusk / dark) lets fish
-// feed up in the column; high overhead sun pins them down.
+// Light term from the reference hour block. Low light (dawn / dusk / dark) lifts fish in the
+// column; high overhead sun pins them down.
 //
 // WS-8b(b1): the brackets are ANCHORED TO THE DAY'S OWN SUNRISE/SUNSET instead of to fixed
 // clock hours. The old `h < 7 || h >= 19` / `h in 10..16` version was only right by
@@ -145,7 +144,7 @@ function lightTerm(block, rep) {
         var sinceSunrise = mid - sunrise;
         var untilSunset = sunset - mid;
         if (sinceSunrise <= LIGHT_EDGE_MINUTES || untilSunset <= LIGHT_EDGE_MINUTES) {
-            return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish feed up in the column.' };
+            return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish hold higher and are quicker to take.' };
         }
         if (sinceSunrise >= LIGHT_CORE_MINUTES && untilSunset >= LIGHT_CORE_MINUTES) {
             return { shift: LIGHT_BRIGHT_SHIFT, label: 'high sun', note: 'fish hold deep and tight.' };
@@ -155,7 +154,7 @@ function lightTerm(block, rep) {
 
     // No solar times on this day -> the fixed brackets (previous behaviour).
     if (h < 7 || h >= 19) {
-        return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish feed up in the column.' };
+        return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish hold higher and are quicker to take.' };
     }
     if (h >= 10 && h <= 16) {
         return { shift: LIGHT_BRIGHT_SHIFT, label: 'high sun', note: 'fish hold deep and tight.' };
@@ -166,9 +165,9 @@ function lightTerm(block, rep) {
 function computeStrikeZone(sonar) {
     // sonar (optional): { center, samples } from communitySonar(). Weather sets the
     // baseline expectation; community catches act as live sonar that pulls the zone
-    // toward where fish are actually feeding. Omitting sonar gives the weather-only
+    // toward where fish are actually holding. Omitting sonar gives the weather-only
     // preview used by refreshZonePreview().
-    var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], terms: [], report: null, sonar: null };
+    var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
     var rep = getActiveReport();
     if (!rep) {
         zone.notes.push('No water report loaded: using the baseline 4.0" - 12.0" strike zone.');
@@ -183,25 +182,21 @@ function computeStrikeZone(sonar) {
     if (!isNaN(pressureDelta)) {
         if (pressureDelta <= -0.03) {
             zone.shift += 1.2;
-            zone.terms.push({ key: 'pressure', dir: 'fall', shift: 1.2, driver: 'the falling barometer' });
             zone.notes.push('Barometer falling ' + pressureDelta.toFixed(2) + ' inHg: bladders expand, fish ride a little higher.');
         } else if (pressureDelta >= 0.03) {
             zone.shift -= 1.2;
-            zone.terms.push({ key: 'pressure', dir: 'rise', shift: -1.2, driver: 'the rising barometer' });
             zone.notes.push('Barometer rising ' + pressureDelta.toFixed(2) + ' inHg: fish pin down a little (lockjaw).');
         }
     }
 
-    // Cloud cover = light penetration: bright sun sends them deep, overcast lifts them.
+    // Cloud cover = light penetration: bright sun sends them down, overcast lifts them.
     var cloud = Number(rep.cloud_pct);
     if (!isNaN(cloud)) {
         if (cloud >= 70) {
             zone.shift += 1.5;
-            zone.terms.push({ key: 'cloud', dir: 'high', shift: 1.5, driver: 'the heavy cloud' });
             zone.notes.push('Heavy cloud cover (' + cloud + '%): fish feel safe riding higher.');
         } else if (cloud <= 30) {
             zone.shift -= 1.5;
-            zone.terms.push({ key: 'cloud', dir: 'low', shift: -1.5, driver: 'the bright sun' });
             zone.notes.push('Bright sun (' + cloud + '% cloud): fish hold deep and tight.');
         }
     }
@@ -210,19 +205,17 @@ function computeStrikeZone(sonar) {
     var rain = Number(rep.rain);
     if (!isNaN(rain) && rain > 0.25) {
         zone.shift += 1.0;
-        zone.terms.push({ key: 'rain', dir: 'freshet', shift: 1.0, driver: 'the rain freshet' });
         zone.notes.push('Rain freshet (' + rain.toFixed(2) + '"): coloured water, run a bigger profile.');
     }
 
-    // Water temperature = metabolism, via the THERMAL OPTIMUM curve (WS-8a). This
-    // replaces the old two-line rule ("< 46 -> deep, >= 55 -> rise"), which pointed the
-    // wrong way above the comfort band: warm water sends salmonids to the coldest,
-    // most oxygenated water, not up. Bands + wording live in inputs.js.
+    // Water temperature, via the THERMAL OPTIMUM curve (WS-8a). This replaces the old
+    // two-line rule ("< 46 -> deep, >= 55 -> rise"), which pointed the wrong way above the
+    // comfort band: warm water sends salmonids to the coldest, most oxygenated water, not up.
+    // Bands + wording live in inputs.js (and no band claims the fish are feeding).
     var temp = getWaterTempF();
     var th = (typeof thermalOptimum === 'function') ? thermalOptimum(temp) : null;
     if (th) {
         zone.shift += th.shift;
-        zone.terms.push({ key: 'thermal', dir: th.band, shift: th.shift, driver: th.driver });
         zone.notes.push('Water ' + th.tempF.toFixed(0) + 'F (' + th.range + 'F band): ' + th.note);
     }
 
@@ -231,7 +224,6 @@ function computeStrikeZone(sonar) {
     var turb = turbidityTerm();
     if (turb) {
         zone.shift += turb.shift;
-        zone.terms.push({ key: 'turbidity', dir: turb.label, shift: turb.shift, driver: turb.driver });
         zone.notes.push(turb.label.charAt(0).toUpperCase() + turb.label.slice(1) + ' water (' +
             turb.fnu.toFixed(1) + ' FNU): ' + turb.note);
     }
@@ -242,8 +234,6 @@ function computeStrikeZone(sonar) {
     var light = block ? lightTerm(block, rep) : null;
     if (light) {
         zone.shift += light.shift;
-        zone.terms.push({ key: 'light', dir: light.shift > 0 ? 'low' : 'high', shift: light.shift,
-            driver: light.shift > 0 ? 'the low light' : 'the high sun' });
         var when = block.label ? ' (' + block.label + ')' : '';
         zone.notes.push(light.label.charAt(0).toUpperCase() + light.label.slice(1) + when + ': ' + light.note);
     }
@@ -269,7 +259,7 @@ function computeStrikeZone(sonar) {
         zone.sonar = sonar;
         zone.notes.push('Recent community catches holding near ' + sonar.center.toFixed(1) + '" (' +
             (sonar.matched && sonar.matched >= 2 ? sonar.matched + ' env-matched' : sonar.samples) + ' fish): zone pulled ' +
-            (zone.sonarShift >= 0 ? '+' : '') + zone.sonarShift.toFixed(1) + '" toward feeding fish. ' +
+            (zone.sonarShift >= 0 ? '+' : '') + zone.sonarShift.toFixed(1) + '" toward holding fish. ' +
             sonar.note);
     }
     if (zMin < 1.0) zMin = 1.0;
@@ -365,7 +355,7 @@ function positionParts(zone, hgt) {
     var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
     var near = (typeof velocityAtSpot === 'function') ? velocityAtSpot(flow, siteId) : null;
     var mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
-    var out = { depth: null, lie: null, liePlain: null, line: null, depthParts: null, bed: null, unc: null };
+    var out = { depth: null, lie: null, lieTarget: null, line: null, depthParts: null, bed: null, unc: null };
 
     // Depth of water they are holding in, from the gauge's measured cross-section. WS-8b a2:
     // the HUD LEADS WITH THE BAND the gauge's own rows span in this flow window (the honest
@@ -391,19 +381,19 @@ function positionParts(zone, hgt) {
     }
 
     // The lie: what the bed velocity says about the water holding them. TWO forms - `lie`
-    // carries the number for the detail string, `liePlain` is the outcome-first sentence the
-    // summary prints (an angler reading the summary does not need the gauge's ft/s).
+    // carries the number for the detail string, `lieTarget` is the plain "where to fish it"
+    // phrase the summary prints.
     if (near && typeof near.bottom === 'number') {
         out.bed = near.bottom;
         if (near.bottom > LIE_FAST_FTS) {
             out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: the lie is behind boulders, wood and cut banks';
-            out.liePlain = 'Pushy water, so look for them behind boulders, wood and cut banks';
+            out.lieTarget = 'pushy water, so target behind boulders, wood and cut banks';
         } else if (near.bottom >= LIE_SOFT_FTS) {
             out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: the lie is the seam beside the current tongue';
-            out.liePlain = 'Moderate flow, so look for them in the seam beside the current tongue';
+            out.lieTarget = 'moderate flow, so target the seam beside the current tongue';
         } else {
             out.lie = 'bed ' + near.bottom.toFixed(1) + ' ft/s: soft water, fish spread over the flats and riffle lips';
-            out.liePlain = 'Soft water, so they are spread over the flats and riffle lips';
+            out.lieTarget = 'soft water, so target the flats and riffle lips';
         }
     }
 
@@ -439,71 +429,50 @@ function whereToFish(zone, hgt) {
 }
 
 // ==================================================================================
-// THE SUMMARY (direct user ask, 2026-09-29): ONE cohesive read of what the fish are
-// doing and where, instead of a bullet per technical reason plus a where-to-fish row.
+// THE SUMMARY (direct user asks: 2026-09-29 restructure, then this trim)
 //
-//   sentence 1  the OUTCOME (how the day has them behaving)
-//   sentence 2  the two biggest drivers, in plain words
-//   sentence 3  where they are: the depth of water they are holding in
-//   sentence 4  the lie that water is (omitted when no velocity curve exists)
-//   sentence 5  the angler's own line against that band (only once a rig is solved)
+// TWO sentences, max: WHERE the fish are (how high off the bed, in what depth of water,
+// and which piece of water to target) and WHERE THE ANGLER'S LINE sits against that band.
 //
-// Deliberately no raw numbers beyond the ones that mean something (depth, line height) and
-// no community/sonar wording. The full per-term reasons still exist on `zone.notes` and are
-// written to the debug trail by paintSimHud(), so nothing is lost - it is just not shouted
-// at an angler who is holding a rod.
+// What is deliberately NOT here any more:
+//   * the driver list ("Most of that is the heavy cloud and the falling barometer") - the
+//     angler asked for the outcome, not the weather lecture; every reason still lands in
+//     `zone.notes` and therefore in the debug trail;
+//   * any claim that the fish are FEEDING. Adult salmon in the river are not feeding -
+//     they are staging, and a fly gets taken out of reaction/territory, not hunger. The
+//     copy says "quick to take", "holding", "pinned down" and never "feeding".
 // ==================================================================================
 var OUTLOOK_BANDS = [
-    { min:  2.0,      text: 'Fish are up and feeding hard.' },
-    { min:  0.7,      text: 'Fish are sitting above the base zone and feeding.' },
-    { min: -0.7,      text: 'Fish are right where you would expect them today.' },
-    { min: -2.0,      text: 'Fish are pinned down and slow to move.' },
-    { min: -Infinity, text: 'Fish are deep and locked up.' }
+    { min:  2.0,      tag: 'Fish are up and quick to take' },
+    { min:  0.7,      tag: 'Fish are holding above the base zone' },
+    { min: -0.7,      tag: 'Fish are sitting in the base zone' },
+    { min: -2.0,      tag: 'Fish are pinned down and slow' },
+    { min: -Infinity, tag: 'Fish are deep and locked up' }
 ];
 
 function fishOutlook(zone, hgt) {
-    var z = zone || { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, terms: [], report: null };
+    var z = zone || { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, report: null };
     var shift = Number(z.shift) || 0;
+    var p = positionParts(z, hgt);
     var sentences = [];
 
-    // 1. The outcome - and, when there is no report at all, that is the whole story.
     if (!z.report) {
+        // No report -> nothing to claim about behaviour. Say what is being shown.
         sentences.push('No water report loaded yet, so this is the plain 4" - 12" base zone.');
     } else {
-        var lead = OUTLOOK_BANDS[OUTLOOK_BANDS.length - 1].text;
+        var tag = OUTLOOK_BANDS[OUTLOOK_BANDS.length - 1].tag;
         for (var i = 0; i < OUTLOOK_BANDS.length; i++) {
-            if (shift >= OUTLOOK_BANDS[i].min) { lead = OUTLOOK_BANDS[i].text; break; }
+            if (shift >= OUTLOOK_BANDS[i].min) { tag = OUTLOOK_BANDS[i].tag; break; }
         }
-        sentences.push(lead);
-
-        // 2. The why - the two strongest drivers, named the way an angler would.
-        var terms = (z.terms || []).slice().sort(function (a, b) {
-            return Math.abs(b.shift) - Math.abs(a.shift);
-        });
-        var drivers = [];
-        for (var t = 0; t < terms.length && drivers.length < 2; t++) {
-            if (terms[t].driver && drivers.indexOf(terms[t].driver) === -1) drivers.push(terms[t].driver);
-        }
-        if (drivers.length === 2) {
-            sentences.push('Most of that is ' + drivers[0] + ' and ' + drivers[1] + '.');
-        } else if (drivers.length === 1) {
-            sentences.push('Most of that is ' + drivers[0] + '.');
+        if (p.depthParts) {
+            sentences.push(tag + ': sitting about ' + p.depthParts.midIn.toFixed(1) + '" off the bed in about ' +
+                p.depthParts.band + ' at ' + Math.round(p.depthParts.flow) + ' CFS (gauge measurement, \u00b1' +
+                p.depthParts.pct + '%)' + (p.lieTarget ? ' \u2014 ' + p.lieTarget : '') + '.');
         } else {
-            sentences.push('Nothing in the conditions is pushing them either way.');
+            sentences.push(tag + '.');
         }
     }
-
-    // 3 + 4. Where they are, and where the angler's line sits.
-    var p = positionParts(z, hgt);
-    if (p.depthParts) {
-        // WS-8b a2: lead with the BAND the gauge's own rows span, not one bare number.
-        sentences.push('They are holding about ' + p.depthParts.midIn.toFixed(1) + '" off the bed, in about ' +
-            p.depthParts.band + ' at ' + Math.round(p.depthParts.flow) +
-            ' CFS (gauge measurement, \u00b1' + p.depthParts.pct + '% for spot vs gauge).');
-    } else {
-        sentences.push('There is no depth measurement for this gauge, so there is no depth to quote.');
-    }
-    if (p.liePlain) sentences.push(p.liePlain + '.');
+    // Sentence 2: the line against that band (only once a rig is solved).
     if (p.line) sentences.push(p.line.charAt(0).toUpperCase() + p.line.slice(1) + '.');
 
     return sentences.join(' ');
@@ -542,30 +511,121 @@ var WEIGHT_OPTIONS = [0.25, 0.375, 0.5, 0.625, 0.75, 1];
 var LEADER_LENGTH_OPTIONS = [6, 7, 8, 9, 10, 11, 12];
 var FOAM_KEYS = ['0', '14', '12', 'c12', '10'];
 
-function bestZoneRig(zone, bottomVelocity, lbTest, ldMat, mlLb, mlMat, foamKey, weightOz, leaderFt, yarnInches, hook, bdMat, bdSz, extraLift) {
-    // Physics is locked: drag coefficient is always 1.0. Full component model,
-    // same as runSim: bead/hook/yarn/line materials all count.
+// ==================================================================================
+// THE RIG SEARCH (reworked 2026-09-29 on a direct user ask)
+//
+// Anglers on the bank change the CORKY first, then add a second corky, then move hook
+// size, yarn and beads — and they set leader length and lead weight once and leave them.
+// So the search runs in TWO passes:
+//
+//   PASS 1  leader + lead FIXED: sweep corky x second corky x yarn x hook x bead size.
+//           If any of those lands in the zone, that IS the suggestion.
+//   PASS 2  leader + lead free as well — run ONLY when pass 1 cannot reach the zone at
+//           all, so "change your leader" is the fallback, never the first answer.
+//
+// Within a pass, cost = distance from the zone middle + a small penalty per component
+// changed (cheapest-to-change first), so the suggestion is the smallest edit that works.
+// The projection uses the SAME locked physics the sim does (Cd = 1.0). The line diameters
+// are deliberately NOT passed, matching the previous behaviour: the angler's lines are
+// held FIXED by the search, so only the class-level drag matters here.
+// ==================================================================================
+var CHANGE_PENALTY = { foam: 0.05, foam2: 0.06, hook: 0.08, yarn: 0.10, bead: 0.12, leader: 0.30, weight: 0.35 };
+var YARN_OPTIONS = [0, 0.5, 1, 2, 3];      // inches of yarn on the hook
+var HOOK_OPTIONS = [2, 1, 0, -1];          // 2 / 1 = size 2 / 1, 0 = 1/0, -1 = 2/0
+
+// Bead sizes the current material owns (library-driven), always including what is tied on.
+function beadSizeOptions(bdMat, bdSz) {
+    var opts = [];
+    if (typeof tackleBeadSizes === 'function') {
+        tackleBeadSizes(bdMat).forEach(function (o) {
+            var mm = Number(o.value);
+            if (isFinite(mm) && opts.indexOf(mm) === -1) opts.push(mm);
+        });
+    }
+    if (opts.indexOf(Number(bdSz)) === -1) opts.push(Number(bdSz));
+    return opts;
+}
+
+// 'Corky 12' / 'Cheater 10 float' / 'None' - the picker's own words without the packaging.
+function foamShort(foam) {
+    var short = String(foam.label || '')
+        .replace(' - Size ', ' ')
+        .replace(/\s*\(\d+mm\)/, '')
+        .replace(' - ', ' ');
+    // A Cheater is a float, not a corky - name it honestly in a suggestion list.
+    return /cheater/i.test(short) ? short + ' float' : short;
+}
+
+// The changes a candidate needs, in the order an angler would actually make them.
+function rigChangeList(best, rig) {
+    var out = [];
+    if (best.foam.key !== rig.foam.key) out.push(foamShort(best.foam));
+    if (best.foam2.key !== rig.foam2.key) {
+        out.push(best.foam2.key === '0' ? 'drop the second corky' : 'a second ' + foamShort(best.foam2));
+    }
+    if (Number(best.hook) !== Number(rig.hook)) out.push('hook size ' + hookLabel(Number(best.hook)));
+    if (Number(best.yarn) !== Number(rig.yarn)) out.push('yarn at ' + best.yarn + '"');
+    if (Number(best.bdSz) !== Number(rig.bdSz)) out.push(best.bdSz + 'mm bead');
+    if (Number(best.leader) !== Number(rig.ldLen)) out.push('a ' + best.leader + ' ft leader');
+    if (Number(best.weight) !== Number(rig.weightOz)) out.push(best.weight + ' oz lead');
+    return out;
+}
+
+function bestZoneRig(zone, rig, vel) {
     var target = (zone.min + zone.max) / 2;
-    var best = null;
-    for (var f = 0; f < FOAM_KEYS.length; f++) {
-        var foam = parseFoam(FOAM_KEYS[f]);
-        // extraLift carries Foam 2's buoyancy so the sweep honours a two-corky rig.
-        var lift = rigLift(foam.lift + (extraLift || 0), yarnInches, hook, bdMat, bdSz);
-        for (var w = 0; w < WEIGHT_OPTIONS.length; w++) {
-            var wt = WEIGHT_OPTIONS[w];
-            var drag = totalDragPerFt(bottomVelocity, lbTest, ldMat, mlLb, mlMat, wt, hook, yarnInches, bdMat, bdSz);
-            for (var l = 0; l < LEADER_LENGTH_OPTIONS.length; l++) {
-                var len = LEADER_LENGTH_OPTIONS[l];
-                var h = presentationHeightInches(lift, len, drag);
-                var cost = Math.abs(h - target);
-                if (wt !== weightOz) cost += 0.06;      // prefer minimal change to the current rig
-                if (len !== leaderFt) cost += 0.06;
-                if (FOAM_KEYS[f] !== foamKey) cost += 0.03;
-                if (!best || cost < best.cost) {
-                    best = { cost: cost, foam: foam, weight: wt, leader: len, hgt: h };
+    var bed = vel.bottom;
+    var beads = beadSizeOptions(rig.bdMat, rig.bdSz);
+    var passes = [
+        { weights: [rig.weightOz], leaders: [rig.ldLen] },            // tackle swaps only
+        { weights: WEIGHT_OPTIONS, leaders: LEADER_LENGTH_OPTIONS }   // leader / lead allowed
+    ];
+    var fallback = null;
+    for (var p = 0; p < passes.length; p++) {
+        var passBest = null;
+        for (var f = 0; f < FOAM_KEYS.length; f++) {
+            var foam = parseFoam(FOAM_KEYS[f]);
+            for (var f2 = 0; f2 < FOAM_KEYS.length; f2++) {
+                var foam2 = parseFoam(FOAM_KEYS[f2]);
+                var liftBase = foam.lift + foam2.lift;
+                for (var y = 0; y < YARN_OPTIONS.length; y++) {
+                    for (var h = 0; h < HOOK_OPTIONS.length; h++) {
+                        for (var b = 0; b < beads.length; b++) {
+                            var lift = rigLift(liftBase, YARN_OPTIONS[y], HOOK_OPTIONS[h], rig.bdMat, beads[b]);
+                            var changed = [];
+                            if (FOAM_KEYS[f] !== rig.foam.key) changed.push('foam');
+                            if (FOAM_KEYS[f2] !== rig.foam2.key) changed.push('foam2');
+                            if (HOOK_OPTIONS[h] !== Number(rig.hook)) changed.push('hook');
+                            if (YARN_OPTIONS[y] !== Number(rig.yarn)) changed.push('yarn');
+                            if (beads[b] !== Number(rig.bdSz)) changed.push('bead');
+                            for (var w = 0; w < passes[p].weights.length; w++) {
+                                var wt = passes[p].weights[w];
+                                var drag = totalDragPerFt(bed, rig.ldLb, rig.ldMat, rig.mlLb, rig.mlMat, wt,
+                                    HOOK_OPTIONS[h], YARN_OPTIONS[y], rig.bdMat, beads[b]);
+                                for (var l = 0; l < passes[p].leaders.length; l++) {
+                                    var len = passes[p].leaders[l];
+                                    var hgt = presentationHeightInches(lift, len, drag);
+                                    if (!isFinite(hgt) || hgt <= 0) continue;
+                                    var cost = Math.abs(hgt - target);
+                                    for (var c = 0; c < changed.length; c++) cost += (CHANGE_PENALTY[changed[c]] || 0.1);
+                                    if (Number(len) !== Number(rig.ldLen)) cost += CHANGE_PENALTY.leader;
+                                    if (Number(wt) !== Number(rig.weightOz)) cost += CHANGE_PENALTY.weight;
+                                    var cand = {
+                                        cost: cost, hgt: hgt, foam: foam, foam2: foam2,
+                                        hook: HOOK_OPTIONS[h], yarn: YARN_OPTIONS[y], bdSz: beads[b],
+                                        weight: wt, leader: len
+                                    };
+                                    if (!passBest || cost < passBest.cost) passBest = cand;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+        // A tackle-only PASS 1 that reaches the zone WINS - that is the whole point of the
+        // priority order. Otherwise remember the closest attempt and let pass 2 try.
+        if (passBest && passBest.hgt >= zone.min && passBest.hgt <= zone.max) return passBest;
+        if (passBest && (!fallback || passBest.cost < fallback.cost)) fallback = passBest;
     }
-    return best;
+    return fallback;
 }

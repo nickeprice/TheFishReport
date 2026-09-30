@@ -17,6 +17,17 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **HUD summary trimmed + biology fix + corky-first rig advice** (three direct user
+  corrections): the summary is now **2 sentences** (outcome tag + where they're holding/depth band/
+  where to target; then your line vs the band) — the driver sentence and its `zone.terms` data are
+  gone; **"feeding" is gone from every angler-facing string** (in-river salmon stage, they don't
+  feed — `THERMAL_BANDS` labels/notes, the light note, the sonar note and the outcome tags all
+  rewritten, with a guard that fails if 'feed' returns); and the **rig advice now changes the CORKY
+  first** — `bestZoneRig()` is two-pass (corky × 2nd corky × yarn × hook × bead with leader+lead
+  FIXED; leader/lead only when no tackle swap reaches the zone), with `rigChangeList()` listing only
+  what changes in the order corky → 2nd corky → hook → yarn → bead → leader → lead.
+  `sw.js` `v2.03.27`, **137/137**.
+
 - 2026-09-29 — **WS-8b (a2): depth as a measured BAND**: `spotDepthFt()` now exposes
   `bandLow`/`bandHigh` (the measured min/max of the same USGS rows the median comes from) and
   `zone.js` `depthBandText()` renders `'2.1-4.1 ft'` — or a single number when the band is

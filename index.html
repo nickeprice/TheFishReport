@@ -52,6 +52,12 @@
                 <input type="text" id="spot-label" aria-label="Name this fishing spot" maxlength="60" placeholder="Name this spot (e.g. Blue Creek run)" style="min-height: 44px;">
                 <button onclick="saveCurrentSpot()" style="min-height: 44px; padding: 10px 15px;">Save this spot</button>
             </div>
+            <!-- Drop a point ANYWHERE and save it by its lat/lon (direct user ask). The nearest
+                 USGS gauge is resolved for the flow; the point's own coordinates drive the weather. -->
+            <button class="btn-main" onclick="startSpotPick()"
+                    style="background-color: #23402a; color: #fff; margin-top: 0; min-height: 44px;">
+                📍 Place a spot on the map
+            </button>
         </div>
         <div id="spot-status" class="spot-status" hidden></div>
         <div id="favorite-spots" class="favorite-spots"></div>

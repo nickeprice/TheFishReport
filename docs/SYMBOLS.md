@@ -140,12 +140,15 @@ this file**, or the pass fails.
 
 ## src/features/map
 - **spots.js** — private favourite spots (WS-5): `SPOTS_CACHE_KEY`, `SPOT_LABEL_MAX`,
-  `spotsState`, `loadFavoriteSpots()`, `renderFavoriteSpots()`, `saveCurrentSpot()`,
-  `selectSavedSpot(id)`, `deleteSavedSpot(id)` — RLS-private planning data, cached locally
+  `spotsState`, `spotsStatus`, `loadFavoriteSpots()`, `renderFavoriteSpots()`, `saveCurrentSpot()`,
+  `saveSpotAt(lat, lon, label)`, `pickNearestStation(list, preferId)`,
+  `resolveSpotStation(lat, lon, preferId)`, `spotGaugeText(spot)`, `selectSavedSpot(id)`,
+  `deleteSavedSpot(id)` — a spot is a lat/lon YOU pick (weather at the point, flow from the
+  resolved gauge), RLS-private, cached locally
 - **spots-map.js** — `savedSpotIcon()`, `savedSpotPopupHtml(spot)` — the saved-spot star
   layer (Leaflet half, split out of spots.js)
 - **map.js** — `showStationMap()`, `loadLeaflet()`, `refreshStationMap(center)`,
-  `mapCenter()`
+  `mapCenter()`, `startSpotPick()`, `onSpotPick(e)` — the "drop a point anywhere" picker
 
 ## src/app.js
 Bootstrap only — no public API. It wires `window.onload` to the globals above.

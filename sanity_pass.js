@@ -1275,7 +1275,7 @@ function behaviorChecks(done) {
     });
     const listOk = recEls['spot-save-row'].hidden === false && rows.length === 2 &&
       rows[0].className === 'spot-row' && labels[0] === 'Blue Creek run' && labels[1] === 'Lower Nisqually' &&
-      /USGS 12101500/.test(metas[0]) && /USGS 12089500/.test(metas[1]) &&
+      /^flow: Puyallup River at Puyallup, WA/.test(metas[0]) && /^flow: Nisqually River at McKenna/.test(metas[1]) &&
       recEls['favorite-spots'].innerHTML === '' &&
       /could not be reached/.test(recEls['spot-status'].textContent);
 
@@ -1297,6 +1297,72 @@ function behaviorChecks(done) {
              `rows=${rows.length} labels=[${labels.join(' | ')}] metas=[${metas.join(' | ')}] coords=${loggedCoords.join(';')}`);
   } catch (e) {
     fail('the saved-spot list shows my spots only, and never leaks coordinates', String(e.message).split('\n')[0]);
+  }
+
+  // WS-5b: a saved spot is a LAT/LON, not a gauge (direct user ask) ----------------------
+  // The report's weather comes from the spot's own coordinates, but flow / runs / legal hours /
+  // tides only exist at a USGS gauge - and /api/water_report defaults to the app's site when
+  // none is passed, so a point must have its gauge RESOLVED explicitly or it would silently
+  // show the wrong river. Assert the resolver, the row's provenance line, and the picker wiring.
+  try {
+    const spotsSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'spots.js'), 'utf8');
+    const mapSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'map.js'), 'utf8');
+    const pageHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+    // The PICKING rule is pure, so it is exercised for real: the closest usable entry wins,
+    // an entry without coordinates is skipped, an empty list is "no gauge here" (null), and
+    // resolveSpotStation only has the thin fetch wrapper left around it.
+    const nearPick = pickNearestStation([
+      { id: '12094000', name: 'Carbon River near Fairfax', lat: 47.02, lon: -122.03, distance_mi: 3.4 },
+      { id: '12101500', name: 'Puyallup River at Puyallup, WA', lat: 47.19, lon: -122.30, distance_mi: 12.1 }
+    ]);
+    const skipPick = pickNearestStation([
+      { id: '12093500', name: 'no coords' },                       // skipped: lat/lon missing
+      { id: '12094000', name: 'Carbon River near Fairfax', lat: 47.02, lon: -122.03, distance_mi: 3.4 }
+    ]);
+    // The SELECTED gauge beats the nearest one when it is in range - the live probe case where
+    // the closest gauge was a 33 CFS creek beside the river being fished.
+    const preferPick = pickNearestStation([
+      { id: '12095000', name: 'South Prairie Creek at South Prairie, WA', lat: 47.14, lon: -122.09, distance_mi: 4.4 },
+      { id: '12093500', name: 'Puyallup River near Orting, WA', lat: 47.10, lon: -122.21, distance_mi: 4.4 }
+    ], '12093500');
+    const nearOk = nearPick && nearPick.id === '12094000' && nearPick.distance === 3.4 &&
+      /^Carbon River/.test(nearPick.name) &&
+      skipPick && skipPick.id === '12094000' &&
+      preferPick && preferPick.id === '12093500' && preferPick.distance === 4.4 &&
+      pickNearestStation([]) === null && pickNearestStation(null) === null &&
+      pickNearestStation([{ id: 'x', name: 'y' }]) === null &&
+      // A station with no name still resolves, by id - never a blank label.
+      pickNearestStation([{ id: '99999', lat: 1, lon: 2 }]).name === '99999';
+    const gaugeTextOk = (function () {
+      spotsState.gauge = { s1: { name: 'Carbon River near Fairfax', distance: 3.4 } };
+      const a = spotGaugeText({ id: 's1', river_name: 'Carbon River near Fairfax' });
+      const b = spotGaugeText({ id: 's2', river_name: 'Nisqually River at McKenna' });
+      const c = spotGaugeText({ id: 's3', river_name: null });
+      spotsState.gauge = {};
+      return a === 'flow: Carbon River near Fairfax \u00b7 3.4 mi away' &&
+        b === 'flow: Nisqually River at McKenna' && c === 'flow from the nearest gauge';
+    })();
+
+    // Static wiring: the point IS the spot (its own coords saved, its gauge resolved), a point
+    // with no gauge is not refused, unreachable stays distinct from "none nearby", and the map
+    // exposes a picker.
+    const wireOk = /async function saveSpotAt\(lat, lon, label\)/.test(spotsSrc) &&
+      /await resolveSpotStation\(Number\(lat\), Number\(lon\), want \? want\.id : null\)/.test(spotsSrc) &&
+      /latitude: Number\(lat\),\s*\n\s*longitude: Number\(lon\)/.test(spotsSrc) &&
+      /stationId: station \? station.id : null/.test(spotsSrc) &&
+      /if \(!gaugeId\) \{/.test(spotsSrc) && !/That spot has no gauge saved/.test(spotsSrc) &&
+      /return \{ ok: false \};/.test(spotsSrc) && /resolved\.ok && resolved\.station/.test(spotsSrc) &&
+      /function startSpotPick\(\)/.test(mapSrc) && /\.once\('click', onSpotPick\)/.test(mapSrc) &&
+      /onclick="startSpotPick\(\)"/.test(pageHtml) && /Place a spot on the map/.test(pageHtml);
+
+    (nearOk && gaugeTextOk && wireOk)
+      ? ok('a saved spot is a lat/lon: nearest gauge resolved, provenance shown, point never refused',
+           'resolver picks the closest usable gauge (3.4 mi), skips a coord-less entry, distinguishes none vs unreachable; row says "flow: <gauge>"')
+      : fail('a saved spot is a lat/lon: nearest gauge resolved, provenance shown, point never refused',
+             `near=${nearOk} gaugeText=${gaugeTextOk} wire=${wireOk} first=${JSON.stringify(results[0])} noneNear=${JSON.stringify(noneNear)}`);
+  } catch (e) {
+    fail('a saved spot is a lat/lon: nearest gauge resolved, provenance shown, point never refused', String(e.message).split('\n')[0]);
   }
 
     // --- WS-8b: the rig search proposes what anglers actually change --------------

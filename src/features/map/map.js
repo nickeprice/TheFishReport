@@ -1,7 +1,8 @@
 /**
  * src/features/map/map.js - interactive station map (UPDATE 3.0 Phase 2.5).
  *
- * public: showStationMap(), loadLeaflet()
+ * public: showStationMap(), loadLeaflet(), refreshStationMap(center), mapCenter(),
+ *         startSpotPick(), onSpotPick(e)
  *
  * Loads Leaflet lazily from a CDN, then plots one pin per nearby gauge from
  * /api/nearby_stations (dynamic radial discovery, Phase 2.2). Tapping a pin selects
@@ -127,6 +128,45 @@ async function refreshStationMap(center) {
     }
     logDebug('Station map: ' + stations.length + ' gauge(s) plotted', 'MAP');
     return { count: stations.length, note: (data && data.note) || '' };
+}
+
+// --- SPOT PICKER (2026-09-29, direct user ask) ----------------------------------------
+// Drop a point ANYWHERE on the map and save it as a private fishing spot by its lat/lon.
+// The point is not a gauge, so spots.js resolves the nearest gauge for the FLOW while the
+// point keeps its OWN coordinates for the weather (see the resolver note in spots.js).
+var _spotPickOn = false;
+
+function startSpotPick() {
+    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim() : '';
+    if (!label) {
+        spotsStatus('Type a name above first, then tap the map where your spot is.');
+        if (typeof showToast === 'function') showToast('Name this spot first, then tap the map.', 'warn', 5000);
+        return;
+    }
+    if (!_stationMap || !window.L) {
+        spotsStatus('Open the map first, then tap it to place your spot.');
+        return;
+    }
+    _spotPickOn = true;
+    spotsStatus('Tap the map where your spot is.');
+    if (_stationMap.getContainer) _stationMap.getContainer().style.cursor = 'crosshair';
+    _stationMap.once('click', onSpotPick);
+}
+
+async function onSpotPick(e) {
+    _spotPickOn = false;
+    if (_stationMap && _stationMap.getContainer) _stationMap.getContainer().style.cursor = '';
+    if (!e || !e.latlng) return;
+    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX) : '';
+    if (!label) { spotsStatus('Name this spot first, then tap the map.'); return; }
+    spotsStatus('Saving\u2026');
+    var id = await saveSpotAt(e.latlng.lat, e.latlng.lng, label);
+    if (!id) { spotsStatus('Could not save that spot.'); return; }
+    setFieldValue('spot-label', '');
+    if (typeof showToast === 'function') showToast('Spot saved (private)', 'success', 2500);
+    await loadFavoriteSpots();
+    try { await refreshStationMap(mapCenter()); } catch (err) {}   // re-plot so the star appears
+    spotsStatus('Saved. Tap its star to load the conditions there.');
 }
 
 async function showStationMap() {

@@ -82,6 +82,26 @@ user_id = auth.uid()` returns **0** without a JWT (verified live 2026-09-29). Th
 view and no `SECURITY DEFINER` function** over this table, and `public_catch_feed` never
 references it — there is no code path that can show one angler another's spots.
 
+### A spot is a POINT, and its data comes from two places
+
+A spot is a lat/lon the angler picked on the map (`map.js` `startSpotPick()`), NOT a gauge.
+`station_id` is the **resolved** nearest gauge and may be null, and the coordinates are the
+ANGLE the report is asked for:
+
+| what | where it comes from |
+|---|---|
+| weather, cloud, wind, precip | Open-Meteo at the **spot's own lat/lon** (`/api/water_report?lat=&lon=`) |
+| flow, species runs, legal windows, tides | the **resolved gauge** (`?site=<id>`), named in the row |
+| nothing nearby | the point shows **no flow at all** — `site` omitted would silently default to the app's river, so it is never sent without one |
+
+`resolveSpotStation(lat, lon, preferId)` → `/api/nearby_stations`; `pickNearestStation(list,
+preferId)` is the pure rule: **the gauge already selected wins if it is in range, otherwise the
+closest usable one** (a live probe at 47.09,-122.15 found South Prairie Creek, 33 CFS, 4.4 mi
+away, with the Puyallup at Orting, 483 CFS, the same distance — nearest is not the same as
+relevant). An entry with no coordinates is skipped; `{ ok: false }` means "could not ask" and is
+kept distinct from "no gauge here".
+
+
 Offline: the list falls back to a local mirror (`localStorage: favorite_spots_cache`) and
 says so; **saving** needs a live session (no outbox for spots — they are planning data, not
 a catch).

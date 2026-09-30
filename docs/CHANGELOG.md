@@ -4,6 +4,52 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — A saved spot is a LAT/LON you pick on the map (not a gauge pin)
+Direct user correction: *"its not save a guage pin i want to be able to save a lon and lat spot on a
+map as a fishing spot so i can pull the data for that"*. The old flow could only save the **current
+map centre** (your GPS fix, else the active gauge), so an arbitrary point was impossible.
+
+**The data question first, because it shapes the design.** `/api/water_report` takes `site` as
+OPTIONAL and uses `lat`/`lon` for the weather (`fetch_meteorological_data(req_lat, req_lon)`), while
+flow, species runs, legal windows and tides all come from the **site**. A request with no `site`
+silently falls back to the app's default river — so a raw point must NEVER be sent without a gauge,
+or it would show the wrong river's numbers. Hence:
+
+> **A spot's conditions = weather at the exact saved point + flow from a real gauge, labelled with
+> that gauge.** A point with no gauge nearby shows nothing for flow rather than borrowing another
+> river's.
+
+**What shipped.**
+- **Map picker** (`map.js`): `startSpotPick()` / `onSpotPick(e)` — name the spot, tap
+  "📍 Place a spot on the map", then tap the map; the tap's latlng is what gets saved, the map
+  re-plots and the star appears. New button in the modal (`index.html`).
+- **Gauge resolution** (`spots.js`): `resolveSpotStation(lat, lon, preferId)` →
+  `/api/nearby_stations` → `{ ok, station }`. The pure part is `pickNearestStation(list, preferId)`
+  so the rule is testable. `ok:false` means "we could not ask" (offline/server error) and is kept
+  distinct from "there is no gauge here", because the old code collapsed the two.
+- **Provenance in the row**: `spotGaugeText(spot)` renders "flow: Puyallup River near Orting, WA ·
+  4.4 mi away" (name always; distance when this session resolved it), or "flow from the nearest
+  gauge" when nothing is known yet.
+- **Open a point**: `selectSavedSpot()` is async now — a spot with no gauge resolves one on the
+  spot, persists it on the row (same id = an edit) and then goes through the SAME `selectPreset()`
+  path a preset uses, passing the **spot's** coords with the **gauge's** id. The old "That spot has
+  no gauge saved — pick it from the map instead" refusal is gone.
+- **`saveCurrentSpot()`** survives as the "I am standing here" path (GPS fix / map centre) and is
+  now a thin wrapper over the new `saveSpotAt(lat, lon, label)`.
+
+**A live probe changed the picking rule.** For a point at 47.09,-122.15 the endpoint returned 13
+gauges; the *nearest* was **South Prairie Creek (33 CFS) at 4.4 mi**, with the **Puyallup at Orting
+(483 CFS) the same 4.4 mi away**. Nearest ≠ relevant, so the rule is now: **the gauge you already
+have selected wins if it is in range, otherwise the closest one.** That case is pinned in the tests.
+
+`sw.js` `v2.03.31`. **138/138 GREEN** — new assertions cover the picking rule (nearest wins,
+coord-less entries skipped, the preference beats nearest, empty/null → null, a nameless station
+resolves by id), the provenance line (name + distance / name only / unknown), and the wiring (the
+point's own coords are saved, the gauge is resolved BEFORE saving, no refusal path, the picker
+exists in both the map and the markup).
+- Key files: `src/features/map/{spots,map}.js`, `index.html`, `sanity_pass.js`, `sw.js`,
+  `docs/{SYMBOLS,CONTRACT}.md`.
+
 ## 2026-09-29 — Beginner copy: the HUD summary and the rig advice are now written for a non-angler
 Direct user ask, quoting the real output: *"this should be a 1-2 sentence summary like youre talking
 to a person who has no idea what they are doing fishing they dont know the terms they dont know

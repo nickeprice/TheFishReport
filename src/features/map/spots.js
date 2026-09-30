@@ -1,16 +1,22 @@
 /**
  * src/features/map/spots.js - PRIVATE favourite fishing spots (WS-5, issue #3b).
  *
- * public: SPOTS_CACHE_KEY, SPOT_LABEL_MAX, spotsState, loadFavoriteSpots(),
- *         renderFavoriteSpots(), saveCurrentSpot(), deleteSavedSpot(id),
+ * public: SPOTS_CACHE_KEY, SPOT_LABEL_MAX, spotsState, spotsStatus, loadFavoriteSpots(),
+ *         renderFavoriteSpots(), saveCurrentSpot(), saveSpotAt(lat, lon, label),
+ *         resolveSpotStation(lat, lon), spotGaugeText(spot), deleteSavedSpot(id),
  *         selectSavedSpot(id)
  *
  * The Leaflet half (the star pin + its popup) lives in src/features/map/spots-map.js.
  *
- * A saved spot is the angler's own water: a label, its gauge, and the coordinates. It is
- * PRIVATE by construction — `public.favorite_spots` is RLS-scoped to `user_id =
- * auth.uid()` (supabase/migrations/20260929190000_favorite_spots.sql), there is no view
- * and no RPC over it, and nothing here sends a spot to the public board or to telemetry.
+ * A saved spot is a lat/lon the angler picked on the map - the angler's own water, not a
+ * gauge. It is PRIVATE by construction — `public.favorite_spots` is RLS-scoped to
+ * `user_id = auth.uid()` (supabase/migrations/20260929190000_favorite_spots.sql), there is no
+ * view and no RPC over it, and nothing here sends a spot to the public board or to telemetry.
+ *
+ * WHAT DATA A POINT CAN HAVE: the report is queried WITH the spot's own lat/lon (so the
+ * weather is for that exact point) and WITH the nearest USGS gauge's id (so the flow, species
+ * runs, legal windows and tides come from a real measurement). A spot with no gauge nearby
+ * cannot show flow at all - it never silently falls back to the app's default river.
  *
  * Tapping a spot goes through the SAME `selectPreset()` path as a preset or a map pin, so
  * "the conditions at MY spot tomorrow" is answered by the existing per-day report. Offline
@@ -21,7 +27,7 @@
 var SPOTS_CACHE_KEY = 'favorite_spots_cache';
 var SPOT_LABEL_MAX = 60;
 
-var spotsState = { rows: [], loaded: false, offline: false };
+var spotsState = { rows: [], loaded: false, offline: false, gauge: {} };
 
 function spotsSignedIn() {
     return (typeof AuthState !== 'undefined') && !!(AuthState && AuthState.signedIn);
@@ -89,8 +95,7 @@ function spotRowEl(spot) {
     open.textContent = spot.label || 'Saved spot';
     var meta = document.createElement('span');
     meta.className = 'spot-meta';
-    meta.textContent = (spot.river_name || 'No river saved') +
-        (spot.station_id ? ' \u00b7 USGS ' + spot.station_id : '');
+    meta.textContent = spotGaugeText(spot);
     open.appendChild(meta);
     open.onclick = (function (id) { return function () { selectSavedSpot(id); }; })(spot.id);
 
@@ -130,8 +135,108 @@ function renderFavoriteSpots() {
     spotsState.rows.forEach(function (s) { box.appendChild(spotRowEl(s)); });
 }
 
+// ==================================================================================
+// RESOLVING A GAUGE FOR A RAW COORDINATE
+//
+// A saved spot is a lat/lon the angler picked on the map - it is NOT a gauge. But the
+// conditions that matter (flow, species runs, legal windows, tides) only exist AT a USGS
+// gauge, and /api/water_report falls back to the app's default site when `site` is
+// omitted - so sending a spot with no gauge would silently show the WRONG river's
+// numbers. That is why a spot's gauge is resolved explicitly, stored on the row, and
+// named in the UI.
+//
+// What the spot DOES own is the weather: the report takes lat/lon and Open-Meteo is
+// queried at those coordinates, so the forecast is for the exact point that was saved.
+// ==================================================================================
+var SPOT_NEAREST_GAUGE_N = 1;      // how many gauges the resolver keeps (the closest)
+
+// The closest USABLE entry from a nearby-stations payload. Pure (the fetch lives in
+// resolveSpotStation), so the picking rule can be tested on its own: an entry without
+// coordinates is skipped rather than accepted - a gauge we cannot place on the map is not
+// a gauge we can claim the flow of.
+//
+// `preferId` is the gauge the angler already has selected. Nearest is not the same as
+// relevant: a live probe at 47.09,-122.15 put South Prairie Creek (33 CFS) 4.4 mi away and
+// the Puyallup at Orting (483 CFS) the same distance out, so "nearest" can hand a spot the
+// flow of a creek beside the river being fished. If the selected gauge is in range it wins;
+// otherwise the closest one does.
+function pickNearestStation(list, preferId) {
+    if (!list || !list.length) return null;
+    var prefer = (preferId != null) ? String(preferId) : null;
+    var nearest = null;
+    for (var i = 0; i < list.length; i++) {
+        var s = list[i];
+        if (!s || !s.id || s.lat == null || s.lon == null) continue;
+        var cand = {
+            id: String(s.id),
+            name: s.name ? String(s.name) : String(s.id),
+            distance: (s.distance_mi != null && isFinite(Number(s.distance_mi))) ? Number(s.distance_mi) : null
+        };
+        if (prefer && cand.id === prefer) return cand;
+        if (!nearest) nearest = cand;
+    }
+    return nearest;
+}
+
+// { ok: true, station: {id,name,distance}|null } | { ok: false }
+// ok:false means "we could not ask" (offline / server error) - NOT "there is no gauge".
+async function resolveSpotStation(lat, lon, preferId) {
+    if (typeof fetch !== 'function' || lat == null || lon == null) return { ok: false };
+    try {
+        var res = await fetch('/api/nearby_stations?lat=' + lat + '&lon=' + lon, { cache: 'no-store' });
+        if (!res.ok) return { ok: false };
+        var data = await res.json();
+        var list = (data && data.stations) ? data.stations : [];
+        return { ok: true, station: pickNearestStation(list, preferId) };
+    } catch (e) {
+        return { ok: false };
+    }
+}
+
+// The gauge NAME for a spot row (and the distance when this session resolved it).
+function spotGaugeText(spot) {
+    if (!spot) return '';
+    var known = spotsState.gauge[spot.id];
+    var name = (known && known.name) ? known.name : (spot.river_name || null);
+    if (!name) return 'flow from the nearest gauge';
+    var dist = (known && known.distance != null) ? ' \u00b7 ' + known.distance + ' mi away' : '';
+    return 'flow: ' + name + dist;
+}
+
+// Save a spot at a LAT/LON the angler chose on the map. The nearest gauge is resolved
+// first and stored on the row so the row (and the report) say where the flow comes from.
+async function saveSpotAt(lat, lon, label) {
+    if (lat == null || lon == null || isNaN(Number(lat)) || isNaN(Number(lon))) {
+        showToast('No position for that spot.', 'warn', 4000);
+        return null;
+    }
+    var id = newUuid();
+    var want = activeStationRecord();
+    var resolved = await resolveSpotStation(Number(lat), Number(lon), want ? want.id : null);
+    var station = (resolved && resolved.ok && resolved.station) ? resolved.station : null;
+    if (station) spotsState.gauge[id] = { name: station.name, distance: station.distance };
+    var res = null;
+    try {
+        res = await Supa.saveFavoriteSpot({
+            clientId: id,
+            label: label,
+            stationId: station ? station.id : null,
+            riverName: station ? station.name : null,
+            latitude: Number(lat),
+            longitude: Number(lon)
+        });
+    } catch (e) { res = null; }
+    if (res && res.ok) {
+        // The LABEL only: coordinates never reach the debug log (AGENTS.md GPS hygiene).
+        logDebug('Favourite spot saved: ' + label + (station ? ' (flow via ' + station.id + ')' : ' (no gauge resolved)'), 'SPOT');
+        return id;
+    }
+    showToast('Could not save the spot: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
+    return null;
+}
+
 // Save the CURRENT position (the GPS fix when we have one, else the active station's
-// gauge) against the active gauge. Private: label + coords go to the owner's own rows.
+// gauge) - the "I am standing here" path. Private: label + coords go to the owner's rows.
 async function saveCurrentSpot() {
     if (!spotsSignedIn()) {
         showToast('Start a session on the Catch Log tab first \u2014 spots save to your private account.', 'warn', 6000);
@@ -139,48 +244,60 @@ async function saveCurrentSpot() {
     }
     var label = (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX);
     if (!label) { showToast('Name this spot first.', 'warn', 4000); return; }
-    var station = activeStationRecord();
     var loc = (typeof mapCenter === 'function') ? mapCenter() : null;
     if (!loc || loc[0] == null || loc[1] == null) {
         showToast('No position yet \u2014 pick a river first.', 'warn', 4000);
         return;
     }
-    var res = null;
-    try {
-        res = await Supa.saveFavoriteSpot({
-            clientId: newUuid(),
-            label: label,
-            stationId: station ? station.id : null,
-            riverName: station ? station.name : null,
-            latitude: loc[0],
-            longitude: loc[1]
-        });
-    } catch (e) { res = null; }
-    if (res && res.ok) {
+    var saved = await saveSpotAt(loc[0], loc[1], label);
+    if (saved) {
         setFieldValue('spot-label', '');
-        // The LABEL only: coordinates never reach the debug log (AGENTS.md GPS hygiene).
-        logDebug('Favourite spot saved: ' + label, 'SPOT');
         showToast('Spot saved (private)', 'success', 2500);
         await loadFavoriteSpots();
-    } else {
-        showToast('Could not save the spot: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
     }
 }
 
-// Open a saved spot: the SAME path as a preset / map pin, so the per-day report does the
-// rest — that is exactly what makes "conditions at MY spot tomorrow" work.
-function selectSavedSpot(id) {
+// Open a saved spot: resolve its gauge if it has none yet (a point picked on the map is not
+// a gauge), then go through the SAME selectPreset() path a preset / map pin uses. The SPOT's
+// coordinates ride along, so the report's weather is for the saved point while the flow comes
+// from the resolved gauge - and the row names that gauge, so the provenance is visible.
+async function selectSavedSpot(id) {
     var spot = null;
     for (var i = 0; i < spotsState.rows.length; i++) {
         if (spotsState.rows[i].id === id) { spot = spotsState.rows[i]; break; }
     }
     if (!spot) return;
-    if (!spot.station_id) {
-        showToast('That spot has no gauge saved \u2014 pick it from the map instead.', 'warn', 5000);
-        return;
+
+    var gaugeId = spot.station_id || null;
+    if (!gaugeId) {
+        spotsStatus('Finding the nearest gauge for that spot\u2026');
+        var want = activeStationRecord();
+        var resolved = await resolveSpotStation(Number(spot.latitude), Number(spot.longitude), want ? want.id : null);
+        if (resolved && resolved.ok && resolved.station) {
+            gaugeId = resolved.station.id;
+            spotsState.gauge[spot.id] = { name: resolved.station.name, distance: resolved.station.distance };
+            spot.station_id = gaugeId;
+            spot.river_name = resolved.station.name;
+            // Persist it once so the row never has to resolve again (same id = an edit).
+            try {
+                await Supa.saveFavoriteSpot({
+                    clientId: spot.id, label: spot.label, stationId: gaugeId, riverName: resolved.station.name,
+                    latitude: Number(spot.latitude), longitude: Number(spot.longitude)
+                });
+            } catch (e) {}
+            renderFavoriteSpots();
+        } else if (resolved && !resolved.ok) {
+            spotsStatus('Could not reach the gauge lookup \u2014 try again when you have signal.');
+            return;
+        } else {
+            showToast('No USGS gauge near that spot yet \u2014 flow needs a nearby gauge.', 'warn', 6000);
+            spotsStatus('No USGS gauge near that spot, so there is no flow to show.');
+            return;
+        }
     }
-    logDebug('Saved spot selected: ' + (spot.label || ''), 'SPOT');
-    selectPreset(spot.station_id, Number(spot.latitude), Number(spot.longitude), spot.label || 'Saved spot', false);
+    spotsStatus('');
+    logDebug('Saved spot selected: ' + (spot.label || '') + ' (gauge ' + gaugeId + ')', 'SPOT');
+    selectPreset(gaugeId, Number(spot.latitude), Number(spot.longitude), spot.label || 'Saved spot', false);
 }
 
 async function deleteSavedSpot(id) {

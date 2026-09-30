@@ -351,6 +351,26 @@ change.
       This RESOLVES the "interpretation to confirm" item in the handoff: the summary belongs under
       BOTH banners.
 
+## SPOT = A POINT YOU PICK — 2026-09-29 (direct user correction)
+
+- [x] **"its not save a guage pin i want to be able to save a lon and lat spot on a map as a fishing
+      spot so i can pull the data for that."** Shipped: a map PICKER (`map.js` `startSpotPick()` /
+      `onSpotPick(e)` + the modal button), the tap's latlng is what gets saved
+      (`spots.js` `saveSpotAt`), and the gauge for the FLOW is resolved rather than required
+      (`resolveSpotStation` → `/api/nearby_stations`, `pickNearestStation` = the pure rule).
+      `selectSavedSpot()` is async and no longer refuses a gauge-less spot; the row says
+      `flow: <gauge name> · N mi away` (`spotGaugeText`).
+      Verified: sanity **138/138** (new block pins the picking rule incl. the preference, the
+      provenance line, and the wiring) and a LIVE probe — for 47.09,-122.15 the endpoint returned
+      13 gauges, nearest **South Prairie Creek 33 CFS @ 4.4 mi** vs **Puyallup at Orting 483 CFS
+      @ 4.4 mi**, which is why "the selected gauge wins when in range, else nearest" is the rule.
+      `sw.js` `v2.03.31`.
+      ⚠ HONESTY BOUNDARY, recorded: flow / species runs / legal windows / tides only exist AT a
+      gauge, so a spot shows the resolved gauge's flow LABELLED with its name, and a point with no
+      gauge nearby shows no flow rather than borrowing the app's default river (`site` omitted would
+      silently fall back to it). Weather IS the spot's own, because the report takes lat/lon.
+      Owed by eye: the picker's crosshair/cursor behaviour and the star appearing after a save.
+
 ## BEGINNER COPY — 2026-09-29 (direct user ask)
 
 - [x] **The HUD summary and the rig advice are beginner-first.** The user quoted the live output and

@@ -17,6 +17,17 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **A saved spot is a LAT/LON you pick on the map** (direct user correction: "its not
+  save a guage pin… so i can pull the data for that"): new map picker (`startSpotPick()` /
+  `onSpotPick(e)` + a modal button), the tap's latlng is saved by `saveSpotAt()`, and the gauge that
+  supplies the FLOW is **resolved** (`resolveSpotStation` → `/api/nearby_stations`, pure
+  `pickNearestStation`) instead of required — the row names it ("flow: Puyallup River near Orting,
+  WA · 4.4 mi away"). Weather comes from the spot's OWN coordinates because the report takes lat/lon;
+  a point with no gauge nearby shows no flow rather than borrowing the app's default river. A live
+  probe at 47.09,-122.15 found the nearest gauge was South Prairie Creek (33 CFS) instead of the
+  Puyallup at Orting (483 CFS) at the same distance, so the rule is now
+  **the selected gauge wins when in range, else nearest**. `sw.js` `v2.03.31`, **138/138**.
+
 - 2026-09-29 — **Beginner copy** (direct user ask): the HUD summary is now **two plain sentences for
   someone who has never fished** ("Fish are likely holding higher in the water and more willing to
   grab — look for calm, shallow water along the gentle edges and the tail of a pool (about 2-5 feet

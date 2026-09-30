@@ -133,6 +133,27 @@ function staticIntegrity() {
          staleShell.length ? 'in SHELL_FILES but not loaded: ' + staleShell.join(', ') : '']
           .filter(Boolean).join(' | '));
 
+  // Vercel serves Python functions ONE FILE PER ROUTE, so a `/api/<name>` call that only
+  // exists as a branch inside api/water_report.py — which is where the local dev server used
+  // to send every /api/* path — 404s on the DEPLOYED app. That is exactly how
+  // /api/nearby_stations broke the map feed, the GPS lookup and every saved-spot resolution
+  // in production while looking perfectly healthy locally (found 2026-09-29 from the phone's
+  // debug trail: `GET /api/nearby_stations -> HTTP 404 … NOT_FOUND pdx1::…`). Every path the
+  // frontend fetches must have its own api/<name>.py entry point.
+  const apiCalls = new Set();
+  for (const f of localScriptPaths()) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    for (const m of src.matchAll(/['"`](\/api\/[a-z0-9_]+)/g)) apiCalls.add(m[1]);
+  }
+  const apiRoutes = [...apiCalls].sort();
+  const noEntryPoint = apiRoutes.filter((p) => !fs.existsSync(path.join(ROOT, p.slice(1) + '.py')));
+  noEntryPoint.length === 0
+    ? ok('every /api route the client calls has its own Vercel entry point',
+        apiRoutes.join(', ') + ' -> api/<name>.py')
+    : fail('every /api route the client calls has its own Vercel entry point',
+        'no api/<name>.py for: ' + noEntryPoint.join(', ') +
+        ' (Vercel routes one function per file, so it would 404 in production)');
+
   // Catch Log merge: ONE list with a yours/everyone toggle; default = Everyone
   const merged = html.includes('id="catch-log-table"') && html.includes('id="catch-log-body"') &&
     html.includes('id="scope-yours"') && html.includes('id="scope-everyone"') &&

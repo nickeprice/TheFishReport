@@ -3,7 +3,7 @@
 | Layer | Choice |
 | --- | --- |
 | Frontend | Plain HTML + CSS + classic JS. **No** framework, bundler, npm or ES modules. |
-| Backend | `api/water_report.py` — Vercel Python serverless (`handler` class only, no `__main__`). |
+| Backend | `api/water_report.py` — Vercel Python serverless (`handler` class only, no `__main__`). **Vercel routes ONE FILE PER PATH**, so `/api/nearby_stations` is its own `api/nearby_stations.py` (a thin subclass delegating to the same handler) — a route that only exists as a branch inside `water_report.py` answers locally and **404s in production** (that is what broke the map/GPS/saved spots on 2026-09-29). |
 | Database | Supabase (Postgres + RLS + anonymous auth); migrations in `supabase/migrations/`. |
 | Live data | USGS **WDFN OGC API** (keyless), Open-Meteo, NOAA CO-OPS tides, WDFW Socrata. |
 | Offline | `sw.js` (tap-to-apply updates) + a durable IndexedDB catch outbox. |
@@ -15,7 +15,9 @@ python3 scripts/dev_server.py 8000      # → http://127.0.0.1:8000/index.html
 ```
 
 The dev server subclasses `api/water_report.handler`; do not construct a second handler
-(it re-runs `handle()` on a consumed socket and blocks forever).
+(it re-runs `handle()` on a consumed socket and blocks forever). It routes `/api/<name>` to
+`api/<name>.py` exactly as Vercel does, so a missing entry point fails locally instead of only
+in production. Restart it after editing `api/*.py` (modules are imported once).
 
 **Validate** — `node sanity_pass.js` (zero dependencies: plain Node + Python). It picks a
 free port, cleans up after itself, and derives the script list from `index.html`, so a newly

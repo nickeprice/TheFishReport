@@ -94,7 +94,9 @@ ANGLE the report is asked for:
 | flow, species runs, legal windows, tides | the **resolved gauge** (`?site=<id>`), named in the row |
 | nothing nearby | the point shows **no flow at all** — `site` omitted would silently default to the app's river, so it is never sent without one |
 
-`resolveSpotStation(lat, lon, preferId)` → `/api/nearby_stations`; `pickNearestStation(list,
+`resolveSpotStation(lat, lon, preferId)` → `/api/nearby_stations` (its own Vercel entry point:
+`api/nearby_stations.py` — Vercel routes one function per file, so a route living only inside
+`water_report.py` answers locally and 404s deployed); `pickNearestStation(list,
 preferId)` is the pure rule: **the gauge already selected wins if it is in range, otherwise the
 closest usable one** (a live probe at 47.09,-122.15 found South Prairie Creek, 33 CFS, 4.4 mi
 away, with the Puyallup at Orting, 483 CFS, the same distance — nearest is not the same as

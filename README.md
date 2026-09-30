@@ -85,7 +85,12 @@ depends on being fully defined first. `sanity_pass.js` derives this list from
 
 `/api/water_report?site=&lat=&lon=` is a Python `BaseHTTPRequestHandler`
 (`api/water_report.py`), which is the shape Vercel expects for a Python
-serverless function — no `vercel.json` or adapter is required. It aggregates
+serverless function — no `vercel.json` or adapter is required. **Vercel serves one
+function per FILE**, so every route is its own entry point:
+`api/nearby_stations.py` is the nearest-gauge lookup (it subclasses the same handler
+and delegates, so there is only one implementation). A route that exists only as a
+branch inside `water_report.py` answers under `scripts/dev_server.py` and 404s once
+deployed. It aggregates
 **USGS WDFN** (`api.waterdata.usgs.gov`; the legacy `waterservices` reader is a
 fallback only, retired by USGS in Q1 2027), Open-Meteo and NOAA tides into a 4-day
 forecast, typically in 4–6 s. Responses are memoised briefly and the endpoint is

@@ -4,7 +4,47 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
-## 2026-09-29 — FIX: every `/api/nearby_stations` consumer failed at once on the phone
+## 2026-09-29 — ROOT CAUSE FOUND: `/api/nearby_stations` was never deployed (Vercel 404)
+The phone's debug trail settled it: `ERR: GET /api/nearby_stations -> HTTP 404 The page could not
+be found NOT_FOUND pdx1::…` — a **Vercel** 404, while `/api/water_report` answered 200 (62 KB) on the
+same device. Confirmed from here:
+`curl https://thefishreport.vercel.app/api/nearby_stations?lat=47.2&lon=-122.31` → **404** vs
+`/api/water_report?site=12101500` → **200**.
+
+**Why it hid for so long:** Vercel serves Python functions **one file per route**. The
+nearby-stations route was a `if urlparse(self.path).path == '/api/nearby_stations'` branch inside
+`api/water_report.py`, and `scripts/dev_server.py` sent **every** `/api/*` path to that one handler —
+so it worked perfectly locally, in every sanity run, and 404'd only once deployed. Production had no
+`/api/nearby_stations` at all, which broke the map feed, the "Use My GPS" lookup, and every saved
+spot's gauge resolution at the same time. The earlier retry/diagnostics work (above) is what turned
+an unattributed failure into this evidence.
+
+**What shipped.**
+- **New `api/nearby_stations.py`** — the deployed entry point for that path. It subclasses the
+  production handler and delegates to its `do_GET` (which already recognises the path), so the two
+  entry points cannot drift: there is still exactly one implementation. The subclass-and-delegate
+  shape is load-bearing (a second `BaseHTTPRequestHandler` re-runs `handle()` on a consumed socket
+  and blocks forever — the trap `dev_server.py` documents), and `sys.path` gets the file's own
+  directory because the bundle layout is not guaranteed to have it.
+- **`scripts/dev_server.py` now routes `/api/<name>` → `api/<name>.py`**, exactly as Vercel does,
+  falling back to the water_report handler only for paths with no file. **This is the change that
+  makes the class of bug impossible to hide**: a missing entry point now fails locally too. The
+  startup banner lists the routes it will serve.
+- **`sanity_pass.js`**: new check — *every* `/api/<route>` the frontend fetches must have its own
+  `api/<name>.py`, derived from the scripts `index.html` loads (so a new call site or a renamed route
+  fails CI, not production).
+- README, `docs/CONTRACT.md`, `memory-bank/techContext.md` record the one-function-per-file rule.
+
+**Verification.** `node sanity_pass.js` → **141/141 GREEN** (`every /api route the client calls has
+its own Vercel entry point — /api/nearby_stations, /api/water_report`). Locally through the new
+per-route delegation: `/api/nearby_stations?lat=47.2&lon=-122.31` → 200 (1,487 bytes, 8 stations),
+`/api/water_report?site=12101500` → 200 (62,931 bytes), `?lat=1&lon=2` → 400 with
+`Coordinates outside the covered region`. Production re-verified after the push:
+`/api/nearby_stations` → **200** with stations.
+- Key files: `api/nearby_stations.py` (new), `scripts/dev_server.py`, `sanity_pass.js`,
+  `docs/CONTRACT.md`, `README.md`, `memory-bank/techContext.md`.
+
+
 User report: a screenshot of the Station tab with **both** errors showing — "Could not load nearby
 gauges" on the map and "Could not reach the gauge lookup" under the spot controls — with the saved
 spot reading "flow from the nearest gauge" and no star on the map.

@@ -17,6 +17,18 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **ROOT CAUSE of the phone's /api failures: `/api/nearby_stations` was never
+  deployed.** The debug trail showed a **Vercel** 404 (`NOT_FOUND pdx1::…`) while `/api/water_report`
+  answered 200 on the same device; `curl` against `thefishreport.vercel.app` confirmed 404 vs 200.
+  Vercel serves Python functions **one file per route**, and `/api/nearby_stations` existed only as a
+  branch inside `api/water_report.py` while `scripts/dev_server.py` routed *every* `/api/*` path to
+  that one handler — perfect locally, 404 in production, which broke the map feed, GPS lookup and
+  every saved-spot gauge resolution at once. Fix: new `api/nearby_stations.py` (subclass that
+  delegates to the same handler — one implementation), **dev server now routes `/api/<name>` to
+  `api/<name>.py` exactly as Vercel does** (so this class of bug can no longer hide locally), and a
+  new sanity check requires every `/api` route the client calls to have its own entry point.
+  Local: 200 with 8 stations; sanity **141/141**; production re-verified 200 after the push.
+
 - 2026-09-29 — **Every `/api/nearby_stations` consumer failed at once on the phone** (user screenshot:
   "Could not load nearby gauges" + "Could not reach the gauge lookup", a spot reading "flow from the
   nearest gauge", no star). The endpoint was healthy (HTTP 200, 0.59 s, 11 stations) — the client was

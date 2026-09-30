@@ -59,6 +59,43 @@ is `v2.03.33`, then re-try **My Saved Spots → 📍 Place a spot on the map →
 If anything still fails, open the debug trail (double-tap the header) — the status and body are in it
 now. Also still owed by eye: the Gear Sim HUD, the weather popup, and the saved-spot list/star layer.
 
+## ROOT CAUSE (2026-09-29, later) — `/api/nearby_stations` was never deployed
+
+**The phone's debug trail answered it:** `GET /api/nearby_stations -> HTTP 404 … NOT_FOUND pdx1::…`
+= a **Vercel** 404, while `/api/water_report` returned 200 on the same device. Confirmed from here:
+`curl https://thefishreport.vercel.app/api/nearby_stations?lat=47.2&lon=-122.31` → 404,
+`/api/water_report?site=12101500` → 200.
+
+**Why:** Vercel serves Python functions **one file per route**. `/api/nearby_stations` was only a
+branch inside `api/water_report.py`, and `scripts/dev_server.py` sent EVERY `/api/*` path to that one
+handler — so it looked perfect locally and in every sanity run, and 404'd only in production. Live
+map feed, GPS lookup and every saved-spot gauge resolution were broken only there.
+
+- [x] **`api/nearby_stations.py` (new)** — the deployed entry point: subclasses
+      `water_report.handler` and delegates to `do_GET` (which already recognises the path), so there
+      is still ONE implementation. Potential bug: a second `BaseHTTPRequestHandler` instance would
+      re-run `handle()` on a consumed socket and block forever — subclass + delegate only (the trap
+      `dev_server.py` documents). `sys.path` gets the file's own dir (bundle layout is not
+      guaranteed). Verified: local 200 with 8 stations through the new per-route delegation.
+- [x] **`scripts/dev_server.py` routes `/api/<name>` → `api/<name>.py`** like Vercel (fallback to the
+      water_report handler only when no such file), so a missing entry point fails LOCALLY too — the
+      real fix for this class of bug. Banner now lists the routes. Potential bug: `importlib`
+      caches modules, so an edit to `api/*.py` needs a dev-server restart (documented in
+      techContext.md). Verified: `/api/nearby_stations` → 200 (1,487 B), `/api/water_report` → 200
+      (62,931 B), `?lat=1&lon=2` → 400 `Coordinates outside the covered region`.
+- [x] **`sanity_pass.js`** — new check: every `/api/<route>` the frontend fetches must have its own
+      `api/<name>.py`, derived from the scripts `index.html` loads, so a new call site fails CI
+      instead of production. Verified: sanity **141/141 GREEN**.
+- [x] **Docs** — README + `docs/CONTRACT.md` + `memory-bank/techContext.md` record the
+      one-function-per-file rule and the route list.
+- [x] **Production verified after push** — `https://thefishreport.vercel.app/api/nearby_stations`
+      → **200** with stations (Vercel git integration deploys on push to `main`).
+
+**OWED BY EYE (user, phone):** re-open the app on the phone → **My Saved Spots → 📍 Place a spot on
+the map → tap the map** → the star appears AND the row should read `flow: <gauge> · N mi away`, and
+the map note should count nearest gauges instead of erroring. The existing "So" spot still says
+"flow from the nearest gauge" — opening it once resolves and persists its gauge.
+
 ## HANDOFF — 2026-09-29 (all approved work + summary/biology/rig-advice corrections shipped)
 
 Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), **WS-5**

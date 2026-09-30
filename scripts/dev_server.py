@@ -19,6 +19,7 @@ Usage::
     python3 scripts/dev_server.py 8000
 """
 
+import importlib
 import mimetypes
 import os
 import sys
@@ -30,14 +31,44 @@ sys.path.insert(0, os.path.join(ROOT, 'api'))
 
 import water_report  # noqa: E402  (path set up above)
 
+_API_DIR = os.path.join(ROOT, 'api')
+
+
+def _api_module(name):
+    """``api/<name>.py`` as a module, or None when no such entry point exists.
+
+    Vercel routes Python functions ONE FILE PER ROUTE, so this mirrors production
+    instead of sending every ``/api/*`` path to the water_report handler. That
+    difference is exactly what hid the missing ``/api/nearby_stations`` route: it
+    answered locally for months and 404'd on the deployed app (2026-09-29).
+    """
+    if not name.isidentifier():
+        return None
+    if not os.path.isfile(os.path.join(_API_DIR, name + '.py')):
+        return None
+    return importlib.import_module(name)
+
+
+def api_routes():
+    """The routes this server (and Vercel) will serve, for the startup banner."""
+    names = sorted(f[:-3] for f in os.listdir(_API_DIR)
+                   if f.endswith('.py') and not f.startswith('_'))
+    return ['/api/' + n for n in names]
+
 
 class Handler(water_report.handler):
-    """Static file server that delegates ``/api/*`` to the production handler."""
+    """Static file server that delegates ``/api/<name>`` to ``api/<name>.py``."""
 
     protocol_version = 'HTTP/1.0'   # sidestep keep-alive edge cases
 
     def do_GET(self):
-        if urlparse(self.path).path.startswith('/api/'):
+        path = urlparse(self.path).path
+        if path.startswith('/api/'):
+            mod = _api_module(path.split('/')[2])
+            if mod is not None:
+                return mod.handler.do_GET(self)
+            # No api/<name>.py for this path: it is one of the water_report handler's
+            # own routes (an unknown path answers there too, as it always has).
             return water_report.handler.do_GET(self)
         return self.serve_static()
 
@@ -83,7 +114,7 @@ def main():
     print('  root : %s' % ROOT)
     print('  host : %s' % display)
     print('  url  : http://%s:%d/index.html' % (display, port))
-    print('  api  : /api/* -> api/water_report.handler')
+    print('  api  : %s -> api/<name>.py (Vercel parity)' % ', '.join(api_routes()))
     print('  (LAN test: python3 scripts/dev_server.py --host=0.0.0.0 8000)')
     print('Ctrl-C to stop.')
     try:

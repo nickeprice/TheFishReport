@@ -17,6 +17,16 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **Recorded 4 migration studies + the Puget Sound regional drivers (no code).**
+  `LITERATURE.md` §7 adds four in-river adult *migration-activity* studies (Peterson 2017 NAJFM 37:78
+  plateau ~20 m³/s; Naylor 2025 NW Sci 98:2 move/sprint/stall; Damborg 2020 Can MS Rep 3026 <20/>80 cms)
+  that corroborate temp + flow as the drivers. §8 adds **region-specific drivers for our own gauges** —
+  Puyallup glacial turbidity; Green/Duwamish **>20–21 °C thermal block → salt-wedge staging until
+  <18 °C + a freshet**; Nisqually **flood-tide** delta crossing — and is **grey-lit (WRIA 9 / King
+  County DNRP / USGS), so verify before use**. Two candidates recorded but **NOT built**: flow-regime
+  boundaries and "Stall vs. Run" (`ROADMAP.md` §3.11 + §3.12). The two juvenile studies
+  (Kuruvilla 2026 smolt migration; Nichols 2026 seawater tolerance) are **out of scope**.
+
 - 2026-09-30 — **Recorded an external study as a Level 2 guardrail (no code).** Burke et al. 2013
   (PLoS ONE 8:e54134) — return-abundance forecasting from 31 marine indicators — corroborates
   temperature as the first-order salmon driver, and its randomized-indicators R²>0.9 warns against

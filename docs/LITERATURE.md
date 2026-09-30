@@ -87,6 +87,54 @@ are *migration behaviour*, not vertical holding depth.
 notebook residual showing our zone is systematically off at high/low conveyance. Until then:
 documented, not wired.
 
+## 7. Flow / migration activity — CORROBORATING (and a flow-regime candidate)
+
+These are in-river adult-salmon studies of migration **activity/counts/tactics** (not holding depth),
+so they corroborate that **temperature and flow are the dominant drivers** — which the model already
+encodes — rather than supplying a strike-zone threshold.
+
+| Study | Finding | Status |
+| --- | --- | --- |
+| Peterson, Fuller & Demko 2017, "Environmental Factors Associated with the Upstream Migration of Fall-Run Chinook Salmon in a Regulated River", NAJFM 37(1):78 | 12-yr, 38,206 fall-run Chinook (Stanislaus/San Joaquin, CA). **Migration activity plateaus — no more daily passages once flow exceeds ~20 m³/s**; temperature, moon, weather and a rock barrier also modelled; managed pulse flows had little effect. | Corroborating (flow drives behaviour) |
+| Naylor et al. 2025, "Prespawn Migration Patterns of Adult Spring Chinook Salmon in the Terminal Reaches of a Highly Altered Interior Stream", Northwest Science 98(2) (doi:10.3955/046.098.0205) | Spring Chinook (Grande Ronde, OR), radio tags + a move/hold Hidden-Markov model. **Higher temperature → more movement**; three tactics — rapid move to cold, **sprint**, **stall**; **stalling in the warmest reaches = highest prespawn mortality**; holding above thermal tolerance → mortality. | Corroborating (temperature dominant); move/hold nuance is for the mental model, no depth number |
+| Keefer et al. 2018, PLoS ONE 13:e0204274 | (duplicate of §1) | already in §1 |
+| Damborg, Stiff, Hyatt, Stockwell, Brown & Till 2020, "Water temperature, river discharge, and adult Chinook salmon migration observations in the Stamp/Somass watershed, 1986–2012", Can. MS Rep. Fish. Aquat. Sci. 3026 | Vancouver Island Chinook, 27-yr series. **"Low flow" < 20 cms and "high flow" > 80 cms** bracket the migration window; low-flow frequency rising since the 1980s. | Corroborating (flow-regime boundaries) |
+
+**Candidate — flow-regime boundaries (NOT built).** Two independent studies land on **~20 cms (~706 cfs)**
+as a "more water stops helping migration" plateau, with a high-flow bound at **80 cms**. Real concept,
+but **different rivers and units (cms vs our cfs)**, and it is *migration activity*, not *holding
+depth* — so no threshold transfers. Gate: a Puget-Sound-relevant number or the notebook residual.
+
+## 8. Puget Sound regional drivers — the app's own rivers (GREY-LIT; verify before use)
+
+Region-specific, directly on the rivers the app serves (USGS 12101500 Puyallup, 12113000 Auburn,
+12089500 McKenna). Sources are **WRIA 9 / King County DNRP / USGS** technical reports, not the
+peer-reviewed journals above — so every threshold here is **reported, verify against the source**
+before hard-coding.
+
+| Basin (gauge) | Reported limiting factor / trigger | Maps to |
+| --- | --- | --- |
+| Puyallup / White (12101500) | Glacial silt / turbidity: high glacial flour impairs visual feeding, fish travel **lower** in the column along gravel seams | `turbidityTerm()` (turbid → deep) |
+| Duwamish / Green (12113000 Auburn) | **Thermal block > 20–21 °C** (RM 7.9 → Auburn): adults stage in Elliott Bay / the lower salt wedge and refuse to push upstream until fall freshets drop temps **below 18 °C** | `thermalOptimum()` (stress > 68 °F — matches Keefer's 20 °C, region-confirmed) |
+| Nisqually (12089500 McKenna) | **Delta tidal flux**: fish cross the extensive shallow flats mainly on **high-slack / flood tides** (avoid stranding + seal predation) | `tideTerm()` (flood → up/active) |
+
+**Candidate — "Stall vs. Run" (a run-timing signal, NOT built).** For a tidal-reach river like the
+Green/Duwamish: `temp > 20–21 °C → fish staging in tidewater / salt wedge` (few in the river reach);
+`temp < 18 °C + an early-fall freshet (15–25 % discharge bump) → mass upstream movement`. This is a
+**"are the fish even here"** state, not a strike-zone depth, and it lives in the **estuary/tidal zone
+(RM 7.9 → Elliott Bay)** that the per-gauge model does not cover. Gate: **verify the 20–21 °C /
+18 °C / freshet numbers against WRIA 9** (govlink.org TMDL + Duwamish Blueprint), then decide
+whether it is a reach-level advisory rather than a strike-zone term.
+
+**Juvenile / outmigration (out of scope for the adult model):**
+- Kuruvilla, Quinn, Anderson, Scheuerell, Berger, Okasaki, McMillan, Pess, Westley & Berdahl 2026,
+  "Social influences complement environmental cues to stimulate migrating juvenile salmon",
+  Movement Ecology 14:33 (doi:10.1186/s40462-026-00644-y) — **smolt** outmigration (Puyallup/Skagit/
+  Dungeness), MARSS models; night migration, flow anomalies, hatchery pulses. Future *smolt-timing*
+  feature, not the adult strike zone.
+- Nichols et al. 2026, "Adaptive potential of Puget Sound Chinook salmon seawater tolerance", CJFAS
+  (doi:10.1139/cjfas-2026-0078) — **juvenile** smoltification/osmoregulation (genomics). Not our model.
+
 ## Honesty caveats (do not drop these)
 
 - **System mismatch.** Most thermal/dam studies are **Columbia/Snake** — a *dammed, impounded* system with ladders and reservoirs. Our rivers (Puyallup/White/Carbon/Green/Nisqually) are **free-flowing Puget Sound** streams. The **Goetz** (Puget Sound Chinook) and **sockeye-estuary** papers are the most directly on-point; Columbia thermal *thresholds* transfer, dam *dynamics* do not.

@@ -4,6 +4,29 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Recorded 4 migration studies (§7) + Puget Sound regional drivers (§8); 2 candidates
+
+Two literature passes, both **recorded only — no model/code change**.
+
+**§7 — Flow / migration activity (corroborating).** Peterson, Fuller & Demko 2017 (NAJFM 37:78) —
+12-yr, 38,206 fall-run Chinook, **migration activity plateaus above ~20 m³/s**; Naylor et al. 2025
+(NW Science 98:2, doi:10.3955/046.098.0205) — spring Chinook **move/sprint/stall** tactics, **warm-reach
+stalling = highest prespawn mortality**; Damborg et al. 2020 (Can. MS Rep. 3026) — **< 20 cms low /
+> 80 cms high** flow brackets, low-flow frequency rising since the 1980s. All are in-river *migration
+activity*, not holding depth → they corroborate temp + flow as the dominant drivers.
+**Candidate recorded (NOT built): flow-regime boundaries** — two studies agree on a ~20 cms (~706 cfs)
+plateau, but different rivers/units and no holding-depth number.
+
+**§8 — Puget Sound regional drivers (grey-lit; verify before use).** Region-specific to our own gauges
+(12101500 Puyallup, 12113000 Auburn, 12089500 McKenna), sourced from **WRIA 9 / King County DNRP /
+USGS** technical reports (not peer review). Maps: Puyallup glacial turbidity → fish travel **lower**
+(our `turbidityTerm()`); Green/Duwamish **thermal block > 20–21 °C** → adults stage in Elliott Bay /
+the salt wedge until **< 18 °C + an early-fall freshet** (our `thermalOptimum()`, region-confirming
+Keefer's 20 °C); Nisqually **flood / high-slack** delta crossing (our `tideTerm()`).
+**Candidate recorded (NOT built): "Stall vs. Run"** — a reach-level run-timing advisory, gated on
+verifying the grey-lit numbers against WRIA 9. Two **juvenile** studies are noted **out of scope** for
+the adult model (Kuruvilla et al. 2026 smolt migration; Nichols et al. 2026 seawater tolerance).
+
 ## 2026-09-30 — Recorded Luis & Pasternack 2023 (confluence micro-habitat); conveyance/Froude planned as a candidate
 User-provided study, directly on-topic (in-river). **Luis & Pasternack 2023**, *Fisheries Research*
 262:106634, doi:10.1016/j.fishres.2023.106634 — adult Chinook at the Feather–Yuba confluence select

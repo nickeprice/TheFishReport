@@ -241,6 +241,25 @@ side on every solve, so the switch is a render-time choice, not a second model.
 Cost when it is wanted: one persisted setting + a branch in `paintSimHud()`/`fishOutlook()`, plus
 the sanity assertions for both renderings. No physics, no contract change.
 
+### 3.11 Flow-regime boundaries (recorded 2026-09-30, NOT built)
+
+Two independent in-river adult-Chinook studies plateau at **~20 cms (~706 cfs)**: Peterson et al. 2017
+(NAJFM 37:78; Stanislaus) found migration activity stops rising above ~20 m³/s, and Damborg et al. 2020
+(Can. MS Rep. 3026; Vancouver Island) bracket the migration window as low flow < 20 cms, high flow
+> 80 cms. Naylor et al. 2025 (NW Science 98:2) adds the move/sprint/stall tactics and that warm-reach
+stalling is the mortality path. Gate: a Puget-Sound-relevant number or the notebook residual — the
+units (cms) and rivers differ, and it is migration *activity*, not holding depth. See `LITERATURE.md` §7.
+
+### 3.12 "Stall vs. Run" thermal run-timing signal (recorded 2026-09-30, NOT built)
+
+WRIA 9 / King County (grey-lit) report a **thermal block > 20–21 °C** from RM 7.9 → Auburn: Green/
+Duwamish fall Chinook + coho stage in Elliott Bay / the lower salt wedge and refuse to push upstream
+until fall freshets drop the river **below 18 °C**. Concept: a reach-level **run-timing advisory**
+("temps > 20 °C → fish staging in tidewater; wait for a freshet") — a *"are the fish even here"* state,
+distinct from the strike zone, and living in the estuary/tidal zone the per-gauge model does not cover.
+Gate: **verify the 20–21 °C / 18 °C / 15–25 % freshet numbers against WRIA 9** (the govlink.org TMDL +
+Duwamish Blueprint docs) before hard-coding. See `LITERATURE.md` §8.
+
 ## 4. Suggested phasing within 4.0
 
 1. **Accounts + RLS tier** (unblocks everything social).

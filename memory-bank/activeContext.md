@@ -64,6 +64,21 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   real sample size + a train/validation split before any re-fit. Cited in `sonar.js` +
   `ROADMAP.md` §3.2. No model code changed.
 
+- **Literature recorded (2026-09-30, NO code change): `LITERATURE.md` §7 + §8.**
+  **§7 (corroborating):** 4 in-river adult *migration-activity* studies — Peterson 2017 (NAJFM 37:78,
+  plateau ~20 m³/s), Naylor 2025 (NW Sci 98:2, move/sprint/stall; warm-reach stalling = mortality),
+  Damborg 2020 (Can. MS Rep. 3026, < 20 / > 80 cms brackets), Keefer 2018 (x-ref §1) → they confirm
+  temp + flow lead. **Flow-regime candidate** (~20 cms plateau) NOT built: units/rivers differ, and
+  it is activity, not holding depth.
+  **§8 (GREY-LIT — verify before use):** region-specific to our own gauges, sourced from WRIA 9 /
+  King County DNRP / USGS (not peer review). Puyallup glacial turbidity → fish lower (our
+  `turbidityTerm()`); Green/Duwamish **thermal block > 20–21 °C → stage in Elliott Bay/salt wedge
+  until < 18 °C + a freshet** (our `thermalOptimum()`, region-confirms Keefer's 20 °C); Nisqually
+  **flood / high-slack** delta crossing (our `tideTerm()`). **"Stall vs. Run" candidate** (a reach-level
+  run-timing advisory, NOT built; gate = verify the 20–21/18 °C/freshet numbers against WRIA 9).
+  Kuruvilla 2026 (smolt migration) + Nichols 2026 (seawater tolerance) = **juvenile, out of scope**.
+  Candidates live in `ROADMAP.md` §3.11 + §3.12.
+
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 
 - [x] **`src/shared/api.js` (new)** — `apiGetJson(path, opts)`: one retry 700 ms later for what a

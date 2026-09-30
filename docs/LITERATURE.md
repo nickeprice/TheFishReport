@@ -139,7 +139,10 @@ before hard-coding.
 
 *NOT verified — do not build on these.*
 - The **RM 7.9** specific figure and the **15–25 % freshet** trigger: **not found** in any readable
-  source (the WRIA 9 white papers are PDFs that our tooling returns as raw bytes).
+  source. The WRIA 9 white papers are PDFs this environment cannot read — there is no
+  `pdftotext`/`mutool`/`gs`/`qpdf` and no PyObjC, and the PDF streams carry **no `78` zlib header**
+  (i.e. they are encrypted), so a local `zlib` extraction fails too. **To close this:** paste the
+  relevant passage from *Green River Temperature and Salmon* (WRIA 9, 2017-02-28) or install poppler.
 - The **Nisqually "adults cross on flood tide"** claim: the USGS Nisqually work is explicitly
   **juvenile** — "as **juvenile Fall Chinook salmon are dependent on the estuary**" (USGS WFRC, Puget
   Sound Fall Chinook Estuarine Utilization / Nisqually otolith studies). The *adult* version is

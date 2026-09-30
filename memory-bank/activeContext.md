@@ -78,6 +78,16 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   run-timing advisory, NOT built; gate = verify the 20–21/18 °C/freshet numbers against WRIA 9).
   Kuruvilla 2026 (smolt migration) + Nichols 2026 (seawater tolerance) = **juvenile, out of scope**.
   Candidates live in `ROADMAP.md` §3.11 + §3.12.
+- **WRIA 9 verification pass run (2026-09-30, no code).** Read what the sources actually say:
+  **CONFIRMED** — WA Ecology criterion for the Lower Green = **63.5 °F (17.5 °C)**; observed summer
+  temps **70–72 °F (21.1–22.2 °C)**, **> 74 °F lethal**; **July 2015 > lethal at almost every mainstem
+  site in the lower 45 miles** (King County's own *2015 Temperature Data Compilation*, via American
+  Rivers). Adults **do** stage in Puget Sound estuaries (EoPS/Quinn 2025, naming Green River Soos
+  Creek), with peer-reviewed anchors **Strange 2013** (adult residence in a *stratified estuary*) +
+  **Strange 2010** (upper thermal limits to adult migration, Klamath). **NOT verified** — the **RM 7.9**
+  figure + **15–25 % freshet** trigger (WRIA 9 PDFs return as raw bytes to our tooling), and the
+  **Nisqually adult flood-tide** claim (the USGS Nisqually work is **juvenile**). Re-framed: "< 18 °C"
+  is the *regulatory criterion*, not a measured behavioural trigger.
 
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 

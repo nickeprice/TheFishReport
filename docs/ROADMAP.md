@@ -252,13 +252,18 @@ units (cms) and rivers differ, and it is migration *activity*, not holding depth
 
 ### 3.12 "Stall vs. Run" thermal run-timing signal (recorded 2026-09-30, NOT built)
 
-WRIA 9 / King County (grey-lit) report a **thermal block > 20–21 °C** from RM 7.9 → Auburn: Green/
-Duwamish fall Chinook + coho stage in Elliott Bay / the lower salt wedge and refuse to push upstream
-until fall freshets drop the river **below 18 °C**. Concept: a reach-level **run-timing advisory**
-("temps > 20 °C → fish staging in tidewater; wait for a freshet") — a *"are the fish even here"* state,
-distinct from the strike zone, and living in the estuary/tidal zone the per-gauge model does not cover.
-Gate: **verify the 20–21 °C / 18 °C / 15–25 % freshet numbers against WRIA 9** (the govlink.org TMDL +
-Duwamish Blueprint docs) before hard-coding. See `LITERATURE.md` §8.
+**Thermal numbers partly VERIFIED (2026-09-30).** Green/Duwamish: the **WA Ecology criterion for the
+Lower Green is 63.5 °F (17.5 °C)**; observed **Lower Green summer temps are 70–72 °F (21.1–22.2 °C)**,
+sometimes **> 74 °F (lethal)**, and July 2015 exceeded the lethal threshold at almost every mainstem
+site in the **lower 45 miles**. So the "20–21 °C block / < 18 °C" framing is real — but the **"< 18 °C"
+is the regulatory criterion, not a measured behavioural trigger**. Adults **do** stage in Puget Sound
+estuaries, and the mechanism now has peer-reviewed anchors: **Strange 2013** (adult Chinook residence
+in a *stratified estuary* — the salt-wedge hold) and **Strange 2010** (upper thermal limits to adult
+migration, Klamath). **Still unverified:** the **RM 7.9** figure and the **15–25 % freshet** trigger
+(not in any readable source), and the **Nisqually "adults cross on flood tide"** claim — the USGS
+Nisqually work is **juvenile**-focused. Gate: a source for the freshet trigger + the RM 7.9 figure
+before hard-coding; the run-timing advisory stays a reach-level (estuary) idea, not a strike-zone term.
+See `LITERATURE.md` §8.
 
 ## 4. Suggested phasing within 4.0
 

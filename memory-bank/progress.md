@@ -17,6 +17,16 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **WRIA 9 verification pass on the "Stall vs. Run" numbers (no code).** Confirmed from
+  readable sources: **WA Ecology criterion for the Lower Green = 63.5 °F (17.5 °C)**; observed summer
+  temps **70–72 °F (21.1–22.2 °C)**, **> 74 °F lethal**, **July 2015 > lethal at nearly every mainstem
+  site in the lower 45 miles** (King County *2015 Temperature Data Compilation*, via American Rivers).
+  Adults **do** stage in Puget Sound estuaries (EoPS / Quinn 2025 — Green River **Soos Creek**), with
+  peer-reviewed anchors now recorded: **Strange 2013** (adult residence in a *stratified estuary*) +
+  **Strange 2010** (upper thermal limits to adult migration, Klamath). **Not verified:** the **RM 7.9**
+  figure, the **15–25 % freshet** trigger, and the **Nisqually adult flood-tide** claim (USGS Nisqually
+  work is **juvenile**). "< 18 °C" = the *regulatory criterion*, not a measured trigger.
+
 - 2026-09-30 — **Recorded 4 migration studies + the Puget Sound regional drivers (no code).**
   `LITERATURE.md` §7 adds four in-river adult *migration-activity* studies (Peterson 2017 NAJFM 37:78
   plateau ~20 m³/s; Naylor 2025 NW Sci 98:2 move/sprint/stall; Damborg 2020 Can MS Rep 3026 <20/>80 cms)

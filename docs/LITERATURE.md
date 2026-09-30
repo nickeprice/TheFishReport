@@ -105,7 +105,7 @@ as a "more water stops helping migration" plateau, with a high-flow bound at **8
 but **different rivers and units (cms vs our cfs)**, and it is *migration activity*, not *holding
 depth* — so no threshold transfers. Gate: a Puget-Sound-relevant number or the notebook residual.
 
-## 8. Puget Sound regional drivers — the app's own rivers (GREY-LIT; verify before use)
+## 8. Puget Sound regional drivers — the app's own rivers (GREY-LIT; partly verified — see pass below)
 
 Region-specific, directly on the rivers the app serves (USGS 12101500 Puyallup, 12113000 Auburn,
 12089500 McKenna). Sources are **WRIA 9 / King County DNRP / USGS** technical reports, not the
@@ -116,7 +116,34 @@ before hard-coding.
 | --- | --- | --- |
 | Puyallup / White (12101500) | Glacial silt / turbidity: high glacial flour impairs visual feeding, fish travel **lower** in the column along gravel seams | `turbidityTerm()` (turbid → deep) |
 | Duwamish / Green (12113000 Auburn) | **Thermal block > 20–21 °C** (RM 7.9 → Auburn): adults stage in Elliott Bay / the lower salt wedge and refuse to push upstream until fall freshets drop temps **below 18 °C** | `thermalOptimum()` (stress > 68 °F — matches Keefer's 20 °C, region-confirmed) |
-| Nisqually (12089500 McKenna) | **Delta tidal flux**: fish cross the extensive shallow flats mainly on **high-slack / flood tides** (avoid stranding + seal predation) | `tideTerm()` (flood → up/active) |
+| Nisqually (12089500 McKenna) | **Delta tidal flux**: fish cross the extensive shallow flats mainly on **high-slack / flood tides** (avoid stranding + seal predation). **⚠️ Adult version UNVERIFIED — see below** | `tideTerm()` (flood → up/active) |
+
+**Verification pass (2026-09-30) — what the sources actually say.**
+
+*Confirmed from readable sources.*
+- The **WA Ecology temperature criterion for the Lower Green is 63.5 °F = 17.5 °C** ("healthy
+  maximum"). *("A River with a Fever Threatens Native Salmon", American Rivers, 2016-11-09.)*
+- **Observed Lower Green summer temps are 70–72 °F (21.1–22.2 °C)**, sometimes **> 74 °F (23.3 °C,
+  lethal)**; **July 2015 exceeded the lethal threshold at almost every mainstem site in the lower 45
+  miles** — citing **King County's *Green-Duwamish River 2015 Temperature Data Compilation and
+  Analysis (Draft)***, which is the document the user named. So the "**20–21 °C block**" matches
+  observed summer water, and the "**< 18 °C**" is really the *regulatory criterion* (17.5 °C), **not a
+  measured behavioural resume-migration trigger**.
+- **Adults do use Puget Sound estuaries before spawning.** *Encyclopedia of Puget Sound, "Chinook
+  salmon and estuary use in Puget Sound"* (T. P. Quinn, 2025-09-15), which also names the **Green
+  River Soos Creek** Chinook population.
+- The staging mechanism now has **peer-reviewed anchors**: **Strange 2013**, "Factors influencing the
+  behavior and duration of residence of adult Chinook salmon in a *stratified estuary*", *Environmental
+  Biology of Fishes* 96:225–243; and **Strange 2010**, "Upper thermal limits to migration in adult
+  Chinook salmon: evidence from the Klamath River basin", *Trans. Am. Fish. Soc.* 139:1091–1108.
+
+*NOT verified — do not build on these.*
+- The **RM 7.9** specific figure and the **15–25 % freshet** trigger: **not found** in any readable
+  source (the WRIA 9 white papers are PDFs that our tooling returns as raw bytes).
+- The **Nisqually "adults cross on flood tide"** claim: the USGS Nisqually work is explicitly
+  **juvenile** — "as **juvenile Fall Chinook salmon are dependent on the estuary**" (USGS WFRC, Puget
+  Sound Fall Chinook Estuarine Utilization / Nisqually otolith studies). The *adult* version is
+  unsupported by those sources.
 
 **Candidate — "Stall vs. Run" (a run-timing signal, NOT built).** For a tidal-reach river like the
 Green/Duwamish: `temp > 20–21 °C → fish staging in tidewater / salt wedge` (few in the river reach);

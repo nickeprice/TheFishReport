@@ -4,6 +4,20 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — WRIA 9 verification pass on the "Stall vs. Run" numbers (no code)
+
+Ran the verification gate on `LITERATURE.md` §8. **Confirmed** from readable sources: the **WA Ecology
+criterion for the Lower Green = 63.5 °F (17.5 °C)**; **observed Lower Green summer temps 70–72 °F
+(21.1–22.2 °C)**, **> 74 °F lethal**, and **July 2015 exceeded lethal at almost every mainstem site in
+the lower 45 miles** (American Rivers 2016, citing King County's *Green-Duwamish River 2015 Temperature
+Data Compilation and Analysis (Draft)*). Adults **do** stage in Puget Sound estuaries (Encyclopedia of
+Puget Sound / Quinn 2025, naming the Green River **Soos Creek** population), with peer-reviewed anchors
+now recorded: **Strange 2013** (adult Chinook residence in a *stratified estuary*) + **Strange 2010**
+(upper thermal limits to adult migration, Klamath). **Not verified:** the **RM 7.9** figure and the
+**15–25 % freshet** trigger (source PDFs return as raw bytes to our tooling), and the **Nisqually adult
+flood-tide crossing** — the USGS Nisqually work is **juvenile**-focused. Re-framed: the "< 18 °C" is
+the *regulatory criterion*, not a measured trigger. No code change.
+
 ## 2026-09-30 — README refreshed (docs map + waterbody list); no code change
 
 Found while answering "do we keep the README current?": the README **is** updated with behavior changes

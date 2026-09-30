@@ -4,6 +4,15 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — README refreshed (docs map + waterbody list); no code change
+
+Found while answering "do we keep the README current?": the README **is** updated with behavior changes
+(e.g. the sonar/tide commit changed it), but nothing *enforces* it, so it had drifted in two places —
+the "Repo docs" table omitted `docs/LITERATURE.md` (and `CONTRACT_TACKLE.md`), and the intro claimed
+**Puyallup / White / Carbon / Green / Nisqually** while `src/data/regions/washington.js` ships **15
+waterbodies** (adds Skagit, Snoqualmie, Skykomish, Snohomish, Stillaguamish, Cedar, Cowlitz, Toutle,
+Lewis, Kalama). Both corrected. No code, no `sw.js` version change (README is not a shell file).
+
 ## 2026-09-30 — Recorded 4 migration studies (§7) + Puget Sound regional drivers (§8); 2 candidates
 
 Two literature passes, both **recorded only — no model/code change**.

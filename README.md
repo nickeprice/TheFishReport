@@ -1,7 +1,8 @@
 # The Fish Report
 
-A mobile-first fishing companion for Washington's Puyallup / White / Carbon /
-Green / Nisqually rivers. Three tools in one shell:
+A mobile-first fishing companion for 15 Washington waterbodies — Puyallup, White,
+Carbon, Green, Nisqually, Skagit, Snoqualmie, Skykomish, Snohomish, Stillaguamish,
+Cedar, Cowlitz, Toutle, Lewis and Kalama. Three tools in one shell:
 
 1. **Water Report** — live USGS flow, barometer, tides, solunar, hatchery
    escapement, fishing-window scoring and WDFW legal hours.
@@ -76,7 +77,8 @@ depends on being fully defined first. `sanity_pass.js` derives this list from
 | `memory-bank/` | the six-file front page — project brief, product context, **current work focus**, system patterns, tech context, progress |
 | `AGENTS.md` + `.clinerules` | working rules and the plan/act workflow |
 | `docs/SYMBOLS.md` | file → public API index (find a function without opening files) |
-| `docs/CONTRACT*.md` | API, region, technique and catch contracts |
+| `docs/CONTRACT*.md` | API, region, technique, tackle and catch contracts |
+| `docs/LITERATURE.md` | the studies behind the environment model — thresholds + provenance |
 | `docs/ROADMAP.md` | forward plan (Update 4.0) |
 | `docs/ARCHIVE_UPDATE_3.0.md`, `docs/ARCHIVE.md`, `docs/CHANGELOG.md` | how the current code got here |
 

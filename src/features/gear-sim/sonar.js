@@ -1,58 +1,103 @@
 /**
  * src/features/gear-sim/sonar.js - community sonar (env-matched logged catches)
- * used to shift WHERE the fish hold. Never changes how water works.
- * public: envMatchWeight(), communitySonar(), getActiveReport(),
+ * used to shift WHERE the fish hold. Never changes how water works. The env match uses the
+ * SAME variable set the sim itself uses (envSignature() in zone.js) - temperature, light /
+ * cloud, turbidity, tide, barometric trend, rain - with weights that mirror how hard each
+ * term moves the zone. Wind and moon are deliberately not part of it.
+ * public: envMatchWeight(), envCloseness(), communitySonar(), getActiveReport(),
  *         getCurrentFlow()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // --- COMMUNITY SONAR ENVIRONMENT MATCH WEIGHTING ---
-// Each logged catch records the water temp / wind / moon at hookup time. When the
-// current live conditions resemble a catch's conditions, that catch is a better
-// predictor of where fish are RIGHT NOW, so it should pull the zone harder.
+// A catch is a better predictor of where fish are RIGHT NOW when the conditions it was logged
+// in resemble today's. The variables are EXACTLY the ones the sim itself uses to place the zone
+// (see envSignature() in zone.js) - temperature, light/cloud, turbidity, tide, barometric trend,
+// rain - so the sim and the sonar can never disagree about what matters. Each variable's weight
+// mirrors how much its term MOVES the zone in computeStrikeZone(): temperature leads, then
+// light/cloud, then colour and tide, then barometer and rain. Wind and moon are deliberately
+// ABSENT: they move surface conditions and activity timing, not the depth at which a river fish
+// holds, so the sim ignores them and so does this. DECLARED constants, not fitted - the same
+// honesty rule the sim's own terms follow. (A later level can re-fit these from real catch data.)
+var ENV_MATCH_WEIGHTS = {
+    tempF:          0.30,
+    lightCloud:     0.20,
+    turbidityFnu:   0.15,
+    tideStage:      0.15,
+    barometerDelta: 0.10,
+    rainIn:         0.10
+};
+
+// 1.0 when identical, 0.0 once they differ by `span` (or more); null when either side is
+// missing (an absent input is not a match and not a mismatch - it is simply not compared).
+function envCloseness(a, b, span) {
+    if (a === null || a === undefined || b === null || b === undefined) return null;
+    var d = Math.abs(Number(a) - Number(b));
+    if (!isFinite(d)) return null;
+    if (!(span > 0)) return d === 0 ? 1 : 0;
+    return Math.max(0, 1 - (d / span));
+}
+
 function envMatchWeight(row, rep) {
-    var score = 0, dims = 0;
+    var now = (typeof envSignature === 'function') ? envSignature(rep) : null;
+    if (!now || !row) return 1;                 // no live signature -> don't penalise legacy rows
 
-    // Water temperature: within 5F of today's is a strong match.
-    var nowTemp = (typeof getWaterTempF === 'function') ? getWaterTempF() : null;
-    var rowTemp = (row.waterTempF !== undefined && row.waterTempF !== null) ? Number(row.waterTempF) : null;
-    if (nowTemp !== null && rowTemp !== null) {
-        dims++;
-        var diff = Math.abs(nowTemp - rowTemp);
-        if (diff <= 5) { score += 1; }
-        else if (diff <= 10) { score += 0.5; }
+    var sum = 0, wsum = 0;
+    function add(key, closeness) {
+        if (closeness === null) return;
+        sum += ENV_MATCH_WEIGHTS[key] * closeness;
+        wsum += ENV_MATCH_WEIGHTS[key];
     }
 
-    // Wind speed: within 5 mph of today's is a match.
-    var nowWind = (typeof window.currentWindMph !== 'undefined' && window.currentWindMph != null) ? Number(window.currentWindMph) : null;
-    var rowWind = (row.windSpeedMph !== undefined && row.windSpeedMph !== null) ? Number(row.windSpeedMph) : null;
-    if (nowWind !== null && rowWind !== null) {
-        dims++;
-        var wdiff = Math.abs(nowWind - rowWind);
-        if (wdiff <= 5) { score += 1; }
-        else if (wdiff <= 10) { score += 0.5; }
-    }
+    add('tempF', envCloseness(row.waterTempF, now.tempF, 10));      // ~5F strong, 10F weak
+    // Light & cloud are two views of the same thing: average them when both exist.
+    var lightC = envCloseness(row.lightShift, now.lightShift, 1.5);
+    var cloudC = envCloseness(row.cloudPct, now.cloudPct, 60);
+    if (lightC !== null && cloudC !== null) add('lightCloud', (lightC + cloudC) / 2);
+    else if (lightC !== null) add('lightCloud', lightC);
+    else if (cloudC !== null) add('lightCloud', cloudC);
+    add('turbidityFnu', envCloseness(row.turbidityFnu, now.turbidityFnu, 30));
+    add('tideStage', envCloseness(row.tideStage, now.tideStage, 6));
+    add('barometerDelta', envCloseness(row.barometerDelta, now.barometerDelta, 0.2));
+    add('rainIn', envCloseness(row.rainIn, now.rainIn, 0.5));
 
-    // Moon phase: same phase bucket is a match (new/small waxing/first-quarter/gibbous/full...).
-    var nowMoon = (rep && rep.lunar_icon) ? String(rep.lunar_icon).trim() : '';
-    var rowMoon = (row.moonPhase !== undefined && row.moonPhase !== null) ? String(row.moonPhase).trim() : '';
-    if (nowMoon && rowMoon) {
-        dims++;
-        if (nowMoon === rowMoon) { score += 1; }
-        else {
-            // Fuzzy: both contain a shared meaningful token (e.g. "Full", "New", "Waxing").
-            var nowTokens = nowMoon.replace(/[^A-Za-z ]/g, '').split(/\s+/).filter(Boolean);
-            var rowTokens = rowMoon.replace(/[^A-Za-z ]/g, '').split(/\s+/).filter(Boolean);
-            var shared = nowTokens.some(function (t) { return rowTokens.indexOf(t) !== -1; });
-            if (shared) score += 0.5;
-        }
-    }
+    if (wsum === 0) return 1;                   // nothing comparable on either side: neutral
+    // Floor so a poor-but-real match still counts a little (0.20 .. 1.0).
+    return 0.20 + (0.80 * (sum / wsum));
+}
 
-    if (dims === 0) return 1;   // no env data on either side: don't penalise legacy rows
-    return 0.25 + ((score / dims) * 0.75);   // 0.25 (poor) .. 1.0 (exact)
+// ==================================================================================
+// THE NOTEBOOK (residual tracking)
+//
+// The residual for one catch = where the fish ACTUALLY was (the replayed presentation
+// height) minus the centre of the zone the model PREDICTED at that moment. Both sides are
+// stored (line_height_in, zone_min_in/zone_max_in) and the residual is DERIVED, never stored.
+//
+// HONEST SCOPE: the "actual" is itself computed with the locked rig physics, so the residual
+// measures the error in the WHERE-FISH-HOLD model GIVEN the rig physics is correct - it can
+// NOT validate the rig physics (that would be circular; the ruler cannot measure itself).
+// A persistent direction here tells us whether to fix the math, add a missing variable, or
+// re-measure - privately, over time.
+// ==================================================================================
+function catchPredictedCenter(row) {
+    var lo = (row && row.zoneMinIn !== undefined && row.zoneMinIn !== null) ? Number(row.zoneMinIn) : NaN;
+    var hi = (row && row.zoneMaxIn !== undefined && row.zoneMaxIn !== null) ? Number(row.zoneMaxIn) : NaN;
+    if (!isFinite(lo) || !isFinite(hi)) return null;     // no prediction stored (older client)
+    return (lo + hi) / 2;
+}
+
+function catchResidual(row) {
+    var c = catchPredictedCenter(row);
+    if (c === null) return null;
+    var actual = (row && row.lineHeightIn !== undefined && row.lineHeightIn !== null) ? Number(row.lineHeightIn) : NaN;
+    if (!isFinite(actual)) return null;                   // missing actual is not a zero residual
+    return actual - c;
 }
 
 function communitySonar(dbArray, flow, species, siteId) {
-    if (!dbArray || !dbArray.length) return { center: null, samples: 0, note: 'no community data yet' };
+    // No "not enough data" state: a single eligible catch contributes, and the ZONE-side
+    // pull is what keeps one catch from moving the zone far. Empty -> centre null, which
+    // simply means the physics zone stands alone.
+    if (!dbArray || !dbArray.length) return { center: null, samples: 0, matched: 0, note: '', residuals: [] };
     var rep = getActiveReport();
     // Deterministic: newest catches first, so the 8-sample window is stable
     // run-to-run regardless of Supabase/localStorage return order.
@@ -68,9 +113,12 @@ function communitySonar(dbArray, flow, species, siteId) {
     });
     var heights = [];
     var weights = [];
+    var residuals = [];
     for (var i = 0; i < sorted.length && heights.length < 8; i++) {
         var row = sorted[i];
-        if (!row || row.loc !== 'Fair') continue;                     // mouth-hooked fish only
+        // No mouth-hook filter: hooking location is not recorded on a catch, so a row is
+        // used on its flow / species / rig alone. (The zone-side pull keeps that honest.)
+        if (!row) continue;
         if (species && row.spc && row.spc !== species) continue;
         if (!row.flow || Math.abs(row.flow - flow) > 300) continue;    // same river stage
         if (!row.ldLen) continue;
@@ -108,9 +156,11 @@ function communitySonar(dbArray, flow, species, siteId) {
         if (isFinite(h) && h > 0) {
             heights.push(h);
             weights.push(envMatchWeight(row, rep));
+            var nb = catchResidual(row);
+            if (nb !== null) residuals.push(nb);
         }
     }
-    if (heights.length < 2) return { center: null, samples: heights.length, note: 'community sample too thin to shift the zone' };
+    if (heights.length < 1) return { center: null, samples: 0, matched: 0, note: '', residuals: residuals };
     var sum = 0, wsum = 0, matched = 0;
     for (var k = 0; k < heights.length; k++) {
         sum += heights[k] * weights[k];
@@ -118,10 +168,9 @@ function communitySonar(dbArray, flow, species, siteId) {
         if (weights[k] >= 0.75) matched++;
     }
     var center = sum / wsum;
-    var matchNote = (matched >= 2)
-        ? matched + ' of ' + heights.length + ' matches today\u2019s conditions'
-        : heights.length + ' recent catches, few matching today\u2019s conditions';
-    return { center: center, samples: heights.length, matched: matched, note: matchNote };
+    // `samples`/`matched` ride along for the caller's pull and for the notebook/residual,
+    // but are never printed to the angler (no count / confidence / "not enough data" text).
+    return { center: center, samples: heights.length, matched: matched, note: '', residuals: residuals };
 }
 
 // ==================================================================================

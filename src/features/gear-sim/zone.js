@@ -2,6 +2,7 @@
  * src/features/gear-sim/zone.js - rig requirements (no defaults), the strike
  * zone, and the best-rig search that moves the presentation into the zone.
  * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(), getTurbidityFnu(),
+ *         refHourBlock(), lightTerm(), turbidityTerm(), tideAt(), tideTerm(), envSignature(),
  *         computeStrikeZone(), gradeColor(), zoneColor(), zoneTrend(), positionParts(),
  *         whereToFish(), fishOutlook(), paintZoneHud(), refreshZonePreview(), bestZoneRig()
  * Classic script (global scope). Loaded BEFORE src/app.js.
@@ -231,6 +232,94 @@ function lightTerm(block, rep) {
     return null;
 }
 
+// ==================================================================================
+// TIDE TERM (tidal reaches only)
+//
+// On a tide-paired station the water pushes and pulls twice a day, and the fish move with it:
+// a rising (flood) tide lets them push up into shallower lies; the ebb drops them back into
+// deeper holding water. This is a SHIFT of WHERE they hold - it is NOT a change to the gauge's
+// measured flow, which stays authoritative. No tide curve for this station -> no term at all
+// (never invented). Only the stage and its trend are used; the ~12 ft Puyallup swing is not
+// converted into a velocity, because the gauge never measured that.
+// ==================================================================================
+var TIDE_RISING_SHIFT = 1.00;    // flood: fish move up with the push
+var TIDE_FALLING_SHIFT = -1.00;  // ebb: fish drop back to deeper water
+
+// The tide at the report's reference hour: { heightFt, trend, shift } or null when the day
+// carries no hourly tide curve. `trend` comes from the slope of the neighbouring hourly
+// points, never from a single extreme (which would flap run-to-run).
+function tideAt(block, rep) {
+    if (!block || !rep || !rep.tide_points || !rep.tide_points.length) return null;
+    var pts = rep.tide_points;
+    var target = Number(block.hour);
+    if (!isFinite(target)) return null;
+    var best = -1, bestDiff = Infinity;
+    for (var i = 0; i < pts.length; i++) {
+        var mins = parseClockMinutes(pts[i] && pts[i].t);
+        if (mins === null) continue;
+        var hh = mins / 60;
+        var d = Math.abs(hh - target);
+        if (d > 12) d = 24 - d;                 // wrapped clock distance
+        if (d < bestDiff) { bestDiff = d; best = i; }
+    }
+    if (best < 0) return null;
+    var h = Number(pts[best].h);
+    if (!isFinite(h)) return null;
+    var prev = (best > 0) ? Number(pts[best - 1].h) : NaN;
+    var next = (best < pts.length - 1) ? Number(pts[best + 1].h) : NaN;
+    var slope = 0;
+    if (isFinite(prev) && isFinite(next)) slope = (next - prev) / 2;
+    else if (isFinite(next)) slope = next - h;
+    else if (isFinite(prev)) slope = h - prev;
+    var trend = (slope > 0.05) ? 'rising' : (slope < -0.05) ? 'falling' : 'slack';
+    var shift = (trend === 'rising') ? TIDE_RISING_SHIFT : (trend === 'falling') ? TIDE_FALLING_SHIFT : 0;
+    return { heightFt: Math.round(h * 100) / 100, trend: trend, shift: Math.round(shift * 20) / 20 };
+}
+
+function tideTerm(block, rep) {
+    var t = tideAt(block, rep);
+    if (!t || t.shift === 0) return null;       // slack: no term, no note
+    return {
+        shift: t.shift, trend: t.trend, heightFt: t.heightFt,
+        label: t.trend + ' tide',
+        note: (t.shift > 0) ? 'fish push up into shallower water with the flood.'
+                            : 'fish drop back into deeper holding water on the ebb.'
+    };
+}
+
+// ==================================================================================
+// THE ENVIRONMENT SIGNATURE - the ONE variable set the sim and the sonar share.
+//
+// The sim builds the zone from these; the sonar matches a catch's stored signature against
+// today's. Same list both sides, so they can never disagree about what matters. Wind and
+// moon are DELIBERATELY absent: they move surface conditions and activity TIMING, not the
+// depth at which a river fish holds, so the sim ignores them and so does this. Every field
+// is null-safe: a missing input is null (never 0, never a guess).
+// ==================================================================================
+function envNum(v) {
+    if (v === null || v === undefined || v === '') return null;
+    var n = Number(v);
+    return isFinite(n) ? n : null;
+}
+
+function envSignature(rep) {
+    var r = rep || getActiveReport();
+    if (!r) return null;
+    var block = refHourBlock();
+    var light = block ? lightTerm(block, r) : null;
+    var tide = block ? tideAt(block, r) : null;
+    return {
+        tempF: getWaterTempF(),
+        cloudPct: envNum(r.cloud_pct),
+        rainIn: envNum(r.rain),
+        turbidityFnu: getTurbidityFnu(),
+        barometerDelta: envNum(r.press_delta),
+        tideStage: tide ? tide.heightFt : null,
+        tideTrend: tide ? tide.trend : null,
+        lightShift: light ? light.shift : null
+    };
+}
+
 function computeStrikeZone(sonar) {
     // sonar (optional): { center, samples } from communitySonar(). Weather sets the
     // baseline expectation; community catches act as live sonar that pulls the zone
@@ -307,29 +396,37 @@ function computeStrikeZone(sonar) {
         zone.notes.push(light.label.charAt(0).toUpperCase() + light.label.slice(1) + when + ': ' + light.note);
     }
 
+    // Tide (tidal reaches only): the flood lifts where fish hold, the ebb drops them back.
+    // No tide curve for this station -> no term at all.
+    var tide = tideTerm(block, rep);
+    if (tide) {
+        zone.shift += tide.shift;
+        zone.notes.push('Tide ' + tide.trend + ' (' + tide.heightFt.toFixed(1) + ' ft): ' + tide.note);
+    }
+
     } // end else (water report loaded) - sonar below runs with or without a report
 
     var zMin = BASE_ZONE_MIN + zone.shift;
     var zMax = BASE_ZONE_MAX + zone.shift;
-    // Community sonar: pull the weather zone toward where fish are actually biting.
-    // Weight grows with sample count (2 catches = 25% pull, 8+ catches = 50% pull),
-    // so a single lucky catch can't yank the zone but a real pattern moves it.
-    // Samples that match today's environmental conditions (water temp / wind / moon)
-    // pull harder than stale ones, so the zone reacts to conditions, not just history.
-    if (sonar && sonar.center !== null && sonar.center !== undefined && isFinite(sonar.center) && sonar.samples >= 2) {
+    // Community catches: pull the physics zone toward where fish are actually being caught.
+    // No minimum sample count - a single catch applies a small nudge, a real pattern moves
+    // it - and the pull is CAPPED so the evidence can never override the physics. The
+    // adjustment is applied SILENTLY (the angler just sees the zone move); the full
+    // provenance goes to the debug trail via zone.notes. No count / confidence / "not
+    // enough data" wording is produced anywhere.
+    if (sonar && sonar.center !== null && sonar.center !== undefined && isFinite(sonar.center) && sonar.samples >= 1) {
         var weatherCenter = (zMin + zMax) / 2;
         var halfWidth = (zMax - zMin) / 2;
-        var effective = (sonar.matched && sonar.matched >= 2) ? sonar.matched : sonar.samples;
-        var pull = Math.min(0.5, 0.125 + (effective * 0.046875));  // 2->~0.22, 8->0.5
+        var effective = (sonar.matched && sonar.matched >= 1) ? sonar.matched : sonar.samples;
+        var pull = Math.min(SONAR_PULL_MAX, SONAR_PULL_FLOOR + (effective * SONAR_PULL_STEP));
         var blended = weatherCenter + ((sonar.center - weatherCenter) * pull);
         zone.sonarShift = blended - weatherCenter;
         zMin = blended - halfWidth;
         zMax = blended + halfWidth;
         zone.sonar = sonar;
-        zone.notes.push('Recent community catches holding near ' + sonar.center.toFixed(1) + '" (' +
-            (sonar.matched && sonar.matched >= 2 ? sonar.matched + ' env-matched' : sonar.samples) + ' fish): zone pulled ' +
-            (zone.sonarShift >= 0 ? '+' : '') + zone.sonarShift.toFixed(1) + '" toward holding fish. ' +
-            sonar.note);
+        zone.notes.push('Recent catches pull the zone ' +
+            (zone.sonarShift >= 0 ? '+' : '') + zone.sonarShift.toFixed(1) +
+            '" toward where fish are being caught.');
     }
     if (zMin < 1.0) zMin = 1.0;
     if (zMax > 24.0) zMax = 24.0;
@@ -380,7 +477,16 @@ function zoneColor(hgt, zone) {
 // can saturate the scale, and keeping it leaves the pinned trend maths untouched.
 // The offset is quantised to 0.1" so the colour and the printed range agree. A community pull
 // can still saturate the scale (it is not bounded by the report rules), hence the clamp.
+// A tide-paired day adds up to +1.0" (flood) / -1.0" (ebb), which can push a stack to 7.7" -
+// above this scale. The constant deliberately STAYS 7.0 (the pinned trend maths is untouched)
+// and zoneTrend() clamps the ratio to 1, so the colour saturates instead of overflowing.
 var ZONE_TREND_FULL_SCALE = 7.0;
+
+// Community-sonar pull: grows with the number of env-matched catches and is CAPPED so the
+// evidence can nudge the physics zone but never override it. 1 catch -> ~0.14, 8+ -> 0.40.
+var SONAR_PULL_MAX = 0.40;
+var SONAR_PULL_FLOOR = 0.10;
+var SONAR_PULL_STEP = 0.0375;
 
 function zoneTrend(zone) {
     var baseMid = (BASE_ZONE_MIN + BASE_ZONE_MAX) / 2;
@@ -497,6 +603,9 @@ function whereToFish(zone, hgt) {
     var light = block ? lightTerm(block, getActiveReport()) : null;
     if (light) parts.push(light.label + ' at ' + (block.label || 'this hour') + ' keeps them ' +
         (light.shift > 0 ? 'up' : 'deep'));
+    var tide = block ? tideTerm(block, getActiveReport()) : null;
+    if (tide) parts.push(tide.label + ' at ' + (block.label || 'this hour') + ' moves them ' +
+        (tide.shift > 0 ? 'up' : 'deep'));
     if (p.line) parts.push(p.line);
     return 'Where to fish: ' + parts.join('; ') + '.';
 }

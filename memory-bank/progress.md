@@ -17,6 +17,19 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **Sonar + sim = one learning machine; tide in the model; dead code removed.** The
+  community sonar matched catches on temp/**wind/moon** while the sim placed the zone from
+  temp/light/cloud/turbidity/barometer/rain — two brains, and wind/moon do not move vertical
+  holding depth. Now `envSignature()` is the ONE shared set and `envMatchWeight()` weights it the
+  way the sim does (temp leads). The dead `loc !== 'Fair'` mouth-hook gate is DROPPED (no
+  hooking-location field), the ≥2-sample floor is gone, and the zone pull is silent + capped (no
+  count/confidence/"not enough data"). **Tide is now a first-principles term** (+1.0" flood /
+  −1.0" ebb on tide-paired stations, no curve → no term). The **notebook** (`catchResidual()` +
+  `communitySonar().residuals[]`) records the model's own error, debug-trail only. Migration
+  `20260930120000_sonar_env_snapshot` (env columns + notebook in the RPC) **still to apply**.
+  Cleaned up `debounce`/`showDay`/`fallbackStation`/`idbDelete`. `sw.js` `v2.03.34`, sanity
+  **143/143**.
+
 - 2026-09-29 — **Ledger audit + spot findings parked.** Ticked two stale `- [ ]` boxes for work that
   HAD shipped (WS-4 per-day weather/hourly popup), because a fresh chat reads an unticked box as open
   work. Then parked, at the user's explicit call, the four spot-feature findings found by reading the

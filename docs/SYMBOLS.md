@@ -56,7 +56,7 @@ this file**, or the pass fails.
 
 ## src/shared
 - **debug.js** — `logDebug(msg, source)` (+ the double-tap header matrix)
-- **ui.js** — `debounce(fn, wait)`, `showToast(msg, kind, ms, action)`
+- **ui.js** — `showToast(msg, kind, ms, action)`
 - **nav.js** — `switchTab(tabId)`, `resetToToday()`
 - **format.js** — `normalizeFeedRow(row)`, `formatCatchTime(value)`, `escapeHtml(value)`,
   `escapeJsString(value)`, `newUuid()`
@@ -76,8 +76,7 @@ this file**, or the pass fails.
   `onBeadMatChange(fieldId, fromLog)`, `tackleWeightOz(shape)`, `tackleBeadSizes(mat)` —
   the CASCADE (material -> brand -> lb test, weight type -> amount, bead material -> size)
   over `src/data/tackle.json`; the picks resolve into the hidden `ml-line`/`ld-line` id
-- **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`,
-  `idbDelete(store, key)`
+- **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`
 - **refresh.js** — `AUTO_REFRESH_MS`, `silenceableRefresh()`, `startAutoRefresh()`, `refreshNow()`
 - **pwa.js** — `registerServiceWorker()`, `applyTabDeepLink()`
 
@@ -88,7 +87,7 @@ this file**, or the pass fails.
 ## src/features/telemetry
 - **tide.js** — `getFMIColor(score)`, `tideHourOf()`, `formatTideRow()`, `tideCurveSvg()`
 - **hero.js** — `buildFishingHero(rep)`, `buildSpeciesCalendarHtml(calendar, escStocks)`
-- **daynav.js** — `activeDateOffset`, `reportsData`, `stepDate()`, `showDay()`,
+- **daynav.js** — `activeDateOffset`, `reportsData`, `stepDate()`,
   `updateActiveDateUI()`, `renderWaterReportEmptyState()`, `legalHoursLabel()`
 - **report.js** — `loadWaterReport(silent)`
 - **hourly.js** — `HOURLY_METRICS`, `openHourlyPopup(metricKey)`, `closeHourlyPopup()` — the
@@ -106,9 +105,14 @@ this file**, or the pass fails.
   `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2)
 - **physics.js** — `lineDiameterScale`, `beadDrag`/`beadSink`, `hookDrag`, `yarnDrag`,
   `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `presentationHeightInches()`
-- **sonar.js** — `envMatchWeight()`, `communitySonar(dbArray, flow, species, siteId)`,
-  `getActiveReport()`, `getCurrentFlow()`
+- **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
+  `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
+  `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME
+  variable set the sim uses (see `envSignature()`), max 8 newest eligible rows, and returns a
+  weighted centre + `residuals[]` (the notebook). No mouth-hook filter; no sample-count floor.
 - **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `getTurbidityFnu()`,
+  `refHourBlock()`, `lightTerm(block, rep)`, `turbidityTerm()`, `tideAt(block, rep)`,
+  `tideTerm(block, rep)`, `envSignature(rep)`,
   `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `depthBandText()`,
   `positionParts()`, `whereToFish()` (detail string), `fishOutlook()` (the 2-sentence HUD summary),
   `paintZoneHud(zone, outlook)`, `refreshZonePreview()`, `bestZoneRig(zone, rig, vel)`,
@@ -116,10 +120,13 @@ this file**, or the pass fails.
   `joinPlain()` (beginner), `plainDepthText()` —
   the HUD: two estimate banners + the summary paragraph, and the colour grade shared with line
   height. The report terms are the WS-8a set: demoted barometer ±1.2", thermal curve, own-gauge
-  colour/gauge terms, and the LIGHT term keyed on the sun's real elevation (`solarElevationDeg()`,
-  `solarDeclinationDeg()`, `activeStationLat()`, `lightTerm(block, rep)` — WS-8b b2′, monotone ramp
-  with no clock cliffs; the fixed brackets survive as the fallback). `zone.notes` still records every
-  reason for the log.
+  colour/gauge terms, the LIGHT term keyed on the sun's real elevation (`solarElevationDeg()`,
+  `solarDeclinationDeg()`, `activeStationLat()` — WS-8b b2′), and the TIDE term (`tideAt`/
+  `tideTerm`: +1.0" on a flood, −1.0" on an ebb, tide-paired stations only, no tide curve → no
+  term). `envSignature()` is the ONE variable set the sim and the sonar share (temperature,
+  light/cloud, turbidity, tide, barometric trend, rain — no wind, no moon). The community pull
+  is silent (no count/confidence text) and capped (`SONAR_PULL_*`). `zone.notes` still records
+  every reason for the log.
   **The rig search is two-pass**: leader/lead fixed first (corky → 2nd corky → hook → yarn → bead),
   leader/lead only as the fallback.
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
@@ -141,7 +148,7 @@ this file**, or the pass fails.
 
 ## src/features/station
 - **picker.js** — `openStationModal()`, `closeStationModal()`, `selectPreset()`,
-  `calcDistance()`, `fallbackStation()`, `useGPS()`
+  `calcDistance()`, `useGPS()`
 - **search.js** — `searchStation()`
 
 ## src/features/map

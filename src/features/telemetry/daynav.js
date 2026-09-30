@@ -1,7 +1,7 @@
 /**
  * src/features/telemetry/daynav.js - forecast-day navigation + empty state.
- * public: activeDateOffset, reportsData, stepDate(), showDay(),
- *         updateActiveDateUI(), renderWaterReportEmptyState(), legalHoursLabel()
+ * public: activeDateOffset, reportsData, stepDate(), updateActiveDateUI(),
+ *         renderWaterReportEmptyState(), legalHoursLabel()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 var activeDateOffset = 0;
@@ -14,13 +14,6 @@ function stepDate(delta) {
     if (newOffset > maxOffset) return;
     activeDateOffset = newOffset;
     updateActiveDateUI();
-}
-
-function showDay(dayId) {
-    var cards = document.getElementsByClassName('day-card');
-    for(var i = 0; i < cards.length; i++) { cards[i].style.display = 'none'; }
-    var target = document.getElementById(dayId);
-    if(target) target.style.display = 'block';
 }
 
 // Legal-hours resolution: the backend Open-Meteo payload is the single source of

@@ -45,6 +45,12 @@ async function logData() {
     }
     var foamRaw = getStr('foam');
     var activeRep = getActiveReport();
+    // The environment signature at catch time, over the SAME variable set the sim uses, so a
+    // later sim can match this catch's conditions against today's.
+    var envSig = (typeof envSignature === 'function') ? envSignature(activeRep) : null;
+    // The notebook: record the model's PREDICTED zone on every catch, even when the sim was
+    // not run - the residual (actual catch height vs this centre) needs both sides stored.
+    var priorZone = (!currentStats && typeof computeStrikeZone === 'function') ? computeStrikeZone() : null;
     // Decoupled from the Gear Sim: logging works straight from the form. When a
     // sim HAS been run we still carry its solved geometry (hook/height/zone) so
     // logs keep the rich private columns, but nothing here requires runSim().
@@ -89,9 +95,21 @@ async function logData() {
         windSpeed: (typeof window.currentWindMph !== 'undefined' && window.currentWindMph != null) ? window.currentWindMph : null,
         windDir: (typeof window.currentWindDir !== 'undefined' && window.currentWindDir != null) ? window.currentWindDir : null,
         moon: (activeRep && activeRep.lunar_icon != null) ? activeRep.lunar_icon : null,
+        // The shared environment signature (envSignature() in zone.js), stored so the sonar
+        // matches this catch's conditions against today's.
+        cloudPct: envSig ? envSig.cloudPct : null,
+        rainIn: envSig ? envSig.rainIn : null,
+        turbidityFnu: envSig ? envSig.turbidityFnu : null,
+        barometerDelta: envSig ? envSig.barometerDelta : null,
+        tideStage: envSig ? envSig.tideStage : null,
+        tideTrend: envSig ? envSig.tideTrend : null,
+        lightShift: envSig ? envSig.lightShift : null,
         hgt: (currentStats && currentStats.hgt != null) ? Number(currentStats.hgt.toFixed(2)) : null,
-        zoneMin: (currentStats && currentStats.zoneMin != null) ? Number(currentStats.zoneMin.toFixed(2)) : null,
-        zoneMax: (currentStats && currentStats.zoneMax != null) ? Number(currentStats.zoneMax.toFixed(2)) : null,
+        // Notebook: the zone the model showed, or (no sim run) the physics-prior zone.
+        zoneMin: (currentStats && currentStats.zoneMin != null) ? Number(currentStats.zoneMin.toFixed(2))
+               : (priorZone ? Number(priorZone.min.toFixed(2)) : null),
+        zoneMax: (currentStats && currentStats.zoneMax != null) ? Number(currentStats.zoneMax.toFixed(2))
+               : (priorZone ? Number(priorZone.max.toFixed(2)) : null),
         score: (currentStats && currentStats.score != null) ? Number(currentStats.score.toFixed(2)) : null
     };
 

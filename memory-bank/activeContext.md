@@ -15,6 +15,49 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
+## ACTIVE — 2026-09-30 sonar/sim = one learning machine + tide in the model + cleanup
+
+- [x] **The sin: the sim and the sonar were two brains.** The sim placed the zone from temp / light
+      / cloud / turbidity / barometer / rain; the sonar matched catches on temp / **wind / moon**.
+      Wind and moon do not move where a river fish holds *vertically* (surface + activity timing,
+      not depth), so weighting them like temperature diluted the one signal that matters. Worse,
+      the sonar was **inert**: the `row.loc !== 'Fair'` mouth-hook gate skipped EVERY row because
+      `hook_location` was dropped as always-NULL (2026-09-28).
+- [x] **User decisions (product calls, recorded):** (a) drop the mouth-hook filter — there is no
+      hooking-location field and none will be added; (b) include tide in the sim; (c) keep a
+      "notebook" of the model's own error; (d) NO catch-count / confidence / "not enough data"
+      text anywhere on the angler's surface.
+- [x] **`zone.js`** — `envSignature(rep)` = the ONE shared variable set (temp, cloud, rain,
+      turbidity, barometric trend, tide stage/trend, light shift; null-safe). **Tide term**
+      (`tideAt`/`tideTerm`): +1.0" flood / −1.0" ebb at the reference hour, from that day's
+      `tide_points`; slack or no curve → no term. **Blend** silent + capped (`SONAR_PULL_*`,
+      1 catch ≈ 0.14 → 8+ 0.40), no floor, count-free note. Potential bug: the tide slope uses a
+      ±0.05 ft deadband, so a near-flat curve reads slack — intended (never invent a direction).
+      Verified: sanity `tide term` + `community pull is silent and capped`.
+- [x] **`sonar.js`** — match rewritten over the shared set (`ENV_MATCH_WEIGHTS`, temp leads;
+      `envCloseness`), wind/moon gone, `envCloseness`/`catchPredictedCenter`/`catchResidual` added,
+      mouth-hook filter + ≥2-sample floor removed, `residuals[]` returned. Potential bug: a row
+      logged before this change has no env fields → `envMatchWeight` returns 1 (neutral), so old
+      catches still count at full weight; intended (don't penalise legacy rows).
+      Verified: sanity `a row with the picked brand replays at that brand` (single row used,
+      residual 6.00") — the old gate assertion is inverted.
+- [x] **`log.js` / `supabase.js`** — `envSignature()` stored at catch time; the predicted zone is
+      ALWAYS stored (physics prior via `computeStrikeZone()` when `currentStats` is null) so the
+      residual is computable. `fetchGlobalCalibration()` maps the env + notebook columns;
+      `loc`/`dist`/wind/moon mapping removed. `fetchMyCatches()` select gains the notebook columns.
+- [x] **Migration `20260930120000_sonar_env_snapshot`** — adds `cloud_pct`, `rain_in`,
+      `turbidity_fnu`, `barometer_delta`, `tide_stage_ft`, `tide_trend`, `light_shift`; recreates
+      `get_global_calibration` returning those + `line_height_in`/`zone_min_in`/`zone_max_in`.
+      RLS + `SECURITY DEFINER` preserved. **NOT YET APPLIED** (verified absent read-only) — the
+      client must not ship before it lands (PostgREST 400 / PGRST204).
+- [x] **Cleanup** — removed `debounce()`, `showDay()`, `fallbackStation()`, `idbDelete()` + their
+      `SYMBOLS.md` and sanity entries. Zero behaviour change.
+- `sw.js` `v2.03.34`; sanity **143/143** (was 141: −1 debounce, +3 tide/signature/pull).
+- **PARKED for the next level:** the notebook's residual is captured + logged but not yet
+  aggregated into a season view (Level 2). And the deeper "Level 2" learning — re-fitting the
+  env weights / thermal + light curves / baseline band from real catch volume — is NOT built; it
+  needs hundreds of rows and a deliberate contract bump (which re-pins the frozen baselines).
+
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 
 - [x] **`src/shared/api.js` (new)** — `apiGetJson(path, opts)`: one retry 700 ms later for what a

@@ -94,22 +94,19 @@ feature built from *your own* logged flow/tide/weather/gear data.
 
 - Fully private; no competition, no fabrication incentive.
 - Consumes the IndexedDB outbox + per-waterbody snapshot from Update 3.0.
-- **Re-enable the inert sonar filter (carried over from 3.0).** `communitySonar()` skips
-  any row whose `loc !== 'Fair'`, but nothing has ever populated that field
-  (`hook_location` was always NULL and was dropped 2026-09-28), so **every calibration row
-  is discarded** and the strike zone always uses its baseline. Decide whether to derive
-  "mouth-hooked" some other way or drop the filter — it CHANGES the Gear Sim's zone, which
-  is why it is a product decision rather than a cleanup.
-  - **DECIDED 2026-09-29 — leave it off for now (`d3`).** Live evidence at decision time:
-    `public.catches` held **1 row, 1 owner** (2026-09-17) and `communitySonar()` needs **≥2**
-    heights in the window before it shifts anything, so turning the filter off would be
-    invisible and then governed by a rule with no dataset. The gate also means something real
-    ("mouth-hooked fish only" — a tail-hooked rig height says nothing about feeding depth), so
-    dropping it would silently start counting foul-hooked fish. Revisit when there is catch
-    volume AND a populated hooking-location field (`d2`: a real form field + column + RPC
-    return; the old always-NULL `hook_location` is why this is a reversal, not a cleanup).
-    The RPC already returns everything the replay needs (heights are RECOMPUTED by
-    `presentationHeightInches`, so no `line_height_in` column is required).
+- **RESOLVED 2026-09-30 — the inert sonar is ON, and the mouth-hook filter is GONE.** The filter
+  was DROPPED, not re-derived: hooking location is not recorded on a catch and there is no field
+  to derive it from, so the product decision was to remove it rather than keep a gate with no
+  data behind it. `communitySonar()` now uses every same-stage / same-species row with a solvable
+  rig, matches on the SAME env signature the sim uses (temperature / light / cloud / turbidity /
+  tide / barometric trend / rain — no wind, no moon), drops the ≥2-sample floor, and applies a
+  capped, SILENT pull (no count / confidence / "not enough data" text). The residual (notebook)
+  is logged to the debug trail. Migration `20260930120000_sonar_env_snapshot`.
+  - **(historical) DECIDED 2026-09-29 — left off for now (`d3`).** Evidence at the time:
+    `public.catches` held 1 row / 1 owner and `communitySonar()` needed ≥2 heights, so dropping
+    the filter would have been invisible; and the gate meant something real ("mouth-hooked fish
+    only"). Superseded 2026-09-30 by the user's call to drop the filter outright (no
+    hooking-location field) and remove the floor.
 - Files: `src/features/season/`.
 
 ### 3.3 Crews + friends leaderboard

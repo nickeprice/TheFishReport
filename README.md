@@ -27,7 +27,7 @@ src/
   app.js                    BOOTSTRAP ONLY (33 lines): window.onload + the outbox load
   shared/                   reusable primitives (classic scripts, one global scope)
     debug.js                logDebug + the double-tap debug matrix
-    ui.js                   debounce + the toast stack
+    ui.js                   the toast stack
     nav.js                  switchTab / resetToToday
     format.js               feed-row normalise, time format, escaping, newUuid
     forms.js                line/material/field sync (shared by BOTH tabs)
@@ -105,9 +105,13 @@ them.
 - **Live telemetry** (`water.js`) is fetched concurrently via `Promise.all()` —
   CFS momentum, proxy water temperature and surface conditions are independent
   reads.
-- **Strike zone** combines weather (barometer, cloud, rain, water temp) with
-  *community sonar*: anonymised tackle telemetry from logged catches near the
-  current flow, pulled from the `get_global_calibration()` RPC.
+- **Strike zone** combines weather (barometer, cloud, rain, water temp, turbidity,
+  light, and **tide** on a tide-paired reach) with *community sonar*: anonymised
+  tackle telemetry from logged catches near the current flow, pulled from the
+  `get_global_calibration()` RPC. The sonar matches a catch on the SAME variable set
+  the sim uses (`envSignature()` — no wind, no moon), applies a **capped, silent** pull
+  (no catch count / confidence is shown), and keeps a private **notebook** of its own
+  residual error for later correction.
 - **Physics is locked** at drag coefficient 1.0. Every simulation output is a
   pure function of the form inputs plus the catch log, so identical inputs
   always return identical numbers.
@@ -174,10 +178,9 @@ There is no committed test runner; the codebase is validated by:
   - `label[for]` / accessible-name integrity against the markup + classic script order.
   - HTTP: static assets serve 200 with correct content types; `/api/water_report`
     returns 4 report days incl. `tide_curve` + `species_calendar`.
-  - Behavior (real `app.js` functions in a DOM-stubbed Node context): debounce
-    collapses a burst, toast renders in a `role=status` stack, `?tab=` deep links
-    activate the target tab, `switchTab` toggles `tab-active`, and the water-report
-    empty state renders.
+  - Behavior (real `app.js` functions in a DOM-stubbed Node context): toast renders
+    in a `role=status` stack, `?tab=` deep links activate the target tab, `switchTab`
+    toggles `tab-active`, and the water-report empty state renders.
 
 Run it with `node sanity_pass.js` (it picks a free port and cleans up after itself).
 

@@ -1,32 +1,9 @@
 /**
- * src/shared/ui.js - UI primitives: trailing debounce + toast stack.
- * public: debounce(fn, wait), showToast(msg, kind, ms, action)
+ * src/shared/ui.js - UI primitives: the toast stack.
+ * public: showToast(msg, kind, ms, action)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
-// --- UTILITIES: debounce + toast notifications ---
-
-/**
- * Trailing-edge debounce. Returns a wrapper that delays invoking `fn` until
- * `wait` ms have elapsed since the last call, so a burst of rapid input events
- * collapses into a single execution.
- *
- * Used by the Gear Sim inputs, which re-derive the strike-zone preview on every
- * keystroke; without this, typing "1040" into River Flow would run the physics
- * four times (1, 10, 104, 1040) instead of once.
- */
-function debounce(fn, wait) {
-    var timer = null;
-    var delay = (typeof wait === 'number') ? wait : 250;
-    return function () {
-        var args = arguments;
-        var ctx = this;
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(function () {
-            timer = null;
-            fn.apply(ctx, args);
-        }, delay);
-    };
-}
+// --- UTILITIES: toast notifications ---
 
 var TOAST_KIND_CLASS = {
     info: 'toast-info',

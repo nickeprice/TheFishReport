@@ -131,4 +131,16 @@ function paintSimHud(rig, out, stats) {
         (out.rigChanges && out.rigChanges.length ? ' | precise rig changes: ' + out.rigChanges.join(', ') +
             ' -> ' + hgt.toFixed(1) + '"' : '') +
         (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
+
+    // THE NOTEBOOK (debug trail only): the model's own error over the catches it used -
+    // residual = where the fish actually were minus where the model predicted. Both sides of
+    // every residual are stored on the catch, so it can be re-derived later. A persistent
+    // direction is the signal to fix the math, add a missing variable, or re-measure.
+    var nbRows = (out.sonar && out.sonar.residuals) ? out.sonar.residuals : [];
+    if (nbRows.length) {
+        var nbSum = 0;
+        for (var bi = 0; bi < nbRows.length; bi++) nbSum += nbRows[bi];
+        logDebug('Notebook: model residual ' + (nbSum / nbRows.length).toFixed(2) +
+            '" over ' + nbRows.length + ' catch(es) (actual - predicted)', 'SIM');
+    }
 }

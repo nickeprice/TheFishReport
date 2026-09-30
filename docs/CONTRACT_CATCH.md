@@ -12,7 +12,9 @@ where table_schema = 'public' and table_name = 'catches' order by ordinal_positi
 
 > Columns below were confirmed against the live DB on 2026-09-29, after migrations
 > `20260928000100_drop_dead_columns`, `20260928235500_drop_rod_ft` and
-> `20260929055300_line_ids_weight_shape`.
+> `20260929055300_line_ids_weight_shape`. The env-signature + notebook columns come from
+> `20260930120000_sonar_env_snapshot`, which must be applied BEFORE the client that writes
+> them ships (PostgREST rejects an unknown column with 400/PGRST204).
 
 ## Payload → column map
 
@@ -42,6 +44,20 @@ where table_schema = 'public' and table_name = 'catches' order by ordinal_positi
 | `hgt` | `line_height_in` | Gear Sim presentation height |
 | `zoneMin` / `zoneMax` | `zone_min_in`, `zone_max_in` | strike zone at log time |
 | `score` | `sim_score` | |
+| `cloudPct` | `cloud_pct` | env signature at catch time (migration `20260930120000`) |
+| `rainIn` | `rain_in` | same |
+| `turbidityFnu` | `turbidity_fnu` | same |
+| `barometerDelta` | `barometer_delta` | the barometric **trend** (`press_delta`), not absolute pressure |
+| `tideStage` / `tideTrend` | `tide_stage_ft`, `tide_trend` | tide stage/trend at the reference hour (tide-paired stations only) |
+| `lightShift` | `light_shift` | the light term's shift at the reference hour |
+
+The env-signature columns carry the SAME variables the Gear Sim uses to place the strike zone
+(`envSignature()` in `zone.js`), so the community sonar matches a catch on the same set —
+temperature, light/cloud, turbidity, tide, barometric trend, rain. Both sides store them and
+the residual (`line_height_in` vs the `zone_min_in`/`zone_max_in` centre) is DERIVED, never
+stored. Note `wind_speed_mph` / `wind_dir_compass` / `moon_phase` remain (written historically)
+but the sonar no longer reads them: they move surface conditions and activity timing, not the
+depth at which a river fish holds.
 
 **Server-side columns never written by the client:** `created_at` (default) and `bd_mat` /
 `bd_sz` (legacy duplicates of `bead_material` / `bead_size` — do not add new readers).
@@ -70,11 +86,13 @@ other users' rows).
 (it owns the measured diameter, which is what the drag term needs), material + lb as the fallback.
 `fetchGlobalCalibration()` already passes the ids through if the RPC ever returns them.
 
-**Deliberately NOT done: `get_global_calibration` does not return the ids yet.** It is
-`SECURITY DEFINER` and anon-executable, so adding brand-level tackle detail widens an anon-readable
-surface — and the entire community path is gated off anyway (`communitySonar()` skips every row
-whose `loc !== 'Fair'`, and nothing populates that field; see `docs/ROADMAP.md` §3.2). Widening the
-RPC before that gate is decided would change nothing for an angler. Revisit as ONE decision.
+**Still NOT returned: the brand ids.** `get_global_calibration` is `SECURITY DEFINER` and
+anon-executable, so adding brand-level tackle detail widens an anon-readable surface; the brand
+only changes the replayed diameter (material + lb is the fallback), so this remains a separate
+product decision. The env-signature columns AND the notebook (`line_height_in`, `zone_min_in`,
+`zone_max_in`) ARE returned as of migration `20260930120000`, because the community sonar and the
+residual need them. The mouth-hook gate that used to keep the whole path inert is gone — see
+`docs/ROADMAP.md` §3.2.
 
 ## Idempotency (Phase 3.2)
 

@@ -192,6 +192,17 @@ function toCatchRow(payload) {
         wind_speed_mph: (payload.windSpeed !== undefined && payload.windSpeed !== null) ? payload.windSpeed : null,
         wind_dir_compass: payload.windDir || null,
         moon_phase: payload.moon || null,
+        // The shared environment signature (envSignature() in zone.js) captured at catch
+        // time, so the community sonar can match a catch's conditions against today's.
+        // Must be sent AFTER migration 20260930120000 (PostgREST 400 on an unknown column).
+        cloud_pct: (payload.cloudPct !== undefined && payload.cloudPct !== null) ? payload.cloudPct : null,
+        rain_in: (payload.rainIn !== undefined && payload.rainIn !== null) ? payload.rainIn : null,
+        turbidity_fnu: (payload.turbidityFnu !== undefined && payload.turbidityFnu !== null) ? payload.turbidityFnu : null,
+        barometer_delta: (payload.barometerDelta !== undefined && payload.barometerDelta !== null) ? payload.barometerDelta : null,
+        tide_stage_ft: (payload.tideStage !== undefined && payload.tideStage !== null) ? payload.tideStage : null,
+        tide_trend: payload.tideTrend || null,
+        light_shift: (payload.lightShift !== undefined && payload.lightShift !== null) ? payload.lightShift : null,
+        // The notebook: what the model predicted (zone) and where the fish was (hgt).
         line_height_in: (payload.hgt !== undefined && payload.hgt !== null) ? payload.hgt : null,
         zone_min_in: (payload.zoneMin !== undefined && payload.zoneMin !== null) ? payload.zoneMin : null,
         zone_max_in: (payload.zoneMax !== undefined && payload.zoneMax !== null) ? payload.zoneMax : null,
@@ -231,7 +242,7 @@ async function fetchMyCatches() {
     if (!client) return [];
     try {
         var res = await client.from('catches')
-            .select('id,species,catch_time,flow,sim_score,angler_name,leader_length,leader_material,leader_lb,weight,foam,bead_material,bead_size,hook_size,yarn')
+            .select('id,species,catch_time,flow,sim_score,angler_name,leader_length,leader_material,leader_lb,weight,foam,bead_material,bead_size,hook_size,yarn,line_height_in,zone_min_in,zone_max_in')
             .order('catch_time', { ascending: false })
             .limit(100);
         if (res.error) return [];
@@ -378,16 +389,17 @@ async function fetchPublicFeed(limit) {
 /**
  * Community telemetry for the physics engine.
  *
- * STATUS (verified live 2026-09-28): the RPC is live and DOES return real rows — it
- * returned the single stored catch. The earlier "returns []" note here was stale.
+ * The RPC returns anonymised tackle + the environment signature for catches at the same
+ * river stage and species. `communitySonar()` replays each rig through the SAME locked
+ * physics to solve the height where that fish was caught, then pulls today's strike zone
+ * toward where fish are being caught.
  *
- * CAVEAT — the consumer is still inert: `communitySonar()` in gear-sim/sonar.js skips any
- * row whose `loc !== 'Fair'`, and nothing has ever populated that field (`hook_location`
- * was always NULL and was dropped on 2026-09-28). So every returned row is filtered out
- * and the strike zone keeps using its baseline. Fixing it CHANGES the Gear Sim's zone, so
- * it is a deliberate product decision, not a cleanup (see docs/ROADMAP.md §3.2).
+ * The env fields below are the SAME variables the sim uses to place the zone
+ * (temperature, light/cloud, turbidity, tide, barometric trend, rain) so the two work
+ * hand in hand. `line_height_in` / `zone_min_in` / `zone_max_in` are the notebook: what
+ * the model predicted vs where the fish actually was (the residual is derived, not stored).
  *
- * The mapper stays shape-tolerant so any future RPC shape still maps cleanly.
+ * The mapper stays shape-tolerant so a slightly different RPC shape still maps cleanly.
  */
 async function fetchGlobalCalibration(flow, species) {
     var client = getClient();
@@ -396,19 +408,21 @@ async function fetchGlobalCalibration(flow, species) {
         var res = await client.rpc('get_global_calibration', { p_flow: flow, p_species: species });
         if (res.error || !res.data) return [];
         return res.data.map(function (r) {
+            var num = function (v) {
+                if (v === null || v === undefined || v === '') return null;
+                var n = Number(v);
+                return isFinite(n) ? n : null;
+            };
             return {
                 flow: (r.cfs !== undefined) ? r.cfs : r.flow,
                 spc: (r.species !== undefined) ? r.species : (r.spc || species),
-                loc: null,   // `hook_location` was dropped 2026-09-28 (always NULL); see docs/ROADMAP.md §3.2
                 ldLen: (r.leader_len_ft !== undefined) ? r.leader_len_ft : r.leader_length,
                 ldMat: (r.leader_material !== undefined) ? r.leader_material : (r.ldMat || null),
                 ldLb: (r.leader_lb !== undefined) ? r.leader_lb : null,
                 mlMat: (r.mainline_mat !== undefined) ? r.mainline_mat : (r.mlMat || null),
                 mlLb: (r.mainline_lb !== undefined) ? r.mainline_lb : null,
-                // P4b: pass the brand ids through IF the RPC ever returns them, so the replay
-                // picks them up with no further client change. They are null today —
-                // `get_global_calibration` does not select the columns yet (see the P4b note
-                // in docs/CONTRACT_CATCH.md for why that is a deliberate product decision).
+                // P4b brand ids, passed through IF the RPC ever returns them (it does not
+                // select those columns yet — see the P4b note in docs/CONTRACT_CATCH.md).
                 ldLine: r.leader_line_id || null,
                 mlLine: r.mainline_line_id || null,
                 weightShape: r.weight_shape || null,
@@ -418,12 +432,19 @@ async function fetchGlobalCalibration(flow, species) {
                 foam: r.foam,
                 bdMat: (r.bead_mat !== undefined) ? r.bead_mat : r.bead_material,
                 bdSz: (r.bead_size !== undefined) ? r.bead_size : null,
-                dist: null,  // `cast_distance_ft` was dropped 2026-09-28 (always NULL)
-                waterTempF: (r.water_temp_f !== undefined) ? r.water_temp_f : null,
-                windSpeedMph: (r.wind_speed_mph !== undefined) ? r.wind_speed_mph : null,
-                windDirCompass: (r.wind_dir_compass !== undefined) ? r.wind_dir_compass : null,
-                moonPhase: (r.moon_phase !== undefined) ? r.moon_phase : null,
-                samples: r.samples
+                // The shared environment signature (envSignature() in zone.js).
+                waterTempF: num(r.water_temp_f),
+                cloudPct: num(r.cloud_pct),
+                rainIn: num(r.rain_in),
+                turbidityFnu: num(r.turbidity_fnu),
+                barometerDelta: num(r.barometer_delta),
+                tideStage: num(r.tide_stage_ft),
+                tideTrend: (r.tide_trend !== undefined) ? r.tide_trend : null,
+                lightShift: num(r.light_shift),
+                // The notebook: prediction vs reality, for the residual.
+                lineHeightIn: num(r.line_height_in),
+                zoneMinIn: num(r.zone_min_in),
+                zoneMaxIn: num(r.zone_max_in)
             };
         });
     } catch (e) {

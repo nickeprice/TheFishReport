@@ -8,7 +8,7 @@
  *      has an accessible name, and the classic script load order ends with app.js.
  *   3. HTTP/API: static 200s + water report shape (4 days, tide_curve, species_calendar).
  *   4. BEHAVIOR: load real app.js functions in a DOM-stubbed Node context and
- *      exercise debounce, toasts, deep links, tab switching, and the empty state.
+ *      exercise toasts, deep links, tab switching, and the empty state.
  *
  * Exit 0 on full pass, 1 on any failure.
  */
@@ -236,20 +236,21 @@ function staticIntegrity() {
          'no .zone-trend / #hud-zone-mark; no .hud-note variant')
     : fail('strike-zone gradient is on the estimate only (no strip, one bullet style)',
            'a trend strip or the dim bullet variant came back');
-  // The community note must stay OFF the HUD even though the sonar still moves the zone. The
-  // old display filter (zoneNotes/ZONE_NOTE_HIDDEN) went with the bullet list; the guarantee is
-  // now structural - the summary paragraph simply never prints community wording (asserted on
-  // the REAL fishOutlook() further down), while zone.notes still records the effect for the log.
+  // The community adjustment must stay OFF the HUD even though the sonar still moves the zone.
+  // The old display filter (zoneNotes/ZONE_NOTE_HIDDEN) went with the bullet list; the
+  // guarantee is now structural - the summary paragraph simply never prints community wording
+  // (asserted on the REAL fishOutlook() further down), while zone.notes still records the
+  // effect for the log. The new note is count-free (no "N fish" / confidence wording).
   {
     // Comments cannot display anything, so strip them: the check is about real code.
     const zoneSrcStatic = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'zone.js'), 'utf8')
       .replace(/\/\/[^\n]*/g, '');
-    (zoneSrcStatic.includes('Recent community catches holding') &&
+    (zoneSrcStatic.includes('Recent catches pull the zone') &&
      !/ZONE_NOTE_HIDDEN/.test(zoneSrcStatic) && !/function zoneNotes\(/.test(zoneSrcStatic) &&
      /function fishOutlook\(/.test(zoneSrcStatic))
-      ? ok('community-catch note is computed but never displayed',
-           'zone.notes keeps it for the log; the bullet filter left with the bullets; the summary never mentions it')
-      : fail('community-catch note is computed but never displayed', 'note missing, or the old filter came back');
+      ? ok('community-catch adjustment is computed but never displayed',
+           'zone.notes keeps it for the log; the summary never mentions it; the note is count-free')
+      : fail('community-catch adjustment is computed but never displayed', 'note missing, or the old filter came back');
   }
   // Bead labels read plainly (the "(Presentation)" suffix was a stray) and the Cheater float is
   // named "Cheater 10" (direct user corrections). The option VALUE stays 'c12', so parseFoam()
@@ -741,7 +742,7 @@ function behaviorChecks(done) {
     }
     return depth === 0 ? src.slice(idx, end) : null;
   }
-  const need = ['debounce', 'showToast', 'switchTab', 'applyTabDeepLink', 'renderWaterReportEmptyState', 'setCatchScope', 'legalHoursLabel'];
+  const need = ['showToast', 'switchTab', 'applyTabDeepLink', 'renderWaterReportEmptyState', 'setCatchScope', 'legalHoursLabel'];
   let code = '';
   // Bring in the top-level var showToast depends on
   {
@@ -1106,6 +1107,78 @@ function behaviorChecks(done) {
   } catch (e) {
     fail('zone terms: demoted barometer, own-gauge colour, reference-hour light', String(e.message).split('\n')[0]);
     fail('the light term rides the sun\'s real elevation (no cliffs, seasonal)', String(e.message).split('\n')[0]);
+  }
+
+  // --- Tide (tidal reaches only): flood lifts, ebb drops, slack / no curve add nothing ------
+  // The term keys on the tide stage+trend at the report's REFERENCE HOUR, read from that day's
+  // hourly tide_points. A station with NO tide curve gets no term at all (never invented).
+  try {
+    global.waterTempF = null;
+    global.turbidityFnu = null;
+    const tideRep = (pts) => [{ press_delta: 0, cloud_pct: 50, rain: 0, tide_points: pts,
+      weather_hour: { iso: '2026-09-30T09:00', label: '9-10 AM' } }];
+    reportsData = tideRep([{ t: '8:00 AM', h: 10.0 }, { t: '9:00 AM', h: 10.6 }, { t: '10:00 AM', h: 11.1 }]);
+    const wzFlood = computeStrikeZone();
+    reportsData = tideRep([{ t: '8:00 AM', h: 11.1 }, { t: '9:00 AM', h: 10.6 }, { t: '10:00 AM', h: 10.0 }]);
+    const wzEbb = computeStrikeZone();
+    reportsData = tideRep([{ t: '8:00 AM', h: 10.5 }, { t: '9:00 AM', h: 10.5 }, { t: '10:00 AM', h: 10.5 }]);
+    const wzSlack = computeStrikeZone();
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0,
+      weather_hour: { iso: '2026-09-30T09:00', label: '9-10 AM' } }];
+    const wzNoTide = computeStrikeZone();
+    const tideOk = Math.abs(wzFlood.shift - 1.0) < 1e-9 && Math.abs(wzEbb.shift + 1.0) < 1e-9 &&
+      Math.abs(wzSlack.shift) < 1e-9 && Math.abs(wzNoTide.shift) < 1e-9 &&
+      /Tide rising \(10\.6 ft\)/.test(wzFlood.notes.join(' | ')) &&
+      /Tide falling \(10\.6 ft\)/.test(wzEbb.notes.join(' | '));
+    tideOk
+      ? ok('tide term: flood lifts, ebb drops, slack and no-curve add nothing',
+           'rising +1.0", falling -1.0", slack 0, no tide_points 0')
+      : fail('tide term: flood lifts, ebb drops, slack and no-curve add nothing',
+             `flood=${wzFlood.shift} ebb=${wzEbb.shift} slack=${wzSlack.shift} none=${wzNoTide.shift}`);
+  } catch (e) {
+    fail('tide term: flood lifts, ebb drops, slack and no-curve add nothing', String(e.message).split('\n')[0]);
+  }
+
+  // --- The env signature: ONE shared variable set (no wind, no moon) -----------------------
+  try {
+    reportsData = [{ press_delta: -0.05, cloud_pct: 90, rain: 0.3,
+      weather_hour: { iso: '2026-09-30T09:00', label: '9-10 AM' } }];
+    global.waterTempF = 52;
+    global.turbidityFnu = 18;
+    const sig = envSignature();
+    const keys = Object.keys(sig).sort().join(',');
+    const want = 'barometerDelta,cloudPct,lightShift,rainIn,tempF,tideStage,tideTrend,turbidityFnu';
+    const sigOk = keys === want && sig.tempF === 52 && sig.cloudPct === 90 && sig.rainIn === 0.3 &&
+      sig.barometerDelta === -0.05 && sig.turbidityFnu === 18;
+    global.waterTempF = null;
+    global.turbidityFnu = null;
+    sigOk
+      ? ok('env signature is the one shared variable set',
+           'temp/cloud/light/turbidity/barometer/tide/rain; no wind, no moon')
+      : fail('env signature is the one shared variable set', `keys=${keys}`);
+  } catch (e) {
+    fail('env signature is the one shared variable set', String(e.message).split('\n')[0]);
+  }
+
+  // --- The community pull is SILENT and CAPPED (no count, no "not enough data") --------
+  try {
+    reportsData = [{ press_delta: 0, cloud_pct: 50, rain: 0 }];
+    const zNone = computeStrikeZone();
+    const zOne = computeStrikeZone({ center: 14, samples: 1, matched: 1, note: '' });
+    const notes = zOne.notes.join(' | ');
+    const pullOk = zOne.sonarShift !== 0 &&                    // a single sample now moves it
+      Math.abs(zOne.sonarShift) < 6 &&                          // but never all the way
+      /Recent catches pull the zone/.test(notes) &&
+      !/\d+\s*fish/i.test(notes) &&                             // no count
+      !/confidence|not enough/i.test(notes);                    // no confidence / no floor text
+    reportsData = [];
+    pullOk
+      ? ok('community pull is silent and capped',
+           `single catch nudged ${zOne.sonarShift.toFixed(2)}" of 6.00"; note carries no count/confidence`)
+      : fail('community pull is silent and capped',
+             `shift=${zOne.sonarShift} notes=${notes}`);
+  } catch (e) {
+    fail('community pull is silent and capped', String(e.message).split('\n')[0]);
   }
 
 
@@ -1753,12 +1826,11 @@ function behaviorChecks(done) {
   // The library is loaded by now, so an id-bearing calibration row must replay at the BRAND's
   // measured diameter while a material+lb-only row keeps the generic row for its class: the two
   // heights must therefore DIFFER. If they stop differing, the brand is being ignored again.
-  // (The rows carry loc:'Fair' because that gate decides whether a row is used at all — see the
-  // inert-sonar product decision in docs/ROADMAP.md §3.2 — and the last check pins the gate, so
-  // P4b cannot silently switch the whole sonar path on.)
+  // The mouth-hook filter is GONE (hooking location is not recorded on a catch), so a row with
+  // no `loc` — or `loc:null` — is INCLUDED, and a single row is enough to produce a centre.
   try {
     const baseRow = {
-      flow: 1040, spc: 'Chinook', loc: 'Fair', ldLen: 8, weight: 0.5, hook: '2', yarn: 0,
+      flow: 1040, spc: 'Chinook', ldLen: 8, weight: 0.5, hook: '2', yarn: 0,
       foam: '12', foam2: '0', bdMat: 'hard', bdSz: 6, ldMat: 'mono', ldLb: 12, mlMat: 'mono', mlLb: 15
     };
     const brandRow = Object.assign({}, baseRow, {
@@ -1771,13 +1843,17 @@ function behaviorChecks(done) {
     const fellBack = tackleRowLine(baseRow, 'leader');
     const prefersId = !!picked && picked.id === 'fluoro-seaguar-sts-8' && picked.diameter_mm === 0.235;
     const usesPair = !!fellBack && fellBack.material === 'mono' && Number(fellBack.lb_test) === 12;
-    const gate = communitySonar([Object.assign({}, brandRow, { loc: null })], 1040, 'Chinook', null).samples === 0;
+    // No mouth-hook gate: a single row with loc:null is INCLUDED (it used to be skipped).
+    const included = communitySonar([Object.assign({}, brandRow, { loc: null })], 1040, 'Chinook', null).samples === 1;
+    // The notebook: a row carrying a prediction + actual yields a residual; no prediction -> null.
+    const nb = catchResidual({ zoneMinIn: 4, zoneMaxIn: 12, lineHeightIn: 14 });
+    const nbOk = nb === 6 && catchResidual({ zoneMinIn: null, zoneMaxIn: null, lineHeightIn: 14 }) === null;
     (isFinite(genericCenter) && isFinite(brandCenter) &&
-     Math.abs(brandCenter - genericCenter) > 1e-3 && prefersId && usesPair && gate)
+     Math.abs(brandCenter - genericCenter) > 1e-3 && prefersId && usesPair && included && nbOk)
       ? ok('a row with the picked brand replays at that brand',
-           `generic ${genericCenter.toFixed(3)}" vs brand ${brandCenter.toFixed(3)}"`)
+           `generic ${genericCenter.toFixed(3)}" vs brand ${brandCenter.toFixed(3)}"; single row used; residual 6.00"`)
       : fail('a row with the picked brand replays at that brand',
-             `generic=${genericCenter} brand=${brandCenter} prefersId=${prefersId} usesPair=${usesPair} gate=${gate}`);
+             `generic=${genericCenter} brand=${brandCenter} prefersId=${prefersId} usesPair=${usesPair} included=${included} nb=${nb}`);
   } catch (e) {
     fail('a row with the picked brand replays at that brand', String(e.message).split('\n')[0]);
   }
@@ -1834,16 +1910,8 @@ function behaviorChecks(done) {
     fail('measured gauge velocity anchors to the locked reference', String(e.message).split('\n')[0]);
   }
 
-  // --- debounce ---
-  let calls = 0;
-  const db = debounce(() => { calls++; }, 30);
-  db(); db(); db();
+  // --- toast (async so the entry animation has a tick to run) ---
   setTimeout(() => {
-    calls === 1
-      ? ok('debounce collapses burst (trailing)', `3 calls → ${calls} execution`)
-      : fail('debounce collapses burst (trailing)', `${calls} executions`);
-
-    // --- toast ---
     showToast('hello', 'info', 300);
     elements['toast-stack'] || (document.body.lastChild && document.body.lastChild.id === 'toast-stack')
       ? ok('toast renders in a role=status stack', 'toast-stack present')

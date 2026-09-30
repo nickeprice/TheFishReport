@@ -4,6 +4,49 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Sonar + sim become ONE learning machine; tide joins the model; dead code removed
+Three product decisions from the user drove this: **(a)** the community sonar must match on the
+SAME variables the sim uses, **(b)** tide belongs in the Gear Sim, **(c)** the sim must keep a
+"notebook" of its own error so the hypothesis can be corrected like a biologist's. Plus the
+parked dead-code cleanup.
+
+**Why the sonar was wrong (and inert).** `communitySonar()` matched catches on **temp / wind /
+moon** while the sim placed the zone from **temp / light / cloud / turbidity / barometer / rain** —
+two different brains, and wind/moon do not move where a river fish holds *vertically*. Worse, the
+whole path was dead: a `row.loc !== 'Fair'` filter (mouth-hooked only) skipped every row, because
+`hook_location` was dropped as always-NULL in 2026-09-28. The user chose to DROP the filter, not
+re-derive it — there is no hooking-location field to populate.
+
+**What shipped.**
+- **`zone.js` — `envSignature(rep)`** is now the ONE variable set the sim and the sonar share
+  (temp, cloud, rain, turbidity, barometric **trend**, tide stage/trend, light shift) with every
+  field null-safe. **Tide term** (`tideAt`/`tideTerm`): on a tide-paired station, +1.0" flood /
+  −1.0" ebb at the report's reference hour, read from that day's `tide_points`; slack or no tide
+  curve → no term (never invented). Tide shifts WHERE fish hold, never the gauge's measured flow.
+- **`sonar.js` — the match rewritten** over the shared set with declared weights (temp 0.30 leads;
+  light/cloud 0.20, turbidity 0.15, tide 0.15, barometer 0.10, rain 0.10). Wind and moon removed.
+  **No mouth-hook filter, no ≥2-sample floor.** New **notebook**: `catchPredictedCenter()` /
+  `catchResidual()` and `communitySonar().residuals[]` (actual replayed height minus predicted
+  zone centre) — private, debug-trail only.
+- **`zone.js` blend** — silent + capped (`SONAR_PULL_*`: 1 catch ≈ 0.14, 8+ → 0.40), no count /
+  confidence / "not enough data" text anywhere. `zone.notes` keeps the full provenance for the log.
+- **`log.js` / `supabase.js`** — a catch now stores the env signature at log time, and ALWAYS
+  stores the predicted zone (physics prior when the sim was not run) so the residual is computable.
+  `fetchGlobalCalibration()` maps the new fields; `loc`/`dist`/wind/moon mapping removed.
+- **Migration `20260930120000_sonar_env_snapshot`** — adds `cloud_pct`, `rain_in`, `turbidity_fnu`,
+  `barometer_delta`, `tide_stage_ft`, `tide_trend`, `light_shift` to `public.catches` and returns
+  them + `line_height_in`/`zone_min_in`/`zone_max_in` from `get_global_calibration`. RLS +
+  `SECURITY DEFINER` preserved. **Apply before the client ships** (PostgREST 400 otherwise).
+- **Cleanup (dead code).** Removed four never-called globals + their `SYMBOLS.md` + sanity entries:
+  `debounce()`, `showDay()`, `fallbackStation()`, `idbDelete()`.
+- `sw.js` `v2.03.34`.
+
+**Verification.** `node sanity_pass.js` → **143/143 GREEN** (was 141: −1 debounce, +3 new — tide
+flood/ebb/slack/none, the env signature key set, and the silent capped pull). Frozen physics
+baselines did NOT move (the report-less fixtures are unchanged; the tide fixtures carry no
+`tide_points` so the 6.7" ceiling and 7.0 scale hold). Migration columns verified ABSENT live
+(read-only), i.e. still to be applied.
+
 ## 2026-09-29 — ROOT CAUSE FOUND: `/api/nearby_stations` was never deployed (Vercel 404)
 The phone's debug trail settled it: `ERR: GET /api/nearby_stations -> HTTP 404 The page could not
 be found NOT_FOUND pdx1::…` — a **Vercel** 404, while `/api/water_report` answered 200 (62 KB) on the

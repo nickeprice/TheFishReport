@@ -1,7 +1,7 @@
 /**
  * src/features/station/picker.js - station modal, GPS pick and presets.
  * public: openStationModal(), closeStationModal(), selectPreset(),
- *         calcDistance(), fallbackStation(), useGPS()
+ *         calcDistance(), useGPS()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
@@ -39,15 +39,11 @@ function calcDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-function fallbackStation() {
-    selectPreset('12101500', 47.1950, -122.3020, 'Puyallup River at Puyallup, WA', false);
-}
-
 // GPS pick. On ANY failure the modal stays OPEN with a retry hint - it is never
 // closed out from under the angler. The old auto-fallback straight to the Puyallup
-// default (fallbackStation -> selectPreset -> closeStationModal) is what made
-// "nearest river" look like it "failed and closed out of the menu". Retry = tap the
-// same button again (useGPS stays bound to it).
+// default (selectPreset -> closeStationModal) is what made "nearest river" look like
+// it "failed and closed out of the menu". Retry = tap the same button again (useGPS
+// stays bound to it).
 function useGPS() {
     var status = document.getElementById('gps-status');
     status.innerText = "Waiting for GPS (grant the location prompt)...";

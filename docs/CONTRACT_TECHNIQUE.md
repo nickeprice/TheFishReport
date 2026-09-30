@@ -58,6 +58,15 @@ A calibration row may carry the PICKED brand ids (`ldLine`/`mlLine`, or the DB n
 `tackleRowLine(row, role)` — brand id first (it owns the measured diameter), material + lb as the
 fallback — and passes the diameter into `totalDragPerFt`.
 
+Each row also carries the SAME environment signature the sim uses (`envSignature()` in `zone.js`):
+temperature, light/cloud, turbidity, tide, barometric trend, rain. `envMatchWeight()` scores a
+catch on that shared set, weighted by how hard each term moves the zone (temperature leads).
+Wind and moon are NOT part of it. There is **no mouth-hook filter and no sample-count floor**:
+every same-stage / same-species row with a solvable rig contributes, and the zone-side pull is
+what keeps a single catch from moving the zone far. `communitySonar()` also returns
+`residuals[]` — the notebook (actual replayed height minus the predicted zone centre), which is
+logged to the debug trail and never shown to the angler.
+
 ### Return value (consumed by `buildSimStats()` + `paintSimHud()`)
 
 ```js

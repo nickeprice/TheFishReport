@@ -1,8 +1,7 @@
 /**
  * src/shared/idb.js - a deliberately tiny promise wrapper over IndexedDB.
  *
- * public: idbAvailable(), idbOpen(), idbGetAll(store), idbPutAll(store, rows),
- *         idbDelete(store, key)
+ * public: idbAvailable(), idbOpen(), idbGetAll(store), idbPutAll(store, rows)
  *
  * The app only needs durable lists (catch records, a telemetry snapshot per waterbody),
  * so this wrapper stays minimal. IndexedDB is unavailable in some private-browsing modes
@@ -83,9 +82,4 @@ function idbPutAll(store, rows) {
         (rows || []).forEach(function (row) { os.put(row); });
         return true;
     }).catch(function () { return null; });
-}
-
-function idbDelete(store, key) {
-    return idbRun(store, 'readwrite', function (os) { os.delete(key); return true; })
-        .catch(function () { return null; });
 }

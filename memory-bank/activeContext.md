@@ -15,6 +15,50 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
+## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
+
+- [x] **`src/shared/api.js` (new)** — `apiGetJson(path, opts)`: one retry 700 ms later for what a
+      retry can fix (network error / timeout / 5xx / non-JSON body), 12 s per attempt, 4xx returned
+      immediately as the server's final word, `serverMessage` carrying the server's own text. Real
+      status + a SANITISED body slice go to the debug trail; the query string (coordinates) never
+      does. Potential bug: `logDebug()` writes with innerHTML, so a body slice must be escaped — it is
+      (`escapeHtml`), and `escapeHtml` is why `api.js` loads AFTER `src/shared/format.js`.
+      Verified: sanity `apiResilienceChecks()` — the log line reads
+      `GET /api/nearby_stations -> HTTP 502 &lt;html&gt;…&lt;/html&gt;` with no `lat`/`lon` anywhere.
+- [x] **`src/features/map/map.js`** — `refreshStationMap()` uses it, always returns an object
+      (`{count, note, error, status, spots}`; it used to `return 0`), and `plotSavedSpotStars()` runs
+      on EVERY refresh, failed ones included. That was the second real bug: the star layer sat after
+      the throwing `res.json()`, so a saved spot's star could not appear while the feed was down
+      (the old comment claimed the opposite). `showStationMap()` now prints the cause:
+      `Could not load nearby gauges (HTTP 502) — … Your saved spots (star) are still shown.`
+      Potential bug: the failure path deliberately does NOT `clearLayers()`, so stale gauge pins stay
+      — check for doubled stars if a refresh ever succeeds twice in a row (it cannot: the success
+      path clears first).
+      Verified: `refreshStationMap([47.2,-122.31])` with a 503 feed → `error` set, `count 0`,
+      `spots 1`, and `L.marker` called with the spot's own `47.19,-122.30`.
+- [x] **`src/features/map/spots.js`** — `resolveSpotStation()` uses it; "could not ask" stays apart
+      from "no gauge here" (incl. the API's HTTP 200 `USGS gauges could not be reached` note, which
+      must not read as a fact about the place); the row message appends the cause; `saveSpotAt()`
+      warns when the spot saved with no gauge instead of leaving a bare "flow from the nearest gauge".
+      Potential bug: the resolver's `note` test is a `/could not be reached/i` string match against
+      the API's wording — if `api/water_report.py` rewords that note, the match silently fails open
+      (an empty list reads as "no gauge here"). Verified by the same sanity check's three cases.
+- [x] **`index.html` (load order) + `sw.js` (`v2.03.33`, SHELL_FILES) + `docs/SYMBOLS.md`** —
+      verified by the existing `sw.js SHELL_FILES matches the index.html script list — 44 modules`,
+      `node --check`, `GET /src/shared/api.js → 200`, and the SYMBOLS coverage check.
+- [x] **`sanity_pass.js`** — new `apiResilienceChecks()` (+ DOM-stub fix: elements had no
+      `children`/`parentNode`, so a toast's dismiss timer crashed the whole run with a TypeError once
+      the new checks gave it time to fire). Verification Step: `node sanity_pass.js` → **140/140
+      GREEN**, with the earlier WS-5 regex `return { ok: false };` updated deliberately to the
+      resolver's new `{ ok: false, status: 0, error: 'no position' }` shape.
+
+**NEXT (user, on the phone):** `python3 scripts/dev_server.py --host=0.0.0.0 8000` (the default bind
+is 127.0.0.1, which a phone cannot reach — an installed app then runs from the service-worker shell
+and fails every `/api/*` call while tiles + Supabase still work) or the tunnel, reload until the app
+is `v2.03.33`, then re-try **My Saved Spots → 📍 Place a spot on the map → tap the map → star**.
+If anything still fails, open the debug trail (double-tap the header) — the status and body are in it
+now. Also still owed by eye: the Gear Sim HUD, the weather popup, and the saved-spot list/star layer.
+
 ## HANDOFF — 2026-09-29 (all approved work + summary/biology/rig-advice corrections shipped)
 
 Shipped and pushed: WS-1 (GPS modal), WS-2 (Gear Sim HUD), WS-3 (the gear cascade), **WS-5**

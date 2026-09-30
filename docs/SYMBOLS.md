@@ -18,7 +18,7 @@ this file**, or the pass fails.
 | 4 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
 | 5 | `src/services/supabase.js` | auth, catch writes, public feed, calibration RPC |
 | 6 | `src/services/water.js` | USGS WDFN / Open-Meteo / WDFW Socrata data layer |
-| 7 | `src/shared/*` | debug, ui, nav, format, forms, idb, refresh, pwa |
+| 7 | `src/shared/*` | debug, ui, nav, format, api, forms, idb, refresh, pwa |
 | 8 | `src/features/*` | auth, telemetry, gear-sim, catch-log, station, map |
 | 9 | `src/app.js` | **bootstrap only** — `window.onload` |
 
@@ -60,6 +60,12 @@ this file**, or the pass fails.
 - **nav.js** — `switchTab(tabId)`, `resetToToday()`
 - **format.js** — `normalizeFeedRow(row)`, `formatCatchTime(value)`, `escapeHtml(value)`,
   `escapeJsString(value)`, `newUuid()`
+- **api.js** — `apiGetJson(path, opts)` → `{ ok, status, data, error, serverMessage, note }`:
+  one resilient GET for the app's OWN `/api/*` endpoints (one retry on a cold/5xx/HTML
+  response, a per-attempt timeout, the real status + a sanitised body slice in the debug
+  trail, and NEVER the query string in a log — it carries coordinates). `ok:false` means
+  "we could not ask", which callers must not word as "the data says no". Used by
+  `src/features/map/map.js` + `src/features/map/spots.js`.
 - **forms.js** — `syncSelect(baseId, fromLog)`, `setFieldValue()`
 - **tackle.js** — `tackleLoad()`, `tackleItems(type)`, `tackleLineById(id)`,
   `tackleLineByMatLb(mat, lb)`, `tackleRowLine(row, role)` (brand id -> else material+lb),

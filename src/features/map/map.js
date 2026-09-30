@@ -101,33 +101,57 @@ function mapCenter() {
     return MAP_DEFAULT_CENTER;
 }
 
-async function refreshStationMap(center) {
-    if (!_stationMap || !_stationMarkers) return 0;
-    var res = await fetch('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1], { cache: 'no-store' });
-    var data = await res.json();
-    var stations = (data && data.stations) ? data.stations : [];
-    _stationMarkers.clearLayers();
-    window.L.circleMarker(center, { radius: 6, color: '#38bdf8', weight: 2, fillOpacity: 0.35 })
-        .addTo(_stationMarkers);
-    stations.forEach(function (s) {
-        if (s.lat == null || s.lon == null) return;
-        window.L.marker([s.lat, s.lon], { icon: mapPinIcon(s), title: s.name })
-            .bindPopup(stationPopupHtml(s))
+// The angler's OWN saved spots, as a star layer. Plotted from LOCAL state only, on every
+// refresh - including when the gauge feed failed, which is the point: a spot you already
+// saved must not vanish (or fail to appear) because the lookup was unreachable. Private
+// data: these coordinates are never sent anywhere by this plot.
+function plotSavedSpotStars() {
+    if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
+    if (typeof savedSpotIcon !== 'function') return 0;
+    var plotted = 0;
+    spotsState.rows.forEach(function (sp) {
+        if (sp.latitude == null || sp.longitude == null) return;
+        window.L.marker([Number(sp.latitude), Number(sp.longitude)], { icon: savedSpotIcon(), title: sp.label })
+            .bindPopup(savedSpotPopupHtml(sp))
             .addTo(_stationMarkers);
+        plotted++;
     });
-    // WS-5: the angler's OWN saved spots, as a star layer. Plotted from local state, so
-    // the layer appears even when /api/nearby_stations is unreachable. Private data:
-    // these coordinates are never sent anywhere by this plot.
-    if (typeof spotsState !== 'undefined' && spotsState.rows.length && typeof savedSpotIcon === 'function') {
-        spotsState.rows.forEach(function (sp) {
-            if (sp.latitude == null || sp.longitude == null) return;
-            window.L.marker([Number(sp.latitude), Number(sp.longitude)], { icon: savedSpotIcon(), title: sp.label })
-                .bindPopup(savedSpotPopupHtml(sp))
+    return plotted;
+}
+
+// { count, note, error, status, spots } - always an object, so callers can read the fields
+// without guarding. `error` set = we could not reach the lookup; `count` is then 0 and the
+// star layer is still painted.
+async function refreshStationMap(center) {
+    if (!_stationMap || !_stationMarkers || typeof apiGetJson !== 'function') {
+        return { count: 0, note: '', error: null, status: 0, spots: 0 };
+    }
+    var out = { count: 0, note: '', error: null, status: 0, spots: 0 };
+    var res = await apiGetJson('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1],
+                              { label: 'nearby_stations' });
+    if (res.ok) {
+        var stations = (res.data && res.data.stations) ? res.data.stations : [];
+        _stationMarkers.clearLayers();
+        window.L.circleMarker(center, { radius: 6, color: '#38bdf8', weight: 2, fillOpacity: 0.35 })
+            .addTo(_stationMarkers);
+        stations.forEach(function (s) {
+            if (s.lat == null || s.lon == null) return;
+            window.L.marker([s.lat, s.lon], { icon: mapPinIcon(s), title: s.name })
+                .bindPopup(stationPopupHtml(s))
                 .addTo(_stationMarkers);
         });
+        out.count = stations.length;
+        out.note = (res.data && res.data.note) || '';
+        logDebug('Station map: ' + stations.length + ' gauge(s) plotted', 'MAP');
+    } else {
+        // Do NOT clear the layer: stale gauge pins beat an empty map, and the star layer
+        // below is re-plotted regardless.
+        out.error = res.error;
+        out.status = res.status;
+        out.note = res.serverMessage || '';
     }
-    logDebug('Station map: ' + stations.length + ' gauge(s) plotted', 'MAP');
-    return { count: stations.length, note: (data && data.note) || '' };
+    out.spots = plotSavedSpotStars();
+    return out;
 }
 
 // --- SPOT PICKER (2026-09-29, direct user ask) ----------------------------------------
@@ -229,7 +253,13 @@ async function showStationMap() {
         if (note) {
             var spotsN = (typeof spotsState !== 'undefined' && spotsState.rows.length)
                 ? ' \u00b7 ' + spotsState.rows.length + ' saved spot(s) (star).' : '';
-            if (out.note) note.textContent = out.note;
+            if (out.error) {
+                // Name the CAUSE (status / timeout / network) instead of blaming the data:
+                // it is the only way to tell a tunnel hiccup from a code bug on a phone.
+                note.textContent = 'Could not load nearby gauges (' + out.error + ')' +
+                    ' \u2014 use the presets, search or GPS above.' + (out.spots ? ' Your saved spots (star) are still shown.' : '');
+            }
+            else if (out.note) note.textContent = out.note;
             else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live.' + spotsN + ' Tap a pin to fish it.';
             else note.textContent = 'No live gauges found nearby.' + spotsN;
         }

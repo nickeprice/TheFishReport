@@ -672,6 +672,10 @@ function behaviorChecks(done) {
     if (!elements[id]) {
       elements[id] = {
         innerText: '', textContent: '', innerHTML: '', value: '', style: {},
+        // children/parentNode are part of the shape a REAL element always has: a toast's
+        // dismiss timer reads stack.children.length, and a stub without it crashed the run
+        // (TypeError) as soon as that timer got a chance to fire (2026-09-29).
+        children: [], parentNode: undefined,
         className: '', classList: {
           add: (c) => { (classes[id] = classes[id] || new Set()).add(c); },
           remove: (c) => { if (classes[id]) classes[id].delete(c); },
@@ -1355,7 +1359,8 @@ function behaviorChecks(done) {
       /latitude: Number\(lat\),\s*\n\s*longitude: Number\(lon\)/.test(spotsSrc) &&
       /stationId: station \? station.id : null/.test(spotsSrc) &&
       /if \(!gaugeId\) \{/.test(spotsSrc) && !/That spot has no gauge saved/.test(spotsSrc) &&
-      /return \{ ok: false \};/.test(spotsSrc) && /resolved\.ok && resolved\.station/.test(spotsSrc) &&
+      /return \{ ok: false, status: 0, error: 'no position'/.test(spotsSrc) &&
+      /resolved\.ok && resolved\.station/.test(spotsSrc) &&
       !/saveRow\.hidden/.test(spotsSrc) && !/id="spot-save-row" hidden/.test(pageHtml) &&
       /function startSpotPick\(\)/.test(mapSrc) && /\.once\('click', onSpotPick\)/.test(mapSrc) &&
       /async function openSpotPickMap\(\)/.test(mapSrc) && /await showStationMap\(\)/.test(mapSrc) &&
@@ -1870,6 +1875,120 @@ function behaviorChecks(done) {
   function finish(done) { done(); }
 }
 
+// --- API resilience (2026-09-29 phone report) ------------------------------------------
+// The phone showed EVERY /api/nearby_stations consumer failing at once ("Could not load nearby
+// gauges" + "Could not reach the gauge lookup") while the endpoint was healthy from the dev
+// machine. A cold tunnel answers the FIRST request with an HTML error page instead of JSON -
+// the flake station/picker.js already retries for. The map + spot paths had no retry, and the
+// map threw on that page BEFORE plotting the saved-spot stars (so a saved spot vanished too).
+// These checks pin the retry, the honest wording, the coordinate hygiene, and the star layer.
+async function apiResilienceChecks() {
+  describe('API resilience (the /api/* lookups the map + spots use)');
+  const apiSrc = fs.readFileSync(path.join(ROOT, 'src', 'shared', 'api.js'), 'utf8');
+  const formatSrc = fs.readFileSync(path.join(ROOT, 'src', 'shared', 'format.js'), 'utf8');
+  const spotsSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'spots.js'), 'utf8');
+  const mapSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'map.js'), 'utf8');
+  const spotsMapSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'map', 'spots-map.js'), 'utf8');
+  const NAME = 'a cold /api lookup recovers on retry, names its cause, and keeps the star layer';
+  const realFetch = global.fetch;
+  const realWindow = global.window;
+  const realLogDebug = global.logDebug;
+  try {
+    const logs = [];
+    global.logDebug = (m) => logs.push(String(m));
+    // One scope, so the pure halves (api.js, format.js for escapeHtml, spots.js, map.js) can be
+    // called directly - the map builds its popup HTML eagerly, so format.js is required here.
+    eval(apiSrc + '\n' + formatSrc + '\n' + spotsSrc + '\n' + spotsMapSrc + '\n' + mapSrc);
+
+    const res_ = (status, body) => ({ ok: status >= 200 && status < 300, status, text: async () => body });
+    const HTML_502 = '<html><body><h1>502 Bad Gateway</h1></body></html>';
+    const ONE_STATION = JSON.stringify({ stations: [{ id: '12101500', name: 'Puyallup River at Puyallup, WA', lat: 47.2, lon: -122.31, distance_mi: 1.2 }] });
+    const nearest = [{ id: '12094000', name: 'Carbon River near Fairfax', lat: 47.02, lon: -122.03, distance_mi: 3.4 }];
+
+    // (1) Cold tunnel: the first answer is an HTML error page, the retry is real data. The
+    // status and a sanitised body slice reach the debug trail; the query string (it carries
+    // the angler's coordinates) never does.
+    let n = 0;
+    global.fetch = async () => (++n === 1 ? res_(502, HTML_502) : res_(200, ONE_STATION));
+    const cold = await apiGetJson('/api/nearby_stations?lat=47.1&lon=-122.2', { label: 'nearby_stations' });
+    const coldOk = cold.ok && cold.status === 200 && n === 2 && cold.data.stations.length === 1 &&
+      logs.some((l) => /HTTP 502/.test(l)) && logs.some((l) => /502 Bad Gateway/.test(l)) &&
+      logs.every((l) => !/47\.1|-122\.2/.test(l));
+
+    // (2) A permanent 5xx is retried then reported; a 4xx is the server's FINAL word, so it is
+    // not retried and the server's own message is what surfaces.
+    n = 0;
+    global.fetch = async () => { n++; return res_(503, 'gateway down'); };
+    const dead = await apiGetJson('/api/nearby_stations?lat=47.1&lon=-122.2', { label: 'nearby_stations' });
+    const deadTries = n;
+    n = 0;
+    global.fetch = async () => { n++; return res_(400, JSON.stringify({ stations: [], error: 'Coordinates outside the covered region' })); };
+    const refused = await apiGetJson('/api/nearby_stations?lat=1&lon=2', { label: 'nearby_stations' });
+    const statusOk = !dead.ok && dead.status === 503 && dead.error === 'HTTP 503' && deadTries === 2 && n === 1 &&
+      !refused.ok && /outside the covered region/.test(refused.serverMessage || '');
+
+    // (3) "Could not ask" stays distinct from "no gauge here" - including the API's own HTTP 200
+    // degradation note ("USGS gauges could not be reached"), which must NOT read as a fact.
+    global.fetch = async () => res_(200, JSON.stringify({ stations: [] }));
+    const noneNear = await resolveSpotStation(47.0, -122.0, null);
+    global.fetch = async () => res_(200, JSON.stringify({ stations: [], note: 'USGS gauges could not be reached (throttled or offline)' }));
+    const couldNotAsk = await resolveSpotStation(47.0, -122.0, null);
+    global.fetch = async () => res_(200, JSON.stringify({ stations: nearest }));
+    const gotIt = await resolveSpotStation(47.0, -122.0, null);
+    const resolverOk = noneNear.ok === true && noneNear.station === null &&
+      couldNotAsk.ok === false && /could not be reached/i.test(couldNotAsk.error || '') &&
+      gotIt.ok === true && gotIt.station.id === '12094000';
+    // (4) The saved-spot STAR LAYER is plotted from local state even when the feed is dead -
+    // that is the bug that left a saved spot off the phone's map entirely.
+    const marked = [];
+    global.window = { L: {
+      divIcon: (o) => ({ o }),
+      circleMarker: () => ({ addTo: () => {} }),
+      layerGroup: () => ({ addTo: () => {} }),
+      marker: (ll) => {
+        const m = { ll, bindPopup() { return m; }, addTo() { marked.push(ll); return m; } };
+        return m;
+      }
+    } };
+    spotsState.rows = [{ id: 's1', label: 'Smooth Operator', latitude: 47.19, longitude: -122.30 }];
+    _stationMap = { getZoom: () => 10, setView: () => {}, getContainer: () => ({ style: {} }), invalidateSize: () => {}, once: () => {} };
+    _stationMarkers = { clearLayers: () => {}, addTo: () => {} };
+    global.fetch = async () => res_(503, 'gateway down');
+    const outDead = await refreshStationMap([47.2, -122.31]);
+    const deadStarOk = !!outDead.error && outDead.count === 0 && outDead.spots === 1 &&
+      marked.length === 1 && marked[0][0] === 47.19 && marked[0][1] === -122.30;
+    global.fetch = async () => res_(200, ONE_STATION);
+    marked.length = 0;
+    const outLive = await refreshStationMap([47.2, -122.31]);
+    const liveStarOk = outLive.count === 1 && outLive.spots === 1 && !outLive.error && marked.length === 2;
+
+    // (5) Wiring: both consumers go through the helper (no bare fetch of the endpoint left),
+    // and both failure messages name the cause instead of blaming the data.
+    const wireOk = /apiGetJson\('\/api\/nearby_stations/.test(mapSrc) &&
+      /apiGetJson\('\/api\/nearby_stations/.test(spotsSrc) &&
+      !/await fetch\('\/api\/nearby_stations/.test(spotsSrc) &&
+      !/await fetch\('\/api\/nearby_stations/.test(mapSrc) &&
+      /function plotSavedSpotStars\(\)/.test(mapSrc) &&
+      /out\.spots = plotSavedSpotStars\(\)/.test(mapSrc) &&
+      /'Could not load nearby gauges \(' \+ out\.error \+ '\)'/.test(mapSrc) &&
+      /'Could not reach the gauge lookup' \+ \(why \?/.test(spotsSrc) &&
+      /attempts = opts\.attempts \|\| 2/.test(apiSrc) &&
+      /API_RETRY_DELAY_MS/.test(apiSrc);
+
+    (coldOk && statusOk && resolverOk && deadStarOk && liveStarOk && wireOk)
+      ? ok(NAME, 'retried the HTML 502 -> 200 (2 calls); 5xx retried, 4xx not; note != empty list; star plotted on a dead feed AND beside live gauges; no coordinates in the log')
+      : fail(NAME, `cold=${coldOk} status=${statusOk} resolver=${resolverOk} deadStar=${deadStarOk} ` +
+          `liveStar=${liveStarOk} wire=${wireOk} marked=${JSON.stringify(marked)} logs=[${logs.join(' | ')}]`);
+
+  } catch (e) {
+    fail(NAME, String(e.message).split('\n')[0]);
+  } finally {
+    global.fetch = realFetch;
+    global.logDebug = realLogDebug;
+    if (realWindow === undefined) delete global.window; else global.window = realWindow;
+  }
+}
+
 // Runner
 async function main() {
   if (!QUIET) {
@@ -1909,6 +2028,7 @@ async function main() {
     server = await startServer();
     await httpChecks();
     await new Promise((resolve) => behaviorChecks(resolve));
+    await apiResilienceChecks();
   } catch (e) {
     fail('dev server start', e.message);
   } finally {

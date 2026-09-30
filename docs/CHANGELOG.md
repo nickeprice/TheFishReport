@@ -4,7 +4,55 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
-## 2026-09-29 — FIX: "Place a spot on the map" did nothing (two blockers)
+## 2026-09-29 — FIX: every `/api/nearby_stations` consumer failed at once on the phone
+User report: a screenshot of the Station tab with **both** errors showing — "Could not load nearby
+gauges" on the map and "Could not reach the gauge lookup" under the spot controls — with the saved
+spot reading "flow from the nearest gauge" and no star on the map.
+
+**Diagnosis.** The endpoint itself is healthy:
+`curl 'http://127.0.0.1:8123/api/nearby_stations?lat=47.2&lon=-122.31'` → **HTTP 200 in 0.59 s, 11
+stations**. So the failure was client-side, and both messages came from the same call:
+`refreshStationMap()` called `res.json()` without checking `res.ok`, so an HTML error page **threw**
+(the catch then printed the "nearby gauges" line), while `resolveSpotStation()` returned `{ok:false}`
+for any non-2xx. Both were the *first* request of a cold connection — `picker.js` already documents
+that a cold tunnel answers the first request with an aborted/HTML body and retries for exactly this
+reason; the map and spot paths never did.
+Also recorded: the phone can only reach `/api/*` when the dev server is reachable from it —
+`scripts/dev_server.py` binds **127.0.0.1** unless you pass `--host=0.0.0.0` — so an installed app
+opened with no server on the LAN loads its shell from the service worker and fails every `/api/*`
+call while map tiles and Supabase still work.
+
+**What shipped.**
+- **New `src/shared/api.js`** — `apiGetJson(path, opts)`: one retry 700 ms later for the failures a
+  retry can fix (network error, timeout, 5xx, non-JSON body), a per-attempt 12 s timeout, a 4xx
+  reported immediately as the server's final word (no pointless retry), and the server's own message
+  surfaced as `serverMessage`. The real status + a **sanitised** body slice go to the debug trail
+  (logDebug writes with innerHTML); **the query string is never logged** — it carries coordinates.
+- **`map.js`** — `refreshStationMap()` goes through it, always returns an OBJECT
+  (`{count, note, error, status, spots}`; it used to `return 0`), and **plots the saved-spot star
+  layer on every refresh, failed ones included**. Second real bug: the star layer sat AFTER the
+  throwing `res.json()`, so a private spot's star could never appear while the feed was down — the
+  old comment claimed the opposite. The failure note now names the cause: "Could not load nearby
+  gauges (HTTP 502) — use the presets, search or GPS above. Your saved spots (star) are still shown."
+- **`spots.js`** — `resolveSpotStation()` goes through it and keeps "could not ask" apart from "no
+  gauge here", including the API's own HTTP 200 "USGS gauges could not be reached" note, which must
+  never read as the fact "no gauge exists here"; the message adds the cause, and saving a spot whose
+  gauge lookup failed now says so instead of leaving a bare "flow from the nearest gauge".
+- `index.html` (load order) + `sw.js` (`v2.03.33`, SHELL_FILES), `docs/SYMBOLS.md`.
+
+**Verification.** `node sanity_pass.js` → **140/140 GREEN**. New `apiResilienceChecks()` drives the
+real code with a stubbed fetch: an HTML 502 then 200 (recovers on the 2nd call, status + body in the
+trail, no coordinates in the log), a permanent 503 (retried then reported), a 400 (not retried, the
+server's message wins), the resolver's three answers, and the star layer plotted on a dead feed AND
+beside live gauges.
+Harness fix: the DOM stub's elements had no `children`/`parentNode`, so a toast's dismiss timer
+crashed the whole run with a TypeError as soon as a new check gave it time to fire (the stub now
+matches a real element, and two leaked dev servers from those crashed runs were killed).
+Re-test on the phone: `python3 scripts/dev_server.py --host=0.0.0.0 8000` (or the tunnel), reload so
+the app picks up `v2.03.33`, and read the debug trail if it fails again — it now carries the HTTP
+status and body.
+
+
 User report: *"map select still not working"*. Two independent defects, either of which alone made
 the button look dead — plus a third that would have failed at the last step.
 

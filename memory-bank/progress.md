@@ -17,6 +17,18 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **Every `/api/nearby_stations` consumer failed at once on the phone** (user screenshot:
+  "Could not load nearby gauges" + "Could not reach the gauge lookup", a spot reading "flow from the
+  nearest gauge", no star). The endpoint was healthy (HTTP 200, 0.59 s, 11 stations) — the client was
+  wrong: the map called `res.json()` without checking `res.ok` (an HTML error page threw) and the spot
+  resolver collapsed any non-2xx into "unreachable", both on the FIRST request of a cold connection
+  (`picker.js` already retried for that; these did not). New `src/shared/api.js` `apiGetJson()` adds
+  one retry, a 12 s timeout, a 4xx-is-final rule, the server's own message, and a sanitised
+  status+body line in the debug trail (never the query string). The map now always returns an object
+  and **plots the saved-spot star layer even when the gauge feed fails** (it sat after the throwing
+  `res.json()`, so a private spot could never appear) and names the cause of a failure. `sw.js`
+  `v2.03.33`, **140/140**.
+
 - 2026-09-29 — **A saved spot is a LAT/LON you pick on the map** (direct user correction: "its not
   save a guage pin… so i can pull the data for that"): new map picker (`startSpotPick()` /
   `onSpotPick(e)` + a modal button), the tap's latlng is saved by `saveSpotAt()`, and the gauge that

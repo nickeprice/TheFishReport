@@ -179,19 +179,27 @@ function pickNearestStation(list, preferId) {
     return nearest;
 }
 
-// { ok: true, station: {id,name,distance}|null } | { ok: false }
-// ok:false means "we could not ask" (offline / server error) - NOT "there is no gauge".
+// { ok: true, station: {id,name,distance}|null } | { ok: false, status, error, serverMessage }
+// ok:false means "we could not ask" (offline / server error / USGS unreachable) - NOT "there is
+// no gauge". The two need different words: only the second one is a fact about the place.
 async function resolveSpotStation(lat, lon, preferId) {
-    if (typeof fetch !== 'function' || lat == null || lon == null) return { ok: false };
-    try {
-        var res = await fetch('/api/nearby_stations?lat=' + lat + '&lon=' + lon, { cache: 'no-store' });
-        if (!res.ok) return { ok: false };
-        var data = await res.json();
-        var list = (data && data.stations) ? data.stations : [];
-        return { ok: true, station: pickNearestStation(list, preferId) };
-    } catch (e) {
-        return { ok: false };
+    if (typeof fetch !== 'function' || lat == null || lon == null) {
+        return { ok: false, status: 0, error: 'no position', serverMessage: null };
     }
+    var res = await apiGetJson('/api/nearby_stations?lat=' + lat + '&lon=' + lon,
+                               { label: 'nearby_stations' });
+    if (!res.ok) {
+        return { ok: false, status: res.status, error: res.error, serverMessage: res.serverMessage };
+    }
+    // HTTP 200 carrying the server's degradation note = BOTH USGS upstreams were unreachable.
+    // That is "could not ask", never the fact "no gauge exists here" (the API is explicit about
+    // this, so an empty list must not be read as the answer).
+    var note = (res.data && res.data.note) ? String(res.data.note) : '';
+    if (/could not be reached/i.test(note)) {
+        return { ok: false, status: res.status, error: note, serverMessage: null };
+    }
+    var list = (res.data && res.data.stations) ? res.data.stations : [];
+    return { ok: true, station: pickNearestStation(list, preferId) };
 }
 
 // The gauge NAME for a spot row (and the distance when this session resolved it).
@@ -230,6 +238,11 @@ async function saveSpotAt(lat, lon, label) {
     if (res && res.ok) {
         // The LABEL only: coordinates never reach the debug log (AGENTS.md GPS hygiene).
         logDebug('Favourite spot saved: ' + label + (station ? ' (flow via ' + station.id + ')' : ' (no gauge resolved)'), 'SPOT');
+        if (resolved && !resolved.ok) {
+            // Saved, but the flow is NOT linked (the lookup was unreachable). Say so instead
+            // of letting the row read "flow from the nearest gauge" with no explanation.
+            showToast('Spot saved \u2014 the gauge lookup failed, so flow is not linked yet. Open the spot later to retry.', 'warn', 6000);
+        }
         return id;
     }
     showToast('Could not save the spot: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
@@ -288,7 +301,9 @@ async function selectSavedSpot(id) {
             } catch (e) {}
             renderFavoriteSpots();
         } else if (resolved && !resolved.ok) {
-            spotsStatus('Could not reach the gauge lookup \u2014 try again when you have signal.');
+            var why = resolved.serverMessage || resolved.error || '';
+            spotsStatus('Could not reach the gauge lookup' + (why ? ' (' + why + ')' : '') +
+                ' \u2014 try again when you have signal.');
             return;
         } else {
             showToast('No USGS gauge near that spot yet \u2014 flow needs a nearby gauge.', 'warn', 6000);

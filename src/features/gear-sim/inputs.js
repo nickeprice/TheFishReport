@@ -208,10 +208,14 @@ function rigLift(foamLift, yarnInches, hook, bdMat, bdSz) {
 //
 // WORDING: an adult salmon in the river is NOT feeding - it is staging, and a fly gets taken
 // out of reaction/territory. So no band says "feeding"; they say hold/hold high/respond.
-// Bands (deg F): <45 torpid | 45-50 cool | 50-64 optimal | 64-68 delay | >68 stress.
-// 68 itself reads as DELAY; stress starts above it. 68F = 20C is the measured onset of thermal
-// stress, with 18-20C (64-68F) the delay zone - Keefer et al. 2018 (PLoS ONE 13:e0204274),
-// Goniea et al. 2006 and Salinger & Anderson 2006 (both TAFS). See docs/LITERATURE.md.
+// Bands (deg F): <45 torpid | 45-50 cool | 50-64 optimal | 64-68 delay | 68-70 stress |
+// 70-71.6 block | over 71.6 lethal. 68 itself reads as DELAY; stress starts above it.
+// 68F = 20C is the measured onset of thermal stress, with 18-20C (64-68F) the delay zone -
+// Keefer et al. 2018 (PLoS ONE 13:e0204274), Goniea et al. 2006 and Salinger & Anderson 2006
+// (both TAFS). The TOP end is the WRIA 9 / King County block: 21-22C (69.8-71.6F) is a
+// "temperature related blockage to migration" and 22C+ is lethal (kcr1532 2004, kcr2880 2015;
+// docs/LITERATURE.md S8). All three top bands share shift -2.00, so the frozen baselines do
+// NOT move - a deeper refuge shift is a deliberate future contract bump, not this change.
 // ==================================================================================
 var THERMAL_BANDS = [
     { band: 'torpid',  range: 'under 45', shift: -1.50, label: 'too cold to be active',
@@ -222,8 +226,12 @@ var THERMAL_BANDS = [
       note: 'fish hold high in the column and take a fly.' },
     { band: 'delay',   range: '64-68',    shift: -1.00, label: 'thermal delay',
       note: 'fish slide to the coolest, fastest water - riffle tailouts and deep pool tails.' },
-    { band: 'stress',  range: 'over 68',  shift: -2.00, label: 'thermal stress',
-      note: 'fish stack in the deepest, most oxygenated pockets.' }
+    { band: 'stress',  range: '68-70',    shift: -2.00, label: 'thermal stress',
+      note: 'fish stack in the deepest, most oxygenated pockets.' },
+    { band: 'block',   range: '70-71.6',  shift: -2.00, label: 'migration block',
+      note: 'past the 21C blockage threshold - upstream movement stops and fish hold in refuge.' },
+    { band: 'lethal',  range: 'over 71.6', shift: -2.00, label: 'lethal range',
+      note: 'at/above 22C - lethal to adults; they sit in the coldest water they can find.' }
 ];
 
 function thermalOptimum(tempF) {
@@ -234,6 +242,8 @@ function thermalOptimum(tempF) {
     else if (t < 50) b = THERMAL_BANDS[1];
     else if (t < 64) b = THERMAL_BANDS[2];
     else if (t <= 68) b = THERMAL_BANDS[3];
-    else b = THERMAL_BANDS[4];
+    else if (t < 70) b = THERMAL_BANDS[4];
+    else if (t < 71.6) b = THERMAL_BANDS[5];
+    else b = THERMAL_BANDS[6];
     return { band: b.band, range: b.range, shift: b.shift, label: b.label, note: b.note, tempF: t };
 }

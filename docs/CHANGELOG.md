@@ -4,6 +4,25 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — Literature applied to TWO non-strike-zone surfaces (bands + run status)
+
+The migration literature mostly measures **timing/rate**, so it also improves surfaces the strike zone
+does not cover. Two small builds, plus one recorded candidate:
+
+- **`src/features/gear-sim/inputs.js` — thermal band top-end.** `THERMAL_BANDS` splits the old
+  open-ended `stress (>68 °F)` into **stress 68–70 / block 70–71.6 (21–22 °C) / lethal >71.6 (22 °C+)**,
+  sourced from kcr1532 (*"21–22 °C … a temperature related blockage to migration"*) and kcr2880
+  (**22 °C = lethal**). **All three keep shift −2.00, so NO frozen baseline moves** — a deeper refuge
+  shift would be a deliberate contract bump. `sanity_pass.js`'s thermal edge pin updated to match
+  (now pins 69.9 stress, 70 block, 71.5 block, 71.6 lethal).
+- **`src/features/telemetry/hero.js` — thermal RUN status.** `buildFishingHero()` now leads with a
+  run-state reason when the own-gauge probe is **≥21 °C** (*"Migration-block range (70F) — fish are
+  holding"*, −9) or **≥22 °C** (*"Lethal water (72F) — the run has stalled"*, −14). A missing probe
+  makes **no claim**. This answers *"are the fish even here?"* — a run signal, not the strike zone.
+- **Recorded, NOT built:** a **dynamic run calendar** (Keefer 2025 — warm years → earlier runs), gated
+  on the phenology slope, which needs the full text. `ROADMAP.md` §3.13.
+- README's Water Report line notes the thermal run status. `sanity_pass.js` **143/143**.
+
 ## 2026-09-30 — Recorded 3 new migration studies (Keefer 2025/2004; Fukushima & Rand 2023) (no code)
 
 User-provided set of five; two were already recorded (Keefer 2018 → §1, Peterson 2017 → §7).

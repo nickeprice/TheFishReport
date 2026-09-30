@@ -17,6 +17,12 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **Literature applied to two NON-strike-zone surfaces (code).** (a) `inputs.js` thermal
+  band top-end split: **stress 68–70 / block 70–71.6 (21–22C) / lethal >71.6 (22C+)** from kcr1532 +
+  kcr2880 — **shifts unchanged (−2.00) so no baseline moves** (sanity edge pin updated). (b) `hero.js`
+  **thermal RUN status** at ≥21C/≥22C in the Fishing Outlook (no probe → no claim). Recorded NOT built:
+  dynamic run calendar (Keefer 2025), gated on the phenology slope. ROADMAP §3.13.
+
 - 2026-09-30 — **Recorded 3 new migration studies (Keefer 2025/2004; Fukushima & Rand 2023) (no code).**
   Of the user's five, two were already in. **Keefer 2025** (Willamette, 909 tags) + **Keefer 2004**
   (Columbia/Snake dams, >12,000 tags) both find **LOWER discharge → FASTER migration** → **re-disproves

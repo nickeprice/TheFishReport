@@ -15,6 +15,18 @@ function buildFishingHero(rep) {
     var reasons = [];
     var any = false;
 
+    // Thermal RUN status (WRIA 9 / King County thresholds - docs/LITERATURE.md SS8). A
+    // tidal-reach river at/above the 21-22C migration-block range stalls the run: adults
+    // stage in the cool salt wedge and stop pushing upstream, so "are they even here?".
+    // Own-gauge probe only - a missing reading makes NO claim. This is a RUN signal, not
+    // the strike zone. 21C = 69.8F, 22C = 71.6F. Ordered first: a blocked run beats a freshet.
+    if (rep.water_temp_f !== null && rep.water_temp_f !== undefined && !isNaN(Number(rep.water_temp_f))) {
+        var wtF = Number(rep.water_temp_f);
+        var wtC = (wtF - 32) * 5 / 9;
+        if (wtC >= 22) { any = true; score -= 14; reasons.push('Lethal water (' + Math.round(wtF) + 'F) - the run has stalled'); }
+        else if (wtC >= 21) { any = true; score -= 9; reasons.push('Migration-block range (' + Math.round(wtF) + 'F) - fish are holding'); }
+    }
+
     if (rep.rain !== null && rep.rain !== undefined && rep.rain > 0.05) {
         any = true; score += 12;
         reasons.push('Rain freshet (' + rep.rain.toFixed(2) + ' in)');

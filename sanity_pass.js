@@ -921,7 +921,8 @@ function behaviorChecks(done) {
     // single ">= 55F -> rise", which pointed the wrong way above the comfort band).
     const edges = [[44, 'torpid', -1.5], [45, 'cool', -0.75], [49.9, 'cool', -0.75], [50, 'optimal', 0.75],
       [59.9, 'optimal', 0.75], [63.9, 'optimal', 0.75], [64, 'delay', -1], [68, 'delay', -1],
-      [68.1, 'stress', -2], [70, 'stress', -2]];
+      [68.1, 'stress', -2], [69.9, 'stress', -2], [70, 'block', -2], [71.5, 'block', -2],
+      [71.6, 'lethal', -2]];
     const badEdges = edges.filter(([t, band, sh]) => {
       const b = thermalOptimum(t);
       return !b || b.band !== band || b.shift !== sh;
@@ -929,7 +930,7 @@ function behaviorChecks(done) {
     const noTemp = thermalOptimum(null) === null && thermalOptimum(undefined) === null && thermalOptimum(NaN) === null;
     (badEdges.length === 0 && noTemp)
       ? ok('thermal-optimum curve replaces "warm water = rise"',
-           'torpid <45 / cool 45-50 / optimal 50-64 / delay 64-68 / stress >68 (20C), null -> no term')
+           'torpid <45 / cool 45-50 / optimal 50-64 / delay 64-68 / stress 68-70 (20C) / block 70-71.6 (21C) / lethal >71.6 (22C), null -> no term')
       : fail('thermal-optimum curve replaces "warm water = rise"', `${JSON.stringify(badEdges)} noTemp=${noTemp}`);
 
     // (2) Depth is the gauge's OWN measured cross-section: median of the six rows nearest today's

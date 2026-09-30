@@ -5,7 +5,8 @@ Carbon, Green, Nisqually, Skagit, Snoqualmie, Skykomish, Snohomish, Stillaguamis
 Cedar, Cowlitz, Toutle, Lewis and Kalama. Three tools in one shell:
 
 1. **Water Report** — live USGS flow, barometer, tides, solunar, hatchery
-   escapement, fishing-window scoring and WDFW legal hours.
+   escapement, fishing-window scoring, a thermal run-status advisory and WDFW legal
+   hours.
 2. **Gear Sim** — a deterministic fluid-dynamics engine that solves your rig
    against today's strike zone.
 3. **Catch Log** — private catch records with a four-column public Brag Board.

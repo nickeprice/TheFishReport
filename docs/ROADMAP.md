@@ -273,6 +273,25 @@ DISPROVEN** — "freshet" appears **0×** across all five documents, and pulse-f
 therefore temperature-gated, not flow-gated.** Nisqually adult flood-tide stays unsupported (USGS work
 is juvenile). See `LITERATURE.md` §8.
 
+### 3.13 Literature → non-strike-zone surfaces (recorded 2026-09-30; #2 + #3 BUILT)
+
+The migration literature mostly measures **timing and rate**, so it also maps to surfaces the strike
+zone does not cover. Three candidates were identified; two are now built.
+
+- **BUILT — thermal band top-end (#3).** `THERMAL_BANDS` gains **block (70–71.6 °F = 21–22 °C)** and
+  **lethal (>71.6 °F = 22 °C+)** beside stress (68–70 °F). Sources: kcr1532 (*"21–22 °C … a
+  temperature related blockage to migration"*) and kcr2880 (**22 °C lethal**). **Shifts stay −2.00**,
+  so the frozen baselines do **not** move — a deeper refuge shift is a deliberate future contract bump.
+- **BUILT — thermal RUN status in the Fishing Outlook (#2).** `buildFishingHero()` now leads with a
+  run-state reason when the own-gauge probe is **≥21 °C (block)** or **≥22 °C (lethal)** — a *"are the
+  fish even here"* signal, separate from the strike zone; no reading → no claim.
+- **NOT built — dynamic run calendar (#1).** The species calendar's `peak_window`/`peak_date` are
+  **static**; **Keefer et al. 2025** (Willamette, 909 tags) shows runs shift **earlier in warm,
+  low-flow years**. Gate: the numeric phenology **slope** (days earlier per °C), which the abstract
+  does not give. **Full text not reachable on 2026-09-30** — `academic.oup.com` returns 403 and the
+  UIdaho VERSO record is a JS-only shell. #1 stays blocked until the slope is sourced
+  (interlibrary copy, author request, or a phenology-regression paper). See `LITERATURE.md` §7.
+
 ## 4. Suggested phasing within 4.0
 
 1. **Accounts + RLS tier** (unblocks everything social).

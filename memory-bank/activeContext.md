@@ -114,6 +114,14 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   block as a NON-LINEAR curve** (rate ↑ to ~18–20 °C, then impair 18–20 / block 21–22 / kill 22+).
   ⚠️ `Fukushima & Rand 2023` is **not Chinook** (Sakhalin taimen) → recorded out-of-scope; the user's
   "Rand et al." label and the `10.1093/tafs/8081683` DOI (404) are both noted in `LITERATURE.md`.
+- **Literature applied to TWO non-strike-zone surfaces (2026-09-30).** Built:
+  (a) **`inputs.js` thermal band top-end** — `THERMAL_BANDS` now splits the old `stress (>68F)` into
+  **stress 68–70 / block 70–71.6 (21–22C) / lethal >71.6 (22C+)**, from kcr1532 + kcr2880. **Shifts
+  stay −2.00 so NO frozen baseline moves**; the `sanity_pass.js` edge pin was updated (now pins
+  69.9 stress, 70 block, 71.5 block, 71.6 lethal). (b) **`hero.js` thermal RUN status** —
+  `buildFishingHero()` leads with a run reason at **≥21C (block, −9) / ≥22C (lethal, −14)**; no probe →
+  no claim. Recorded NOT built: **dynamic run calendar** (Keefer 2025 warm-year shift), gated on the
+  phenology slope. `ROADMAP.md` §3.13; README Water-Report line updated.
 
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 

@@ -36,22 +36,24 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 #tab-gear-sim h3, #tab-catch-log h3 { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 12px 0 6px 0; padding: 0; }
 
 #hud { position: -webkit-sticky; position: sticky; top: 48px; background-color: #1a1a1a; z-index: 1000; padding: 8px 10px; border-bottom: 1px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-/* TWO STACKED BANNERS (restructured 2026-09-29 on a direct user ask): the strike zone
-   estimate on top, the line-height estimate under it, then ONE summary paragraph and the
-   off-target gear changes. Each banner is a full-width row so the label and its number read
-   as a single statement instead of two half-width columns. */
+/* TWO BANNERS SIDE BY SIDE (direct user ask, 2026-09-29): Strike Zone Estimate left, Line Height
+   Estimate right, each CENTRED in its own half, with the summary paragraph and the gear changes
+   running full width underneath both. */
+.hud-banners { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .hud-banner {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 6px;
-    font-size: 1.05rem;
-    font-weight: bold;
-    padding: 3px 0;
+    gap: 1px;
+    text-align: center;
+    padding: 2px 0;
 }
-.hud-banner + .hud-banner { border-top: 1px solid #262626; }
-.hud-cap { color: #e5e7eb; }
-.hud-val { font-weight: bold; }
+/* Vertical rule between the two halves (never a horizontal one - they sit side by side). */
+.hud-banner + .hud-banner { border-left: 1px solid #262626; }
+.hud-cap { color: #cbd5e1; font-size: 0.78rem; letter-spacing: 0.02em; }
+/* The NUMBER is the point: bigger and bold, coloured by its own grade. */
+.hud-val { font-weight: bold; font-size: 1.2rem; line-height: 1.15; }
 /* The one cohesive "what the fish are doing and where" paragraph. Deliberately the widest
    text block in the HUD: it is the part an angler actually reads. */
 .hud-outlook {

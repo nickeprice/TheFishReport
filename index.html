@@ -128,19 +128,21 @@
 
 <!-- TOOL 2: GEAR SIM -->
 <div id="tab-gear-sim" class="tab-content">
-    <!-- Outcome HUD (restructured 2026-09-29 on a direct user ask). TWO stacked BANNERS —
-         the estimated strike zone, then the angler's estimated line height — followed by ONE
-         cohesive summary of what the fish are doing and where (fishOutlook()), and then the
-         gear changes ONLY when the current rig is off target. The per-reason bullets are gone:
-         they live on in the debug trail. Each banner's number keeps its own colour grade. -->
+    <!-- Outcome HUD (restructured 2026-09-29 on direct user asks). The two BANNERS sit SIDE BY
+         SIDE - Strike Zone Estimate on the LEFT, Line Height Estimate on the RIGHT, each centred
+         in its own half and each keeping its own colour grade - and then the summary paragraph
+         and the gear changes run FULL WIDTH beneath both. The per-reason bullets are gone: they
+         live on in the debug trail. -->
     <div id="hud">
-        <div class="hud-banner">
-            <span class="hud-cap">Strike Zone Estimate:</span>
-            <span id="hud-zone" class="hud-val">4.0" - 12.0"</span>
-        </div>
-        <div class="hud-banner">
-            <span class="hud-cap">Line Height Estimate:</span>
-            <span id="hud-hgt" class="hud-val">--</span>
+        <div class="hud-banners">
+            <div class="hud-banner">
+                <span class="hud-cap">Strike Zone Estimate:</span>
+                <span id="hud-zone" class="hud-val">4.0" - 12.0"</span>
+            </div>
+            <div class="hud-banner">
+                <span class="hud-cap">Line Height Estimate:</span>
+                <span id="hud-hgt" class="hud-val">--</span>
+            </div>
         </div>
         <p id="hud-where" class="hud-outlook">Load a water report to see where the fish are holding today.</p>
         <ul id="hud-changes" class="hud-changes"></ul>

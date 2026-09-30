@@ -17,6 +17,13 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-29 — **HUD layout: banners side by side** (direct user ask): Strike Zone Estimate on the
+  **LEFT**, Line Height Estimate on the **RIGHT**, each centred in its own half (label above the
+  number; cap 0.78rem, value 1.2rem bold so the number reads at a glance), with a **vertical**
+  divider rule between the halves — and the 2-sentence summary + the corky-first change rows
+  **full width beneath both**. New `.hud-banners` 2-up grid wrapper; no JS changed (same ids).
+  `sw.js` `v2.03.28`, **137/137**.
+
 - 2026-09-29 — **HUD summary trimmed + biology fix + corky-first rig advice** (three direct user
   corrections): the summary is now **2 sentences** (outcome tag + where they're holding/depth band/
   where to target; then your line vs the band) — the driver sentence and its `zone.terms` data are

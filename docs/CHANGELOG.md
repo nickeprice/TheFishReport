@@ -4,6 +4,27 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-29 — HUD layout: the two banners sit SIDE BY SIDE again (zone left, line right)
+Direct user ask: *"for the banner strike zone should still be left, and line height should still be
+to the right side centered in their zones, and summary and adjustments should be below this"*.
+
+- `index.html` — the two banners are wrapped in `<div class="hud-banners">`; Strike Zone Estimate is
+  the LEFT cell, Line Height Estimate the RIGHT, and `<p id="hud-where">` + `<ul id="hud-changes">`
+  follow FULL WIDTH beneath both (that part of the 2026-09-29 restructure stands).
+- `src/styles.css` — `.hud-banners` is a 2-up grid; each `.hud-banner` is a centred flex COLUMN
+  (label above, number below) so the number can be read at a glance: **cap 0.78rem, value 1.2rem
+  bold** (the earlier "too small to read" complaint stays addressed). The divider between the two
+  halves is now a VERTICAL rule (`border-left`), replacing the horizontal one from the stacked
+  layout. `.hud-outlook` stays left-aligned full width, `.hud-changes` below it.
+- No JS changed: `paintZoneHud()` / `paintSimHud()` write the same `#hud-zone`, `#hud-hgt`,
+  `#hud-where` and `#hud-changes` ids, so the summary, the grades and the off-target-only change
+  rows are untouched.
+- `sw.js` `v2.03.28`. **137/137 GREEN** — the HUD structure assertion now pins the SIDE-BY-SIDE
+  layout (a `.hud-banners` container, zone before line in the DOM, both `</div>`s before `#hud-where`,
+  and `#hud-where` before `#hud-changes`), and the CSS assertion pins the 2-up grid + centred
+  banners + the vertical rule + the left-aligned summary, so a stacked revert fails the build.
+- Key files: `index.html`, `src/styles.css`, `sanity_pass.js`, `sw.js`.
+
 ## 2026-09-29 — HUD summary trimmed to 2 sentences, no "feeding", and the rig advice now changes the CORKY first
 Three direct user corrections in one pass.
 

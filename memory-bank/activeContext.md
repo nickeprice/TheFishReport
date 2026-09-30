@@ -28,11 +28,9 @@ advice). Current state: sanity **137/137**, `sw.js` `v2.03.27`, `origin/main` cl
 **NEXT = verify by eye.** No decisions are pending; every Phase 4 sub-item is recorded (b1 + a2
 shipped; b2/c2/d3 declined-by-design with reasons; a1 waits on a dated 1 m 3DEP source).
 1. **Browser pass** — `python3 scripts/dev_server.py 8000` → `http://127.0.0.1:8000/index.html`.
-   Look at: the Gear Sim HUD (two banners, the 2-sentence summary wrapping on a phone, the
-   corky-first change rows), the saved-spot list + map star layer, the weather popup.
-2. **One interpretation to confirm** (1-line fix if wrong): the two banners are stacked with the
-   summary BELOW both; if it belongs under the Line Height banner it is a block move in
-   `index.html` + CSS order, no JS change.
+   Look at: the Gear Sim HUD (two banners SIDE BY SIDE — zone left, line right — then the 2-sentence
+   summary and the corky-first change rows full width beneath), the saved-spot list + map star layer,
+   the weather popup.
 
 Owed regardless: a by-hand browser pass (the cascade is proven by the recording-DOM harness, the
 per-day weather by the live API + sanity, the popup CSS by rule, the where-to-fish row and the
@@ -342,6 +340,15 @@ change.
       ⚠ NOTE for the next session: this commit touched `computeStrikeZone` heavily, and an early
       regex-based edit duplicated + deleted blocks (caught by the harness, fixed). The zone terms are
       pinned: +5.45 / −4.45 / 1.2 alone / 0.75 colour / 6.7 ceiling — if those move, something broke.
+- [x] **Layout follow-up (same day, direct user ask): the two banners sit SIDE BY SIDE** — Strike Zone
+      LEFT, Line Height RIGHT, each centred in its own half (label above the number: cap 0.78rem,
+      value 1.2rem bold), with the summary + adjustments FULL WIDTH beneath both. `index.html` (a
+      `.hud-banners` wrapper), `src/styles.css` (2-up grid, centred columns, VERTICAL divider rule),
+      `sanity_pass.js` (structure + CSS assertions now pin the side-by-side layout and the DOM order:
+      zone before line, both `</div>`s before `#hud-where`, `#hud-where` before `#hud-changes`),
+      `sw.js` `v2.03.28`, sanity **137/137**. No JS changed — the same ids are painted.
+      This RESOLVES the "interpretation to confirm" item in the handoff: the summary belongs under
+      BOTH banners.
 
 ## PHASE 4 DECISIONS — 2026-09-29 (user call, Act mode)
 

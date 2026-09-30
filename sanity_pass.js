@@ -189,19 +189,23 @@ function staticIntegrity() {
     ? ok('dead .gear-grid / .run-footer rules removed', 'no stale layout rules')
     : fail('dead .gear-grid / .run-footer rules removed', 'stale CSS found');
 
-  // Gear Sim HUD structure (direct user instruction, 2026-09-29): TWO estimate BANNERS — the
-  // strike zone, then the line height — ONE cohesive summary paragraph under them, and the gear
-  // changes below that, shown only when the rig is off target. The per-reason bullet list and the
-  // two-column panel grid are gone, so a silent revert fails here.
+  // Gear Sim HUD structure (direct user instructions, 2026-09-29): TWO BANNERS SIDE BY SIDE —
+  // strike zone LEFT, line height RIGHT, each centred in its own half — then the summary paragraph
+  // and the gear changes full width beneath them, and the changes shown only when off target. The
+  // per-reason bullet list and the old panel/hud-line classes are gone, so a silent revert fails.
   (html.includes('<span class="hud-cap">Strike Zone Estimate:</span>') &&
    html.includes('<span class="hud-cap">Line Height Estimate:</span>') &&
    (html.match(/class="hud-banner"/g) || []).length === 2 &&
-   /<p id="hud-where" class="hud-outlook"/.test(html) && /<ul id="hud-changes"/.test(html) &&
-   !/hud-zone-notes|hud-panels|hud-panel\b/.test(html) && !/hud-panels|hud-panel\b/.test(cssSrc))
-    ? ok('HUD = two estimate banners + one summary paragraph + the change list',
-         'Strike Zone Estimate / Line Height Estimate banners, #hud-where summary, #hud-changes; no bullet list, no panel grid')
-    : fail('HUD = two estimate banners + one summary paragraph + the change list',
-           'banner structure or summary paragraph changed');
+   /<div class="hud-banners">/.test(html) &&
+   /id="hud-zone"[\s\S]{0,200}id="hud-hgt"/.test(html) &&
+   /<\/div>\s*<\/div>\s*<p id="hud-where" class="hud-outlook"/.test(html) &&
+   /<p id="hud-where" class="hud-outlook"[\s\S]{0,400}<ul id="hud-changes"/.test(html) &&
+   !/hud-zone-notes|hud-panels|hud-panel\b|hud-line\b/.test(html) &&
+   !/hud-panels|hud-panel\b|hud-line\b/.test(cssSrc))
+    ? ok('HUD = two banners side by side, then the summary and the change list beneath',
+         'Strike Zone banner left, Line Height banner right, #hud-where and #hud-changes full width below; no bullet list, no panel grid')
+    : fail('HUD = two banners side by side, then the summary and the change list beneath',
+           'banner layout, summary paragraph or change list changed');
   // WS-7 correction (direct user ask): the gradient lives on the ESTIMATE NUMBER only — the
   // separate trend strip + marker were unwanted, and the strike-zone bullets no longer use the
   // dim/smaller variant (both HUD panels now render ONE bullet style).
@@ -239,14 +243,16 @@ function staticIntegrity() {
       : fail('bead labels are plain and the Cheater float reads "Cheater 10"',
              `presentation=${html.includes('Presentation')} cheaterOptions=${cheater}`);
   }
-  (/.hud-banner \{[^}]*justify-content: center/.test(cssSrc) &&
+  (/.hud-banners \{[^}]*grid-template-columns: 1fr 1fr/.test(cssSrc) &&
+   /.hud-banner \{[^}]*align-items: center/.test(cssSrc) &&
+   /.hud-banner \+ \.hud-banner \{[^}]*border-left/.test(cssSrc) &&
    /.hud-outlook \{[^}]*text-align: left/.test(cssSrc) &&
    /.hud-changes \{[^}]*list-style-position: inside/.test(cssSrc) &&
    /#tab-gear-sim #hud \+ \.bucket \{[^}]*padding-top: 1[0-9]px/.test(cssSrc))
-    ? ok('HUD banners are centred, the summary is readable, with clearance above the first gear row',
-         '.hud-banner centred + .hud-outlook left-aligned + .hud-changes bullets + bucket padding-top')
-    : fail('HUD banners are centred, the summary is readable, with clearance above the first gear row',
-           'banner / summary / separation CSS missing');
+    ? ok('HUD banners sit side by side and are centred, with the summary readable below',
+         '.hud-banners 2-up + .hud-banner centred + vertical rule + .hud-outlook left + .hud-changes bullets + bucket padding-top')
+    : fail('HUD banners sit side by side and are centred, with the summary readable below',
+           'banner grid / centring / summary CSS missing');
   // Scroll/bar geometry: no body-as-scroll-container, and the body padding must
   // clear the REAL 56px bar + safe-area inset.
   (/html, body \{[^}]*height: 100%/.test(cssSrc) === false)

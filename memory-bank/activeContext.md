@@ -97,6 +97,14 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
   RM 42.3–59.1), 21 °C (Duwamish, mouth–RM 11). WRIA 9 deck lists "Delayed migration" + "Direct
   lethality" for adult upstream migration. **Still open:** "RM 7.9" (source uses RM 11/42.3/59.1) and
   the "15–25 % freshet" trigger (**0 occurrences of "freshet"**).
+  **RESOLVED (same day): "RM 7.9" CONFIRMED, freshet DISPROVEN.** Read all five PDFs: **RM 7.9 = the
+  *"MIT 42nd Ave S Bridge RM7.9"* station** (kcr2880, + RM7.9a) and **Southgate Creek (RM 7.9)** (Blueprint),
+  inside the **RM 4.7–8.5 transition zone**. Criterion **17.5 °C**, **22 °C = lethal**; 2015 exceeded
+  17.5 °C until **~Sept 2** and 22 °C throughout. Holding water = the **cool brackish salt wedge**
+  ("cooler bottom water … from Elliott Bay during high tides"). **Goetz & Quinn 2019** added
+  (FB 117(3):258–271 — Puget Sound adults retreat to cool marine water). **Freshet = DISPROVEN**:
+  0× "freshet" in all five docs + Peterson 2017 (2/11 yrs, no gain > 700 cfs) + Hasler 2014
+  ("unclear", needed 2× flow). **Stall-vs-Run is temperature-gated, not flow-gated.**
 
 ## ACTIVE — 2026-09-29 (later) `/api` lookup resilience (phone screenshot: both map + spot errors)
 

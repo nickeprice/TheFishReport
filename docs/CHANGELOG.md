@@ -4,6 +4,23 @@ Keep this LEAN by design: a fresh chat reads only the LAST entries to restore co
 `memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
 Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
 
+## 2026-09-30 — "RM 7.9" + the thermal block CONFIRMED; the freshet trigger DISPROVEN (no code)
+
+Read all five primary documents (PDFKit). **"RM 7.9" is real**: kcr2880's station list contains *"MIT
+42nd Ave S Bridge RM7.9"* (+ **RM7.9a**, Figs 2–3) and the Duwamish Blueprint names *"Southgate Creek
+(RM 7.9)"* — inside the **RM 4.7–8.5 transition zone** (expanded from the 2005 RM 4.7–7.0 area).
+**Thresholds:** the applicable criterion is **17.5 °C**, **22 °C = lethal**; in 2015 *all* mainstem
+stations exceeded 17.5 °C **until ~Sept 2** and exceeded 22 °C. The holding water is the **cool brackish
+salt wedge** (*"cooler bottom water … enters the river from Elliott Bay during high tides"*), and dam
+operations have *"pushed the salt wedge farther upstream"*. **Peer-reviewed anchor added: Goetz & Quinn
+2019** (*Fishery Bulletin* 117(3):258–271, DOI 10.7755/FB.117.3.12) — Puget Sound adults entered in
+mid-summer but *"often moved back into the cool, marine waters of Puget Sound"* (basin = Lake
+Washington/Cedar, not the Green). **The "15–25 % freshet" trigger is DISPROVEN**: "freshet" appears
+**0×** in all five documents, and the pulse-flow literature (Peterson 2017 — 2/11 years, no gain above
+700 cfs; Hasler 2014 — "unclear", needed 2× flow) shows flow pulses don't reliably move adults.
+**Stall-vs-Run is temperature-gated, not flow-gated.** `LITERATURE.md` §8 + `ROADMAP.md` §3.12 updated.
+No code change.
+
 ## 2026-09-30 — WRIA 9 thermal thresholds CONFIRMED from the primary source (no code)
 
 Read the actual WRIA 9 / King County documents (PDFKit via `osascript` — their streams will not

@@ -17,6 +17,15 @@
 
 **Recent log** (newest first; full history in `docs/CHANGELOG.md`):
 
+- 2026-09-30 — **"RM 7.9" + thermal block CONFIRMED; freshet trigger DISPROVEN (no code).** Read all five
+  primary PDFs. **RM 7.9 is real** — the *"MIT 42nd Ave S Bridge RM7.9"* station (kcr2880) and
+  **Southgate Creek (RM 7.9)** (Blueprint), inside the **RM 4.7–8.5 transition zone**. Criterion
+  **17.5 °C**, **22 °C = lethal**; 2015 exceeded 17.5 °C until ~Sept 2. Holding water = the cool
+  **brackish salt wedge** (Elliott Bay water on high tides). New peer-reviewed anchor **Goetz & Quinn
+  2019** (FB 117(3):258–271 — Puget Sound adults retreat to cool marine water). The **"15–25 % freshet"
+  trigger is DISPROVEN** (0× "freshet" in all five docs; Peterson 2017 2/11 yrs; Hasler 2014 "unclear")
+  → **Stall-vs-Run is temperature-gated, not flow-gated.**
+
 - 2026-09-30 — **WRIA 9 thermal thresholds CONFIRMED from the primary source (no code).** King County's
   June 2004 *Green-Duwamish Watershed Temperature Monitoring Report* (kcr1532) states it verbatim:
   *"18–20 °C … impairment to salmon migration; 21–22 °C … a temperature related blockage to

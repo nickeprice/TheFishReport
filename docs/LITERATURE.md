@@ -115,7 +115,7 @@ before hard-coding.
 | Basin (gauge) | Reported limiting factor / trigger | Maps to |
 | --- | --- | --- |
 | Puyallup / White (12101500) | Glacial silt / turbidity: high glacial flour impairs visual feeding, fish travel **lower** in the column along gravel seams | `turbidityTerm()` (turbid → deep) |
-| Duwamish / Green (12113000 Auburn) | **Thermal block > 20–21 °C** (RM 7.9 → Auburn): adults stage in Elliott Bay / the lower salt wedge and refuse to push upstream until fall freshets drop temps **below 18 °C** | `thermalOptimum()` (stress > 68 °F — matches Keefer's 20 °C, region-confirmed) |
+| Duwamish / Green (12113000 Auburn) | **Thermal block** — applicable criterion **17.5 °C**; **18–20 °C = impairment, 21–22 °C = blockage, 22 °C = lethal**; adults hold in the **cool brackish salt wedge** (Elliott Bay water on high tides) in the **RM 4.7–8.5 transition zone**; **RM 7.9 = the 42nd Ave S Bridge station** | `thermalOptimum()` (stress > 68 °F — matches Keefer's 20 °C, region-confirmed) |
 | Nisqually (12089500 McKenna) | **Delta tidal flux**: fish cross the extensive shallow flats mainly on **high-slack / flood tides** (avoid stranding + seal predation). **⚠️ Adult version UNVERIFIED — see below** | `tideTerm()` (flood → up/active) |
 
 **Verification pass (2026-09-30) — what the sources actually say.**
@@ -146,30 +146,49 @@ before hard-coding.
 - **Adults do use Puget Sound estuaries before spawning.** *Encyclopedia of Puget Sound, "Chinook
   salmon and estuary use in Puget Sound"* (T. P. Quinn, 2025-09-15), which also names the **Green
   River Soos Creek** Chinook population.
-- The staging mechanism now has **peer-reviewed anchors**: **Strange 2013**, "Factors influencing the
-  behavior and duration of residence of adult Chinook salmon in a *stratified estuary*", *Environmental
-  Biology of Fishes* 96:225–243; and **Strange 2010**, "Upper thermal limits to migration in adult
-  Chinook salmon: evidence from the Klamath River basin", *Trans. Am. Fish. Soc.* 139:1091–1108.
+- **"RM 7.9" CONFIRMED — it is real, and it is the transition-zone station.** King County's *2015
+  Temperature Data Compilation* (kcr2880) lists the station **"MIT 42nd Ave S Bridge RM7.9"**
+  (47.4900, −122.2802) plus **RM7.9a**, with Figures 2–3 plotting temperature at both; the Duwamish
+  Blueprint names **"Southgate Creek (RM 7.9)"** as a freshwater input. It sits inside the **Duwamish
+  transition zone**, which the Blueprint expanded from the 2005 area (**RM 4.7–7.0**) — juveniles use
+  RM 1–3.5 → 4.7–6.5 → **6.8–8.5** by season. ✅ **"RM 7.9" is a genuine location, not a misprint.**
+- **The cold water adults hold in is the brackish salt wedge.** kcr2880: *"the presence of **cooler
+  bottom water** found in the **brackish salt wedge** that enters the river from Elliott Bay during
+  **high tides** and recedes as the tide goes out"*; the Blueprint adds that dam operations have
+  *"pushed the salt wedge farther upstream"*. USGS (WSP 1873-D) measured the wedge's tide excursion
+  (≈1 km for a 1.3 m tide, ≈3 km for a 3 m tide).
+- **Observed 2015 severity (kcr2880).** The applicable criterion is **17.5 °C** ("Salmonid spawning,
+  rearing and migration") for the Duwamish + Green from **RM 11** to Mill Creek; *"7-DMax temperatures
+  at all of the mainstem stations in this reach **exceeded the 17.5 °C … criterion until about
+  September 2, 2015**"* and *"7-DMax temperatures at all of the stations **exceeded the 22 °C lethal
+  threshold**"*. So **22 °C is the lethal line**, and the summer block lasts into early September.
+- The staging mechanism has **peer-reviewed anchors**: **Goetz & Quinn 2019** (*Fishery Bulletin*
+  117(3):258–271, DOI 10.7755/FB.117.3.12) — Puget Sound adults entered in mid-summer but *"often moved
+  back into the cool, marine waters of Puget Sound"* before running (basin = Lake Washington/Cedar, not
+  the Green); **Strange 2013** (adult residence in a *stratified estuary*, *Environ. Biol. Fish*
+  96:225–243); **Strange 2010** (upper thermal limits to migration, Klamath, *TAFS* 139:1091–1108).
 
-*NOT verified — do not build on these.*
-- The **"RM 7.9"** figure: **not found** in any source read — King County segments the river at
-  **RM 11 / 42.3 (Flaming Geyser) / 59.1**, and RM 7.9 would fall inside the *Duwamish* reach
-  (mouth–RM 11). Treat "RM 7.9" as **unverified** and do not publish it.
-- The **"15–25 % freshet"** trigger: **zero occurrences of "freshet"** in the full text of both the
-  2004 monitoring report and the WRIA 9 temperature deck. **Unsupported — do not code it.**
-  *(PDF sources here are readable via PDFKit through `osascript`; see `AGENTS.md` → Validation.)*
-- The **Nisqually "adults cross on flood tide"** claim: the USGS Nisqually work is explicitly
-  **juvenile** — "as **juvenile Fall Chinook salmon are dependent on the estuary**" (USGS WFRC, Puget
-  Sound Fall Chinook Estuarine Utilization / Nisqually otolith studies). The *adult* version is
-  unsupported by those sources.
+*DISPROVEN / not to be built.*
+- The **"15–25 % freshet"** trigger is **DISPROVEN**, not merely unverified. **"freshet" appears zero
+  times** in the full text of *all five* documents read (kcr1532, kcr2880, the Duwamish Blueprint, its
+  Appendix B, and the WRIA 9 deck), and the peer-reviewed pulse-flow literature finds the effect weak or
+  absent: **Peterson, Fuller & Demko 2017** (NAJFM 37:78) — pulse flows triggered migration in **only 2
+  of 11 years**, "small and short-lived", with **no added movement above 700 cfs**; **Hasler et al.
+  2014** (Aquat. Sci. 76:231–241; keyword "**Artificial freshets**") — effect "**unclear**", passage
+  improved only in an *abnormal* pulse at **2× prescribed flow**, "requires further research".
+  **Temperature, not flow, is the driver. Do not code a flow trigger.**
+- The **Nisqually "adults cross on flood tide"** claim stays unsupported: the USGS Nisqually work is
+  explicitly **juvenile** — "as **juvenile Fall Chinook salmon are dependent on the estuary**" (USGS
+  WFRC, Puget Sound Fall Chinook Estuarine Utilization / Nisqually otolith studies).
 
 **Candidate — "Stall vs. Run" (a run-timing signal, NOT built).** For a tidal-reach river like the
-Green/Duwamish: `temp > 20–21 °C → fish staging in tidewater / salt wedge` (few in the river reach);
-`temp < 18 °C + an early-fall freshet (15–25 % discharge bump) → mass upstream movement`. This is a
+Green/Duwamish: `temp > ~20 °C → fish staging in tidewater / the salt wedge` (few in the river reach);
+as it cools toward the **17.5 °C** criterion (lethal **22 °C**) → upstream movement. **This is
+temperature-gated, NOT flow-gated** — the freshet trigger is disproven above. This is a
 **"are the fish even here"** state, not a strike-zone depth, and it lives in the **estuary/tidal zone
-(RM 7.9 → Elliott Bay)** that the per-gauge model does not cover. Gate: **verify the 20–21 °C /
-18 °C / freshet numbers against WRIA 9** (govlink.org TMDL + Duwamish Blueprint), then decide
-whether it is a reach-level advisory rather than a strike-zone term.
+(RM 7.9 → Elliott Bay)** that the per-gauge model does not cover. The **evidence gate is now closed** —
+the thresholds are verified above and the flow trigger is disproven — so the only open question is a
+*product* one: whether to surface it as a reach-level advisory rather than a strike-zone term.
 
 **Juvenile / outmigration (out of scope for the adult model):**
 - Kuruvilla, Quinn, Anderson, Scheuerell, Berger, Okasaki, McMillan, Pess, Westley & Berdahl 2026,

@@ -1,105 +1,86 @@
 # Guardrails
-- Use targeted replace_in_file edits; never rewrite a >400-line file whole.
+- Use targeted replace_in_file edits; never rewrite a >400-line file whole[cite: 1].
 - Read narrowly: grep/search_codebase to locate a symbol first, then read only
-  that +-30 line window. Never whole-read a large file when a range will do.
-- Confirm edits with `git diff --stat` / `git diff <file>` instead of re-reading.
-- Pipe verification output through `tail -n 40` / `grep`; only dump full logs on failure.
-- Batch independent reads/searches/edits into one tool call.
+  that +-30 line window[cite: 1]. Never whole-read a large file when a range will do[cite: 1].
+- Confirm edits with `git diff --stat` / `git diff <file>` instead of re-reading[cite: 1].
+- Pipe verification output through `tail -n 40` / `grep`; only dump full logs on failure[cite: 1].
+- Batch independent reads/searches/edits into one tool call[cite: 1].
 
 # Git (standing instruction from user, 2026-09-29)
 - The words **"commit" and "push" mean the SAME thing: stage everything, commit, and push
   to `origin`.** Never commit without pushing, never push without committing, and never stop
-  at a local commit to ask whether to push.
-- Write the commit message from the actual change; reference the issue numbers it addresses.
+  at a local commit to ask whether to push[cite: 1].
+- Write the commit message from the actual change; reference the issue numbers it addresses[cite: 1].
 
 # Workflow
 - Plan mode: explore the minimum, record the plan as `- [ ]` boxes in
   `memory-bank/activeContext.md` with file paths, one-line Potential Bugs, and a
-  concrete Verification Step. Present plan, then wait.
+  concrete Verification Step[cite: 1]. Present plan, then wait[cite: 1].
 - Act mode: read `memory-bank/activeContext.md` ACTIVE items only; execute unchecked
-  items in order; mark `- [x]` only after the Verification Step passes.
+  items in order; mark `- [x]` only after the Verification Step passes[cite: 1].
 
 # Frontend module layout (UPDATE 3.0)
 - `src/app.js` is the LAST classic script and owns ONLY the `window.onload`
-  bootstrap. Features live in `src/features/{telemetry,gear-sim,catch-log,station,auth}/`;
-  shared primitives in `src/shared/`. Classic scripts, one global scope.
+  bootstrap[cite: 1]. Features live in `src/features/{telemetry,gear-sim,catch-log,station,auth}/`;
+  shared primitives in `src/shared/`[cite: 1]. Classic scripts, one global scope[cite: 1].
 - Target <150 lines for feature/component files; data/type/contract files
-  (`src/data/*`, `docs/CONTRACT*.md`) are EXEMPT.
-- Every feature file opens with `// public: a(), b() — purpose`.
-- Moving/splitting a big classic-script file: slice by exact line ranges with a
-  byte-for-byte tiling assertion (never hand-transcribe), then add the new files to
-  BOTH `index.html` (load order, `app.js` last) AND `sw.js` SHELL_FILES, and bump VERSION.
+  (`src/data/*`, `docs/CONTRACT*.md`) are EXEMPT[cite: 1].
+- Every feature file opens with `// public: a(), b() — purpose`[cite: 1].
 
 # Reading discipline
 - Never whole-read `src/data/*.json` (`wdfw_rules.json` is thousands of lines),
   `docs/ARCHIVE*.md`, or `docs/CHANGELOG.md`: grep/search the specific key, then
-  read only a ±30 line window around the match.
-- One feature boundary per Act prompt (not a rigid "max 2 files" rule).
+  read only a ±30 line window around the match[cite: 1].
+- One feature boundary per Act prompt (not a rigid "max 2 files" rule)[cite: 1].
 
 # Verification
 - After frontend changes run `node sanity_pass.js --quiet` — it derives the script
   list from `index.html`, so newly added modules are auto syntax/HTTP-checked
-  (`--quiet` prints only failures + the PASSED/FAILED summary).
+  (`--quiet` prints only failures + the PASSED/FAILED summary)[cite: 1].
 
 # Context handoff
 - Monitor context window usage; when it gets tight, finish the current logical step
-  and prepare a handoff.
-- Handoff: update `memory-bank/activeContext.md` + `memory-bank/progress.md`, then end
-  the turn with a condensed carry-over block (current objective, last completed step,
-  immediate next step). No task-spawning tool exists — the user restarts the session
-  manually and reads `activeContext.md`.
+  and prepare a handoff[cite: 1].
+- Handoff: check off the completed `- [x]` item in `memory-bank/activeContext.md` and end
+  the turn with a condensed carry-over block[cite: 1]. The user restarts the session manually[cite: 1].
 
 # Output terseness
-- No prose wind-up, filler, or hedging; deliver diffs directly.
-- YAGNI: implement the minimum block that satisfies the verification step.
+- No prose wind-up, filler, or hedging; deliver diffs directly[cite: 1].
+- YAGNI: implement the minimum block that satisfies the verification step[cite: 1].
 - Terseness does NOT waive the base rule: end with a concise summary + flag any
-  non-obvious decision.
+  non-obvious decision[cite: 1].
 
 # Instruction ledger (chat asks are not in the repo)
 - Any instruction that outlives the current turn gets a `- [ ]` box in
   `memory-bank/activeContext.md` IN THAT TURN — act mode included, because act-mode asks
-  are the ones that evaporate (rod length was acknowledged twice and lost both times).
+  are the ones that evaporate (rod length was acknowledged twice and lost both times)[cite: 1].
 - At phase end run `python3 scripts/session_instructions.py` (~11 KB, not the multi-MB
-  transcript) and reconcile every turn against what shipped. Unmatched items are either
-  done next or marked open-by-design. Never read the full transcript to hunt for misses.
+  transcript) and reconcile every turn against what shipped[cite: 1]. Unmatched items are either
+  done next or marked open-by-design[cite: 1]. Never read the full transcript to hunt for misses[cite: 1].
 
 # Database (standing instruction from user)
 - ALWAYS author DB changes as an idempotent timestamped migration under
   `supabase/migrations/`, then APPLY IT YOURSELF with
-  `npx supabase db push --yes < /dev/null`. Never leave a migration unapplied and
-  never ask the user to run it by hand — they are already logged in + linked.
-- Then VERIFY against the live DB (read-only query) before reporting done.
+  `npx supabase db push --yes < /dev/null`[cite: 1]. Never leave a migration unapplied and
+  never ask the user to run it by hand — they are already logged in + linked[cite: 1].
+- Then VERIFY against the live DB (read-only query) before reporting done[cite: 1].
 - `CREATE OR REPLACE VIEW` cannot rename a column (42P16): `drop view if exists`
-  first, then `create view` (matches `src/services/schema.sql`).
+  first, then `create view` (matches `src/services/schema.sql`)[cite: 1].
 - One-time data fixes are migrations too, guarded so they are no-ops on re-run
-  (e.g. `where id = '…' and river_name is null`).
+  (e.g. `where id = '…' and river_name is null`)[cite: 1].
 
 # Terminal safety
 - NEVER run the same failing command more than twice consecutively; then STOP and
-  summarize the error + ask for guidance.
-- No blocking foreground servers in the tool window (background + redirect to /tmp).
-- Do NOT write files via shell heredocs: they can mangle and exit 1 WITHOUT executing.
-  Use the editor to write a temp file, then `cp` it into place.
+  summarize the error + ask for guidance[cite: 1].
+- No blocking foreground servers in the tool window (background + redirect to /tmp)[cite: 1].
+- Do NOT write files via shell heredocs: they can mangle and exit 1 WITHOUT executing[cite: 1].
+  Use the editor to write a temp file, then `cp` it into place[cite: 1].
 
 # Memory (memory-bank/)
 - `memory-bank/` is the front page: projectbrief, productContext, activeContext,
-  systemPatterns, techContext, progress. A fact lives there ONCE and points at the
-  deep doc — never fork the same fact into two files (that is how docs go stale).
-- Append a concise 1-2 line entry to `docs/CHANGELOG.md` at each feature/phase end.
-- New chat: read `memory-bank/activeContext.md` (ACTIVE items) + `memory-bank/progress.md`
-  + the last ~20 lines of `docs/CHANGELOG.md`. Not full history.
-
-# Docs map
-- `README.md` = the **GitHub landing page** (scope, architecture, how to run). Refresh it **in the
-  SAME commit** as any change to user-facing behavior, the waterbody list, or the run instructions —
-  nothing else keeps it honest (it drifted: the docs table missed `LITERATURE.md`, and the intro
-  claimed 5 rivers while 15 ship).
-- `memory-bank/*` = orientation · `AGENTS.md` + `.clinerules` = rules
-- `docs/SYMBOLS.md` = file -> public API index (find a function without opening files)
-- `docs/CONTRACT.md` / `_REGIONS` / `_TECHNIQUE` / `_CATCH` = data + API contracts
-- `docs/LITERATURE.md` = the studies behind the environment model (thresholds + provenance)
-- `docs/ROADMAP.md` (Update 4.0) · `docs/ARCHIVE_UPDATE_3.0.md` (completed blueprint)
-- `docs/ARCHIVE.md` + `docs/CHANGELOG.md` = history / audit trail
+  systemPatterns, techContext, progress[cite: 1]. A fact lives there ONCE and points at the
+  deep doc — never fork the same fact into two files (that is how docs go stale)[cite: 1].
+- New chat: read `memory-bank/activeContext.md` (ACTIVE items only)[cite: 1]. Do not read historical logs.
 
 # Continuous improvement
-- On a style/architecture/tool correction: ask to persist it to .clinerules.
+- On a style/architecture/tool correction: ask to persist it to .clinerules[cite: 1].

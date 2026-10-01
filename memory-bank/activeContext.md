@@ -15,6 +15,163 @@ Blueprint (completed work): `docs/ARCHIVE_UPDATE_3.0.md` · Roadmap (next): `doc
       Verified: `git ls-remote` + `git fetch` against the new URL, `origin/main` unchanged,
       old `github.com/nickeprice/index.html` returns 301 (GitHub redirect), new URL 200.
 
+## REBUILD SHELVED / REVERTED (2026-09-30, user decision) — READ FIRST
+
+- [x] User asked to revert to the constants that existed BEFORE the AI-dataset assumptions. Done:
+      `inputs.js`, `physics.js`, `sanity_pass.js` restored to HEAD `6f84ace` (foam 0.60/0.90/0.70,
+      yarn 0.15/in, no silicone/extended hooks). Sanity 149 pass / 0 fail. The two sections below
+      (REAL-UNITS REBUILD, HANDOFF) are HISTORICAL, not active.
+- Kept for reference: `scripts/derive_tackle.py` (read-only prototype; no app file reads it).
+  Finding: with sourced diameters + assumed foam 0.05-0.25 g/cm3 and an estimated hook mass,
+  corky 14/12/10 and cheater 10 get NEGATIVE net lift (0.0 in). No published corky density or hook
+  mass was found (yakimabait, garrenwood, tacklewarehouse, jctacklefactory, speypages). The
+  user-pasted 0.09-0.19 g/cm3 (0.15 baseline) is an unsourced AI estimate.
+- [ ] Open by design: revisit only if a sourced foam density / hook mass appears. `sw.js` stays v2.03.37.
+- [ ] **MEASURE (user, 2026-10-01):** user is buying a 0.001 g scale + 10 mL cylinder (has calipers).
+      Supersedes "user cannot measure". Protocol: `docs/MEASUREMENT_PROTOCOL.md`; log into
+      `docs/tackle_measure_template.csv`. Waiting on the user's data.
+- [ ] After data: add `sd`/`n` to `docs/tackle_measurements.csv` + `scripts/tackle_csv_to_json.py`
+      (reject a measured value with no sd); seeded Monte Carlo in `scripts/derive_tackle.py`
+      (median, 5-95%, fraction net lift <= 0). Potential bug: net lift = small difference of
+      large terms, so +/-10% foam variation dominates; never clamp. Verify: two runs
+      byte-identical + `--check` clean. Whether the UI shows the range is NOT decided.
+
+## REAL-UNITS TACKLE REBUILD (2026-09-30) — PAUSED, awaiting user. SUPERSEDES the handoff below.
+
+The user stepped away. Plan is written, NOTHING from it has been started. Resume at **task 0**.
+
+**Decisions (recorded, do not relitigate):**
+- [x] The old reference rig (1040 CFS / Corky 12 / 1/2 oz) and the 4"-12" zone have **no real
+      basis** (an old tuning method; `DRAG_REF=7.5`, foam lifts and the zone were tuned against
+      each other). Nothing gets anchored to them. The 2.89" -> 1.52" move is NOT a finding.
+- [x] Rebuild in **real units**: lift in grams-force, drag in grams-force per foot
+      (`F = 1/2 rho Cd A v^2`). Remove `DRAG_REF`, `anchorScale`, `REF_DIAMETER_MM`.
+- [x] ONLY locked data = the 110 line diameters. Everything else is derived, basis labelled.
+      The user cannot measure anything: research + physics only, never ask them to weigh.
+- [x] **Yarn default = SOAKED** (-0.011 per inch). Fresh-cast is an optional input; its air lift
+      is a labelled placeholder (not derivable).
+- [x] **No `silicone` material.** Soft beads ARE the silicone ones: delete the `silicone` branch
+      + `SILICONE_BEAD_SINK` in `physics.js`, fold 10mm into `soft`.
+- [x] Scope: Lil Corky #14/12/10/8/6/4 · Beau Mac Cheater #14/12/10/8 ONLY (other 3 of 7 sizes
+      unpublished) · hooks 2/0, 1/0, 1, 2 for Owner SSW Cutting Point, Gamakatsu Octopus,
+      Gamakatsu Finesse Wide Gap · Glo Bugs yarn · existing beads + 10mm soft · existing
+      lead/tungsten weights. Drop the AI file's hook 4/3-0/4-0/5-0 and cheater #6/#4/#2.
+- [ ] Foam tolerance (+/-10%): raised, NOT decided. Ask again.
+
+**Published inputs (cite these; fetched 2026-09-30):**
+- Lil Corky diameter: #14 1/4", #8 1/2" (yakimabait.com lil-corky-8-14); #6 5/8", #4 3/4"
+  (yakimabait.com lil-corky-4-6); #12 5/16", #10 3/8" (vandamwarehouse.com, "body length").
+- Beau Mac Cheater: #14 1/4", #12 5/16", #10 3/8", #8 1/2"; "teardrop-shaped", "7 sizes"
+  (sportco.com listings). Old CSV `cheater-12` (13x9.5mm egg) is probably a real #10 (3/8").
+- Glo Bugs yarn: acrylic (Amazon listing), ~5/16" = 8mm, 15 ft/bag (globugs.com).
+- Gamakatsu Octopus 1/0: 26.3mm long, 12.1mm gap, ~1.02mm wire, ONE photographed specimen
+  (garrenwood.com). Owner SSW + Finesse Wide Gap: sizes only, NO dimensions (Owner page 403).
+- NOT found anywhere: corky/cheater/yarn mass, buoyancy or foam density; hook masses.
+
+**Assumptions to LABEL (not facts):** foam density 0.05-0.25 g/cm3 (unsourced; lift factor is
+only 0.75-0.95 so level is insensitive, ratios are exact from diameters); hook mass (estimate,
++/-25%); cheater teardrop shape; acrylic 1.18 g/cm3; line Cd (constant, contract says not static).
+The 0.15 foam density seen earlier was BACK-FIT from the AI lifts = circular. Do not cite it.
+
+**Tasks (execute in order, tick only after the Verification passes):**
+- [x] **0. Prototype, no app files touched.** (DONE 2026-09-30: scripts/derive_tackle.py, two runs byte-identical; heights mostly 0.0" at 3 ft leader -> see gate 1) Write `scripts/derive_tackle.py` (stdlib only) +
+      a read-only report printing real-unit lift, drag and height for typical rigs.
+      Potential bug: foam density >= 0.998 gives negative lift -> REFUSE, never clamp.
+      Verify: two runs byte-identical; magnitudes sane (lift in g, drag in gf/ft).
+- [ ] **1. DECISION GATE.** (2026-09-30 research pass: NO published hook mass, wire dia (except Octopus 1/0 26.3mm long) or foam density found. Fetched: garrenwood, yakimabait, tacklewarehouse, mahitackle, speypages (Octopus #1 gap 11mm, 1/0 12.75mm), jctacklefactory (generic corky 6.5/7.5/8.7/10/12/15mm, no mass). u-perform EVA 403, kfcase 404, frbiz 503. Prototype hook wire-length ratio 3.2x is likely ~1.6-2x too heavy (est 0.47 gf vs ~0.24 for a ~0.28 g hook); the old library 1/0 = 0.28 is plausibly closer. Still 0.0 in for corky 14/12/10 -> needs user decision.) Show the user the prototype heights. Choose the zone approach
+      (source it from literature / flag it as assumption / hide it). If heights are absurd
+      (e.g. <0.5" or >40") STOP and show them; do NOT tune to look right.
+- [ ] **2. Data.** Derived rows into `docs/tackle_measurements.csv` (+ regenerate `tackle.json`
+      via `scripts/tackle_csv_to_json.py`); basis in `notes`; fix the FALSE "dry weight
+      measured" hook notes; foam/hook/bead rows only, leave line + weight geometry.
+      Verify: `python3 scripts/tackle_csv_to_json.py --check` clean.
+- [ ] **3. Physics in real units** (`physics.js`, `inputs.js`, `zone.js`, `solver.js`, sonar
+      replay `sonar.js:141`); `rigLift()` (`inputs.js:257`) uses soaked yarn by default.
+      Re-pin frozen baselines in `sanity_pass.js` with rationale inline.
+      Verify: `node sanity_pass.js --quiet` (currently 145 pass / 4 FAIL, expected).
+- [ ] **4. UI.** Add new corky/cheater `<option>`s at `index.html` ~246/250/370/374, extend
+      `FOAM_KEYS` (`zone.js:722`), 10mm soft bead, hook picker. Fix swapped cheater labels:
+      `inputs.js` `c10` says "Size 12" and `c12` says "Size 10". Bump `sw.js` from v2.03.37.
+      Verify: sanity + a DOM assertion that every new option exists.
+- [ ] **5. Docs + push.** `CONTRACT_TACKLE.md` (basis = derived, NOT weighed), `SYMBOLS.md`,
+      `CHANGELOG.md`, `README.md`, `progress.md`; then commit AND push in ONE step.
+
+**Working tree right now (UNCOMMITTED, do NOT commit as-is):** `inputs.js`, `physics.js`,
+`sanity_pass.js` hold INTERIM foam/hook/yarn/silicone constants from the AI dataset. Task 3
+replaces them. Corky 14/12/10 lifts there (0.30/0.39/0.62) are ~1.5-2.7x too high against the
+published diameters; corky 8/6/4 happen to match a 0.15 density. HEAD `6f84ace`, `sw.js` v2.03.37.
+
+
+## HANDOFF — 2026-09-30 (end of session) — foam/tackle re-source IN PROGRESS, UNCOMMITTED
+
+**State:** working tree dirty (`sanity_pass.js`, `src/features/gear-sim/inputs.js`,
+`src/features/gear-sim/physics.js`), HEAD `6f84ace`, sanity **145 pass / 4 FAIL**. Do NOT commit
+until the 4 failures are resolved or consciously re-pinned. `sw.js` is still `v2.03.37` (bump it
+when this ships).
+
+**User decisions (recorded, do not relitigate):**
+- [x] The AI-derived dataset REPLACES the old foam/hook/yarn/bead numbers ("my old data was
+      incorrect"). The old hook rows say `"dry weight measured"` but the user NEVER measured
+      hooks, so that note is false. The 110 line diameters are correct, so keep them.
+- [x] NO glass beads. Add silicone beads (6/8/10mm = -0.02/-0.04/-0.08). Use the USER's corky
+      names (12 = 8mm, 10 = 10mm) and add corkies 8/6/4. Add the full cheater ladder.
+- [x] Tolerance (+/-10% on foam): raised, NOT decided or built. Ask again.
+- The dataset is `handbook density x geometric volume`, NOT weighed, despite its own claim.
+  Label it that way in the docs (`CONTRACT_TACKLE.md`). It was never imported into
+  `tackle.json` or the CSV.
+
+**DONE in the working tree (uncommitted):**
+- `inputs.js`: `FOAM_TABLE` re-sourced (corky 12 0.60->0.39, corky 10 0.90->0.62, c12 0.70->0.55;
+  corkies 8/6/4 and cheaters c14/c10/c8/c6/c4/c2 added). `parseFoam()` handles `cNN` keys.
+  Added `YARN_LIFT_FRESH_PER_INCH=0.160`, `YARN_LIFT_SOAKED_PER_INCH=-0.011`,
+  `HOOK_SINK_EXTENDED`, `PENCIL_LEAD_SINK_PER_INCH`. `physics.js`: `SILICONE_BEAD_SINK` + a
+  `beadSink()` silicone branch.
+- `sanity_pass.js`: re-pinned the 4 frozen baseline rows (lift/hgt only, drag unchanged), the drift
+  baseline (hgt 1.518", score 3.883), and `wsOut.hgt`, with rationale inline.
+
+**NOT DONE (the data is dead code until these land):**
+- [ ] Yarn two-state is NOT wired: `rigLift()` still does `yarnInches * 0.15`. Needs a rig input
+      (fresh_cast vs soaked) and a default. I leaned `fresh_cast`; the user has not chosen.
+- [ ] `HOOK_SINK_EXTENDED`, `PENCIL_LEAD_SINK_PER_INCH`, silicone beads, and the new corky/cheater
+      sizes are unreachable from the UI: no `<option>`s in `index.html` (the foam selects are
+      hardcoded 4x, at lines ~246/250/370/374), `FOAM_KEYS` in `zone.js:722` not extended,
+      the bead-material select has no `silicone`, and the hook picker has no new sizes.
+- [ ] Update `tackle.json` + the CSV (+ `scripts/tackle_csv_to_json.py`) and fix the false hook notes.
+- [ ] Docs: `CONTRACT_TACKLE.md`, `SYMBOLS.md`, `CHANGELOG.md`, `ROADMAP.md`, `progress.md`.
+
+**The 4 failing assertions (diagnose, don't blindly re-pin):**
+1. `bead labels are plain and the Cheater float reads "Cheater 10"` (`sanity_pass.js:259-262`):
+   it pins `'c12': { lift: 0.70, label: 'Cheater - Size 10' }`. The value is now 0.55, so update
+   the regex. Expected, a deliberate change.
+2. `an on-target rig gets no suggestion rows at all` (~line 944): `rigOn` (Corky 10, 6 ft leader,
+   0.25 oz) was 4.81" and is now **3.16"**, below the 4" floor.
+3. `the summary paragraph is painted...` (~line 1265-1290): `hgt` is re-pinned, but the "summary"
+   and "where" strings differ. Read the failure text before touching it.
+4. `the rig search changes the corky first...` (~line 1545-1560): the rig search now picks
+   "Cheater 10 float + a second Corky 10 + hook Size 2 + yarn at 3"" instead of
+   "Corky 10 + a second Corky 10 + hook size 1/0". The search is choosing different tackle
+   because the lifts changed, so this is a behavior change to look at, not just a number.
+
+**THE REAL FINDING, needs a user product call before any re-pin of #2-#4:** lowering the foam
+lifts drops the frozen 1040 CFS reference rig from 2.887" to **1.518"**, below the 4"-12" zone,
+and an "on-target" rig to 3.16". The zone constants and `DRAG_REF` were NOT changed. The 4"-12"
+band was a folklore band tuned when foam read ~1.5x high. The options are (a) re-anchor `DRAG_REF`
+so the reference rig lands mid-zone again (a deliberate contract bump), (b) accept the lower
+heights and leave the zone alone, or (c) revert the foam lifts to the old values and defer this.
+My lean is (a), but it is the user's call.
+
+**Corrections to things I said earlier in the session (don't repeat them):**
+- I said the user's corky numbers "agree" with the dataset (0.40/0.60 vs 0.39/0.62). That compared
+  the `tackle.json` `buoyancy_g` rows, which physics does NOT read. Physics reads `FOAM_TABLE`
+  (0.60/0.90 before), so in physics units the real change is a ~35% drop.
+- The cheater key mapping is MY choice, and the user never confirmed it: `c12` = the picker's
+  "Cheater 10" at 0.55 (the dataset's cheater_10), and `c10` = the dataset's cheater_12 at 0.32,
+  labelled "Cheater - Size 12". Confirm, or swap.
+
+**Process notes:** no inline `python3 -c` / `node -e` with nested quotes, because the shell mangles
+them. Write a temp file with the editor instead. Commit messages go via `git commit -F <file>`.
+
+
 ## ACTIVE — 2026-09-30 sonar/sim = one learning machine + tide in the model + cleanup
 
 - [x] **The sin: the sim and the sonar were two brains.** The sim placed the zone from temp / light

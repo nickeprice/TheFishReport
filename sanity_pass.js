@@ -648,7 +648,9 @@ async function httpChecks() {
     const pacToday = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Los_Angeles', weekday: 'long', month: 'short', day: 'numeric'
     }).format(new Date());
-    (day0.tag === 'TODAY' && String(day0.title) === pacToday)
+    // The API zero-pads the day (strftime %d: "Oct 01"); Intl does not ("Oct 1"). Strip the
+    // padding from the API title so days 1-9 of a month compare equal.
+    (day0.tag === 'TODAY' && String(day0.title).replace(/ 0(\d)$/, ' $1') === pacToday)
       ? ok('day 0 card is TODAY in Pacific time', `${day0.title} == ${pacToday}`)
       : fail('day 0 card is TODAY in Pacific time', `title=${day0.title} pacificToday=${pacToday}`);
     const NET_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday']; // NETTING_DAYS = [6, 0, 1]

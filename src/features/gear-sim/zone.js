@@ -844,7 +844,7 @@ function bestZoneRig(zone, rig, vel) {
             var foam = parseFoam(FOAM_KEYS[f]);
             for (var f2 = 0; f2 < FOAM_KEYS.length; f2++) {
                 var foam2 = parseFoam(FOAM_KEYS[f2]);
-                var liftBase = foam.buoyancy_g + foam2.buoyancy_g;
+                var liftBase = foam.net_buoyancy_g + foam2.net_buoyancy_g;
                 for (var y = 0; y < YARN_OPTIONS.length; y++) {
                     for (var h = 0; h < HOOK_OPTIONS.length; h++) {
                         for (var b = 0; b < beads.length; b++) {
@@ -853,7 +853,7 @@ function bestZoneRig(zone, rig, vel) {
                             var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(YARN_OPTIONS[y]) : 0;
                             var hookMassG = hData ? hData.mass_g : 0;
                             var beadNetSink = bData ? bData.netSinkG : 0;
-                            var liftGf = computeLiftGf(foam.buoyancy_g, foam2.buoyancy_g, hookMassG, beadNetSink, yG);
+                            var liftGf = computeLiftGf(foam.net_buoyancy_g, foam2.net_buoyancy_g, hookMassG, beadNetSink, yG);
                             var changed = [];
                             if (FOAM_KEYS[f] !== rig.foam.key) changed.push('foam');
                             if (FOAM_KEYS[f2] !== rig.foam2.key) changed.push('foam2');
@@ -870,8 +870,14 @@ function bestZoneRig(zone, rig, vel) {
                                 var ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
                                 var bObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
                                 var hObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+                                var yarnDrag = (typeof tackleYarnDragData === 'function')
+                                    ? tackleYarnDragData() : null;
+                                var yObj = yarnDrag ? { areaCm2: yarnDrag.areaCm2, cd: yarnDrag.cd } : null;
                                 var dragGfFt = totalDragPerFt(bed, refLdDia, refLdLen,
-                                    wObj, ck1Obj, ck2Obj, bObj, hObj, null);
+                                    wObj, ck1Obj, ck2Obj, bObj, hObj, yObj);
+                                if (rig.mlDia && rig.mlDia > 0) {
+                                    dragGfFt += lineDragPerFt(rig.mlDia, bed);
+                                }
                                 for (var l = 0; l < passes[p].leaders.length; l++) {
                                     var len = passes[p].leaders[l];
                                     var hgt = presentationHeightInches(liftGf, dragGfFt, len);

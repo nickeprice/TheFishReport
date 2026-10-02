@@ -13,7 +13,7 @@ hook-2-0,hook,Hook 2/0,,,,,0.35,,,,,,,,,,dry weight measured
 hook-1-0,hook,Hook 1/0,,,,,0.28,,,,,,,,,,dry weight measured
 hook-1,hook,Hook 1,,,,,0.2,,,,,,,,,,dry weight measured
 hook-2,hook,Hook 2,,,,,0.16,,,,,,,,,,dry weight measured
-yarn-egg,yarn,Egg yarn (saturated),,,,,,,,,,,,,0.01,,ESTIMATED near-neutral; model 0.15/in lift is ~15x high
+yarn-egg,yarn,Egg yarn (saturated),,,,,,,,1.8,cylinder,0.8,,,-0.012,,ESTIMATED near-neutral; model -0.012/in (slightly sinking - not buoyant)
 braid-generic-20,line,Generic average 20lb,Generic average,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-generic-30,line,Generic average 30lb,Generic average,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-generic-40,line,Generic average 40lb,Generic average,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)

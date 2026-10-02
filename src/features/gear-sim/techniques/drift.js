@@ -42,9 +42,9 @@ var DRIFT_TECHNIQUE = {
         }
         var bedVel = velocity.bottom;
 
-        // Lift: read real values from tackle.json
-        var f1G = foam.buoyancy_g;
-        var f2G = foam2.buoyancy_g;
+        // Lift: read NET values from tackle.json (buoyancy_g - mass_g)
+        var f1G = foam.net_buoyancy_g;
+        var f2G = foam2.net_buoyancy_g;
         var hData = (typeof tackleHookData === 'function') ? tackleHookData(hook) : null;
         var hookMassG = hData ? hData.mass_g : 0;
         var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdMat, bdSz) : null;
@@ -52,7 +52,7 @@ var DRIFT_TECHNIQUE = {
         var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(yarn) : 0;
         var liftGf = computeLiftGf(f1G, f2G, hookMassG, beadNetSink, yG);
 
-        // Drag: line + point objects (weight, corky, bead, hook, yarn)
+        // Drag: line + point objects (weight, corky, bead, hook, yarn, mainline)
         var wData = (typeof tackleWeightPhysicsData === 'function')
             ? tackleWeightPhysicsData(weightShape, weightOz) : null;
         var weightObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
@@ -60,10 +60,16 @@ var DRIFT_TECHNIQUE = {
         var corky2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
         var beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
         var hookObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
-        var yarnObj = null;   // yarn drag area negligible
+        // @provenance: informed_estimate — porous cylinder (5mm × 50mm), Cd=0.8
+        var yarnDrag = (typeof tackleYarnDragData === 'function') ? tackleYarnDragData() : null;
+        var yarnObj = yarnDrag ? { areaCm2: yarnDrag.areaCm2, cd: yarnDrag.cd } : null;
 
         var dragGfPerFt = totalDragPerFt(bedVel, ldDia, ldLen,
             weightObj, corky1Obj, corky2Obj, beadObj, hookObj, yarnObj);
+        // @provenance: derived — mainline distributed drag (mlDia from form, mean velocity)
+        if (mlDia > 0) {
+            dragGfPerFt += lineDragPerFt(mlDia, velocity.mean);
+        }
         var hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
         var blownOut = (bedVel > 3.5 && weightOz < 0.5);
 

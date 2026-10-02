@@ -38,7 +38,7 @@ COLUMNS = [
 TYPES = {"foam", "line", "bead", "hook", "yarn", "weight"}
 # Geometric shapes only. A rubber sleeve on a weight is a LABEL/variant, not a
 # shape, so `shape` stays the bare geometry and the variant lives in `label`.
-SHAPES = {"sphere", "plate", "other", "egg", "slinky", "pencil", "barrel",
+SHAPES = {"sphere", "cylinder", "plate", "other", "egg", "slinky", "pencil", "barrel",
           "teardrop", "cannonball"}
 TEXT_COLS = ("brand", "material", "shape", "notes")
 
@@ -55,7 +55,7 @@ REQUIRED = {
     "bead": ("mass_g", "buoyancy_g", "diameter_mm"),
     "line": ("diameter_mm",),
     "hook": ("mass_g",),
-    "yarn": ("buoyancy_per_inch_g",),
+    "yarn": ("buoyancy_per_inch_g", "area_cm2", "cd"),
     # weight: mass pins the sink/hold side, area_cm2 the drag side. Mass is
     # currently derived from the oz label; area still needs measuring.
     "weight": ("mass_g", "area_cm2"),

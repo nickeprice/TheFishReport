@@ -60,28 +60,33 @@ var FOAM_PICKER_MAP = { '14': 'corky-14', '12': 'corky-12', '10': 'corky-10', 'c
 
 /**
  * Resolve a foam picker value to its tackle.json data.
- * Returns {key, size, buoyancy_g, mass_g, label, areaCm2, cd}
+ * Returns {key, size, buoyancy_g, mass_g, net_buoyancy_g, label, areaCm2, cd}
+ * net_buoyancy_g = buoyancy_g - mass_g  (Archimedes net, used in computeLiftGf)
  * Falls back to {key:'0',...} for None/empty input.
+ * @provenance: derived — buoyancy_g and mass_g from tackle.json
  */
 function parseFoam(rawValue) {
     var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
     if (key === '0' || key === '') {
-        return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
+        return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
     }
     var tid = FOAM_PICKER_MAP[key];
     var item = tid ? (typeof tackleById === 'function' ? tackleById(tid) : null) : null;
     if (item) {
         var size = (key === 'c12') ? 10 : parseFloat(key);
+        var rawBuoy = item.buoyancy_g || 0;
+        var mass = item.mass_g || 0;
         return {
             key: key, size: size,
-            buoyancy_g: item.buoyancy_g || 0,
-            mass_g: item.mass_g || 0,
+            buoyancy_g: rawBuoy,
+            mass_g: mass,
+            net_buoyancy_g: Math.max(0, rawBuoy - mass),  // corky's own mass subtracted
             label: item.label || ('Corky - Size ' + key),
             areaCm2: item.area_cm2 || 0,
             cd: item.cd || 0.47
         };
     }
-    return { key: key, size: parseFloat(key) || 0, buoyancy_g: 0, mass_g: 0,
+    return { key: key, size: parseFloat(key) || 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0,
         label: 'Corky - Size ' + key, areaCm2: 0, cd: 0.47 };
 }
 
@@ -136,18 +141,42 @@ function tackleBeadData(bdMat, bdSz) {
 
 /**
  * Yarn buoyancy in grams-force per inch, from tackle.json.
- * Saturated egg-yarn estimated at ~0.01 gf/in (near-neutral).
+ * Saturated egg-yarn is slightly NEGATIVE (sinks ~0.012 gf/in).
+ * @provenance: informed_estimate — acrylic ρ≈1.17, packing≈15%, tuft d≈5mm, V≈0.50 cm³/in
+ * @value: -0.012 gf/in
+ * @error: ±0.012 gf/in (±100%)
+ * @measure: user soaks 10" yarn 5 min, weighs wet vs dry → saturated_mass_per_inch → replace
  */
 function tackleYarnBuoyancyG(inches) {
     if (!inches || inches <= 0) return 0;
-    var yb = 0.01;
+    var yb = -0.012;
     if (typeof tackleItems === 'function') {
         var yarns = tackleItems('yarn');
         if (yarns && yarns.length > 0 && yarns[0].buoyancy_per_inch_g !== undefined) {
             yb = Number(yarns[0].buoyancy_per_inch_g);
         }
     }
-    return Math.max(0, inches * yb);
+    return inches * yb;  // negative = sinks
+}
+
+/**
+ * Yarn form drag data from tackle.json.
+ * Returns {areaCm2, cd} or default informed estimate.
+ * @provenance: informed_estimate — porous cylinder (5mm × 50mm tuft), effective area ≈0.7×solid
+ * @value: area_cm²=1.8, cd=0.8
+ * @error: area ±0.5 cm² (±28%), cd ±0.2 (±25%)
+ * @measure: caliper tuft diameter at 5 points → mean_d, area_cm² = π × mean_d × length_cm
+ */
+function tackleYarnDragData() {
+    var dflt = { areaCm2: 1.8, cd: 0.8 };
+    if (typeof tackleItems !== 'function') return dflt;
+    var yarns = tackleItems('yarn');
+    if (!yarns || yarns.length === 0) return dflt;
+    var y = yarns[0];
+    if (y.area_cm2 && y.cd) {
+        return { areaCm2: Number(y.area_cm2), cd: Number(y.cd) };
+    }
+    return dflt;
 }
 
 /**

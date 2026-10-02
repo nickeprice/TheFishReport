@@ -87,15 +87,17 @@ function totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt,
 
 /**
  * Net upward lift in grams-force.
- *   lift = corky1_buoyancy + corky2_buoyancy + yarn_buoyancy
+ *   lift = corky1_net + corky2_net + yarn_net
  *          - hook_mass - bead_net_sink
  * All values from tackle.json.
+ * corky1/2 NET = buoyancy_g - mass_g  (raw buoyancy minus corky mass)
  * beadNetSinkG: max(0, bead.mass_g - bead.buoyancy_g) - positive = sink force
+ * @provenance: derived — Archimedes net buoyancy = ρ·V − m per item in tackle.json
  * Floored at 0.01 gf to prevent degenerate catenary behaviour.
  */
-function computeLiftGf(corky1BuoyancyG, corky2BuoyancyG, hookMassG, beadNetSinkG, yarnBuoyancyG) {
+function computeLiftGf(corky1NetG, corky2NetG, hookMassG, beadNetSinkG, yarnBuoyancyG) {
     return Math.max(0.01,
-        (corky1BuoyancyG || 0) + (corky2BuoyancyG || 0) + (yarnBuoyancyG || 0)
+        (corky1NetG || 0) + (corky2NetG || 0) + (yarnBuoyancyG || 0)
         - (hookMassG || 0) - (beadNetSinkG || 0));
 }
 

@@ -141,7 +141,7 @@ function communitySonar(dbArray, flow, species, siteId) {
         var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(row.yarn || 0) : 0;
         var hookMassG = hData ? hData.mass_g : 0;
         var beadNetSink = bData ? bData.netSinkG : 0;
-        var liftGf = computeLiftGf(foam.buoyancy_g, foam2.buoyancy_g, hookMassG, beadNetSink, yG);
+        var liftGf = computeLiftGf(foam.net_buoyancy_g, foam2.net_buoyancy_g, hookMassG, beadNetSink, yG);
         var bedVel = hydraulicVelocity(row.flow, siteId).bottom;
         // P4b: prefer the BRAND the angler picked (its id owns the measured diameter, so the
         // replay runs the real line) and fall back to material + lb for a row logged before
@@ -172,8 +172,13 @@ function communitySonar(dbArray, flow, species, siteId) {
         var ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
         var bObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
         var hObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+        var yarnDrag = (typeof tackleYarnDragData === 'function') ? tackleYarnDragData() : null;
+        var yObj = yarnDrag ? { areaCm2: yarnDrag.areaCm2, cd: yarnDrag.cd } : null;
         var drag = totalDragPerFt(bedVel, ldDia, row.ldLen || 10,
-            wObj, ck1Obj, ck2Obj, bObj, hObj, null);
+            wObj, ck1Obj, ck2Obj, bObj, hObj, yObj);
+        if (mlDia > 0) {
+            drag += lineDragPerFt(mlDia, hydraulicVelocity(row.flow, siteId).mean);
+        }
         var h = presentationHeightInches(liftGf, drag, row.ldLen);
         if (isFinite(h) && h > 0) {
             heights.push(h);

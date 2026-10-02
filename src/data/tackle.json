@@ -2169,8 +2169,11 @@
       "id": "yarn-egg",
       "type": "yarn",
       "label": "Egg yarn (saturated)",
-      "buoyancy_per_inch_g": 0.01,
-      "notes": "ESTIMATED near-neutral; model 0.15/in lift is ~15x high"
+      "area_cm2": 1.8,
+      "shape": "cylinder",
+      "cd": 0.8,
+      "buoyancy_per_inch_g": -0.012,
+      "notes": "ESTIMATED near-neutral; model -0.012/in (slightly sinking - not buoyant)"
     }
   ]
 }

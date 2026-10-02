@@ -8,6 +8,37 @@
 - **0.6 Sanity baselines re-pinned** — 149/149 passing. Key changes: physics test uses `net_buoyancy_g` instead of gross `buoyancy_g`; integration test suggestions flipped from "running high" to "running low" reflecting the ~50% lift reduction. All changed lines carry `// @provenance:` or `// @fix:` comments.
 
 **Plan status:** Phase 0 all items checked. Phases 1-8 ready to execute.
+
+## Phase 1-8 Complete (2026-10-02) — Physics Engine Rebuild
+
+**What shipped (commits b0c0f36..75d92cc):**
+
+**New modules (6 added to src/features/gear-sim/):**
+
+| File | Lines | Functions | Purpose |
+|------|-------|-----------|---------|
+| `hydro.js` | 116 | `logLawVelocity`, `uStarFromMax`, `velocityProfile`, `turbulenceFluctuation` | 3D log-law velocity field |
+| `riverbed.js` | 140 | `bedElevation`, `contactForce`, `frictionForce`, `isSnagged` | Cobble-bed substrate & contact |
+| `cable.js` | 114 | `cablePreset`, `cableNodes`, `resolveCable` | Lumped-mass cable dynamics |
+| `sinker.js` | 101 | `sinkerForceBalance`, `sinkerBounceStep` | Bouncing sinker model |
+| `terminal.js` | 74 | `terminalEquilibrium`, `vivFrequency`, `vivAmplitude` | Hook + corky/yarn equilibrium |
+| `salmon.js` | 82 | `salmonState`, `salmonMouthCone`, `salmonPositionZ` | Target fish entity |
+| `interception.js` | 84 | `interceptionRun`, `interceptionProbability` | Flossing state machine |
+
+**Integration:**
+- Extended `drift.js compute()` to run the new pipeline additively, outputting `hookDepthM`, `interceptionProb`, `sweepQuality`, `salmonDepthM`
+- Extended `solver.js` `buildSimStats()` and `paintSimHud()` for new fields
+- All modules wired into `index.html`, `sw.js` SHELL_FILES, `docs/SYMBOLS.md`
+- `sw.js` VERSION → `v2.03.39`
+
+**Verification:** 56 new sanity tests across all modules. **208/208 GREEN** at final commit. All existing baselines untouched (additive integration).
+
+**Notable decisions:**
+- `cable.js` uses a 10× convergence boost on the pseudodynamic step — physical stiffness kEff ~10⁴ N/m makes direct integration glacial
+- Drag sign corrected in `resolveCable`: water flow pushes nodes downstream (+x)
+- Seat probability model in `interception.js`: stochastic clamp `P = min(1, max(0, (v-0.5)/1.5))` — reliable seating above 2 m/s
+- All modules under 150 lines per frontend conventions
+- All numeric literals carry `@provenance:` tags
 # HISTORY — completed work log (NOT the plan)
 
 The active plan lives in `memory-bank/plan.md`. This file is append-only history; the

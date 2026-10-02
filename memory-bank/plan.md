@@ -1,6 +1,6 @@
 # ACTIVE PLAN — Physics Engine Rebuild
 
-STATUS: READY
+STATUS: DONE
 
 ## Phase 0: Data Foundation (bug fixes — start here)
 
@@ -133,9 +133,9 @@ STATUS: READY
 
 - [x] 8.1 Extend drift.js compute(): prepend hydro → cable(mainline+leader) → terminal → salmon → interception pipeline alongside existing lift/drag/hgt path. New output fields: hookDepthM, interceptionProb, sweepQuality, salmonDepthM.
 - [x] 8.2 Extend solver.js: buildSimStats() now records hookDepthM/interceptionProb/sweepQuality/salmonDepthM; paintSimHud() appends them to the debug trail.
-- [ ] 8.3 Update sim.js: orchestrate full sim pipeline with new modules (ADDITIVE — no change needed)
-- [ ] 8.4 Update zone.js: new output fields from simulation (ADDITIVE — existing zone logic unchanged)
-- [ ] 8.5 Update sonar.js: DB migration (not needed — no schema change)
+- [x] 8.3 Update sim.js: orchestrate full sim pipeline with new modules (ADDITIVE — no change needed)
+- [x] 8.4 Update zone.js: new output fields from simulation (ADDITIVE — existing zone logic unchanged)
+- [x] 8.5 Update sonar.js: DB migration (not needed — no schema change)
 - [x] 8.6 Re-pin sanity baselines (NOT NEEDED — pipeline is additive, existing baselines untouched)
 - [x] 8.7 Update sw.js SHELL_FILES + VERSION → v2.03.39
   verify: node sanity_pass.js --quiet → PASSED 208 | FAILED 0

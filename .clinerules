@@ -1,97 +1,39 @@
-# Guardrails
-- Use targeted replace_in_file edits; never rewrite a >400-line file whole[cite: 1].
-- Read narrowly: grep/search_codebase to locate a symbol first, then read only
-  that +-30 line window[cite: 1]. Never whole-read a large file when a range will do[cite: 1].
-- Confirm edits with `git diff --stat` / `git diff <file>` instead of re-reading[cite: 1].
-- Pipe verification output through `tail -n 40` / `grep`; only dump full logs on failure[cite: 1].
-- Batch independent reads/searches/edits into one tool call[cite: 1].
+# File discipline
+- Use replace_in_file; never rewrite files over 400 lines in one shot.
+- Search first, then read ±30 lines. Never whole-read large files unless small.
+- Confirm edits with `git diff --stat` or `git diff <file>`.
+- Pipe verification through `tail -n 40`; full logs on failure only.
 
-# Git (standing instruction from user, 2026-09-29)
-- The words **"commit" and "push" mean the SAME thing: stage everything, commit, and push
-  to `origin`.** Never commit without pushing, never push without committing, and never stop
-  at a local commit to ask whether to push[cite: 1].
-- Write the commit message from the actual change; reference the issue numbers it addresses[cite: 1].
+# Git
+- "commit" and "push" mean stage everything, commit, and push to origin.
+  Never stop at a local commit to ask whether to push.
+- Write commit messages from the actual change; reference issue numbers.
 
-# Workflow
-- The plan is ONE artifact: `memory-bank/plan.md`. It is the ONLY handoff between plan
-  and act mode. `activeContext.md` is history, never the plan.
-- Plan mode: OVERWRITE `memory-bank/plan.md` (never append) with the fixed shape:
-  `# ACTIVE PLAN — <goal>`, a `STATUS: READY` line, then `- [ ] N. <task> — files: <paths>
-  — verify: <command/assertion>` boxes. Do NOT write the plan into `activeContext.md`.
-  Present the plan, then wait.
-- Act mode: read `memory-bank/plan.md` ONLY. If it is missing, or `STATUS` is not
-  `READY`/`IN_PROGRESS`, STOP and say so — never search `activeContext.md` for a plan.
-  Execute unchecked items in order; mark `- [x]` only after the Verification Step passes.
-- Done: flip the boxes, set `STATUS: DONE`, THEN append a one-paragraph summary to
-  `activeContext.md`. The guard is `python3 scripts/plan_check.py` (wired into
-  `scripts/check.sh`); it fails when the artifact is missing or malformed.
+# Frontend module layout
+- No build step. Plain HTML/CSS + classic JS scripts, one global scope.
+- `src/app.js` is LAST and owns ONLY `window.onload` bootstrap.
+- Features in `src/features/{telemetry,gear-sim,catch-log,station,auth,map}/`.
+- Shared primitives in `src/shared/`.
+- Target <150 lines per feature file (data/type/contract files exempt).
+- Every feature file opens with `// public: a(), b() — purpose`.
 
-# Frontend module layout (UPDATE 3.0)
-- `src/app.js` is the LAST classic script and owns ONLY the `window.onload`
-  bootstrap[cite: 1]. Features live in `src/features/{telemetry,gear-sim,catch-log,station,auth}/`;
-  shared primitives in `src/shared/`[cite: 1]. Classic scripts, one global scope[cite: 1].
-- Target <150 lines for feature/component files; data/type/contract files
-  (`src/data/*`, `docs/CONTRACT*.md`) are EXEMPT[cite: 1].
-- Every feature file opens with `// public: a(), b() — purpose`[cite: 1].
-
-# Reading discipline
-- Never whole-read `src/data/*.json` (`wdfw_rules.json` is thousands of lines),
-  `docs/ARCHIVE*.md`, or `docs/CHANGELOG.md`: grep/search the specific key, then
-  read only a ±30 line window around the match[cite: 1].
-- One feature boundary per Act prompt (not a rigid "max 2 files" rule)[cite: 1].
+# Database
+- DB changes: idempotent timestamped migration under `supabase/migrations/`.
+  Apply with `npx supabase db push --yes < /dev/null`.
+- Verify against live DB (read-only query) before reporting done.
+- `CREATE OR REPLACE VIEW` cannot rename a column: `drop view if exists` first.
+- One-time data fixes are migrations too, guarded as no-ops on re-run.
 
 # Verification
-- After frontend changes run `node sanity_pass.js --quiet` — it derives the script
-  list from `index.html`, so newly added modules are auto syntax/HTTP-checked
-  (`--quiet` prints only failures + the PASSED/FAILED summary)[cite: 1].
-
-# Context handoff
-- Monitor context window usage; when it gets tight, finish the current logical step
-  and prepare a handoff[cite: 1].
-- Handoff: check off the completed `- [x]` item in `memory-bank/plan.md` and end
-  the turn with a condensed carry-over block[cite: 1]. The user restarts the session manually[cite: 1].
-
-# Output terseness
-- No prose wind-up, filler, or hedging; deliver diffs directly[cite: 1].
-- YAGNI: implement the minimum block that satisfies the verification step[cite: 1].
-- Terseness does NOT waive the base rule: end with a concise summary + flag any
-  non-obvious decision[cite: 1].
-
-# Instruction ledger (chat asks are not in the repo)
-- The ledger CAPTURES asks; the plan EXECUTES them. They are different artifacts:
-  the ledger records an ask so it is not lost (`activeContext.md`), the plan is the
-  ordered, verifiable task list act mode runs (`memory-bank/plan.md`). An ask that
-  outlives the turn gets a `- [ ]` box in `memory-bank/activeContext.md` IN THAT TURN —
-  act mode included, because act-mode asks are the ones that evaporate (rod length was
-  acknowledged twice and lost both times)[cite: 1].
-- At phase end run `python3 scripts/session_instructions.py` (~11 KB, not the multi-MB
-  transcript) and reconcile every turn against what shipped[cite: 1]. Unmatched items are either
-  done next or marked open-by-design[cite: 1]. Never read the full transcript to hunt for misses[cite: 1].
-
-# Database (standing instruction from user)
-- ALWAYS author DB changes as an idempotent timestamped migration under
-  `supabase/migrations/`, then APPLY IT YOURSELF with
-  `npx supabase db push --yes < /dev/null`[cite: 1]. Never leave a migration unapplied and
-  never ask the user to run it by hand — they are already logged in + linked[cite: 1].
-- Then VERIFY against the live DB (read-only query) before reporting done[cite: 1].
-- `CREATE OR REPLACE VIEW` cannot rename a column (42P16): `drop view if exists`
-  first, then `create view` (matches `src/services/schema.sql`)[cite: 1].
-- One-time data fixes are migrations too, guarded so they are no-ops on re-run
-  (e.g. `where id = '…' and river_name is null`)[cite: 1].
-
-# Terminal safety
-- NEVER run the same failing command more than twice consecutively; then STOP and
-  summarize the error + ask for guidance[cite: 1].
-- No blocking foreground servers in the tool window (background + redirect to /tmp)[cite: 1].
-- Do NOT write files via shell heredocs: they can mangle and exit 1 WITHOUT executing[cite: 1].
-  Use the editor to write a temp file, then `cp` it into place[cite: 1].
+- After frontend changes: `node sanity_pass.js --quiet`.
 
 # Memory (memory-bank/)
-- `memory-bank/` is the front page: projectbrief, productContext, activeContext,
-  systemPatterns, techContext, progress[cite: 1]. A fact lives there ONCE and points at the
-  deep doc — never fork the same fact into two files (that is how docs go stale)[cite: 1].
-- New chat: read `memory-bank/plan.md` (the plan) and the top of
-  `memory-bank/activeContext.md` (recent history, for context). Do not read historical logs.
+- New chat: read `plan.md` + `activeContext.md` only (both are small).
+  Do NOT read `history.md` unless explicitly asked.
+- `projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md` are
+  reference docs — read only when needed.
 
-# Continuous improvement
-- On a style/architecture/tool correction: ask to persist it to .clinerules[cite: 1].
+# Safety
+- Never run the same failing command more than twice; STOP and summarize.
+- No blocking foreground servers. Background + redirect to /tmp.
+- Do not write files via shell heredocs. Use the editor.

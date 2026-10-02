@@ -561,7 +561,7 @@ function symbolsIndex() {
   }
 
   try {
-    const mb = ['projectbrief', 'productContext', 'activeContext', 'systemPatterns', 'techContext', 'progress'];
+    const mb = ['projectbrief', 'productContext', 'activeContext', 'systemPatterns', 'techContext'];
     const absent = mb.filter((f) => !fs.existsSync(path.join(ROOT, 'memory-bank', f + '.md')));
     absent.length === 0
       ? ok('memory-bank/ complete', mb.join(', '))

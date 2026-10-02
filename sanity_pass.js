@@ -262,7 +262,7 @@ function staticIntegrity() {
   {
     const cheater = (html.match(/<option value="c12">Cheater 10<\/option>/g) || []).length;
     const inSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'inputs.js'), 'utf8');
-    const hasMap = /FOAM_PICKER_MAP.*foamMap/.test(inSrc) && /GEAR_OPTIONS\\.foamMap/.test(inSrc);
+    const hasMap = /FOAM_PICKER_MAP.*foamMap/.test(inSrc) && /GEAR_OPTIONS\.foamMap/.test(inSrc);
     (!html.includes('Presentation') && cheater === 4 && hasMap)
       ? ok('bead labels are plain and the Cheater float reads "Cheater 10"',
            'no "(Presentation)"; 4 Cheater 10 options; FOAM_PICKER_MAP maps c12 -> cheater-12')

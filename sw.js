@@ -63,6 +63,7 @@ const SHELL_FILES = [
     '/src/features/gear-sim/cable.js',
     '/src/features/gear-sim/sinker.js',
     '/src/features/gear-sim/terminal.js',
+    '/src/features/gear-sim/salmon.js',
     '/src/features/gear-sim/sonar.js',
     '/src/features/gear-sim/zone.js',
     '/src/features/gear-sim/rig.js',

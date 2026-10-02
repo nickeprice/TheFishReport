@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'terminal', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'terminal', 'salmon', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -1197,6 +1197,66 @@ function behaviorChecks(done) {
       : fail('vivAmplitude returns amplitude proportional to D', `got ${amp} mm`);
   } catch (e) {
     fail('terminal.js tests', String(e.message).split('\n')[0]);
+  }
+  // --- Salmon tests: target entity ---------------------------------------------
+  try {
+    // salmonState: mouth open at t=0.25s (sin(2π·1·0.25)=sin(π/2)=1 > threshold)
+    var st1 = salmonState(0.25, 1.0, 0.35, 0);
+    st1.mouthOpen === true && st1.mouthFraction > 0.9
+      ? ok('salmonState mouth open at t=0.25s (peak of cycle)',
+           `open=${st1.mouthOpen}, fraction=${st1.mouthFraction.toFixed(3)}`)
+      : fail('salmonState mouth open at t=0.25s (peak of cycle)', JSON.stringify(st1));
+
+    // salmonState: mouth closed at t=0 (sin(0)=0, below threshold 0.3)
+    var st0 = salmonState(0, 1.0, 0.35, 0);
+    st0.mouthOpen === false && st0.mouthFraction === 0
+      ? ok('salmonState mouth closed at t=0 (cycle start)', `open=${st0.mouthOpen}`)
+      : fail('salmonState mouth closed at t=0 (cycle start)', JSON.stringify(st0));
+
+    // salmonState: mouth closed for about 65% of the cycle (duty cycle = 0.35)
+    // At t=0.3 (108°, sin(108°)=0.951), threshold should be ~0.3, so mouth open
+    var stMid = salmonState(0.12, 1.0, 0.35, 0);  // t=0.12 → 43° → sin(43°)=0.68
+    var closedCount = 0, openCount = 0;
+    for (var si = 0; si < 100; si++) {
+        var s = salmonState(si * 0.01, 1.0, 0.35, 0);
+        if (s.mouthOpen) openCount++; else closedCount++;
+    }
+    Math.abs(openCount / 100 - 0.35) < 0.10
+      ? ok('salmonState duty cycle matches 35%', `open ${openCount}/100 cycles (want ~35)`)
+      : fail('salmonState duty cycle matches 35%', `open ${openCount}/100 cycles`);
+
+    // salmonMouthCone: fully open returns correct dimensions
+    var cone1 = salmonMouthCone(1.0);
+    Math.abs(cone1.widthM - 0.065) < 1e-4 && cone1.areaM2 > 0
+      ? ok('salmonMouthCone full open has correct width and area',
+           `w=${cone1.widthM}m, area=${(cone1.areaM2*1e4).toFixed(2)} cm²`)
+      : fail('salmonMouthCone full open has correct width and area', JSON.stringify(cone1));
+
+    // salmonMouthCone: closed mouth has zero area
+    var cone0 = salmonMouthCone(0);
+    cone0.areaM2 === 0
+      ? ok('salmonMouthCone closed mouth has zero area', 'area=0')
+      : fail('salmonMouthCone closed mouth has zero area', JSON.stringify(cone0));
+
+    // salmonMouthCone: half open has half the area
+    var coneHalf = salmonMouthCone(0.5);
+    Math.abs(coneHalf.areaM2 - cone1.areaM2 * 0.5) < 1e-6
+      ? ok('salmonMouthCone area scales linearly with fraction',
+           `halfArea=${(coneHalf.areaM2*1e4).toFixed(2)} cm² = 0.5 × full`)
+      : fail('salmonMouthCone area scales linearly with fraction', JSON.stringify(coneHalf));
+
+    // salmonPositionZ: returns value within range
+    var positions = [];
+    for (var pi = 0; pi < 100; pi++) {
+        var pos = salmonPositionZ(0.15, 0.60);
+        positions.push(pos);
+    }
+    var allInRange = positions.filter(function(p) { return p >= 0.15 && p <= 0.60; }).length;
+    allInRange === 100
+      ? ok('salmonPositionZ stays within [0.15, 0.60]m', `${allInRange}/100 in range`)
+      : fail('salmonPositionZ stays within [0.15, 0.60]m', `${allInRange}/100 in range`);
+  } catch (e) {
+    fail('salmon.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

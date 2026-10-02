@@ -129,6 +129,10 @@ this file**, or the pass fails.
 - **terminal.js** — `terminalEquilibrium(corkyNetBuoyancyN, yarnNetBuoyancyN, hookMassKg)`,
   `vivFrequency(v, D)`, `vivAmplitude(D)` — terminal tackle equilibrium check
   (net force corky+yarn−hook, threshold 0.005 N) and VIV model (St=0.21, amplitude 0.1·D).
+- **salmon.js** — `SALMON_DEFAULTS`, `salmonState(t, freqHz, dutyCycle, phase)`,
+  `salmonMouthCone(mouthFraction)`, `salmonPositionZ(depthMinM, depthMaxM)` —
+  adult salmon target: respiration cycle (sinusoidal, f=1.0 Hz, duty=35%),
+  elliptical mouth cone (65×45×80 mm), random holding depth (0.15-0.60 m).
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

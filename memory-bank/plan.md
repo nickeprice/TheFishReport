@@ -108,12 +108,15 @@ STATUS: READY
 
 ## Phase 6: salmon.js — Target Entity
 
-- [ ] 6.1 New file: src/features/gear-sim/salmon.js
+- [x] 6.1 New file: src/features/gear-sim/salmon.js
+  Functions: salmonState(t, freqHz, dutyCycle, phase), salmonMouthCone(mouthFraction),
+  salmonPositionZ(depthMinM, depthMaxM)
   Position: z ∈ [0.15, 0.60]m (boundary layer), facing upstream (−x).
   Buccal respiration: f = 1.0 Hz (0.8-1.4), duty cycle 35%.
   Mouth: elliptical truncated cone (65mm wide × 45mm tall × 80mm deep).
-  State: MouthOpen(t) = sin(2π·f·t) > 0.35
-  verify: MouthOpen(0.25, 1.0) → true (mouth open at t=0.25s)
+  State: mouthOpen when sin(2π·f·t+phase) crosses duty cycle threshold.
+  Wired into index.html (after terminal.js), sw.js, SYMBOLS.md, sanity_pass.js (load + 8 tests)
+  verify: node sanity_pass.js --quiet → PASSED 200 | FAILED 0
 
 ## Phase 7: interception.js — Flossing State Machine
 

@@ -25,24 +25,47 @@ var DRIFT_TECHNIQUE = {
         var dbArray = env.dbArray || [];
         var species = env.species;
         var weightOz = rig.weightOz, ldLen = rig.ldLen, ldMat = rig.ldMat, ldLb = rig.ldLb;
-        // The picked weight TYPE. Drives the leader drag through the weight's measured
-        // area, so shape/density finally matter (a slinky parachutes, tungsten cuts).
         var weightShape = rig.weightShape;
         var mlMat = rig.mlMat, mlLb = rig.mlLb, hook = rig.hook, yarn = rig.yarn;
         var foam = rig.foam, foam2 = rig.foam2, bdMat = rig.bdMat, bdSz = rig.bdSz;
-        // The PICKED lines' real diameters. 0 means "no brand-specific pick", and the
-        // physics then resolves material+lb to the generic library row itself.
         var ldDia = rig.ldDia || 0, mlDia = rig.mlDia || 0;
 
-        // 2. Fluid dynamics (LOCKED: drag coefficient is always 1.0) -------------------
-        // Every component counts: leader diameter (sqrt lb x material), coupled
-        // mainline, bead sphere + material sink, hook mass/gap, yarn skirt.
+        // 2. Pure-math fluid dynamics (no tuned constants) --------------------------
         var velocity = hydraulicVelocity(flow, env.siteId);
-        var dragPerFt = totalDragPerFt(velocity.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz, ldDia, mlDia, weightShape);
-        // Foam 1 + Foam 2 both contribute buoyancy (two corkies lift more).
-        var lift = rigLift(foam.lift + foam2.lift, yarn, hook, bdMat, bdSz);
-        var hgt = presentationHeightInches(lift, ldLen, dragPerFt);
-        var blownOut = (velocity.bottom > 3.5 && weightOz < 0.5);
+        // Use spot velocity when available (continuity-adjusts for river width at the
+        // angler's location vs the gauge). Falls back to gauge velocity.
+        var spotVel = (typeof velocityAtSpot === 'function')
+            ? velocityAtSpot(flow, velocity.station || null) : null;
+        if (spotVel && spotVel.bottom && spotVel.bottom > 0) {
+            velocity = { mean: spotVel.mean, bottom: spotVel.bottom, source: velocity.source,
+                station: velocity.station, spotRatio: spotVel.ratio };
+        }
+        var bedVel = velocity.bottom;
+
+        // Lift: read real values from tackle.json
+        var f1G = foam.buoyancy_g;
+        var f2G = foam2.buoyancy_g;
+        var hData = (typeof tackleHookData === 'function') ? tackleHookData(hook) : null;
+        var hookMassG = hData ? hData.mass_g : 0;
+        var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdMat, bdSz) : null;
+        var beadNetSink = bData ? bData.netSinkG : 0;
+        var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(yarn) : 0;
+        var liftGf = computeLiftGf(f1G, f2G, hookMassG, beadNetSink, yG);
+
+        // Drag: line + point objects (weight, corky, bead, hook, yarn)
+        var wData = (typeof tackleWeightPhysicsData === 'function')
+            ? tackleWeightPhysicsData(weightShape, weightOz) : null;
+        var weightObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
+        var corky1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
+        var corky2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
+        var beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
+        var hookObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+        var yarnObj = null;   // yarn drag area negligible
+
+        var dragGfPerFt = totalDragPerFt(bedVel, ldDia, ldLen,
+            weightObj, corky1Obj, corky2Obj, beadObj, hookObj, yarnObj);
+        var hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
+        var blownOut = (bedVel > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------
         var sonar = communitySonar(dbArray, flow, species, env.siteId);
@@ -108,7 +131,7 @@ var DRIFT_TECHNIQUE = {
         var precise = (best && typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
 
         return {
-            velocity: velocity, dragPerFt: dragPerFt, lift: lift, hgt: hgt, blownOut: blownOut,
+            velocity: velocity, dragPerFt: dragGfPerFt, lift: liftGf, hgt: hgt, blownOut: blownOut,
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
             whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges
         };

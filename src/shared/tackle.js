@@ -43,6 +43,14 @@ function tackleLineById(id) {
     }
     return null;
 }
+// Generic lookup by id across ALL tackle types (not just lines).
+function tackleById(id) {
+    if (!id || !TACKLE || !TACKLE.items) return null;
+    for (var i = 0; i < TACKLE.items.length; i++) {
+        if (TACKLE.items[i].id === id) return TACKLE.items[i];
+    }
+    return null;
+}
 
 // Fallback for a plain material+lb pair (a community catch row, or a rig saved
 // before the pickers existed): prefer the `generic` average row for that size.

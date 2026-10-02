@@ -42,17 +42,17 @@ function spotWidthRatio(siteId) {
 function velocityAtSpot(flow, siteId) {
     var v = hydraulicVelocity(flow, siteId);
     var r = spotWidthRatio(siteId);
-    var has = (typeof v.trueMean === 'number');
+    var has = v && v.mean && v.mean > 0;
     return {
-        mean: has ? v.trueMean * r.ratio : null,
-        bottom: has ? v.trueBottom * r.ratio : null,
-        atGauge: true,                    // no spot width yet -> the value IS the gauge's
+        mean: has ? v.mean * r.ratio : null,
+        bottom: has ? v.bottom * r.ratio : null,
+        atGauge: true,
         ratio: r.ratio,
         ratioMeasured: r.measured,
         gaugeWidthFt: r.gaugeFt,
         uncertainty: SAME_REACH_UNCERTAINTY,
-        source: v.source,
-        thinRecent: !!v.thinRecent
+        source: v ? v.source : 'none',
+        thinRecent: v ? !!v.thinRecent : false
     };
 }
 
@@ -100,7 +100,8 @@ function siteDepthRows(siteId) {
 function depthAtGauge(flow, siteId) {
     var s = siteDepthRows(siteId);
     if (!s) return null;
-    var q = (Number(flow) > 0) ? Number(flow) : REF_FLOW;
+    var q = (Number(flow) > 0) ? Number(flow) : 0;
+    if (!q || q <= 0) return null;
     var rows = s.rows.slice().sort(function (x, y) {
         return Math.abs(Math.log(x.q / q)) - Math.abs(Math.log(y.q / q));
     });

@@ -794,12 +794,20 @@ function rigChangePlain(best, rig) {
         else up.push(best.foam2.lift > rig.foam2.lift ? 'a bigger second corky' : 'a smaller second corky');
     }
     if (Number(best.hook) !== Number(rig.hook)) {
-        // A lighter hook sinks less, so it lifts the rig: hookSink decreases as the size grows.
-        up.push(hookSink(best.hook) < hookSink(rig.hook) ? 'a smaller hook' : 'a bigger hook');
+        // A lighter hook sinks less, so it lifts the rig: hook mass decreases as the size grows.
+        var hkBest = (typeof tackleHookData === 'function' ? tackleHookData(best.hook) : null);
+        var hkRig = (typeof tackleHookData === 'function' ? tackleHookData(rig.hook) : null);
+        var hkBestMass = hkBest ? hkBest.mass_g : 0;
+        var hkRigMass = hkRig ? hkRig.mass_g : 0;
+        up.push(hkBestMass < hkRigMass ? 'a smaller hook' : 'a bigger hook');
     }
     if (Number(best.yarn) !== Number(rig.yarn)) up.push(Number(best.yarn) > Number(rig.yarn) ? 'more yarn' : 'less yarn');
     if (Number(best.bdSz) !== Number(rig.bdSz)) {
-        up.push(beadSink(rig.bdMat, best.bdSz) < beadSink(rig.bdMat, rig.bdSz) ? 'a lighter bead' : 'a heavier bead');
+        var bdBest = (typeof tackleBeadData === 'function' ? tackleBeadData(rig.bdMat, best.bdSz) : null);
+        var bdRig = (typeof tackleBeadData === 'function' ? tackleBeadData(rig.bdMat, rig.bdSz) : null);
+        var bdBestNet = bdBest ? bdBest.netSinkG : 0;
+        var bdRigNet = bdRig ? bdRig.netSinkG : 0;
+        up.push(bdBestNet < bdRigNet ? 'a lighter bead' : 'a heavier bead');
     }
     if (Number(best.leader) !== Number(rig.ldLen)) up.push(Number(best.leader) > Number(rig.ldLen) ? 'a longer leader' : 'a shorter leader');
     if (Number(best.weight) !== Number(rig.weightOz)) up.push(Number(best.weight) > Number(rig.weightOz) ? 'more weight' : 'less weight');
@@ -818,21 +826,34 @@ function bestZoneRig(zone, rig, vel) {
     var bed = vel.bottom;
     var beads = beadSizeOptions(rig.bdMat, rig.bdSz);
     var passes = [
-        { weights: [rig.weightOz], leaders: [rig.ldLen] },            // tackle swaps only
-        { weights: WEIGHT_OPTIONS, leaders: LEADER_LENGTH_OPTIONS }   // leader / lead allowed
+        { weights: [rig.weightOz], leaders: [rig.ldLen] },
+        { weights: WEIGHT_OPTIONS, leaders: LEADER_LENGTH_OPTIONS }
     ];
     var fallback = null;
+    // Pre-lookup reference data
+    var refHookData = (typeof tackleHookData === 'function') ? tackleHookData(rig.hook) : null;
+    var refBeadData = (typeof tackleBeadData === 'function') ? tackleBeadData(rig.bdMat, rig.bdSz) : null;
+    var refYarnG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(rig.yarn) : 0;
+    var refWeightData = (typeof tackleWeightPhysicsData === 'function')
+        ? tackleWeightPhysicsData(rig.weightShape, rig.weightOz) : null;
+    var refLdDia = rig.ldDia || 0;
+    var refLdLen = rig.ldLen;
     for (var p = 0; p < passes.length; p++) {
         var passBest = null;
         for (var f = 0; f < FOAM_KEYS.length; f++) {
             var foam = parseFoam(FOAM_KEYS[f]);
             for (var f2 = 0; f2 < FOAM_KEYS.length; f2++) {
                 var foam2 = parseFoam(FOAM_KEYS[f2]);
-                var liftBase = foam.lift + foam2.lift;
+                var liftBase = foam.buoyancy_g + foam2.buoyancy_g;
                 for (var y = 0; y < YARN_OPTIONS.length; y++) {
                     for (var h = 0; h < HOOK_OPTIONS.length; h++) {
                         for (var b = 0; b < beads.length; b++) {
-                            var lift = rigLift(liftBase, YARN_OPTIONS[y], HOOK_OPTIONS[h], rig.bdMat, beads[b]);
+                            var hData = (typeof tackleHookData === 'function') ? tackleHookData(HOOK_OPTIONS[h]) : null;
+                            var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(rig.bdMat, beads[b]) : null;
+                            var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(YARN_OPTIONS[y]) : 0;
+                            var hookMassG = hData ? hData.mass_g : 0;
+                            var beadNetSink = bData ? bData.netSinkG : 0;
+                            var liftGf = computeLiftGf(foam.buoyancy_g, foam2.buoyancy_g, hookMassG, beadNetSink, yG);
                             var changed = [];
                             if (FOAM_KEYS[f] !== rig.foam.key) changed.push('foam');
                             if (FOAM_KEYS[f2] !== rig.foam2.key) changed.push('foam2');
@@ -841,12 +862,19 @@ function bestZoneRig(zone, rig, vel) {
                             if (beads[b] !== Number(rig.bdSz)) changed.push('bead');
                             for (var w = 0; w < passes[p].weights.length; w++) {
                                 var wt = passes[p].weights[w];
-                                var drag = totalDragPerFt(bed, rig.ldLb, rig.ldMat, rig.mlLb, rig.mlMat, wt,
-                                    HOOK_OPTIONS[h], YARN_OPTIONS[y], rig.bdMat, beads[b],
-                                    0, 0, rig.weightShape);
+                                // Build object descriptors for drag calculation
+                                var wObj = (typeof tackleWeightPhysicsData === 'function')
+                                    ? tackleWeightPhysicsData(rig.weightShape || null, wt) : null;
+                                wObj = wObj ? { areaCm2: wObj.areaCm2, cd: wObj.cd } : null;
+                                var ck1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
+                                var ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
+                                var bObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
+                                var hObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+                                var dragGfFt = totalDragPerFt(bed, refLdDia, refLdLen,
+                                    wObj, ck1Obj, ck2Obj, bObj, hObj, null);
                                 for (var l = 0; l < passes[p].leaders.length; l++) {
                                     var len = passes[p].leaders[l];
-                                    var hgt = presentationHeightInches(lift, len, drag);
+                                    var hgt = presentationHeightInches(liftGf, dragGfFt, len);
                                     if (!isFinite(hgt) || hgt <= 0) continue;
                                     var cost = Math.abs(hgt - target);
                                     for (var c = 0; c < changed.length; c++) cost += (CHANGE_PENALTY[changed[c]] || 0.1);
@@ -865,8 +893,6 @@ function bestZoneRig(zone, rig, vel) {
                 }
             }
         }
-        // A tackle-only PASS 1 that reaches the zone WINS - that is the whole point of the
-        // priority order. Otherwise remember the closest attempt and let pass 2 try.
         if (passBest && passBest.hgt >= zone.min && passBest.hgt <= zone.max) return passBest;
         if (passBest && (!fallback || passBest.cost < fallback.cost)) fallback = passBest;
     }

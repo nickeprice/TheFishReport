@@ -130,15 +130,18 @@ function communitySonar(dbArray, flow, species, siteId) {
         // material sink, hook gap/mass, yarn skirt. Missing fields fall back to the
         // reference defaults so legacy rows still solve.
         var foam = parseFoam(row.foam !== undefined ? row.foam : row.corky);
-        // Second corky: honour foam_2 from the row when present (two-corky rigs).
         var foam2 = parseFoam(row.foam_2 !== undefined ? row.foam_2 : row.foam2);
         var bdMat = (row.bdMat !== undefined) ? row.bdMat : row.bead_material;
         var bdSzRaw = (row.bdSz !== undefined && row.bdSz !== null) ? row.bdSz : row.bead_size;
-        // RPC returns hook_size as text ("2","0","-1"); hookSink uses strict
-        // equality, so coerce to a number or cloud rows misread the hook.
         var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ? Number(row.hook) : 2;
         if (isNaN(hookNum)) hookNum = 2;
-        var lift = rigLift(foam.lift + foam2.lift, row.yarn || 0, hookNum, bdMat, bdSzRaw);
+        // Lift from tackle.json
+        var hData = (typeof tackleHookData === 'function') ? tackleHookData(hookNum) : null;
+        var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdMat, bdSzRaw) : null;
+        var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(row.yarn || 0) : 0;
+        var hookMassG = hData ? hData.mass_g : 0;
+        var beadNetSink = bData ? bData.netSinkG : 0;
+        var liftGf = computeLiftGf(foam.buoyancy_g, foam2.buoyancy_g, hookMassG, beadNetSink, yG);
         var bedVel = hydraulicVelocity(row.flow, siteId).bottom;
         // P4b: prefer the BRAND the angler picked (its id owns the measured diameter, so the
         // replay runs the real line) and fall back to material + lb for a row logged before
@@ -146,7 +149,7 @@ function communitySonar(dbArray, flow, species, siteId) {
         // returns null when neither resolves, which keeps the old defaults below.
         var ldLine = (typeof tackleRowLine === 'function') ? tackleRowLine(row, 'leader') : null;
         var mlLine = (typeof tackleRowLine === 'function') ? tackleRowLine(row, 'mainline') : null;
-        var lb = (ldLine && ldLine.lb_test) ? ldLine.lb_test : (row.ldLb || row.leader_lb || REF_LB_TEST);
+        var lb = (ldLine && ldLine.lb_test) ? ldLine.lb_test : (row.ldLb || row.leader_lb || 12);
         var ldMat = (ldLine && ldLine.material) ? ldLine.material : (row.ldMat || row.leader_material || 'copoly');
         var wt = (row.weight !== undefined && row.weight !== null) ? row.weight : 0.5;
         // The weight TYPE (shape_label). A cloud calibration row does not carry one yet -
@@ -161,8 +164,17 @@ function communitySonar(dbArray, flow, species, siteId) {
         // 0 means "no explicit diameter" -> lineDiameterScale() falls back to generic/by-lb.
         var ldDia = (ldLine && ldLine.diameter_mm) ? ldLine.diameter_mm : 0;
         var mlDia = (mlLine && mlLine.diameter_mm) ? mlLine.diameter_mm : 0;
-        var drag = totalDragPerFt(bedVel, lb, ldMat, mlLb, mlMat, wt, hookNum, row.yarn || 0, bdMat, bdSzRaw, ldDia, mlDia, wtShape);
-        var h = presentationHeightInches(lift, row.ldLen, drag);
+        // New drag: use the pure-math model
+        var wData = (typeof tackleWeightPhysicsData === 'function')
+            ? tackleWeightPhysicsData(wtShape, wt) : null;
+        var wObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
+        var ck1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
+        var ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
+        var bObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
+        var hObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+        var drag = totalDragPerFt(bedVel, ldDia, row.ldLen || 10,
+            wObj, ck1Obj, ck2Obj, bObj, hObj, null);
+        var h = presentationHeightInches(liftGf, drag, row.ldLen);
         if (isFinite(h) && h > 0) {
             heights.push(h);
             weights.push(envMatchWeight(row, rep));

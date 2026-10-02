@@ -1,39 +1,23 @@
 /**
- * src/features/gear-sim/inputs.js - Gear Sim constants, form readers and the
- * kinematic primitives (hydraulic velocity + rig lift).
- * public: currentStats, BASE_ZONE_MIN/MAX, getNum/getStr/getGPS, FOAM_TABLE,
- *         parseFoam/hookLabel/hookSink, hydraulicVelocity(), rigLift(),
- *         getActiveStationId(), measuredFit(), measuredVelocity(),
+ * src/features/gear-sim/inputs.js - Gear Sim constants, form readers and
+ * kinematic primitives (hydraulic velocity in true ft/s).
+ * public: currentStats, BASE_ZONE_MIN/MAX, getNum/getStr/getGPS,
+ *         parseFoam/hookLabel, hydraulicVelocity(), getActiveStationId(),
+ *         measuredFit(), measuredVelocity(),
+ *         tackleFoamById, tackleHookData, tackleBeadData, tackleYarnBuoyancyG,
  *         THERMAL_BANDS, thermalOptimum(tempF)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 // --- GEAR SIM: DETERMINISTIC FLUID DYNAMICS ENGINE ---
 // Pure boundary-layer physics. Every output is a pure function of the form inputs plus
 // the stored catch log, so identical inputs always return identical numbers.
-// The old KNN loop (processAiStrikeZone) and calcHistoricHeight() drift model are gone.
+// Physics is pure math:  F = 0.5 * rho * Cd * A * v^2. No tuned constants, no
+// reference flow, no calibration anchors. Community catches never bend
+// the physics - they act as sonar that shifts WHERE the fish are (the zone).
 var currentStats = null;
 
 var BASE_ZONE_MIN = 4.0;     // inches - baseline strike zone floor
 var BASE_ZONE_MAX = 12.0;    // inches - baseline strike zone ceiling
-
-// Calibration constants. Tuned so a reference rig (1040 CFS, 12 lb leader, 1/2 oz lead,
-// 10 ft leader, Corky 10 + 1" yarn) lands in the middle of the baseline zone.
-// Physics is LOCKED: drag coefficient is always 1.0. Community catches never bend
-// the physics - they act as sonar that shifts WHERE the fish are (the zone).
-var DRAG_REF = 7.5;          // drag units per foot of leader at the reference conditions
-var REF_FLOW = 1040;         // reference discharge (CFS) the calibration is anchored to
-var REF_LB_TEST = 12;        // reference leader diameter for those conditions
-// Reference diameter for the MEASURED line library: generic mono 12 lb. The old
-// sqrt(lb/12) proxy returned exactly 1.0 for this line, so anchoring the real
-// diameters here keeps the locked reference rig where it was and only moves rigs
-// whose real diameter differs from the proxy. See docs/CONTRACT_TACKLE.md.
-var REF_DIAMETER_MM = 0.34;
-var REF_MEAN_VELOCITY = 0.25 * Math.pow(REF_FLOW, 0.4);               // 4.024883779
-var REF_BOTTOM_VELOCITY = REF_MEAN_VELOCITY * Math.pow(0.05, 1 / 6);  // 2.442952438
-// Drag denominator. Taken from the SAME expression as the reference bed velocity rather than
-// the old rounded 2.45, so velocityScale is exactly 1 at 1040 CFS. (Correcting that rounding
-// moves the 1040 reference by +0.28%; the v^2 change itself does not move it at all.)
-var REF_VELOCITY = REF_BOTTOM_VELOCITY;
 
 function getNum(id) {
     var el = document.getElementById(id);
@@ -71,21 +55,34 @@ function getGPS() {
 // between the Corky 12 and the Corky 10. (The float is named "Cheater 10" for the angler -
 // the picker and this label agree - while docs/tackle_measurements.csv keeps its own
 // measurement row `cheater-12` with the measured egg dimensions.)
-var FOAM_TABLE = {
-    '0':   { lift: 0.00, label: 'None' },
-    '14':  { lift: 0.30, label: 'Corky - Size 14 (6mm)' },
-    '12':  { lift: 0.60, label: 'Corky - Size 12 (8mm)' },
-    '10':  { lift: 0.90, label: 'Corky - Size 10 (10mm)' },
-    'c12': { lift: 0.70, label: 'Cheater - Size 10' }
-};
+// Picker value -> tackle.json id mapping for foam types.
+var FOAM_PICKER_MAP = { '14': 'corky-14', '12': 'corky-12', '10': 'corky-10', 'c12': 'cheater-12' };
 
+/**
+ * Resolve a foam picker value to its tackle.json data.
+ * Returns {key, size, buoyancy_g, mass_g, label, areaCm2, cd}
+ * Falls back to {key:'0',...} for None/empty input.
+ */
 function parseFoam(rawValue) {
     var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
-    if (key === 'c12') return { key: 'c12', size: 10, lift: FOAM_TABLE.c12.lift, label: FOAM_TABLE.c12.label };
-    var size = parseFloat(key);
-    if (!size) return { key: '0', size: 0, lift: 0, label: 'None' };
-    var entry = FOAM_TABLE[String(size)] || { lift: 0.6 };
-    return { key: String(size), size: size, lift: entry.lift, label: entry.label || ('Corky - Size ' + size) };
+    if (key === '0' || key === '') {
+        return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
+    }
+    var tid = FOAM_PICKER_MAP[key];
+    var item = tid ? (typeof tackleById === 'function' ? tackleById(tid) : null) : null;
+    if (item) {
+        var size = (key === 'c12') ? 10 : parseFloat(key);
+        return {
+            key: key, size: size,
+            buoyancy_g: item.buoyancy_g || 0,
+            mass_g: item.mass_g || 0,
+            label: item.label || ('Corky - Size ' + key),
+            areaCm2: item.area_cm2 || 0,
+            cd: item.cd || 0.47
+        };
+    }
+    return { key: key, size: parseFloat(key) || 0, buoyancy_g: 0, mass_g: 0,
+        label: 'Corky - Size ' + key, areaCm2: 0, cd: 0.47 };
 }
 
 // Backwards compatible with records that only stored a numeric `corky` value.
@@ -103,12 +100,66 @@ function hookLabel(hook) {
     return 'Sz ' + hook;
 }
 
-// Heavier hooks are more anchor weight, so they subtract from the net lift.
-function hookSink(hook) {
-    if (hook === -1) return 0.35;   // 2/0
-    if (hook === 0) return 0.28;    // 1/0
-    if (hook === 1) return 0.20;    // size 1
-    return 0.12;                    // size 2 (and legacy size 3)
+// ====== TACKLE DATA LOOKUPS (from tackle.json) ======
+
+/**
+ * Resolve hook picker value to tackle.json row.
+ * Returns {mass_g, areaCm2, cd} or null.
+ */
+function tackleHookData(hookVal) {
+    var MAP = { '2': 'hook-2', '1': 'hook-1', '0': 'hook-1-0', '-1': 'hook-2-0' };
+    var tid = MAP[String(hookVal)];
+    if (!tid) return null;
+    var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
+    if (!item) return null;
+    return { mass_g: item.mass_g || 0, areaCm2: item.area_cm2 || 0, cd: item.cd || 0.47 };
+}
+
+/**
+ * Resolve bead material+size to tackle.json row.
+ * Returns {mass_g, buoyancy_g, areaCm2, cd, netSinkG} or null.
+ * netSinkG = max(0, mass_g - buoyancy_g) - positive means bead sinks.
+ */
+function tackleBeadData(bdMat, bdSz) {
+    if (!bdMat || bdMat === 'none' || !bdSz) return null;
+    var beads = (typeof tackleItems === 'function') ? tackleItems('bead') : [];
+    for (var i = 0; i < beads.length; i++) {
+        if (beads[i].material === bdMat && Math.abs(Number(beads[i].diameter_mm) - Number(bdSz)) < 0.01) {
+            var b = beads[i];
+            var massG = b.mass_g || 0, buoyG = b.buoyancy_g || 0;
+            return { mass_g: massG, buoyancy_g: buoyG, netSinkG: Math.max(0, massG - buoyG),
+                areaCm2: b.area_cm2 || 0, cd: b.cd || 0.47 };
+        }
+    }
+    return null;
+}
+
+/**
+ * Yarn buoyancy in grams-force per inch, from tackle.json.
+ * Saturated egg-yarn estimated at ~0.01 gf/in (near-neutral).
+ */
+function tackleYarnBuoyancyG(inches) {
+    if (!inches || inches <= 0) return 0;
+    var yb = 0.01;
+    if (typeof tackleItems === 'function') {
+        var yarns = tackleItems('yarn');
+        if (yarns && yarns.length > 0 && yarns[0].buoyancy_per_inch_g !== undefined) {
+            yb = Number(yarns[0].buoyancy_per_inch_g);
+        }
+    }
+    return Math.max(0, inches * yb);
+}
+
+/**
+ * Weight physics data from tackle.json.
+ * Returns {areaCm2, cd, mass_g} or null.
+ */
+function tackleWeightPhysicsData(shapeLabel, oz) {
+    if (!shapeLabel || !oz) return null;
+    if (typeof tackleWeightRow !== 'function') return null;
+    var row = tackleWeightRow(shapeLabel, Number(oz));
+    if (!row) return null;
+    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: Number(row.mass_g) || 0 };
 }
 
 // Hydraulic geometry for a PNW gravel-bed river. We only know discharge (CFS), so
@@ -163,38 +214,21 @@ function measuredVelocity(siteId, flow) {
 }
 
 function hydraulicVelocity(flow, siteId) {
-    var meanVelocity = 0.25 * Math.pow(Math.max(flow, 1), 0.4);      // ft/s
-    var bottomVelocity = meanVelocity * Math.pow(0.05, 1 / 6);       // 1/6th power law
-    var out = { mean: meanVelocity, bottom: bottomVelocity, source: 'estimate' };
+    var meanEstimate = 0.25 * Math.pow(Math.max(flow, 1), 0.4);      // ft/s power-law estimate
+    var bottomEstimate = meanEstimate * Math.pow(0.05, 1 / 6);       // ft/s at bed
+    var out = { mean: meanEstimate, bottom: bottomEstimate, source: 'estimate' };
 
     var here = measuredVelocity(siteId, flow);
-    var ref = measuredVelocity(siteId, REF_FLOW);
     var fit = measuredFit(siteId);
-    if (here && ref && fit) {
-        var shape = here / ref;
-        if (shape >= SHAPE_MIN && shape <= SHAPE_MAX) {
-            // Internal (calibration) scale: the drag/strike-zone math reads these, anchored
-            // so the reference rig is unchanged. NOT raw ft/s.
-            out.mean = REF_MEAN_VELOCITY * shape;
-            out.bottom = REF_BOTTOM_VELOCITY * shape;
-            out.source = 'measured';
-            out.station = String(siteId);
-            out.samples = fit.n;
-            out.thinRecent = fit.thin;
-            // TRUE measured velocity at the gauge (ft/s). Display-only: honest numbers for
-            // the angler, kept separate from the calibration scale above so showing truth
-            // can never silently move the physics.
-            out.trueMean = here;
-            out.trueBottom = here * Math.pow(0.05, 1 / 6);
-        }
+    if (here && here > 0 && fit) {
+        out.mean = here;                           // true ft/s from gauge
+        out.bottom = here * Math.pow(0.05, 1 / 6); // true ft/s at bed
+        out.source = 'measured';
+        out.station = String(siteId);
+        out.samples = fit.n;
+        out.thinRecent = fit.thin;
     }
     return out;
-}
-
-// Net upward lift = foam buoyancy + yarn buoyancy - hook anchor weight - bead sink.
-// beadSink is subtracted because every bead has mass; denser materials sink more.
-function rigLift(foamLift, yarnInches, hook, bdMat, bdSz) {
-    return Math.max(0.02, foamLift + (yarnInches * 0.15) - hookSink(hook) - beadSink(bdMat, bdSz));
 }
 
 // ==================================================================================

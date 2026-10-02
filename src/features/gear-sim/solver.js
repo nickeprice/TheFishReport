@@ -19,23 +19,20 @@ function pickedLineDiameter(pickId) {
 function readRigFromForm() {
     var hookRaw = parseFloat(getStr('hook'));
     return {
-        flow: getCurrentFlow(),                 // derived from the live water report
+        flow: getCurrentFlow(),
         weightOz: getNum('weight'),
-        // The picked weight's TYPE (shape_label). Physics reads its measured area_cm2, so
-        // a slinky and a cannonball at the same oz stop scoring identically. Blank -> the
-        // term degrades to exactly the old mass-only formula.
         weightShape: getStr('weight-shape'),
         ldLen: getNum('ld-len'),
         ldMat: getStr('ld-mat'),
-        ldLb: getNum('ld-lb') || REF_LB_TEST,
+        ldLb: getNum('ld-lb') || 12,
         ldDia: pickedLineDiameter('ld-line'),
         mlMat: getStr('ml-mat'),
         mlLb: getNum('ml-lb'),
         mlDia: pickedLineDiameter('ml-line'),
-        hook: isNaN(hookRaw) ? 2 : hookRaw,     // 0 = 1/0, -1 = 2/0
+        hook: isNaN(hookRaw) ? 2 : hookRaw,
         yarn: getNum('yarn'),
         foam: parseFoam(getStr('foam')),        // Foam 1
-        foam2: parseFoam(getStr('foam2')),      // Foam 2 (second corky)
+        foam2: parseFoam(getStr('foam2')),      // Foam 2
         bdMat: getStr('bd-mat'),
         bdSz: getNum('bd-sz'),
         species: getStr('species')
@@ -116,7 +113,7 @@ function paintSimHud(rig, out, stats) {
     if (simBtn) { simBtn.innerText = 'RUN SIMULATION'; simBtn.disabled = false; }
     // Continuity record: log the gauge value WITH the (currently unmeasured) spot ratio, so
     // the trail shows exactly what was assumed instead of an unexplained single number.
-    var shownBottom = (typeof velocity.trueBottom === 'number') ? velocity.trueBottom : velocity.bottom;
+    var shownBottom = velocity.bottom;
     var near = (typeof velocityAtSpot === 'function')
         ? velocityAtSpot(rig.flow, velocity.station || null) : null;
     var spotDepth = (typeof spotDepthFt === 'function')

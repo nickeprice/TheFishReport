@@ -56,7 +56,7 @@ function getGPS() {
 // the picker and this label agree - while docs/tackle_measurements.csv keeps its own
 // measurement row `cheater-12` with the measured egg dimensions.)
 // Picker value -> tackle.json id mapping for foam types.
-var FOAM_PICKER_MAP = { '14': 'corky-14', '12': 'corky-12', '10': 'corky-10', 'c12': 'cheater-12' };
+var FOAM_PICKER_MAP = GEAR_OPTIONS.foamMap;
 
 /**
  * Resolve a foam picker value to its tackle.json data.
@@ -112,7 +112,7 @@ function hookLabel(hook) {
  * Returns {mass_g, areaCm2, cd} or null.
  */
 function tackleHookData(hookVal) {
-    var MAP = { '2': 'hook-2', '1': 'hook-1', '0': 'hook-1-0', '-1': 'hook-2-0' };
+    var MAP = GEAR_OPTIONS.hookIdMap;
     var tid = MAP[String(hookVal)];
     if (!tid) return null;
     var item = (typeof tackleById === 'function') ? tackleById(tid) : null;

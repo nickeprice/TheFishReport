@@ -18,7 +18,7 @@ this file**, or the pass fails.
 | 4 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
 | 5 | `src/services/supabase.js` | auth, catch writes, public feed, calibration RPC |
 | 6 | `src/services/water.js` | USGS WDFN / Open-Meteo / WDFW Socrata data layer |
-| 7 | `src/shared/*` | debug, ui, nav, format, api, forms, idb, refresh, pwa |
+| 7 | `src/shared/*` | debug, ui, nav, format, api, forms, idb, gear-options, refresh, pwa |
 | 8 | `src/features/*` | auth, telemetry, gear-sim, catch-log, station, map |
 | 9 | `src/app.js` | **bootstrap only** — `window.onload` |
 
@@ -79,6 +79,7 @@ this file**, or the pass fails.
   the CASCADE (material -> brand -> lb test, weight type -> amount, bead material -> size)
   over `src/data/tackle.json`; the picks resolve into the hidden `ml-line`/`ld-line` id
 - **idb.js** — `idbAvailable()`, `idbOpen()`, `idbGetAll(store)`, `idbPutAll(store, rows)`
+- **gear-options.js** — `GEAR_OPTIONS`, `populateStaticGear()` — single source of truth for all dropdown options (hook, yarn, foam, bead, weight, line mat). Populates selects on load.
 - **refresh.js** — `AUTO_REFRESH_MS`, `silenceableRefresh()`, `startAutoRefresh()`, `refreshNow()`
 - **pwa.js** — `registerServiceWorker()`, `applyTabDeepLink()`
 
@@ -143,25 +144,24 @@ this file**, or the pass fails.
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME
   variable set the sim uses (see `envSignature()`), max 8 newest eligible rows, and returns a
   weighted centre + `residuals[]` (the notebook). No mouth-hook filter; no sample-count floor.
-- **zone.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `getTurbidityFnu()`,
+- **zone-env.js** — `RIG_REQUIRED`, `missingRigFields()`, `getWaterTempF()`, `getTurbidityFnu()`,
   `refHourBlock()`, `lightTerm(block, rep)`, `turbidityTerm()`, `tideAt(block, rep)`,
-  `tideTerm(block, rep)`, `envSignature(rep)`,
-  `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`, `depthBandText()`,
-  `positionParts()`, `whereToFish()` (detail string), `fishOutlook()` (the 2-sentence HUD summary),
-  `paintZoneHud(zone, outlook)`, `refreshZonePreview()`, `bestZoneRig(zone, rig, vel)`,
-  `beadSizeOptions()`, `foamShort()`, `rigChangeList()` (precise), `rigChangePlain()` +
-  `joinPlain()` (beginner), `plainDepthText()` —
-  the HUD: two estimate banners + the summary paragraph, and the colour grade shared with line
-  height. The report terms are the WS-8a set: demoted barometer ±1.2", thermal curve, own-gauge
-  colour/gauge terms, the LIGHT term keyed on the sun's real elevation (`solarElevationDeg()`,
-  `solarDeclinationDeg()`, `activeStationLat()` — WS-8b b2′), and the TIDE term (`tideAt`/
-  `tideTerm`: +1.0" on a flood, −1.0" on an ebb, tide-paired stations only, no tide curve → no
-  term). `envSignature()` is the ONE variable set the sim and the sonar share (temperature,
-  light/cloud, turbidity, tide, barometric trend, rain — no wind, no moon). The community pull
-  is silent (no count/confidence text) and capped (`SONAR_PULL_*`). `zone.notes` still records
-  every reason for the log.
-  **The rig search is two-pass**: leader/lead fixed first (corky → 2nd corky → hook → yarn → bead),
-  leader/lead only as the fallback.
+  `tideTerm(block, rep)`, `envSignature(rep)` —
+  environmental math: rig requirements, weather terms (barometer, cloud, rain, thermal curve
+  calling `thermalOptimum()`), own-gauge colour, solar-geometry light term, tide term. All
+  null-safe (missing input → null, never a guess).
+- **zone-core.js** — `computeStrikeZone()`, `gradeColor()`, `zoneColor()`, `zoneTrend()`,
+  `depthBandText()`, `positionParts()`, `whereToFish()` (detail string),
+  `fishOutlook()` (the 2-sentence HUD summary), `paintZoneHud(zone, outlook)`,
+  `refreshZonePreview()`, `plainDepthText()` —
+  strike zone computation, positioning, and HUD painting. The community-catch pull is silent
+  (no count/confidence text) and capped (`SONAR_PULL_*`). `zone.notes` still records every
+  reason for the log. `envSignature()`, called from zone-env, is the ONE variable set the sim
+  and the sonar share (temperature, light/cloud, turbidity, tide, barometric trend, rain).
+- **zone-best.js** — `bestZoneRig(zone, rig, vel)`, `beadSizeOptions()`, `foamShort()`,
+  `rigChangeList()` (precise), `rigChangePlain()` + `joinPlain()` (beginner) —
+  deterministic two-pass tackle search: leader/lead fixed first (corky → 2nd corky → hook →
+  yarn → bead), leader/lead only as the fallback.
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

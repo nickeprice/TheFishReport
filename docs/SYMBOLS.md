@@ -133,6 +133,11 @@ this file**, or the pass fails.
   `salmonMouthCone(mouthFraction)`, `salmonPositionZ(depthMinM, depthMaxM)` —
   adult salmon target: respiration cycle (sinusoidal, f=1.0 Hz, duty=35%),
   elliptical mouth cone (65×45×80 mm), random holding depth (0.15-0.60 m).
+- **interception.js** — `interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs)`,
+  `interceptionProbability(hookDepthM, flowMs)`, `HOOK_SET_FORCE_N` — flossing
+  interception state machine: 4-phase (DRIFT_STABILIZE → SWEEP → COLLISION → SEAT),
+  Monte-Carlo (N=100) over randomised salmon depth + breathing phase,
+  hook set threshold 8.0 N, seat distance 0.008 m.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

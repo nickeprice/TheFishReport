@@ -120,12 +120,14 @@ STATUS: READY
 
 ## Phase 7: interception.js — Flossing State Machine
 
-- [ ] 7.1 New file: src/features/gear-sim/interception.js
-  4-phase: DRIFT_STABILIZE → SWEEP → COLLISION → SEAT
-  Monte-Carlo: N=100 runs, randomize salmon position + breathing phase → interceptionProbability
-  Hook set force = 8.0 N (informed_estimate, salmon jaw cartilage)
-  Seat distance < 0.008m (from hook gap geometry)
-  verify: state machine transitions through all 4 phases correctly
+- [x] 7.1 New file: src/features/gear-sim/interception.js
+  4-phase: DRIFT_STABILIZE → SWEEP → COLLISION → SEAT (or SEAT_FAILED)
+  Monte-Carlo: N=100 runs, randomise salmon position + breathing phase → interceptionProbability
+  Hook set force model: seatProb = clamp((flowMs - 0.5) / 1.5, 0, 1)
+  Seat distance = 0.008m (from hook gap geometry)
+  public: interceptionRun(), interceptionProbability()
+  Wired into index.html (after salmon.js), sw.js, SYMBOLS.md, sanity_pass.js (load + 7 tests)
+  verify: node sanity_pass.js --quiet → PASSED 208 | FAILED 0
 
 ## Phase 8: Extend Existing Compute Path
 

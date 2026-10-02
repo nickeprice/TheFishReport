@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'terminal', 'salmon', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'terminal', 'salmon', 'interception', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -1257,6 +1257,67 @@ function behaviorChecks(done) {
       : fail('salmonPositionZ stays within [0.15, 0.60]m', `${allInRange}/100 in range`);
   } catch (e) {
     fail('salmon.js tests', String(e.message).split('\n')[0]);
+  }
+  // --- Interception tests: flossing state machine ------------------------------
+  try {
+    // interceptionRun with a perfect pass (hook at salmon depth, mouth open, fast flow)
+    var run1 = interceptionRun(0.3, 0.3, true, 2.0);
+    run1.phases[0] === 'DRIFT_STABILIZE' && run1.phases[1] === 'SWEEP' && run1.phases[2] === 'COLLISION'
+      ? ok('interceptionRun reaches COLLISION with perfect conditions',
+           `phases: [${run1.phases.join(', ')}]`)
+      : fail('interceptionRun reaches COLLISION with perfect conditions', JSON.stringify(run1));
+
+    // interceptionRun: hook far from salmon depth fails at DRIFT_STABILIZE
+    var run2 = interceptionRun(0.8, 0.3, false, 1.0);
+    run2.phases.length === 0 || run2.phases[0] === 'DRIFT_STABILIZE' && run2.phases.length === 1
+      ? ok('interceptionRun aborts at DRIFT_STABILIZE when hook is far',
+           `phases: [${run2.phases.join(', ')}]`)
+      : fail('interceptionRun aborts at DRIFT_STABILIZE when hook is far',
+             JSON.stringify(run2));
+
+    // interceptionRun: mouth closed fails at COLLISION
+    var run3 = interceptionRun(0.3, 0.3, false, 2.0);
+    run3.phases.indexOf('DRIFT_STABILIZE') >= 0 && run3.phases.indexOf('SWEEP') >= 0
+      && run3.phases.indexOf('COLLISION') < 0
+      ? ok('interceptionRun aborts at COLLISION when mouth is closed',
+           `phases: [${run3.phases.join(', ')}]`)
+      : fail('interceptionRun aborts at COLLISION when mouth is closed',
+             JSON.stringify(run3));
+
+    // interceptionRun: slow flow fails at SEAT (force < 8N)
+    var run4 = interceptionRun(0.3, 0.3, true, 0.1);
+    run4.phases.indexOf('SEAT') < 0
+      ? ok('interceptionRun fails SEAT at low flow',
+           `phases: [${run4.phases.join(', ')}]`)
+      : fail('interceptionRun fails SEAT at low flow',
+             JSON.stringify(run4));
+
+    // interceptionRun: sweepQuality decreases with depth mismatch
+    var runNear = interceptionRun(0.3, 0.3, true, 1.0);
+    var runFar = interceptionRun(0.3, 0.6, true, 1.0);
+    runNear.sweepQuality > runFar.sweepQuality
+      ? ok('interceptionRun sweepQuality decreases with depth mismatch',
+           `near=${runNear.sweepQuality.toFixed(3)} > far=${runFar.sweepQuality.toFixed(3)}`)
+      : fail('interceptionRun sweepQuality decreases with depth mismatch',
+             `near=${runNear.sweepQuality} far=${runFar.sweepQuality}`);
+
+    // interceptionProbability: Monte-Carlo returns 0-1
+    var prob = interceptionProbability(0.3, 1.5);
+    prob.probability >= 0 && prob.probability <= 1 && prob.totalSweeps > 0
+      ? ok('interceptionProbability returns plausible Monte-Carlo result',
+           `P=${prob.probability.toFixed(3)}, sweeps=${prob.totalSweeps}, hooked=${prob.totalHooked}, quality=${prob.avgSweepQuality.toFixed(3)}`)
+      : fail('interceptionProbability returns plausible Monte-Carlo result',
+             JSON.stringify(prob));
+
+    // interceptionProbability: at optimal depth with fast flow, probability > 0
+    var probGood = interceptionProbability(0.3, 3.0);
+    probGood.probability > 0
+      ? ok('interceptionProbability > 0 at optimal depth + fast flow',
+           `P=${probGood.probability.toFixed(3)}`)
+      : fail('interceptionProbability > 0 at optimal depth + fast flow',
+             JSON.stringify(probGood));
+  } catch (e) {
+    fail('interception.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

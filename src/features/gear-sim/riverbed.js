@@ -28,22 +28,59 @@ var RESTITUTION = 0.15;        // dimensionless
 // Nominal cobble radius for Hertz contact, metres
 // D₅₀ = 0.10m → R_cobble = 0.05m
 var R_COBBLE_M = 0.05;         // m — @provenance: derived (from MEDIAN_COBBLE_M in hydro.js)
+
+// Spectral roughness coefficients — sum-of-sines approximation of self-affine gravel bed.
+// N=6 log-spaced wavenumbers k ∈ [2π/(10·D₅₀), 2π/(D₅₀/4)] with A ∝ k^(-β), β = H+1, H≈0.7.
+// Deterministic phase offsets (fixed numbers, not random).
+// @provenance: literature (Robert 2003, Aberle & Nikora 2006 — self-affine gravel roughness)
+var BED_RGH = [];
+(function() {
+    var D50 = 2 * R_COBBLE_M;                       // median cobble diameter (0.10 m)
+    var kMin = 2 * Math.PI / (10 * D50);            // 6.283 — longest wavelength
+    var kMax = 2 * Math.PI / (D50 / 4);             // 251.3 — shortest wavelength
+    var N = 6;
+    // Fixed phase offsets (radians) — deterministic, seeded
+    var phX = [0.0, 1.2, 2.7, 4.1, 5.3, 0.8];
+    var phY = [1.8, 3.4, 0.5, 2.2, 4.9, 3.1];
+    var amps = [];
+    var sumA2 = 0;
+    for (var i = 0; i < N; i++) {
+        var k = Math.exp(Math.log(kMin) + i * (Math.log(kMax) - Math.log(kMin)) / (N - 1));
+        var a = Math.pow(k, -1.7);                  // power-law amplitude before normalisation
+        amps.push(a);
+        sumA2 += a * a;
+    }
+    // Normalise so RMS roughness ≈ D50 / 4 = 0.025 m
+    var targetRMS = D50 / 4;
+    var norm = Math.sqrt(2 * targetRMS * targetRMS / sumA2);
+    for (var i = 0; i < N; i++) {
+        BED_RGH.push({
+            k: Math.exp(Math.log(kMin) + i * (Math.log(kMax) - Math.log(kMin)) / (N - 1)),
+            amp: amps[i] * norm,
+            phX: phX[i],
+            phY: phY[i]
+        });
+    }
+})();
+
 /**
  * Bed elevation (z) at a given (x, y) coordinate.
  *
- * A flat cobble bed at z=0 with sinusoidal micro-topography (±r_cobble/2):
- *   z_bed = 0 + (R_COBBLE_M / 2) · sin(π · x / 2·R_COBBLE_M) · sin(π · y / 2·R_COBBLE_M)
+ * Spectral sum-of-sines approximation of a self-affine gravel bed:
+ *   z(x,y) = Σ A_i · sin(k_i·x + φx_i) · sin(k_i·y + φy_i)
  *
- * This is a placeholder — replace with a DEM or fractal Brownian surface in production.
  * x, y: streamwise and spanwise coordinates (m)
- *
  * Returns elevation (m). Negative = below datum.
- * @provenance: standard — sinusoidal placeholder for cobble roughness.
+ * @provenance: literature — sum-of-sines roughness, Robert 2003, Aberle & Nikora 2006.
  */
 function bedElevation(x, y) {
     if (isNaN(x) || isNaN(y)) return 0;
-    var lambda = 2 * R_COBBLE_M;                    // roughness wavelength
-    return 0 + (R_COBBLE_M / 2) * Math.sin(Math.PI * x / lambda) * Math.sin(Math.PI * y / lambda);
+    var z = 0;
+    for (var i = 0; i < BED_RGH.length; i++) {
+        var r = BED_RGH[i];
+        z += r.amp * Math.sin(r.k * x + r.phX) * Math.sin(r.k * y + r.phY);
+    }
+    return z;
 }
 
 /**

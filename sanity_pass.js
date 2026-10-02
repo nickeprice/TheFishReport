@@ -983,10 +983,10 @@ function behaviorChecks(done) {
   }
   // --- Riverbed tests: substrate, contact, friction, snag ---------------------
   try {
-    // bedElevation at (0, 0) = 0 (sin(0) = 0)
-    bedElevation(0, 0) === 0
-      ? ok('bedElevation returns datum at origin', '0 -> 0')
-      : fail('bedElevation returns datum at origin', `got ${bedElevation(0, 0)}`);
+    // bedElevation at origin ≈ 0 (sum-of-sines with non-zero phases → near zero)
+    Math.abs(bedElevation(0, 0)) < 0.005
+      ? ok('bedElevation returns near-datum at origin', `${bedElevation(0, 0).toFixed(6)}`)
+      : fail('bedElevation returns near-datum at origin', `got ${bedElevation(0, 0)}`);
 
     // bedElevation micro-topography non-zero away from origin
     bedElevation(0.05, 0.05) !== 0

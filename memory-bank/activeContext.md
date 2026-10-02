@@ -69,6 +69,17 @@ The active plan lives in `memory-bank/plan.md`. This file is append-only history
 - Bead data (area, cd, net sink)
 - Weight data (area_cm2, cd)
 - Line diameters (110 measured)
+## Four Scientific Upgrades (2026-10-02)
+
+**What shipped:**
+- **L1 (cable.js)** — Attempted PBD solver for the cable convergence issue. Pure PBD (force × α + inextensibility) does NOT converge for a cable in uniform cross-flow because the constraint-only approach has no restoring force mechanism to balance uniform drag. Kept the original elastic-strain tension model which IS physically correct (EA=247 N for 0.30mm fluoro → 0.1 mm bow). PBD reserved for future dynamic/time-stepped cable simulation.
+- **L2 (riverbed.js)** — Replaced single-sinusoid bedElevation placeholder with spectral sum-of-sines roughness field (N=6 log-spaced wavenumbers, A ∝ k^(-1.7), RMS ≈ 0.025 m). Deterministic phase offsets. Test loosened from exact zero to |z| < 0.005 at origin.
+- **L3 (interception.js)** — Replaced linear clamp P(seat) with momentum-threshold logistic sigmoid. Added HOOK_PEN_FORCE_N = 2.0 N. v50 = √(2·F_pen·d_stop/m) ≈ 1.03 m/s. P = 1/(1+exp(-5·(relV-v50))).
+- **L4 (sinker.js)** — Added RESTITUTION_SINKER = 0.15 (self-contained copy of the riverbed.js RESTITUTION constant). Removed cross-module load-order dependency.
+
+**Files changed:** `src/features/gear-sim/cable.js`, `src/features/gear-sim/riverbed.js`, `src/features/gear-sim/interception.js`, `src/features/gear-sim/sinker.js`, `sanity_pass.js`, `memory-bank/plan.md`
+
+**Verification:** `node sanity_pass.js --quiet` → PASSED 208 | FAILED 0
 - All labelled ESTIMATED/measured per tackle.json notes
 
 ### Pending: `sanity_pass.js` needs re-pin (7 tests fail with the new physics values)

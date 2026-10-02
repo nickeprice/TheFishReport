@@ -12,6 +12,10 @@ var G_SINKER = 9.81;           // m/s² — @provenance: standard
 var RHO_SINKER = 1000;         // kg/m³ — @provenance: standard (matching hydro.js)
 var SINKER_DENSITY_LEAD = 11340;  // kg/m³ — @provenance: literature
 var CD_SINKER = 1.0;           // dimensionless — cylinder at Re≈8000 @provenance: literature
+// Coefficient of restitution for wet rock impacts — self-contained copy.
+// Marshall 2012 (Journal of Hydraulic Engineering 138:211) — wet cobble impacts at Re≈10⁴
+// @provenance: literature
+var RESTITUTION_SINKER = 0.15; // dimensionless
 
 /**
  * Solve for the terminal sinker velocity from the force balance:
@@ -94,7 +98,7 @@ function sinkerBounceStep(z, vz, massKg, areaM2, cd, dt, vWater, z_bed, r_cobble
         // Penalty-based contact: push sinker above bed + bounce
         var overlap = bedTop - zNew;
         zNew = bedTop + overlap * 0.5;  // push back
-        vzNew = -vzNew * RESTITUTION;   // bounce (RESTITUTION from riverbed.js)
+        vzNew = -vzNew * RESTITUTION_SINKER;   // bounce
         return { z: zNew, vz: vzNew, onBed: true };
     }
 

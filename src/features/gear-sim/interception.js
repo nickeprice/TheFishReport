@@ -11,6 +11,10 @@
 var HOOK_SET_FORCE_N = 8.0;    // N — @provenance: informed_estimate (salmon jaw cartilage)
 var SEAT_DISTANCE_M = 0.008;   // m — hook gap geometry @provenance: informed_estimate
 var MC_RUNS = 100;             // Monte-Carlo sample count
+// Hook penetration force threshold: F_pen = σ_ult·A_point ≈ 2-5 MPa · 1.3e-7 m² ≈ 0.26-0.65 N.
+// Conservative value 2.0 N accounts for cartilage resistance.
+// @provenance: derived — momentum-threshold sigmoid (KE = ½·m·v² exceeds work to penetrate tissue)
+var HOOK_PEN_FORCE_N = 2.0;    // N
 
 /**
  * One interception simulation run.
@@ -69,11 +73,14 @@ function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs) {
             mouthOpenAtSweep: mouthState, sweepQuality: sweepQuality };
     }
 
-    // Phase 4: Seat — hook set force check
-    // The hook catches on the jaw as the gear sweeps past. Seat probability
-    // depends on relative velocity: at v > 1.0 m/s the hook catches reliably.
+    // Phase 4: Seat — momentum-threshold sigmoid
+    // Hook seats when kinetic energy ½·m·v² exceeds work to penetrate tissue.
+    // Threshold velocity v₅₀ = √(2·F_pen·d_stop / m_gear)
+    // For m=0.030 kg (1 oz), F_pen≈2 N, d_stop=0.008 m → v₅₀ ≈ 1.03 m/s
+    // @provenance: derived — momentum-threshold sigmoid
     var relV = flowMs || 1.0;
-    var seatProb = Math.min(1, Math.max(0, (relV - 0.5) / 1.5));
+    var v50 = Math.sqrt(2 * HOOK_PEN_FORCE_N * SEAT_DISTANCE_M / 0.030);
+    var seatProb = 1 / (1 + Math.exp(-5 * (relV - v50)));
     var seats = Math.random() < seatProb;
     if (seats) {
         phases.push('SEAT');

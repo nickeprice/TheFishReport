@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -928,6 +928,58 @@ function behaviorChecks(done) {
       : fail('the picked weight shape reaches the presentation height', `slinky ${hSlinky}" vs tungsten ${hTung}"`);
   } catch (e) {
     fail('gear-sim physics is deterministic (frozen baseline)', String(e.message).split('\n')[0]);
+  }
+  // --- Hydro tests: 3D velocity field -----------------------------------------
+  try {
+    // logLawVelocity(1.0 m, uStar=0.15 m/s, z0=0.008 m) at z=1.0m above cobble bed.
+    // u(1.0) = (0.15/0.41) * ln(1.0/0.008) = 0.366 * ln(125) = 0.366 * 4.829 = 1.767 m/s
+    const vLog = logLawVelocity(1.0, 0.15, 0.008);
+    Math.abs(vLog - 1.767) < 1e-3
+      ? ok('logLawVelocity returns expected value at z=1.0m', `${vLog} m/s (want ~1.767)`)
+      : fail('logLawVelocity returns expected value at z=1.0m', `got ${vLog} want ~1.767`);
+
+    // uStarFromMax: uMax=2.0 m/s, H=3.0 m, z0=0.008 m
+    // u* = 2.0 * 0.41 / ln(3.0/0.008) = 0.82 / ln(375) = 0.82 / 5.926 = 0.1384 m/s
+    const uStar = uStarFromMax(2.0, 3.0, 0.008);
+    Math.abs(uStar - 0.1384) < 1e-3
+      ? ok('uStarFromMax inverts the log law correctly', `u* = ${uStar} m/s (want ~0.1384)`)
+      : fail('uStarFromMax inverts the log law correctly', `got ${uStar} want ~0.1384`);
+
+    // velocityProfile at z=1.0 should equal explicit logLawVelocity(1.0, u*, 0.008)
+    const prof = velocityProfile(1.0, 3.0, 2.0, 0.008);
+    const vAtZ = logLawVelocity(1.0, prof.uStar, 0.008);
+    Math.abs(prof.vMs - vAtZ) < 1e-3 && prof.z0 === 0.008 && prof.H === 3.0
+      ? ok('velocityProfile composes uStarFromMax + logLawVelocity', `v=${prof.vMs} m/s, u*=${prof.uStar}, H=${prof.H}`)
+      : fail('velocityProfile composes uStarFromMax + logLawVelocity', `got ${JSON.stringify(prof)}`);
+
+    // velocityProfile with default z0 (ROUGHNESS_COBBLE)
+    const profDefault = velocityProfile(1.0, 3.0, 2.0);
+    profDefault.z0 > 0 && profDefault.vMs > 0
+      ? ok('velocityProfile uses ROUGHNESS_COBBLE when z0 omitted', `z0=${profDefault.z0}, v=${profDefault.vMs} m/s`)
+      : fail('velocityProfile uses ROUGHNESS_COBBLE when z0 omitted', `got ${JSON.stringify(profDefault)}`);
+
+    // Turbulence: deterministic test — the Box-Muller is stochastic, but the
+    // fluctuation envelope must be within ±3·intensity·uMean for 10 invocations at I=0.1.
+    var maxFluct = 0;
+    for (var tf = 0; tf < 10; tf++) {
+      var fl = turbulenceFluctuation(0, 0.1, 2.0);
+      if (Math.abs(fl) > maxFluct) maxFluct = Math.abs(fl);
+    }
+    maxFluct > 0 && maxFluct < 0.6   // 3·0.10·2.0 = 0.6
+      ? ok('turbulenceFluctuation stays within ±3σ envelope', `max |fluct| = ${maxFluct.toFixed(4)} m/s (cap 0.6)`)
+      : fail('turbulenceFluctuation stays within ±3σ envelope', `max |fluct| = ${maxFluct} m/s (cap 0.6)`);
+
+    // Edge cases: z <= z0 returns 0
+    logLawVelocity(0.005, 0.15, 0.008) === 0
+      ? ok('logLawVelocity returns 0 for z inside roughness sublayer', 'z < z0 -> 0')
+      : fail('logLawVelocity returns 0 for z inside roughness sublayer', 'got non-zero');
+
+    // Edge cases: null inputs return 0
+    logLawVelocity(null, 0.15, 0.008) === 0 && uStarFromMax(-1, 3, 0.008) === null
+      ? ok('hydro edge cases: bad/high inputs return 0 or null', 'logLawVelocity(null) -> 0, uStarFromMax(-1) -> null')
+      : fail('hydro edge cases: bad/high inputs return 0 or null', 'expected 0 or null');
+  } catch (e) {
+    fail('hydro.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

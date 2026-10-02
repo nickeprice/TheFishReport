@@ -58,6 +58,7 @@ const SHELL_FILES = [
     '/src/features/gear-sim/inputs.js',
     '/src/features/gear-sim/continuity.js',
     '/src/features/gear-sim/physics.js',
+    '/src/features/gear-sim/hydro.js',
     '/src/features/gear-sim/sonar.js',
     '/src/features/gear-sim/zone.js',
     '/src/features/gear-sim/rig.js',

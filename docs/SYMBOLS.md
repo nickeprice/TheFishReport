@@ -105,13 +105,14 @@ this file**, or the pass fails.
   `depthAtGauge(flow, siteId)` (`D = A/W` median, cross-checked by `Q/(W·V)`; `minFt`/`maxFt` are
   the MEASURED BAND), `spotDepthFt(flow, siteId)` — the same-reach DEPTH estimate with
   `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2)
-- **physics.js** — `lineDiameterScale`, `beadDrag`/`beadSink`, `hookDrag`, `yarnDrag`,
-  `mainlineDragPerFt`, `leaderDragPerFt`, `totalDragPerFt`, `weightAreaScale(shapeLabel, oz)`,
-  `presentationHeightInches()` — `weightAreaScale()` replaced the old unitless
-  `anchorScale = 0.7 + 0.6·oz` (P3): it reads the picked weight's measured `area_cm2` and
-  returns `massResponse(oz) × (area/area_ref)`, anchored so the 1/2 oz lead barrel is exactly
-  `1.0`. An unknown shape degrades to the old mass-only formula, so legacy rigs and cloud
-  rows are unmoved.
+- **physics.js** — `lineDragPerFt(diameterMm, velocityFtS)`, `pointDragGf(areaCm2, cd, velocityFtS)`,
+  `totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt, ...objects)`, `computeLiftGf(...)`,
+  `presentationHeightInches(liftGf, dragGfPerFt, leaderFt)` — standard fluid dynamics:
+  `F = 0.5·ρ·Cd·A·v²` with no tuned constants. Lift is net Archimedes (buoyancy − mass).
+- **hydro.js** — `KAPPA`, `ROUGHNESS_COBBLE`, `logLawVelocity(z, uStar, z0)`,
+  `uStarFromMax(uMax, H, z0)`, `velocityProfile(z, H, uMax, [z0])`,
+  `turbulenceFluctuation(t, intensity, uMean)` — log-law boundary layer velocity profile,
+  roughness estimates, and isotropic Gaussian turbulence for the 3D cable simulator.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

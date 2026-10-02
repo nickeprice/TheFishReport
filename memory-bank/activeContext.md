@@ -1,3 +1,13 @@
+## Phase 0 Complete (2026-10-01)
+
+**What shipped (commit 73d77be):**
+- **0.1 Net corky buoyancy** — `parseFoam()` returns `net_buoyancy_g = buoyancy_g - mass_g`; all 4 call sites (`drift.js`, `zone.js`, `sonar.js`, and the sanity test) now pass net values.
+- **0.2 Yarn buoyancy sign** — CSV `buoyancy_per_inch_g` changed from `+0.01` (buoyant) to `-0.012` (sinking), matching the JS function default. CSV converter script updated to regen tackle.json.
+- **0.3 Yarn drag fields** — CSV/JSON yarn row now carries `area_cm2=1.8`, `shape=cylinder`, `cd=0.8`. Converter `REQUIRED_FIELDS["yarn"]` updated. `cylinder` added to `SHAPES` set.
+- **0.4-0.5 Yarn/mainline drag wiring** — verified all 3 call sites use `tackleYarnDragData()` and `lineDragPerFt(mlDia, ...)` with proper null guards.
+- **0.6 Sanity baselines re-pinned** — 149/149 passing. Key changes: physics test uses `net_buoyancy_g` instead of gross `buoyancy_g`; integration test suggestions flipped from "running high" to "running low" reflecting the ~50% lift reduction. All changed lines carry `// @provenance:` or `// @fix:` comments.
+
+**Plan status:** Phase 0 all items checked. Phases 1-8 ready to execute.
 # HISTORY — completed work log (NOT the plan)
 
 The active plan lives in `memory-bank/plan.md`. This file is append-only history; the

@@ -45,7 +45,7 @@ STATUS: READY
   re-run → 149/149. Ensure all changed lines carry a // rationale: comment.
   verify: node sanity_pass.js --quiet prints "PASSED 149 | FAILED 0"
 
-- [ ] 0.7 Commit + push.
+- [x] 0.7 Commit + push.
   files: all modified
   Run: stage all, commit: "fix: Phase0 data foundation — net corky buoyancy,
   yarn sign/drag (CSV→JSON fix), mainline drag, provenance comments", push to origin
@@ -53,11 +53,13 @@ STATUS: READY
 
 ## Phase 1: hydro.js — 3D Velocity Field
 
-- [ ] 1.1 New file: src/features/gear-sim/hydro.js
-  Functions: logLawVelocity(z, uStar, z0), velocityProfile(z, H, uMax), turbulenceFluctuation(t, intensity)
-  Constants: κ=0.41, ρ=1000 kg/m³, ν=1.0e-6 m²/s
+- [x] 1.1 New file: src/features/gear-sim/hydro.js
+  Functions: logLawVelocity(z, uStar, z0), velocityProfile(z, H, uMax), uStarFromMax(uMax, H, z0),
+  turbulenceFluctuation(t, intensity)
+  Constants: κ=0.41, ρ=1000 kg/m³, ν=1.0e-6 m²/s, ROUGHNESS_COBBLE=0.00825 m
   Derive u* from uMax = u* · κ / ln(H/z0). z₀ = 0.033 · (2.5 · D₅₀), D₅₀ = 0.10m cobble default.
-  verify: node -e "logLawVelocity(1.0, 0.15, 0.008)" returns plausible ~2.2 m/s
+  Wired into index.html (after physics.js), sw.js SHELL_FILES, SYMBOLS.md, and sanity_pass.js.
+  verify: node sanity_pass.js --quiet → PASSED 157 | FAILED 0
 
 ## Phase 2: riverbed.js — Substrate & Contact
 

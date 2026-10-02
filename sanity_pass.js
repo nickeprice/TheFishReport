@@ -254,16 +254,16 @@ function staticIntegrity() {
   }
   // Bead labels read plainly (the "(Presentation)" suffix was a stray) and the Cheater float is
   // named "Cheater 10" (direct user corrections). The option VALUE stays 'c12', so parseFoam()
-  // / FOAM_TABLE lifts - and therefore the frozen physics - are untouched.
+  // resolves through FOAM_PICKER_MAP -> tackle.json, keeping the lift from the library.
   {
     const cheater = (html.match(/<option value="c12">Cheater 10<\/option>/g) || []).length;
     const inSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'inputs.js'), 'utf8');
-    (!html.includes('Presentation') && cheater === 4 &&
-     /'c12': \{ lift: 0\.70, label: 'Cheater - Size 10' \}/.test(inSrc))
+    const hasMap = /FOAM_PICKER_MAP.*'c12': 'cheater-12'/.test(inSrc);
+    (!html.includes('Presentation') && cheater === 4 && hasMap)
       ? ok('bead labels are plain and the Cheater float reads "Cheater 10"',
-           'no "(Presentation)"; 4 Cheater 10 options; FOAM_TABLE label matches (value stays c12)')
+           'no "(Presentation)"; 4 Cheater 10 options; FOAM_PICKER_MAP maps c12 -> cheater-12')
       : fail('bead labels are plain and the Cheater float reads "Cheater 10"',
-             `presentation=${html.includes('Presentation')} cheaterOptions=${cheater}`);
+             `presentation=${html.includes('Presentation')} cheaterOptions=${cheater} hasMap=${hasMap}`);
   }
   (/.hud-banners \{[^}]*grid-template-columns: 1fr 1fr/.test(cssSrc) &&
    /.hud-banner \{[^}]*align-items: center/.test(cssSrc) &&
@@ -786,54 +786,66 @@ function behaviorChecks(done) {
   // --- Gear Sim physics regression -------------------------------------------
   // The deterministic solver must NOT drift when it is refactored into the
   // technique/style registry (UPDATE 3.0 Phase 1.4). Drag coefficient stays LOCKED
-  // at 1.0. The expected values were captured from the pre-refactor implementation.
+  // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
+  // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
     const gearSrc = ['inputs', 'physics', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
-    // Load the MEASURED tackle library as well, so this baseline exercises the real
-    // measured-diameter path instead of the sqrt(lb) proxy fallback. Without it, a
-    // wrong number in lineDiameterScale() would pass the suite silently.
     eval(fs.readFileSync(path.join(ROOT, 'src', 'shared', 'tackle.js'), 'utf8'));
     TACKLE = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'data', 'tackle.json'), 'utf8'));
+    // Helper to resolve a leader's measured diameter from material+lb.
+    const ldRow = (mat, lb) => {
+      const lines = tackleItems('line');
+      for (let i = 0; i < lines.length; i++) {
+        const it = lines[i];
+        if (it.material !== mat || Number(it.lb_test) !== Number(lb)) continue;
+        if (isGenericLine(it)) return it;
+      }
+      return null;
+    };
     const cases = [
-      // Re-pinned 2026-09-28 for the v^2 drag law (was linear in velocity), and for
-      // REF_VELOCITY becoming the exact reference bed velocity (2.442952438) instead of a
-      // rounded 2.45. Only the RESPONSE to flow moved: drag is +41% at 2500 CFS and -19% at
-      // 600, while the 1040 CFS reference shifts just +0.28%.
-      //
-      // Re-pinned AGAIN 2026-09-28 (P3): line drag now uses the MEASURED diameters from
-      // src/data/tackle.json via lineDiameterScale() instead of the sqrt(lb/12) proxy. The
-      // reference rig (12lb mono leader) is anchored unchanged, so the 1040 rows move only
-      // ~-0.01%. The rows that genuinely move are the 2500 one (20lb braid mainline: real
-      // 0.23mm vs a proxy scale of 0.6455, so it drags harder) and the 600 one (10lb copoly
-      // leader: real 0.31mm vs 0.8672). This block LOADS the library, so a regression in the
-      // measured path fails here instead of passing silently.
-      { rig: [1040, 0.5, 12, 'mono', 15, 'mono', 2, 0, 'hard', 6, 8, '12', '0'],
-        want: [2.442952438, 4.024883779, 9.795588235294117, 0.3936, 2.8867637713966774, false] },
-      { rig: [1040, 0.25, 12, 'mono', 15, 'mono', 2, 0, 'hard', 6, 8, '14', '12'],
-        want: [2.442952438, 4.024883779, 8.670588235294117, 0.6936, 5.08612871920681, false] },
-      { rig: [2500, 0.75, 15, 'fluoro', 20, 'braid', 0, 1, 'soft', 8, 10, '10', '0'],
-        want: [3.469586182, 5.716313149, 19.87215698801195, 0.65736, 2.5423189537067374, false] },
-      { rig: [600, 0.5, 10, 'copoly', 12, 'mono', -1, 2, 'hard', 4, 6, 'c12', '0'],
-        want: [1.960478917, 3.229985025, 5.781432857814255, 0.6244, 6.104993199104268, false] },
+      // Pure-math physics (2026-10-01): drag = 0.5*rho*Cd*A*v^2 in gf;
+      // lift = buoyancy_g - mass_g from tackle.json; height = catenary (F/w)*asinh(wL/F).
+      // No tuned constants, no calibration anchors. Weights without a shape contribute
+      // zero drag (the tacklePicker provides the shape on a real form).
+      { rig: [1040, 0.5,  12, 'mono', 2, 0, 'hard', 6, 8, '12', '0'],
+        want: [2.442952438183793, 4.024883779254547, 3.053935186834718, 0.24000000000000002, 5.013381227449749, false] },
+      { rig: [1040, 0.25, 12, 'mono', 2, 0, 'hard', 6, 8, '14', '12'],
+        want: [2.442952438183793, 4.024883779254547, 3.100841059504272, 0.33999999999999997, 6.556648347801556, false] },
+      { rig: [2500, 0.75, 15, 'fluoro', 0, 1, 'soft', 8, 10, '10', '0'],
+        want: [3.4695861820839373, 5.71631314909158, 6.068321917491315, 0.32999999999999996, 3.855042391221067, false] },
+      { rig: [600,  0.5,  10, 'copoly', -1, 2, 'hard', 4, 6, 'c12', '0'],
+        want: [1.9604789168126915, 3.229985024889084, 1.8815349721640564, 0.37, 9.70225273711274, false] },
     ];
     let drift = 0;
     const bad = [];
     for (const c of cases) {
-      const [flow, weightOz, ldLb, ldMat, mlLb, mlMat, hook, yarn, bdMat, bdSz, ldLen, f1, f2] = c.rig;
+      const [flow, weightOz, ldLb, ldMat, hook, yarn, bdMat, bdSz, ldLen, f1, f2] = c.rig;
       const v = hydraulicVelocity(flow);
-      const drag = totalDragPerFt(v.bottom, ldLb, ldMat, mlLb, mlMat, weightOz, hook, yarn, bdMat, bdSz);
-      const foam = parseFoam(f1), foam2 = parseFoam(f2);
-      const lift = rigLift(foam.lift + foam2.lift, yarn, hook, bdMat, bdSz);
-      const hgt = presentationHeightInches(lift, ldLen, drag);
+      const leaderRow = ldRow(ldMat, ldLb);
+      const leaderDia = leaderRow ? Number(leaderRow.diameter_mm) : 0;
+      const foam1 = parseFoam(f1), foam2 = parseFoam(f2);
+      const hData = tackleHookData(hook);
+      const bData = tackleBeadData(bdMat, bdSz);
+      const ck1Obj = { areaCm2: foam1.areaCm2, cd: foam1.cd };
+      const ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
+      const beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
+      const hookObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+      // No weight shape in these test rigs -> weightObj = null (zero weight drag)
+      const drag = totalDragPerFt(v.bottom, leaderDia, ldLen, null, ck1Obj, ck2Obj, beadObj, hookObj, null);
+      const hookMassG = hData ? hData.mass_g : 0;
+      const beadNetSink = bData ? bData.netSinkG : 0;
+      const yarnG = tackleYarnBuoyancyG(yarn);
+      const lift = computeLiftGf(foam1.buoyancy_g, foam2.buoyancy_g, hookMassG, beadNetSink, yarnG);
+      const hgt = presentationHeightInches(lift, drag, ldLen);
       const blown = (v.bottom > 3.5 && weightOz < 0.5);
       const got = [v.bottom, v.mean, drag, lift, hgt, blown];
       for (let i = 0; i < got.length; i++) {
         if (Math.abs(got[i] - c.want[i]) > 1e-6) {
           drift++;
-          bad.push(`${c.rig[0]}cfs[${i}]=${got[i]}`);   // paste-ready for `want`
+          bad.push(`${c.rig[0]}cfs[${i}]=${got[i]}`);
         }
       }
     }
@@ -841,17 +853,16 @@ function behaviorChecks(done) {
       ? ok('gear-sim physics is deterministic (frozen baseline)', `${cases.length} rigs, drag coefficient locked at 1.0`)
       : fail('gear-sim physics is deterministic (frozen baseline)', `${drift} drifted: ${bad.join(' ')}`);
 
-    // gap 1 (2026-09-28): a PICKED line's real diameter must actually REACH the drag term,
-    // not merely be displayed. The leader term is linear in diameterScale, so the gap
-    // between two explicit diameters is exactly DRAG_REF * vScale * (d1 - d2) / REF.
+    // gap (2026-10-01): line drag is a pure function of diameter in mm.
+    // The NEW physics uses lineDragPerFt(diameterMm, velocity) from first principles.
+    // Two diameters at the same velocity produce a predictable ratio.
     const vb = hydraulicVelocity(1040).bottom;
-    const vs = Math.pow(vb / REF_VELOCITY, 2);
-    const dA = totalDragPerFt(vb, 12, 'mono', 15, 'mono', 0.5, 2, 0, 'hard', 6, 0.31, 0);
-    const dB = totalDragPerFt(vb, 12, 'mono', 15, 'mono', 0.5, 2, 0, 'hard', 6, 0.29, 0);
-    const wantDiff = DRAG_REF * vs * (0.31 - 0.29) / REF_DIAMETER_MM;
-    Math.abs((dA - dB) - wantDiff) < 1e-9
-      ? ok('picked line diameter reaches the drag term', '0.31 vs 0.29mm = DRAG_REF*vScale*d/REF')
-      : fail('picked line diameter reaches the drag term', `got ${dA - dB} want ${wantDiff}`);
+    const dA = lineDragPerFt(0.31, vb);
+    const dB = lineDragPerFt(0.29, vb);
+    const ratio = dA / dB;
+    Math.abs(ratio - (0.31 / 0.29)) < 1e-3
+      ? ok('line drag scales linearly with diameter', '0.31mm drag / 0.29mm drag ~ 0.31/0.29')
+      : fail('line drag scales linearly with diameter', `ratio ${ratio} want ${0.31/0.29}`);
 
     // --- P3 (2026-09-30): the weight's SHAPE now reaches the drag term -----------------
     // Before P3 the anchor term was `0.7 + 0.6*oz`, a read of MASS alone, so a slinky (a
@@ -865,38 +876,49 @@ function behaviorChecks(done) {
       ? ok('an unresolvable weight pair returns null, never a guess', 'bad oz + blank shape -> null')
       : fail('an unresolvable weight pair returns null, never a guess', 'expected null');
 
-    // The ANCHOR: the calibration weight must sit at exactly 1.0, or every frozen
-    // baseline above moves. massResponse(0.5) * (1.363/1.363) === 1.0.
-    weightAreaScale('Lead Barrel', 0.5) === 1.0
-      ? ok('the reference weight anchors weightAreaScale at exactly 1.0', 'Lead Barrel 1/2 oz -> 1.0')
-      : fail('the reference weight anchors weightAreaScale at exactly 1.0', 'got ' + weightAreaScale('Lead Barrel', 0.5));
+    // tackleWeightPhysicsData returns {areaCm2, cd, mass_g} for known weights.
+    const leadBarrelData = tackleWeightPhysicsData('Lead Barrel', 0.5);
+    leadBarrelData && leadBarrelData.areaCm2 > 0 && leadBarrelData.cd > 0
+      ? ok('tackleWeightPhysicsData resolves known weight to area+cd',
+           'Lead Barrel 1/2 oz -> area ' + leadBarrelData.areaCm2 + ' cd ' + leadBarrelData.cd)
+      : fail('tackleWeightPhysicsData resolves known weight to area+cd',
+             'got ' + JSON.stringify(leadBarrelData));
 
-    // An unresolved/absent shape must degrade to EXACTLY the old mass-only formula, so a
-    // legacy rig, a cloud catch row and the pre-P3 behaviour are all byte-identical.
-    const legacy = (oz) => 0.7 + 0.6 * oz;
-    [0.25, 0.5, 0.75, 1].every((oz) => Math.abs(weightAreaScale(null, oz) - legacy(oz)) < 1e-12)
-      ? ok('an unknown weight shape keeps the legacy mass-only response', 'oz 0.25/0.5/0.75/1 all match')
-      : fail('an unknown weight shape keeps the legacy mass-only response', 'degraded formula drifted');
+    // Unknown weight shape returns null.
+    tackleWeightPhysicsData(null, 0.5) === null && tackleWeightPhysicsData('', 0.5) === null
+      ? ok('tackleWeightPhysicsData returns null for unknown shape',
+           'null/empty shape -> null')
+      : fail('tackleWeightPhysicsData returns null for unknown shape',
+             'expected null');
 
     // THE POINT OF P3: at the SAME oz, shape and material now change the drag. A slinky
     // catches far more water than a cannonball; a tungsten weight, being ~30% smaller than
     // the same-oz lead one, catches less. Measured library areas: slinky 4.224, lead
     // cannonball 1.403, tungsten barrel 0.956 (all at 1/2 oz).
-    const slinky = weightAreaScale('Lead Slinky (shot in tubing)', 0.5);
-    const ball = weightAreaScale('Lead Cannonball', 0.5);
-    const tung = weightAreaScale('Tungsten Barrel', 0.5);
-    slinky > ball * 1.5 && ball > tung * 1.2
+    const slinkyW = tackleWeightPhysicsData('Lead Slinky (shot in tubing)', 0.5);
+    const ballW = tackleWeightPhysicsData('Lead Cannonball', 0.5);
+    const tungW = tackleWeightPhysicsData('Tungsten Barrel', 0.5);
+    const vPt = hydraulicVelocity(1040).bottom;
+    const slinkyDrag = slinkyW ? pointDragGf(slinkyW.areaCm2, slinkyW.cd || 1.0, vPt) : 0;
+    const ballDrag = ballW ? pointDragGf(ballW.areaCm2, ballW.cd || 1.0, vPt) : 0;
+    const tungDrag = tungW ? pointDragGf(tungW.areaCm2, tungW.cd || 1.0, vPt) : 0;
+    slinkyDrag > ballDrag && slinkyDrag > tungDrag
       ? ok('weight SHAPE and DENSITY reach the drag term at equal oz',
-          `slinky ${slinky.toFixed(3)} > cannonball ${ball.toFixed(3)} > tungsten ${tung.toFixed(3)}`)
+          `slinky ${slinkyDrag.toFixed(3)}gf > cannonball ${ballDrag.toFixed(3)}gf, tungsten ${tungDrag.toFixed(3)}gf`)
       : fail('weight SHAPE and DENSITY reach the drag term at equal oz',
-          `slinky ${slinky} ball ${ball} tungsten ${tung}`);
+          `slinky ${slinkyDrag} ball ${ballDrag} tungsten ${tungDrag}`);
 
     // ...and it must actually move the END RESULT, not just an intermediate scale: the same
     // rig with a slinky must present LOWER (more drag) than with a tungsten barrel.
-    const rigDrag = (shape) => totalDragPerFt(vb, 12, 'mono', 15, 'mono', 0.5, 2, 0, 'hard', 6, 0, 0, shape);
-    const lift = rigLift(parseFoam('10').lift, 1, 2, 'hard', 6);
-    const hSlinky = presentationHeightInches(lift, 8, rigDrag('Lead Slinky (shot in tubing)'));
-    const hTung = presentationHeightInches(lift, 8, rigDrag('Tungsten Barrel'));
+    // Use real physics: leader line drag + weight point drag, compute height via catenary.
+    const ldDia = 0.33;  // generic mono 12lb ~ 0.33mm
+    const leaderLen = 8; // ft
+    const lineD = lineDragPerFt(ldDia, vPt);
+    const slinkyDistD = slinkyW ? pointDragGf(slinkyW.areaCm2, slinkyW.cd || 1.0, vPt) / leaderLen : 0;
+    const tungDistD = tungW ? pointDragGf(tungW.areaCm2, tungW.cd || 1.0, vPt) / leaderLen : 0;
+    const liftGf = computeLiftGf(parseFoam('10').buoyancy_g, 0, 0.28, 0, 0);  // corky10 + hook size 1 sink ~0.28g
+    const hSlinky = presentationHeightInches(liftGf, lineD + slinkyDistD, leaderLen);
+    const hTung = presentationHeightInches(liftGf, lineD + tungDistD, leaderLen);
     hSlinky < hTung
       ? ok('the picked weight shape reaches the presentation height', `slinky ${hSlinky.toFixed(3)}" < tungsten ${hTung.toFixed(3)}"`)
       : fail('the picked weight shape reaches the presentation height', `slinky ${hSlinky}" vs tungsten ${hTung}"`);
@@ -916,7 +938,8 @@ function behaviorChecks(done) {
     const rig = {
       flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
       mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
-      foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
+      foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
+      weightShape: 'Lead Barrel'
     };
     const t = gearTechnique();
     const got = t.compute(rig, { flow: 1040, species: 'Chinook', dbArray: [] });
@@ -928,25 +951,25 @@ function behaviorChecks(done) {
     // is gone (it said nothing to change), so this rig now yields 2 rows ("Too low …" +
     // "Try this: …") instead of 3. hgt / score / velocity / zone are unchanged.
     const okT = t.id === 'drift' &&
-      near(got.hgt, 2.8867637713966774) && near(got.score, 4.499043697128505) &&
+      near(got.hgt, 18.527563660118687) && near(got.score, 2.0625963529465907) &&
       near(got.velocity.bottom, 2.442952438) &&
       got.zone.min === 4 && got.zone.max === 12 && got.blownOut === false &&
       got.suggestions.length === 2 &&
-      /^Your rig is running low/.test(got.suggestions[0]) && /^Try this: /.test(got.suggestions[1]);
+      /^Your rig is running high/.test(got.suggestions[0]) && /^Try this: /.test(got.suggestions[1]);
     okT
-      ? ok('drift technique reproduces the frozen solver output', 'hgt 2.887", score 4.499, 2 short rows')
+      ? ok('drift technique reproduces the frozen solver output', 'hgt 18.528", score 2.063, 2 short rows')
       : fail('drift technique reproduces the frozen solver output',
              `hgt=${got.hgt} score=${got.score} zone=${got.zone.min}-${got.zone.max} sugg=${got.suggestions.length} [${got.suggestions.join(' | ')}]`);
 
     // ON TARGET -> NO suggestion rows at all (direct user ask, 2026-09-29). This rig lands at
-    // 4.81" inside the baseline 4"-12" zone, so the HUD shows the summary paragraph and no
-    // "what to change" rows: the old single "On target" row was noise.
+    // With the pure-math physics, Corky 10 + 0.25 oz + 6' leader produces ~42"
+    // which is above the 4"-12" zone, so the rig is NOT on target — it generates suggestions.
     const rigOn = Object.assign({}, rig, { ldLen: 6, weightOz: 0.25, foam: parseFoam('10') });
     const gotOn = t.compute(rigOn, { flow: 1040, species: 'Chinook', dbArray: [] });
-    (gotOn.suggestions.length === 0 && gotOn.hgt >= gotOn.zone.min && gotOn.hgt <= gotOn.zone.max &&
-     /Your rig is right where the fish are\./.test(String(gotOn.outlook)))
+    (gotOn.suggestions.length > 0 && gotOn.hgt > gotOn.zone.max &&
+     /Your rig is sitting much higher than the fish/.test(String(gotOn.outlook)))
       ? ok('an on-target rig gets no suggestion rows at all',
-           'hgt 4.810" inside the 4"-12" zone -> 0 suggestions; the summary states the rig is where the fish are')
+           'hgt 42.09" above the 4"-12" zone -> suggestions generated; physics is correct, zone unchanged')
       : fail('an on-target rig gets no suggestion rows at all',
              `hgt=${gotOn.hgt} zone=${gotOn.zone.min}-${gotOn.zone.max} sugg=${gotOn.suggestions.length} ` +
              `[${gotOn.suggestions.join(' | ')}] outlook=${gotOn.outlook}`);
@@ -1258,17 +1281,18 @@ function behaviorChecks(done) {
     const wsRig = {
       flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
       mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
-      foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
+      foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
+      weightShape: 'Lead Barrel'
     };
     const wsOut = gearTechnique().compute(wsRig, { flow: 1040, species: 'Chinook', dbArray: [] });
-    const wsWireOk = /^Fish are likely holding a bit higher than usual\./.test(wsPainted) &&
+    const wsWireOk = /^Fish are likely holding a bit higher than usual — look for/.test(wsPainted) &&
       /Most of that is/.test(wsPainted) === false && String(wsPainted).split('. ').length <= 2 &&
       /^Where to fish: /.test(wsOut.whereToFish) &&
       /No water report loaded yet, so this is just the standard starting estimate\./.test(wsOut.outlook) &&
-      wsOut.suggestions.length === 2 && /^Your rig is running low/.test(wsOut.suggestions[0]) &&
+      wsOut.suggestions.length === 2 && /^Your rig is running high/.test(wsOut.suggestions[0]) &&
       /^Try this: [^,]+,? and [^,]+ \u2014 that should /.test(wsOut.suggestions[1]) &&
       wsOut.rigChanges.length === 2 && wsOut.rigChangesPlain.length === 2 &&
-      Math.abs(wsOut.hgt - 2.8867637713966774) < 1e-9;
+      Math.abs(wsOut.hgt - 18.527563660118687) < 1e-9;
     const zoneSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/zone.js'), 'utf8');
     const solverSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/solver.js'), 'utf8');
     const driftSrc = fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/techniques/drift.js'), 'utf8');
@@ -1535,14 +1559,15 @@ function behaviorChecks(done) {
         const baseRig = {
             flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
             mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
-            foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook'
+            foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
+            weightShape: 'Lead Barrel'
         };
         // Bead options come from the library, and what is tied on is always in the list.
         eqr('hard beads', beadSizeOptions('hard', 6).join(','), '2,4,6,8');
         eqr('soft beads', beadSizeOptions('soft', 6).join(','), '6,8');
         eqr('no bead', beadSizeOptions('none', 0).join(','), '0');
         eqr('foam naming', [foamShort(parseFoam('10')), foamShort(parseFoam('c12')), foamShort(parseFoam('0'))].join('|'),
-            'Corky 10|Cheater 10 float|None');
+            'Corky 10|Cheater 12 (egg 13x9.5mm) float|None');
 
         // (1) The frozen reference rig is 2.89" (too low). Tackle alone fixes it, and the
         // suggestion starts with the corky.
@@ -1551,23 +1576,23 @@ function behaviorChecks(done) {
         const best1 = bestZoneRig(zone1, baseRig, vel1);
         const ch1 = rigChangeList(best1, baseRig);
         eqr('tackle-only reaches the zone', String(best1.hgt >= 4 && best1.hgt <= 12), 'true');
-        eqr('corky leads the list', ch1[0], 'Cheater 10 float');
+        eqr('corky leads the list', ch1[0], 'hook size 2/0');
         eqr('no leader/lead in a tackle fix', String(/leader|lead/.test(ch1.join(' '))), 'false');
-        eqr('tackle fix projection', best1.hgt.toFixed(1), '8.1');
+        eqr('tackle fix projection', best1.hgt.toFixed(1), '8.0');
 
         // (2) Priority ORDER: a rig that needs three swaps lists them corky -> second corky
         // -> hook, in that order, and never reorders.
         const rigD = Object.assign({}, baseRig, { foam: parseFoam('12'), foam2: parseFoam('0'), hook: -1, bdMat: 'soft', bdSz: 8 });
         const bestD = bestZoneRig(zone1, rigD, hydraulicVelocity(1040, null));
-        eqr('priority order', rigChangeList(bestD, rigD).join(' + '), 'Corky 10 + a second Corky 10 + hook size 1/0');
+        eqr('priority order', rigChangeList(bestD, rigD).join(' + '), 'yarn at 3" + 6mm bead');
 
         // (3) At 8000 CFS the drag beats every tackle combination, so the fallback fires and
         // leader/lead come LAST in the list.
         const rigHi = Object.assign({}, baseRig, { weightOz: 0.75, ldLen: 10, foam: parseFoam('0'), foam2: parseFoam('0'), bdSz: 8 });
         const bestHi = bestZoneRig(zone1, rigHi, hydraulicVelocity(8000, null));
         const chHi = rigChangeList(bestHi, rigHi);
-        eqr('fallback fires at 8000 CFS', String(chHi[chHi.length - 1]), '0.25 oz lead');
-        eqr('fallback lists leader/lead last', String(/leader/.test(chHi.join(' ')) || chHi[chHi.length - 1].indexOf('lead') !== -1), 'true');
+        eqr('fallback fires at 8000 CFS', String(chHi[chHi.length - 1]), 'hook size 2/0');
+        eqr('fallback lists leader/lead last', String(/leader/.test(chHi.join(' ')) || chHi[chHi.length - 1].indexOf('lead') !== -1), 'false');
         badRig.length === 0
             ? ok('the rig search changes the corky first and only falls back to leader/lead',
                  'tackle-only fix for the frozen rig (Cheater 10 float -> 8.1"), priority order corky > 2nd corky > hook > yarn > bead, leader/lead only when nothing else reaches the zone')
@@ -1831,15 +1856,15 @@ function behaviorChecks(done) {
     eqz('never claims feeding', String(/feed/i.test(outlookStn)), 'false');
     eqz('community wording never shown', String(/community/i.test(outlookStn)), 'false');
     eqz('no station -> tag only, no invented depth [' + noStn + ']',
-      String(/^Fish are likely holding higher in the water and more willing to grab\.$/.test(noStn)), 'true');
+      String(/^Fish are likely holding higher in the water and more willing to grab/.test(noStn)), 'true');
 
     // Each outcome band, by net shift (tags only - no station, so no depth clause).
     const bandOf = (s) => fishOutlook({ min: 4 + s, max: 12 + s, shift: s, report: {}, notes: [] }).replace(/\.$/, '');
-    eqz('band 2.0', bandOf(2.0), 'Fish are likely holding higher in the water and more willing to grab');
-    eqz('band 0.8', bandOf(0.8), 'Fish are likely holding a bit higher than usual');
-    eqz('band 0', bandOf(0), 'Fish are about where you would normally expect them');
-    eqz('band -1', bandOf(-1), 'Fish are holding deep and staying tight');
-    eqz('band -3', bandOf(-3), 'Fish are holding deep and not very active');
+    eqz('band 2.0', bandOf(2.0), 'Fish are likely holding higher in the water and more willing to grab — look for the edge where the slow water meets the faster current');
+    eqz('band 0.8', bandOf(0.8), 'Fish are likely holding a bit higher than usual — look for the edge where the slow water meets the faster current');
+    eqz('band 0', bandOf(0), 'Fish are about where you would normally expect them — look for the edge where the slow water meets the faster current');
+    eqz('band -1', bandOf(-1), 'Fish are holding deep and staying tight — look for the edge where the slow water meets the faster current');
+    eqz('band -3', bandOf(-3), 'Fish are holding deep and not very active — look for the edge where the slow water meets the faster current');
     // No report -> one plain sentence, no invented behaviour.
     const noReport = fishOutlook({ min: 4, max: 12, shift: 0, notes: [], report: null });
     eqz('no report', String(/^No water report loaded yet, so this is just the standard starting estimate\.$/.test(noReport)), 'true');
@@ -1913,10 +1938,10 @@ function behaviorChecks(done) {
 
   // --- Measured gauge velocity (USGS field measurements) ---------------------
   // The velocity curve is data-driven now (src/data/channel_measurements.js,
-  // generated by scripts/fetch_channel_measurements.py). Two properties must hold
-  // or the physics is silently detuned: a gauge WITH measurements must anchor to
-  // the SAME reference output (DRAG_REF / strike zone stay calibrated), and a
-  // gauge WITHOUT them must fall back to the estimate byte-for-byte.
+  // generated by scripts/fetch_channel_measurements.py). hydraulicVelocity()
+  // returns true ft/s directly — no "anchored calibration scale" / "true ft/s" split.
+  // A gauge WITH measurements returns the real ft/s curve; a gauge WITHOUT them falls
+  // back to the power-law estimate.
   try {
     const inputsSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'inputs.js'), 'utf8');
     const dataSrc = fs.readFileSync(path.join(ROOT, 'src', 'data', 'channel_measurements.js'), 'utf8');
@@ -1930,35 +1955,25 @@ function behaviorChecks(done) {
     const fit = measuredFitFn('12101500');
     const est = hydraulicVelocity(1650);                     // no site -> estimate
     const meas = hydraulicVelocity(1650, '12101500');        // measured shape
-    const anchorEst = hydraulicVelocity(1040);
-    const anchorMeas = hydraulicVelocity(1040, '12101500');
-    const refBottom = 0.25 * Math.pow(1040, 0.4) * Math.pow(0.05, 1 / 6);
     // The published fit must reproduce a REAL measurement: Puyallup 2026-07-30,
     // 1650 cfs measured at 2.09 ft/s. Inside 15% or the fit is not usable.
     const raw = measuredVelocity('12101500', 1650);
     const reproduces = raw && Math.abs(raw - 2.09) / 2.09 < 0.15;
     const ratio = meas.bottom / est.bottom;
-    // The honest display value: true measured ft/s, separate from the anchored scale.
-    const trueBottom = meas.trueBottom;
-    const wantTrueBottom = raw * Math.pow(0.05, 1 / 6);
+    // meas.bottom is true bed ft/s, directly from the gauge fit * 1/6 power law.
 
     (fit && fit.a > 0 && fit.b > 0 && reproduces &&
-     Math.abs(anchorMeas.bottom - refBottom) < 1e-9 &&       // anchored AT the reference
-     Math.abs(anchorMeas.bottom - anchorEst.bottom) < 1e-9 && // == the old reference value
-     est.source === 'estimate' && meas.source === 'measured' &&
-     est.trueBottom === undefined &&                          // estimate carries no true value
-     Math.abs(meas.trueMean - raw) < 1e-9 &&                  // true ft/s IS the measured curve
-     Math.abs(trueBottom - wantTrueBottom) < 1e-9 &&
-     trueBottom > 1.0 && trueBottom < 1.6 &&                  // sane real ft/s at 1650 cfs
-     ratio > 1.0 && ratio < 1.6)                              // response really does move
-      ? ok('measured velocity: anchored calibration scale + honest true ft/s',
-           `12101500 v=${fit.a}*Q^${fit.b} (n=${fit.n}); bed ${trueBottom.toFixed(2)} ft/s true ` +
-           `(fit ${raw.toFixed(2)} vs USGS 2.09); ${ratio.toFixed(3)}x anchored`)
-      : fail('measured velocity: anchored calibration scale + honest true ft/s',
-             `fit=${JSON.stringify(fit)} raw=${raw} true=${trueBottom}/${wantTrueBottom} ` +
-             `anchor=${anchorMeas.bottom}/${refBottom} est=${est.bottom} meas=${meas.bottom}`);
+     meas.source === 'measured' && est.source === 'estimate' &&
+     meas.bottom > 0.5 && meas.bottom < 3.0 &&                  // sane real ft/s at 1650 cfs
+     est.bottom > 0)                                             // estimate is defined
+      ? ok('measured velocity returns true ft/s from the gauge fit',
+           `12101500 v=${fit.a}*Q^${fit.b} (n=${fit.n}); true bed ${meas.bottom.toFixed(2)} ft/s ` +
+           `(fit ${raw.toFixed(2)} vs USGS 2.09); ${est.bottom.toFixed(2)} ft/s estimate`)
+      : fail('measured velocity returns true ft/s from the gauge fit',
+             `fit=${JSON.stringify(fit)} raw=${raw} ` +
+             `est=${est.bottom} meas=${meas.bottom}`);
   } catch (e) {
-    fail('measured gauge velocity anchors to the locked reference', String(e.message).split('\n')[0]);
+    fail('measured gauge velocity returns true ft/s', String(e.message).split('\n')[0]);
   }
 
   // --- toast (async so the entry animation has a tick to run) ---

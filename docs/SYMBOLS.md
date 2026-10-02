@@ -122,6 +122,10 @@ this file**, or the pass fails.
   `cableNodes(startX, startZ, preset)`, `resolveCable(nodes, preset, flowAt)` —
   lumped-parameter cable dynamics: preset generators for mainline (40 nodes, SG=0.97)
   and leader (30 nodes, SG=1.78), normal/tangential drag, quasi-static relaxation solver.
+- **sinker.js** — `SINKER_DENSITY_LEAD`, `sinkerForceBalance(massKg, areaM2, cd, vWater, F_bed)`,
+  `sinkerBounceStep(z, vz, massKg, areaM2, cd, dt, vWater, z_bed, r_cobble)` —
+  point-mass sinker terminal velocity from force balance (weight−buoyancy−drag),
+  Euler integration with Hertz bed collision and restitution bounce.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

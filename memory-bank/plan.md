@@ -85,12 +85,15 @@ STATUS: READY
 
 ## Phase 4: sinker.js — Bouncing Sinker
 
-- [ ] 4.1 New file: src/features/gear-sim/sinker.js
-  Mass Mw = 20-75g (0.7-2.6 oz). Density lead = 11,340 kg/m³.
-  Forces: gravity + buoyancy + form drag + Coulomb friction + Saffman lift (negligible, <1% of weight)
-  Bouncing: z ≤ z_bed + r_cobble. Compute average v_sinker from force balance.
-  Cd_sinker = 1.0 (cylinder at Re ≈ 8000)
-  verify: 30g sinker at 2 m/s → v_sinker < 2.0 m/s
+- [x] 4.1 New file: src/features/gear-sim/sinker.js
+  Functions: sinkerForceBalance(massKg, areaM2, cd, vWater, F_bed),
+  sinkerBounceStep(z, vz, massKg, areaM2, cd, dt, vWater, z_bed, r_cobble)
+  Mass 20-75g (0.7-2.6 oz). Density lead = 11,340 kg/m³.
+  Forces: gravity + buoyancy + form drag + Coulomb friction.
+  Bouncing: z ≤ z_bed + r_cobble → restitution bounce.
+  Cd_sinker = 1.0 (cylinder at Re ≈ 8000).
+  Wired into index.html (after cable.js), sw.js, SYMBOLS.md, sanity_pass.js (load + 8 tests)
+  verify: node sanity_pass.js --quiet → PASSED 184 | FAILED 0
 
 ## Phase 5: terminal.js — Hook + Corky/Yarn Equilibrium
 

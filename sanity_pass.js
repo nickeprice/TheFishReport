@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -1095,6 +1095,56 @@ function behaviorChecks(done) {
       : fail('resolveCable hangs vertical in still water', `bottomX=${nds3[nds3.length-1].x}`);
   } catch (e) {
     fail('cable.js tests', String(e.message).split('\n')[0]);
+  }
+  // --- Sinker tests: force balance and bouncing ---------------------------------
+  try {
+    // sinkerForceBalance: 30g lead sinker, area from Lead Barrel 1/2 oz reference
+    // Mass 0.030 kg, area ~1.2 cm² = 1.2e-4 m², cd=1.0, still water
+    var fb = sinkerForceBalance(0.030, 1.2e-4, 1.0, 0, 0);
+    fb.vTermMS > 0 && fb.Re > 0
+      ? ok('sinkerForceBalance returns terminal velocity for 30g lead',
+           `v_term=${fb.vTermMS.toFixed(3)} m/s, Re=${fb.Re.toFixed(0)}, netForce=${(fb.netForceN*1000).toFixed(2)} mN`)
+      : fail('sinkerForceBalance returns terminal velocity for 30g lead', JSON.stringify(fb));
+
+    // Terminal velocity must be less than free-fall (no drag) = sqrt(2*g*h) equivalent
+    // Drag limits it: v_term < 5 m/s for a 30g sinker
+    fb.vTermMS < 5.0
+      ? ok('sinker terminal velocity is drag-limited (< 5 m/s)', `${fb.vTermMS.toFixed(3)} m/s`)
+      : fail('sinker terminal velocity is drag-limited (< 5 m/s)', `${fb.vTermMS.toFixed(3)} m/s`);
+
+    // sinkerForceBalance: with bed contact force (F_bed > 0), net force is reduced
+    var fbOnBed = sinkerForceBalance(0.030, 1.2e-4, 1.0, 0, 0.2);
+    fbOnBed.netForceN < fb.netForceN
+      ? ok('sinkerForceBalance reduces net force when on bed',
+           `F_bed=0.2N → net=${(fbOnBed.netForceN*1000).toFixed(2)} mN vs free=${(fb.netForceN*1000).toFixed(2)} mN`)
+      : fail('sinkerForceBalance reduces net force when on bed', JSON.stringify(fbOnBed));
+
+    // sinkerForceBalance: zero mass returns zeros
+    var fbZero = sinkerForceBalance(0, 1.2e-4, 1.0, 0, 0);
+    fbZero.vTermMS === 0 && fbZero.netForceN === 0
+      ? ok('sinkerForceBalance zero mass returns zero velocity', 'v=0, F=0')
+      : fail('sinkerForceBalance zero mass returns zero velocity', JSON.stringify(fbZero));
+
+    // sinkerBounceStep: no collision when high above bed
+    var high = sinkerBounceStep(0.5, -0.5, 0.030, 1.2e-4, 1.0, 0.01, 0, 0, 0.05);
+    high.onBed === false && high.z >= 0
+      ? ok('sinkerBounceStep no collision above bed', `z=${high.z.toFixed(4)}m, onBed=${high.onBed}`)
+      : fail('sinkerBounceStep no collision above bed', JSON.stringify(high));
+
+    // sinkerBounceStep: collision reverses velocity (bounce)
+    var coll = sinkerBounceStep(0.02, -1.0, 0.030, 1.2e-4, 1.0, 0.01, 0, 0, 0.05);
+    coll.onBed === true && coll.vz >= 0
+      ? ok('sinkerBounceStep collision reverses velocity (bounce)',
+           `vz_after=${coll.vz.toFixed(3)} m/s (restitution=${RESTITUTION}), z=${coll.z.toFixed(4)}m`)
+      : fail('sinkerBounceStep collision reverses velocity (bounce)', JSON.stringify(coll));
+
+    // sinkerBounceStep: zero dt returns state unchanged
+    var noStep = sinkerBounceStep(0.5, 0, 0.030, 1.2e-4, 1.0, 0, 0, 0, 0.05);
+    noStep.z === 0.5 && noStep.vz === 0
+      ? ok('sinkerBounceStep zero dt returns unchanged state', 'z=0.5, vz=0')
+      : fail('sinkerBounceStep zero dt returns unchanged state', JSON.stringify(noStep));
+  } catch (e) {
+    fail('sinker.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

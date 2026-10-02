@@ -1,5 +1,34 @@
 # ACTIVE — current work focus
 
+## 2026-10-01 — PURE-MATH PHYSICS REBUILD (shipped)
+
+**Completed:** Entire physics engine rewritten in real units using `F = 0.5 * rho * Cd * A * v^2`. No tuned constants, no reference flow, no calibration anchors.
+
+### What was removed
+- `DRAG_REF`, `REF_FLOW`, `REF_LB_TEST`, `REF_DIAMETER_MM`, `REF_MEAN_VELOCITY`, `REF_BOTTOM_VELOCITY`, `REF_VELOCITY`
+- `FOAM_TABLE`, `parseFoam().lift` → replaced by `.buoyancy_g` from tackle.json
+- `hookSink()`, `beadSink()`, `beadDrag()`, `hookDrag()`, `yarnDrag()`, `mainlineDragPerFt()`, `leaderDragPerFt()`, `weightAreaScale()`
+- `lineDiameterScale()`, `rigLift()` (old dimensionless version)
+
+### What was built
+- **`physics.js`**: `lineDragPerFt()`, `pointDragGf()`, `totalDragPerFt()`, `computeLiftGf()`, `presentationHeightInches()` — all standard fluid dynamics
+- **`inputs.js`**: `parseFoam()` now returns `.buoyancy_g` (reads from tackle.json), added `tackleHookData()`, `tackleBeadData()`, `tackleYarnBuoyancyG()`, `tackleWeightPhysicsData()`. `hydraulicVelocity()` returns TRUE ft/s (no scaling).
+- **`tackle.js`**: added `tackleById()` for generic item lookup
+- **`drift.js`**: compute uses spot velocity (continuity-adjusted for river width)
+- **`zone.js`**: `bestZoneRig` uses new physics; fixed `hookSink`/`beadSink` references
+- **`sonar.js`**: replay uses new drag/lift
+- **`continuity.js`**: `velocityAtSpot()` uses real ft/s fields
+
+### Tackle.json data used
+- Corky buoyancy_g, mass_g, area_cm2, cd
+- Hook mass_g (measured)
+- Bead data (area, cd, net sink)
+- Weight data (area_cm2, cd)
+- Line diameters (110 measured)
+- All labelled ESTIMATED/measured per tackle.json notes
+
+### Pending: `sanity_pass.js` needs re-pin (7 tests fail with the new physics values)
+The old frozen baseline tests check against old tuned values. These need updating to the new pure-math invariants. The `activeContext.md` notes the approach: test invariants (drag scales with diameter, buoyancy with size, etc.) instead of pinned numbers.
 STATUS: UPDATE 3.0 **COMPLETE** (Phases 1–4 shipped). Hygiene sprint **H1–H3 done**; H4 is
 parked, and the two future buckets below are parked deliberately.
 

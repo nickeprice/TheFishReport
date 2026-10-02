@@ -97,11 +97,14 @@ STATUS: READY
 
 ## Phase 5: terminal.js — Hook + Corky/Yarn Equilibrium
 
-- [ ] 5.1 New file: src/features/gear-sim/terminal.js
+- [x] 5.1 New file: src/features/gear-sim/terminal.js
+  Functions: terminalEquilibrium(corkyNetBuoyancyN, yarnNetBuoyancyN, hookMassKg),
+  vivFrequency(v, D), vivAmplitude(D)
   Equilibrium: netForce = corkyNet + yarnNet − hookMass·g. Target |netForce| < 0.005 N.
   VIV: St = 0.21 (circular cylinder at Re 10³-10⁴). Amplitude ≈ 0.1·D.
-  Output: hook z-position, net vertical force, isEquilibrium
-  verify: terminalEquilibrium(0.4g net corky, 0.16g hook) → net ≈ 0.24g > threshold → note
+  Output: {netForceN, isEquilibrium, corkyUpN, yarnUpN, hookDownN}
+  Wired into index.html (after sinker.js), sw.js, SYMBOLS.md, sanity_pass.js (load + 8 tests)
+  verify: node sanity_pass.js --quiet → PASSED 192 | FAILED 0
 
 ## Phase 6: salmon.js — Target Entity
 

@@ -126,6 +126,9 @@ this file**, or the pass fails.
   `sinkerBounceStep(z, vz, massKg, areaM2, cd, dt, vWater, z_bed, r_cobble)` —
   point-mass sinker terminal velocity from force balance (weight−buoyancy−drag),
   Euler integration with Hertz bed collision and restitution bounce.
+- **terminal.js** — `terminalEquilibrium(corkyNetBuoyancyN, yarnNetBuoyancyN, hookMassKg)`,
+  `vivFrequency(v, D)`, `vivAmplitude(D)` — terminal tackle equilibrium check
+  (net force corky+yarn−hook, threshold 0.005 N) and VIV model (St=0.21, amplitude 0.1·D).
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

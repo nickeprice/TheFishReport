@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sinker', 'terminal', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -1145,6 +1145,58 @@ function behaviorChecks(done) {
       : fail('sinkerBounceStep zero dt returns unchanged state', JSON.stringify(noStep));
   } catch (e) {
     fail('sinker.js tests', String(e.message).split('\n')[0]);
+  }
+  // --- Terminal tackle tests: equilibrium and VIV ------------------------------
+  try {
+    // terminalEquilibrium: corky 0.4g net buoyancy = 0.4e-3 * 9.81 = 0.00392 N
+    // hook 0.16g = 0.16e-3 * 9.81 = 0.00157 N, no yarn
+    var eq1 = terminalEquilibrium(0.00392, 0, 0.00016);
+    Math.abs(eq1.netForceN - (0.00392 - 0.00157)) < 1e-6
+      ? ok('terminalEquilibrium computes net force correctly',
+           `net=${(eq1.netForceN*1000).toFixed(3)} mN (want ${((0.00392-0.00157)*1000).toFixed(3)} mN)`)
+      : fail('terminalEquilibrium computes net force correctly', JSON.stringify(eq1));
+
+    // terminalEquilibrium: corky 0.4g net buoyancy with 0.4g hook → near equilibrium
+    var eq2 = terminalEquilibrium(0.00392, 0, 0.00040);
+    eq2.isEquilibrium === true
+      ? ok('terminalEquilibrium detects equilibrium when net near zero',
+           `net=${(eq2.netForceN*1000).toFixed(3)} mN, threshold ${EQUILIBRIUM_THRESHOLD_N*1000} mN`)
+      : fail('terminalEquilibrium detects equilibrium when net near zero', JSON.stringify(eq2));
+
+    // terminalEquilibrium: heavy hook with no corky → strong downward net
+    var eq3 = terminalEquilibrium(0, 0, 0.001);
+    eq3.netForceN < -0.005 && eq3.isEquilibrium === false
+      ? ok('terminalEquilibrium reports non-equilibrium for unbalanced rig',
+           `net=${(eq3.netForceN*1000).toFixed(3)} mN`)
+      : fail('terminalEquilibrium reports non-equilibrium for unbalanced rig', JSON.stringify(eq3));
+
+    // terminalEquilibrium: with yarn buoyancy offsetting hook
+    var eq4 = terminalEquilibrium(0, 0.001, 0.0001);
+    eq4.yarnUpN === 0.001 && eq4.hookDownN === 0.0001 * 9.81
+      ? ok('terminalEquilibrium includes yarn and hook correctly',
+           `yarn=${eq4.yarnUpN} N, hook=${eq4.hookDownN} N`)
+      : fail('terminalEquilibrium includes yarn and hook correctly', JSON.stringify(eq4));
+
+    // vivFrequency for 2 mm hook shank at 1 m/s
+    var fViv = vivFrequency(1.0, 0.002);
+    Math.abs(fViv - 105) < 5   // St=0.21 → 0.21*1/0.002 = 105 Hz
+      ? ok('vivFrequency returns plausible VIV frequency',
+           `f=${fViv.toFixed(1)} Hz (want ~105 Hz for 2mm@1m/s)`)
+      : fail('vivFrequency returns plausible VIV frequency', `got ${fViv} Hz`);
+
+    // vivFrequency: zero velocity returns 0
+    vivFrequency(0, 0.002) === 0
+      ? ok('vivFrequency returns 0 for zero velocity', 'v=0 → 0')
+      : fail('vivFrequency returns 0 for zero velocity', 'expected 0');
+
+    // vivAmplitude for 2 mm hook shank
+    var amp = vivAmplitude(0.002);
+    Math.abs(amp - 0.0002) < 1e-6
+      ? ok('vivAmplitude returns amplitude proportional to D',
+           `amp=${(amp*1000).toFixed(4)} mm (want 0.2 mm for 2mm D)`)
+      : fail('vivAmplitude returns amplitude proportional to D', `got ${amp} mm`);
+  } catch (e) {
+    fail('terminal.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

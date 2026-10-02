@@ -79,7 +79,11 @@ function buildSimStats(rig, out) {
         bottomVelocity: out.velocity.bottom,
         meanVelocity: out.velocity.mean,
         dragCoeff: 1.0,
-        blownOut: out.blownOut
+        blownOut: out.blownOut,
+        hookDepthM: out.hookDepthM || null,
+        interceptionProb: out.interceptionProb || 0,
+        sweepQuality: out.sweepQuality || 0,
+        salmonDepthM: out.salmonDepthM || null
     };
 }
 
@@ -127,6 +131,9 @@ function paintSimHud(rig, out, stats) {
             ' \u00b1' + Math.round(spotDepth.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
         '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
+        (out.hookDepthM ? '; hook depth ' + out.hookDepthM.toFixed(2) + ' m' : '') +
+        (out.interceptionProb ? '; P(intercept)=' + out.interceptionProb.toFixed(3) : '') +
+        (out.sweepQuality ? '; sweepQ=' + out.sweepQuality.toFixed(2) : '') +
         // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
         // debug trail is where they survive in full - including the community-sonar note.
         (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +

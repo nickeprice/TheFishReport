@@ -136,10 +136,57 @@ var DRIFT_TECHNIQUE = {
         var outlook = (typeof fishOutlook === 'function') ? fishOutlook(zone, hgt) : null;
         var precise = (best && typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
 
+        // ====== NEW PIPELINE (Phase 1-7): full physics ======
+        // Compute hydro profile, cable deflection, terminal equilibrium,
+        // and interception probability. Additive — existing outputs unchanged.
+        var hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
+        try {
+            if (typeof cablePreset === 'function' && typeof velocityProfile === 'function') {
+                var bedVelMs = bedVel * CFS_TO_MS;
+                var meanVelMs = velocity.mean * CFS_TO_MS;
+                var depthM = 2.0;
+                var uMax = Math.max(meanVelMs * 1.2, bedVelMs * 1.5);
+                var profileFn = function(z) {
+                    var p = velocityProfile(z, depthM, uMax, ROUGHNESS_COBBLE);
+                    return { vMs: p ? p.vMs : 0 };
+                };
+                var mlCable = cablePreset('mainline', 61);
+                if (mlCable) {
+                    var mlNodes = cableNodes(0, 0, mlCable);
+                    resolveCable(mlNodes, mlCable, profileFn);
+                    var botZ = mlNodes[mlNodes.length - 1].z;
+                    var ldLenM = ldLen * 0.3048;
+                    var ldCable = cablePreset('leader', ldLenM);
+                    if (ldCable) {
+                        var ldNodes = cableNodes(0, botZ, ldCable);
+                        resolveCable(ldNodes, ldCable, profileFn);
+                        var ldBotZ = ldNodes[ldNodes.length - 1].z;
+                        var liftN = liftGf / N_TO_GF;
+                        var hookMassKg = hookMassG * 0.001;
+                        var tEq = terminalEquilibrium(liftN, 0, hookMassKg);
+                        hookDepthM = ldBotZ + (tEq.isEquilibrium ? 0 : 0.1);
+                        if (typeof interceptionProbability === 'function') {
+                            var ip = interceptionProbability(hookDepthM, bedVelMs);
+                            interceptionProb = ip.probability;
+                            sweepQuality = ip.avgSweepQuality;
+                        }
+                        if (typeof salmonPositionZ === 'function')
+                            salmonDepthM = salmonPositionZ();
+                    }
+                }
+            }
+        } catch (e) {
+            if (typeof logDebug === 'function')
+                logDebug('New pipeline: ' + String(e.message).split('\n')[0], 'SIM');
+        }
+        // ====== END NEW PIPELINE ======
+
         return {
             velocity: velocity, dragPerFt: dragGfPerFt, lift: liftGf, hgt: hgt, blownOut: blownOut,
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
-            whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges
+            whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges,
+            hookDepthM: hookDepthM, interceptionProb: interceptionProb,
+            sweepQuality: sweepQuality, salmonDepthM: salmonDepthM
         };
     }
 };

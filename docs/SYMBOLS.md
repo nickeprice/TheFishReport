@@ -118,6 +118,10 @@ this file**, or the pass fails.
   `frictionForce(v_xy, F_n)`, `isSnagged(z, z_bed, pullVec, muS)` —
   cobble-bed substrate, Hertz contact, Coulomb friction, and snag detection for
   the lumped-mass cable simulator.
+- **cable.js** — `CABLE_PRESETS`, `cablePreset(presetKey, totalLengthM)`,
+  `cableNodes(startX, startZ, preset)`, `resolveCable(nodes, preset, flowAt)` —
+  lumped-parameter cable dynamics: preset generators for mainline (40 nodes, SG=0.97)
+  and leader (30 nodes, SG=1.78), normal/tangential drag, quasi-static relaxation solver.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

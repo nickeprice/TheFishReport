@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'cable', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -1044,6 +1044,57 @@ function behaviorChecks(done) {
       : fail('isSnagged returns false when pull overcomes friction', JSON.stringify(freed));
   } catch (e) {
     fail('riverbed.js tests', String(e.message).split('\n')[0]);
+  }
+  // --- Cable tests: lumped-mass dynamics --------------------------------------
+  try {
+    // cablePreset: mainline at 61m (200ft) returns sensible values
+    var ml = cablePreset('mainline', 61);
+    ml && ml.nodes === 40 && ml.ds > 0 && ml.netWeightN < 0
+      ? ok('cablePreset mainline resolves correctly', `${ml.nodes} nodes, ds=${ml.ds.toFixed(4)}m, netWeight=${ml.netWeightN.toFixed(4)}N (SG<1 → buoyant)`)
+      : fail('cablePreset mainline resolves correctly', JSON.stringify(ml));
+
+    // cablePreset: leader at 2.44m (8ft) sinks (SG>1 → netWeightN > 0)
+    var ld = cablePreset('leader', 2.44);
+    ld && ld.nodes === 30 && ld.netWeightN > 0
+      ? ok('cablePreset leader resolves correctly', `${ld.nodes} nodes, ds=${ld.ds.toFixed(4)}m, netWeight=${ld.netWeightN.toFixed(4)}N (SG>1 → sinks)`)
+      : fail('cablePreset leader resolves correctly', JSON.stringify(ld));
+
+    // cablePreset: unknown key returns null
+    cablePreset('foo', 10) === null
+      ? ok('cablePreset unknown key returns null', 'foo -> null')
+      : fail('cablePreset unknown key returns null', 'expected null');
+
+    // cableNodes: creates correct number of nodes
+    var nds = cableNodes(0, 3.0, ml);
+    nds.length === 40 && nds[0].pinned === true
+      ? ok('cableNodes creates pinned root, correct count', `${nds.length} nodes, top is pinned`)
+      : fail('cableNodes creates pinned root, correct count', `count=${nds.length} pinned=${nds[0].pinned}`);
+
+    // cableNodes: initial vertical chain topology
+    var topZ = nds[0].z, botIdx = nds.length - 1;
+    nds[botIdx].z < topZ
+      ? ok('cableNodes initialises vertical chain', `top z=${topZ}, bottom z=${nds[botIdx].z}`)
+      : fail('cableNodes initialises vertical chain', `top ${topZ} bottom ${nds[botIdx].z}`);
+
+    // resolveCable: uniform flow produces a bowed shape (bottom node x > 0)
+    // Use leader (SG>1, sinks) for a clear bow
+    var ldShort = cablePreset('leader', 5);
+    var nds2 = cableNodes(0, 2.0, ldShort);
+    var result = resolveCable(nds2, ldShort, function(z) { return { vMs: 1.0 }; });
+    result.converged === true && nds2[nds2.length-1].x > 0
+      ? ok('resolveCable converges to bowed shape under uniform flow',
+           `iter=${result.iterations}, bottomX=${nds2[nds2.length-1].x.toFixed(4)}m`)
+      : fail('resolveCable converges to bowed shape under uniform flow',
+             JSON.stringify({ converged: result.converged, bottomX: nds2[nds2.length-1].x, iters: result.iterations }));
+
+    // resolveCable: no-flow case — cable hangs straight down (x ≈ 0)
+    var nds3 = cableNodes(0, 2.0, ldShort);
+    resolveCable(nds3, ldShort, function(z) { return { vMs: 0 }; });
+    Math.abs(nds3[nds3.length-1].x) < 1e-3
+      ? ok('resolveCable hangs vertical in still water', `bottomX=${nds3[nds3.length-1].x.toFixed(6)}m`)
+      : fail('resolveCable hangs vertical in still water', `bottomX=${nds3[nds3.length-1].x}`);
+  } catch (e) {
+    fail('cable.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

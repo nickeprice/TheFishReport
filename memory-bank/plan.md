@@ -74,13 +74,14 @@ STATUS: READY
 
 ## Phase 3: cable.js — Lumped-Mass Line Dynamics
 
-- [ ] 3.1 New file: src/features/gear-sim/cable.js
+- [x] 3.1 New file: src/features/gear-sim/cable.js
   N-node lumped-parameter cable. Normal + tangential drag. Quasi-static equilibrium solver.
   Mainline preset: 40 nodes, d=0.35mm, SG=0.97, E=10 GPa, Cd_n=1.15, Cd_t=0.03
   Leader preset: 30 nodes, d=0.30mm, SG=1.78, E=3.5 GPa, Cd_n=1.1, Cd_t=0.03
   Drag: Fn = 0.5·ρ·Cd_n·d·ds·|v_rel_n|·v_rel_n, Ft = 0.5·ρ·Cd_t·π·d·ds·|v_rel_t|·v_rel_t
   SG braid=0.97 (floats), SG fluoro=1.78 (sinks)
-  verify: cable under uniform flow converges to bowed shape
+  Wired into index.html (after riverbed.js), sw.js, SYMBOLS.md, sanity_pass.js (load + 8 tests)
+  verify: node sanity_pass.js --quiet → PASSED 176 | FAILED 0
 
 ## Phase 4: sinker.js — Bouncing Sinker
 

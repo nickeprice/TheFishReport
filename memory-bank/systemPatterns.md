@@ -1,7 +1,8 @@
 # System Patterns — architecture & conventions
 
-Orientation only. The authoritative sources are **`AGENTS.md`** (project shape, working
-rules, validation) and **`.clinerules`** (plan/act workflow + hard guardrails).
+Orientation only. The authoritative sources are **`.clinerules`** (plan/act workflow +
+hard guardrails) and **`memory-bank/plan.md`** (the single plan/act handoff artifact).
+There is no `AGENTS.md`.
 
 - **No build step.** Plain HTML/CSS plus classic (non-module) scripts sharing one global
   scope, loaded in dependency order at the end of `<body>`. `src/app.js` is **last** and

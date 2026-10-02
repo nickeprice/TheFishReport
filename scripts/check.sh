@@ -12,6 +12,9 @@ node --check sanity_pass.js
 python3 -m py_compile api/water_report.py scripts/dev_server.py scripts/scrape_wdfw.py scripts/refresh_wdfw_forecast.py
 echo "syntax OK"
 
+echo "== plan artifact =="
+python3 scripts/plan_check.py
+
 if [[ "${1:-}" == "--quick" ]]; then
   echo "quick mode: skipping sanity pass (network)"
   exit 0

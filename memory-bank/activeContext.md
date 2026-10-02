@@ -1,4 +1,7 @@
-# ACTIVE — current work focus
+# HISTORY — completed work log (NOT the plan)
+
+The active plan lives in `memory-bank/plan.md`. This file is append-only history; the
+`## ACTIVE —` headings below are legacy labels for finished work, not live tasks.
 
 ## 2026-10-01 — PURE-MATH PHYSICS REBUILD (shipped)
 

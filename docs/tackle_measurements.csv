@@ -1,7 +1,7 @@
 id,type,label,brand,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,sample_length_mm,notes
-corky-14,foam,Corky 14 (6mm),,,,6.0,0.05,0.1,,0.283,sphere,0.47,,,,,mass from 6-count batch; buoyancy DERIVED from density 0.5
-corky-12,foam,Corky 12 (8mm),,,,8.0,0.2,0.4,,0.503,sphere,0.47,,,,,measured; density 0.5
-corky-10,foam,Corky 10 (10mm),,,,10.0,0.3,0.6,,0.785,sphere,0.47,,,,,measured; density 0.5
+corky-14,foam,Corky 14 (6mm),,,,6.0,0.111,0.1,,0.283,sphere,0.47,,,,,"mass from 6-count batch; buoyancy DERIVED from density 0.5; 20-count, 0.001 g scale"
+corky-12,foam,Corky 12 (8mm),,,,8.0,0.129,0.4,,0.503,sphere,0.47,,,,,"measured; density 0.5; 20-count, 0.001 g scale"
+corky-10,foam,Corky 10 (10mm),,,,10.0,0.233,0.6,,0.785,sphere,0.47,,,,,"measured; density 0.5; 20-count, 0.001 g scale"
 cheater-12,foam,Cheater 12 (egg 13x9.5mm),,,,,0.3,0.7,,0.97,other,0.5,,,,,egg 13x9.5mm; area = broadside ellipse pi*6.5*4.75mm; cd approx
 bead-hard-2,bead,Bead hard 2mm,,hard,,2.0,0.004,0.004,1.0,0.031,sphere,0.47,,,,,DERIVED geometrically (below 0.01g scale)
 bead-hard-4,bead,Bead hard 4mm,,hard,,4.0,0.034,0.034,1.0,0.126,sphere,0.47,,,,,DERIVED geometrically (density 1.0)
@@ -124,63 +124,38 @@ copoly-mccoy-mean-green-8,line,McCoy Mean Green 8lb,McCoy Mean Green,copoly,8,0.
 copoly-mccoy-mean-green-10,line,McCoy Mean Green 10lb,McCoy Mean Green,copoly,10,0.3,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-mccoy-mean-green-12,line,McCoy Mean Green 12lb,McCoy Mean Green,copoly,12,0.33,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-mccoy-mean-green-15,line,McCoy Mean Green 15lb,McCoy Mean Green,copoly,15,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-weight-lead-slinky-1-4,weight,Lead Slinky (shot in tubing) 1/4 oz,,lead,,,7.09,,4.65,2.662,slinky,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)
-weight-lead-slinky-3-8,weight,Lead Slinky (shot in tubing) 3/8 oz,,lead,,,10.63,,4.65,3.488,slinky,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)
-weight-lead-slinky-1-2,weight,Lead Slinky (shot in tubing) 1/2 oz,,lead,,,14.17,,4.65,4.224,slinky,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)
-weight-lead-slinky-5-8,weight,Lead Slinky (shot in tubing) 5/8 oz,,lead,,,17.72,,4.65,4.903,slinky,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)
-weight-lead-slinky-3-4,weight,Lead Slinky (shot in tubing) 3/4 oz,,lead,,,21.26,,4.65,5.536,slinky,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)
-weight-lead-slinky-1,weight,Lead Slinky (shot in tubing) 1 oz,,lead,,,28.35,,4.65,6.707,slinky,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 5.0)
-weight-lead-pencil-1-4,weight,Lead Pencil 1/4 oz,,lead,,,7.09,,11.34,1.239,pencil,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)
-weight-lead-pencil-rubber-1-4,weight,Lead Pencil (rubber sleeve) 1/4 oz,,lead,,,7.99,,5.55,2.025,pencil,1.0,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)"
-weight-lead-pencil-3-8,weight,Lead Pencil 3/8 oz,,lead,,,10.63,,11.34,1.623,pencil,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)
-weight-lead-pencil-rubber-3-8,weight,Lead Pencil (rubber sleeve) 3/8 oz,,lead,,,11.77,,5.97,2.512,pencil,1.0,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)"
-weight-lead-pencil-1-2,weight,Lead Pencil 1/2 oz,,lead,,,14.17,,11.34,1.966,pencil,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)
-weight-lead-pencil-rubber-1-2,weight,Lead Pencil (rubber sleeve) 1/2 oz,,lead,,,15.52,,6.27,2.938,pencil,1.0,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)"
-weight-lead-pencil-5-8,weight,Lead Pencil 5/8 oz,,lead,,,17.72,,11.34,2.281,pencil,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)
-weight-lead-pencil-rubber-5-8,weight,Lead Pencil (rubber sleeve) 5/8 oz,,lead,,,19.26,,6.50,3.325,pencil,1.0,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)"
-weight-lead-pencil-3-4,weight,Lead Pencil 3/4 oz,,lead,,,21.26,,11.34,2.576,pencil,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)
-weight-lead-pencil-rubber-3-4,weight,Lead Pencil (rubber sleeve) 3/4 oz,,lead,,,22.98,,6.68,3.679,pencil,1.0,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)"
-weight-lead-pencil-1,weight,Lead Pencil 1 oz,,lead,,,28.35,,11.34,3.121,pencil,1.0,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0)
-weight-lead-pencil-rubber-1,weight,Lead Pencil (rubber sleeve) 1 oz,,lead,,,30.40,,6.96,4.330,pencil,1.0,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 3.0, rubber sleeve modelled)"
-weight-lead-barrel-1-4,weight,Lead Barrel 1/4 oz,,lead,,,7.09,,11.34,0.859,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-lead-barrel-3-8,weight,Lead Barrel 3/8 oz,,lead,,,10.63,,11.34,1.125,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-lead-barrel-1-2,weight,Lead Barrel 1/2 oz,,lead,,,14.17,,11.34,1.363,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-lead-barrel-5-8,weight,Lead Barrel 5/8 oz,,lead,,,17.72,,11.34,1.582,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-lead-barrel-3-4,weight,Lead Barrel 3/4 oz,,lead,,,21.26,,11.34,1.786,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-lead-barrel-1,weight,Lead Barrel 1 oz,,lead,,,28.35,,11.34,2.164,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
 weight-lead-teardrop-1-4,weight,Lead Teardrop 1/4 oz,,lead,,,7.09,,11.34,1.082,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-rubber-1-4,weight,Lead Teardrop (rubber sleeve) 1/4 oz,,lead,,,7.85,,5.97,1.675,teardrop,0.5,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)"
 weight-lead-teardrop-3-8,weight,Lead Teardrop 3/8 oz,,lead,,,10.63,,11.34,1.418,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-rubber-3-8,weight,Lead Teardrop (rubber sleeve) 3/8 oz,,lead,,,11.60,,6.39,2.091,teardrop,0.5,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)"
 weight-lead-teardrop-1-2,weight,Lead Teardrop 1/2 oz,,lead,,,14.17,,11.34,1.717,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-rubber-1-2,weight,Lead Teardrop (rubber sleeve) 1/2 oz,,lead,,,15.32,,6.68,2.453,teardrop,0.5,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)"
 weight-lead-teardrop-5-8,weight,Lead Teardrop 5/8 oz,,lead,,,17.72,,11.34,1.993,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-rubber-5-8,weight,Lead Teardrop (rubber sleeve) 5/8 oz,,lead,,,19.04,,6.90,2.782,teardrop,0.5,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)"
 weight-lead-teardrop-3-4,weight,Lead Teardrop 3/4 oz,,lead,,,21.26,,11.34,2.250,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-rubber-3-4,weight,Lead Teardrop (rubber sleeve) 3/4 oz,,lead,,,22.73,,7.08,3.087,teardrop,0.5,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)"
-weight-lead-teardrop-1,weight,Lead Teardrop 1 oz,,lead,,,28.35,,11.34,2.726,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-rubber-1,weight,Lead Teardrop (rubber sleeve) 1 oz,,lead,,,30.11,,7.35,3.643,teardrop,0.5,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0, rubber sleeve modelled)"
 weight-lead-cannonball-1-4,weight,Lead Cannonball 1/4 oz,,lead,,,7.09,,11.34,0.884,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-1-4,weight,Lead Cannonball (rubber sleeve) 1/4 oz,,lead,,,7.92,,5.74,1.497,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)"
+weight-lead-cannonball-rubber-1-4,weight,"Lead Cannonball (rubber sleeve, swivel) 1/4 oz",,lead,,,7.92,,5.74,1.497,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
 weight-lead-cannonball-3-8,weight,Lead Cannonball 3/8 oz,,lead,,,10.63,,11.34,1.158,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-3-8,weight,Lead Cannonball (rubber sleeve) 3/8 oz,,lead,,,11.68,,6.17,1.849,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)"
+weight-lead-cannonball-rubber-3-8,weight,"Lead Cannonball (rubber sleeve, swivel) 3/8 oz",,lead,,,11.68,,6.17,1.849,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
 weight-lead-cannonball-1-2,weight,Lead Cannonball 1/2 oz,,lead,,,14.17,,11.34,1.403,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-1-2,weight,Lead Cannonball (rubber sleeve) 1/2 oz,,lead,,,15.42,,6.48,2.156,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)"
+weight-lead-cannonball-rubber-1-2,weight,"Lead Cannonball (rubber sleeve, swivel) 1/2 oz",,lead,,,15.42,,6.48,2.156,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
 weight-lead-cannonball-5-8,weight,Lead Cannonball 5/8 oz,,lead,,,17.72,,11.34,1.628,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-5-8,weight,Lead Cannonball (rubber sleeve) 5/8 oz,,lead,,,19.14,,6.70,2.433,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)"
+weight-lead-cannonball-rubber-5-8,weight,"Lead Cannonball (rubber sleeve, swivel) 5/8 oz",,lead,,,19.14,,6.70,2.433,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
 weight-lead-cannonball-3-4,weight,Lead Cannonball 3/4 oz,,lead,,,21.26,,11.34,1.838,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-3-4,weight,Lead Cannonball (rubber sleeve) 3/4 oz,,lead,,,22.85,,6.89,2.687,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)"
-weight-lead-cannonball-1,weight,Lead Cannonball 1 oz,,lead,,,28.35,,11.34,2.227,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-1,weight,Lead Cannonball (rubber sleeve) 1 oz,,lead,,,30.23,,7.18,3.154,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled)"
-weight-tungsten-barrel-1-4,weight,Tungsten Barrel 1/4 oz,,tungsten,,,7.09,,19.30,0.603,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-tungsten-barrel-3-8,weight,Tungsten Barrel 3/8 oz,,tungsten,,,10.63,,19.30,0.789,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-tungsten-barrel-1-2,weight,Tungsten Barrel 1/2 oz,,tungsten,,,14.17,,19.30,0.956,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-tungsten-barrel-5-8,weight,Tungsten Barrel 5/8 oz,,tungsten,,,17.72,,19.30,1.110,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-tungsten-barrel-3-4,weight,Tungsten Barrel 3/4 oz,,tungsten,,,21.26,,19.30,1.253,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-tungsten-barrel-1,weight,Tungsten Barrel 1 oz,,tungsten,,,28.35,,19.30,1.518,barrel,0.9,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 1.0)
-weight-tungsten-teardrop-1-4,weight,Tungsten Teardrop 1/4 oz,,tungsten,,,7.09,,19.30,0.759,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-tungsten-teardrop-3-8,weight,Tungsten Teardrop 3/8 oz,,tungsten,,,10.63,,19.30,0.994,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-tungsten-teardrop-1-2,weight,Tungsten Teardrop 1/2 oz,,tungsten,,,14.17,,19.30,1.205,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-tungsten-teardrop-5-8,weight,Tungsten Teardrop 5/8 oz,,tungsten,,,17.72,,19.30,1.398,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-tungsten-teardrop-3-4,weight,Tungsten Teardrop 3/4 oz,,tungsten,,,21.26,,19.30,1.579,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-tungsten-teardrop-1,weight,Tungsten Teardrop 1 oz,,tungsten,,,28.35,,19.30,1.913,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
+weight-lead-cannonball-rubber-3-4,weight,"Lead Cannonball (rubber sleeve, swivel) 3/4 oz",,lead,,,22.85,,6.89,2.687,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
+weight-tungsten-teardrop-1-4,weight,Tungsten Teardrop (swivel) 1/4 oz,,tungsten,,,7.09,,19.30,0.759,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-3-8,weight,Tungsten Teardrop (swivel) 3/8 oz,,tungsten,,,10.63,,19.30,0.994,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-1-2,weight,Tungsten Teardrop (swivel) 1/2 oz,,tungsten,,,14.17,,19.30,1.205,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-5-8,weight,Tungsten Teardrop (swivel) 5/8 oz,,tungsten,,,17.72,,19.30,1.398,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-3-4,weight,Tungsten Teardrop (swivel) 3/4 oz,,tungsten,,,21.26,,19.30,1.579,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-cylinder-1-4,weight,Tungsten Cylinder (swivel) 1/4 oz,,tungsten,,,7.09,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-1-4,weight,Stainless Steel Barrel (swivel) 1/4 oz,,stainless_steel,,,7.09,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-submarine-1-4,weight,"Lead Submarine (rubber sleeve, swivel) 1/4 oz",,lead,,,7.09,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-tungsten-cylinder-3-8,weight,Tungsten Cylinder (swivel) 3/8 oz,,tungsten,,,10.63,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-3-8,weight,Stainless Steel Barrel (swivel) 3/8 oz,,stainless_steel,,,10.63,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-submarine-3-8,weight,"Lead Submarine (rubber sleeve, swivel) 3/8 oz",,lead,,,10.63,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-tungsten-cylinder-1-2,weight,Tungsten Cylinder (swivel) 1/2 oz,,tungsten,,,14.18,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-1-2,weight,Stainless Steel Barrel (swivel) 1/2 oz,,stainless_steel,,,14.18,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-submarine-1-2,weight,"Lead Submarine (rubber sleeve, swivel) 1/2 oz",,lead,,,14.18,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-tungsten-cylinder-5-8,weight,Tungsten Cylinder (swivel) 5/8 oz,,tungsten,,,17.72,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-5-8,weight,Stainless Steel Barrel (swivel) 5/8 oz,,stainless_steel,,,17.72,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-submarine-5-8,weight,"Lead Submarine (rubber sleeve, swivel) 5/8 oz",,lead,,,17.72,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-tungsten-cylinder-3-4,weight,Tungsten Cylinder (swivel) 3/4 oz,,tungsten,,,21.26,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-3-4,weight,Stainless Steel Barrel (swivel) 3/4 oz,,stainless_steel,,,21.26,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-submarine-3-4,weight,"Lead Submarine (rubber sleeve, swivel) 3/4 oz",,lead,,,21.26,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"

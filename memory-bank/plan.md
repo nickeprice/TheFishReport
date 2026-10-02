@@ -63,12 +63,14 @@ STATUS: READY
 
 ## Phase 2: riverbed.js — Substrate & Contact
 
-- [ ] 2.1 New file: src/features/gear-sim/riverbed.js
-  Functions: bedElevation(x,y), contactForce(z, z_bed, v_z), frictionForce(v_xy, F_n), isSnagged(z, z_bed, pullVec)
+- [x] 2.1 New file: src/features/gear-sim/riverbed.js
+  Functions: bedElevation(x,y), contactForce(z, z_bed, v_z), frictionForce(v_xy, F_n),
+  isSnagged(z, z_bed, pullVec, muS)
   μ_static = 0.65, μ_kinetic = 0.35 (lead-on-wet-cobble, literature range 0.55-0.75)
   Hertz contact: k = (4/3) · E* · √(R*), E* ≈ 12 GPa lead-on-basalt
   Restitution = 0.15 (Marshall 2012, wet rock impacts)
-  verify: local test in sanity_pass.js — contact force at penetration > 0
+  Wired into index.html (after hydro.js), sw.js, SYMBOLS.md, sanity_pass.js (load + 11 tests)
+  verify: node sanity_pass.js --quiet → PASSED 168 | FAILED 0
 
 ## Phase 3: cable.js — Lumped-Mass Line Dynamics
 

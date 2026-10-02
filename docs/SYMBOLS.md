@@ -113,6 +113,11 @@ this file**, or the pass fails.
   `uStarFromMax(uMax, H, z0)`, `velocityProfile(z, H, uMax, [z0])`,
   `turbulenceFluctuation(t, intensity, uMean)` — log-law boundary layer velocity profile,
   roughness estimates, and isotropic Gaussian turbulence for the 3D cable simulator.
+- **riverbed.js** — `MU_STATIC`, `MU_KINETIC`, `RESTITUTION`, `R_COBBLE_M`,
+  `bedElevation(x, y)`, `contactForce(z, z_bed, v_z)`,
+  `frictionForce(v_xy, F_n)`, `isSnagged(z, z_bed, pullVec, muS)` —
+  cobble-bed substrate, Hertz contact, Coulomb friction, and snag detection for
+  the lumped-mass cable simulator.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

@@ -789,7 +789,7 @@ function behaviorChecks(done) {
   // at 1.0. Physics is pure-math F = 0.5 * rho * Cd * A * v^2; lift reads real
   // buoyancy_g / mass_g from tackle.json via computeLiftGf().
   try {
-    const gearSrc = ['inputs', 'physics', 'hydro', 'sonar', 'zone']
+    const gearSrc = ['inputs', 'physics', 'hydro', 'riverbed', 'sonar', 'zone']
       .map((n) => fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', n + '.js'), 'utf8'))
       .join('\n');
     eval(gearSrc);
@@ -980,6 +980,70 @@ function behaviorChecks(done) {
       : fail('hydro edge cases: bad/high inputs return 0 or null', 'expected 0 or null');
   } catch (e) {
     fail('hydro.js tests', String(e.message).split('\n')[0]);
+  }
+  // --- Riverbed tests: substrate, contact, friction, snag ---------------------
+  try {
+    // bedElevation at (0, 0) = 0 (sin(0) = 0)
+    bedElevation(0, 0) === 0
+      ? ok('bedElevation returns datum at origin', '0 -> 0')
+      : fail('bedElevation returns datum at origin', `got ${bedElevation(0, 0)}`);
+
+    // bedElevation micro-topography non-zero away from origin
+    bedElevation(0.05, 0.05) !== 0
+      ? ok('bedElevation micro-topography is non-zero', `${bedElevation(0.05, 0.05)}`)
+      : fail('bedElevation micro-topography is non-zero', 'got 0 at non-origin');
+
+    // contactForce: no contact above bed
+    const noContact = contactForce(0, -0.1, 0);
+    noContact.inContact === false && noContact.forceN === 0
+      ? ok('contactForce returns zero when above bed', 'z > z_bed -> no contact')
+      : fail('contactForce returns zero when above bed', JSON.stringify(noContact));
+
+    // contactForce: positive force on penetration
+    const contact = contactForce(0.04, 0.05, 0);
+    contact.inContact === true && contact.forceN > 0
+      ? ok('contactForce returns positive force on penetration',
+           `δ=${contact.penetration.toFixed(4)}m, F=${contact.forceN.toFixed(2)}N`)
+      : fail('contactForce returns positive force on penetration',
+             JSON.stringify(contact));
+
+    // frictionForce: zero with no normal load
+    const noFriction = frictionForce(0.5, 0);
+    noFriction.magnitudeN === 0
+      ? ok('frictionForce returns zero when F_n <= 0', 'F_n=0 -> 0')
+      : fail('frictionForce returns zero when F_n <= 0', JSON.stringify(noFriction));
+
+    // frictionForce: static regime at low speed
+    const staticF = frictionForce(1e-9, 10);
+    staticF.isSticking === true && staticF.magnitudeN > 0
+      ? ok('frictionForce static regime at v≈0', `μ_static·F_n = ${staticF.magnitudeN}N (expect ${10 * 0.65}N)`)
+      : fail('frictionForce static regime at v≈0', JSON.stringify(staticF));
+
+    // frictionForce: kinetic regime sliding
+    const kineticF = frictionForce(0.1, 10);
+    kineticF.isSticking === false && kineticF.direction !== 0
+      ? ok('frictionForce kinetic regime', `μ_kinetic·F_n = ${kineticF.magnitudeN}N (expect ${10 * 0.35}N), dir=${kineticF.direction}`)
+      : fail('frictionForce kinetic regime', JSON.stringify(kineticF));
+
+    // isSnagged: above bed = not snagged
+    const above = isSnagged(0.2, 0.1, { x: 0, y: 0, z: 1 });
+    above.snagged === false && above.reason === 'above_bed'
+      ? ok('isSnagged returns false when above bed', 'z > z_bed -> not snagged')
+      : fail('isSnagged returns false when above bed', JSON.stringify(above));
+
+    // isSnagged: embedded with weak pull = snagged
+    const stuck = isSnagged(0, 0.1, { x: 0.1, y: 0, z: 0.02 });
+    stuck.snagged === true
+      ? ok('isSnagged detects snag when pull fails to lift', `reason: ${stuck.reason}`)
+      : fail('isSnagged detects snag when pull fails to lift', JSON.stringify(stuck));
+
+    // isSnagged: embedded with strong vertical pull = not snagged
+    const freed = isSnagged(0, 0.1, { x: 0.1, y: 0, z: 1.0 });
+    freed.snagged === false
+      ? ok('isSnagged returns false when pull overcomes friction', `reason: ${freed.reason}`)
+      : fail('isSnagged returns false when pull overcomes friction', JSON.stringify(freed));
+  } catch (e) {
+    fail('riverbed.js tests', String(e.message).split('\n')[0]);
   }
   // --- Drift technique (COMPOSED solver) regression ---------------------------
   // Pins the composition (read rig -> physics -> strike zone -> score -> suggestions),

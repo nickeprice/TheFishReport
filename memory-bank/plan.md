@@ -11,7 +11,7 @@ Spec: docs/CHAIN_SOLVER.md
 - [x] 7. chain.js NEW — RK4 + shooting method + air catenary
 - [x] 8. Wire chain solver into drift.js, remove cable/terminal/sinker
 - [x] 9. DELETE cable.js, terminal.js, sinker.js
-- [ ] 10. Update index.html script tags, sw.js SHELL_FILES, bump version
+- [x] 10. Update index.html script tags, sw.js SHELL_FILES, bump version
 - [ ] 11. Sanity tests for chain solver, re-pin baselines
 
 ### Fixes

@@ -119,17 +119,10 @@ this file**, or the pass fails.
   `frictionForce(v_xy, F_n)`, `isSnagged(z, z_bed, pullVec, muS)` —
   cobble-bed substrate, Hertz contact, Coulomb friction, and snag detection for
   the lumped-mass cable simulator.
-- **cable.js** — `CABLE_PRESETS`, `cablePreset(presetKey, totalLengthM)`,
-  `cableNodes(startX, startZ, preset)`, `resolveCable(nodes, preset, flowAt)` —
-  lumped-parameter cable dynamics: preset generators for mainline (40 nodes, SG=0.97)
-  and leader (30 nodes, SG=1.78), normal/tangential drag, quasi-static relaxation solver.
-- **sinker.js** — `SINKER_DENSITY_LEAD`, `sinkerForceBalance(massKg, areaM2, cd, vWater, F_bed)`,
-  `sinkerBounceStep(z, vz, massKg, areaM2, cd, dt, vWater, z_bed, r_cobble)` —
-  point-mass sinker terminal velocity from force balance (weight−buoyancy−drag),
-  Euler integration with Hertz bed collision and restitution bounce.
-- **terminal.js** — `terminalEquilibrium(corkyNetBuoyancyN, yarnNetBuoyancyN, hookMassKg)`,
-  `vivFrequency(v, D)`, `vivAmplitude(D)` — terminal tackle equilibrium check
-  (net force corky+yarn−hook, threshold 0.005 N) and VIV model (St=0.21, amplitude 0.1·D).
+- **chain.js** — `chainSolve(rig, env)` — unified chain solver: RK4 shooting
+  method integrating the ODE from hook to rod tip through water, then an analytical
+  air catenary. Replaces cable.js, terminal.js, and sinker.js with a single model.
+  Returns `{ hookDepthM, hookZ, converged, iterations, detail }`.
 - **salmon.js** — `SALMON_DEFAULTS`, `salmonState(t, freqHz, dutyCycle, phase)`,
   `salmonMouthCone(mouthFraction)`, `salmonPositionZ(depthMinM, depthMaxM)` —
   adult salmon target: respiration cycle (sinusoidal, f=1.0 Hz, duty=35%),

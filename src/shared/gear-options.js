@@ -23,16 +23,16 @@ var GEAR_OPTIONS = {
   ],
   foam: [
     { val: '0', label: 'None' },
-    { val: '14', label: 'Corky 14 (7mm)' },
-    { val: '12', label: 'Corky 12 (8.4mm)' },
-    { val: '10', label: 'Corky 10 (10mm)' },
+    { val: '14', label: 'Corky 14' },
+    { val: '12', label: 'Corky 12' },
+    { val: '10', label: 'Corky 10' },
     { val: 'c12', label: 'Cheater 10' }
   ],
   beadSize: [
     { val: 0, label: 'None' },
     { val: 4, label: '4mm' },
     { val: 5, label: '5mm' },
-    { val: 5.8, label: '5.8mm' },
+    { val: 5.8, label: '6mm' },
     { val: 8, label: '8mm' }
   ],
   weight: [

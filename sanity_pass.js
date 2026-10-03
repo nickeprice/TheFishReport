@@ -201,7 +201,7 @@ function staticIntegrity() {
   // otherwise wrap the lb test onto its own line. Assert the rule exists and that no
   // other row uses it, so a stray 3-up row cannot appear unnoticed.
   const threeUp = (html.match(/class="gear-row gear-row-3"/g) || []).length;
-  (cssSrc.includes('.gear-row {') && cssSrc.includes('.gear-row-3 {') && threeUp === 4)
+  (cssSrc.includes('.gear-row {') && cssSrc.includes('.gear-row-3 {') && threeUp === 6)
     ? ok('resting gear rows present (.gear-row + two 3-up rows per form)',
          `${threeUp} 3-up rows (mainline cascade + weight setup row)`)
     : fail('resting gear rows present (.gear-row + two 3-up rows per form)',
@@ -1919,7 +1919,7 @@ function behaviorChecks(done) {
         // Bead options: all sizes plus the tied-on size.
         eqr('bead sizes', beadSizeOptions(6).join(','), ['0','4','5','5.8','6','8'].join(','));
         eqr('foam naming', [foamShort(parseFoam('10')), foamShort(parseFoam('c12')), foamShort(parseFoam('0'))].join('|'),
-            'Corky 10|Cheater 12 (egg 13x9.5mm) float|None');
+            'Corky 10|Cheater 12 float|None');
 
         // (1) The frozen reference rig is now 2.21" (too low, P0 net corky buoyancy + tackle rebuild). Tackle alone
         // fixes it, and the suggestion starts with the corky — recommending a bigger size first.

@@ -35,7 +35,7 @@
     {
       "id": "bead-6",
       "type": "bead",
-      "label": "Bead 6mm (5.8mm)",
+      "label": "Bead 6mm",
       "material": "plastic",
       "diameter_mm": 5.8,
       "mass_g": 0.098,
@@ -296,7 +296,7 @@
     {
       "id": "cheater-12",
       "type": "foam",
-      "label": "Cheater 12 (egg 13x9.5mm)",
+      "label": "Cheater 12",
       "mass_g": 0.276,
       "buoyancy_g": 0.553,
       "area_cm2": 0.933,
@@ -551,7 +551,7 @@
     {
       "id": "corky-10",
       "type": "foam",
-      "label": "Corky 10 (10mm)",
+      "label": "Corky 10",
       "diameter_mm": 10.0,
       "mass_g": 0.233,
       "buoyancy_g": 0.493,
@@ -565,7 +565,7 @@
     {
       "id": "corky-12",
       "type": "foam",
-      "label": "Corky 12 (8.4mm)",
+      "label": "Corky 12",
       "diameter_mm": 8.4,
       "mass_g": 0.129,
       "buoyancy_g": 0.296,
@@ -579,7 +579,7 @@
     {
       "id": "corky-14",
       "type": "foam",
-      "label": "Corky 14 (7mm)",
+      "label": "Corky 14",
       "diameter_mm": 7.0,
       "mass_g": 0.111,
       "buoyancy_g": 0.168,

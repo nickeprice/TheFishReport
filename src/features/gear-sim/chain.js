@@ -319,6 +319,8 @@ function chainSolve(rig, env) {
     var uMax = env.uMax || 1.0;
     var z0 = env.z0 || 0.008;
     var rodH = env.rodHeightM || 1.5;
+    var zBed = 0.03;                          // roughness plane bed floor
+    var shootTol = Math.max(0.02, 0.01 * H);  // depth-scaled convergence
 
     function velFn(z) { return _chainVelAt(z, H, uMax, z0); }
 
@@ -341,13 +343,13 @@ function chainSolve(rig, env) {
     }
 
     // ── 5. Shooting: bisection on hook depth ───────────────────────
-    var zLo = 0.01, zHi = H + 0.5;
+    var zLo = Math.max(zBed, 0.01), zHi = Math.max(H - 0.05, zLo + 0.1);
     var best = null, bestErr = 1e9;
     var converged = false;
 
     for (var iter = 0; iter < SHOOT_MAX; iter++) {
         var h = (zLo + zHi) / 2;
-        var hookZ = Math.max(0.01, H - h);
+        var hookZ = Math.max(Math.max(zBed, 0.01), H - h);
 
         // 5a. Initial tension from hook point element
         var el0 = elems[0];
@@ -419,7 +421,7 @@ function chainSolve(rig, env) {
             bestErr = err;
             best = {
                 hookDepthM: h, hookZ: hookZ,
-                converged: err < SHOOT_TOL,
+                converged: err < shootTol,
                 iterations: iter + 1,
                 detail: 'zTip=' + cat.zTip.toFixed(2) + ' xTip=' + cat.xTip.toFixed(2) +
                     ' L_air=' + L_air.toFixed(2) + ' err=' + err.toFixed(4)
@@ -430,13 +432,13 @@ function chainSolve(rig, env) {
         else if (cat.zTip > H + rodH + 0.01) zLo = h;
         else { converged = true; break; }
 
-        if (err < SHOOT_TOL) { converged = true; break; }
+        if (err < shootTol) { converged = true; break; }
     }
 
     if (best) { best.converged = converged || best.converged; return best; }
 
     return {
-        hookDepthM: H * 0.5, hookZ: H * 0.5,
+        hookDepthM: H * 0.5, hookZ: Math.max(zBed, H * 0.5),
         converged: false, iterations: SHOOT_MAX,
         detail: 'chain solver did not converge'
     };

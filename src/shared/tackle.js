@@ -292,7 +292,8 @@ function tackleBeadSizes() {
     tackleItems('bead').forEach(function (it) {
         var mm = Number(it.diameter_mm);
         if (!mm || out.some(function (o) { return o.value === String(mm); })) return;
-        out.push({ value: String(mm), text: mm + 'mm' });
+        var label = (it.label || (mm + 'mm')).replace(/^Bead\s+/i, '');
+        out.push({ value: String(mm), text: label });
     });
     return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
 }

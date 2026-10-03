@@ -141,13 +141,18 @@ var DRIFT_TECHNIQUE = {
         // ====== NEW PIPELINE (Phase 8): chain solver ======
         // Use the unified chain solver (RK4 + shooting + air catenary)
         // which replaces cable.js, terminal.js, and sinker.js with one ODE.
+        // Dynamic spot depth: pull from continuity.js, fall back to 6.0 ft.
+        var spotDepth = (typeof spotDepthFt === 'function')
+            ? spotDepthFt(env.flow, env.siteId) : null;
+        var depthFt = (spotDepth && spotDepth.value) ? spotDepth.value : 6.0;
+        var H = depthFt * 0.3048;  // ft → m
         var hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
         try {
             if (typeof chainSolve === 'function') {
                 var bedVelMs = bedVel * CFS_TO_MS;
                 var meanVelMs = velocity.mean * CFS_TO_MS;
                 var chainEnv = {
-                    depthM: 2.0,
+                    depthM: H,
                     uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
                     z0: ROUGHNESS_COBBLE,
                     rodHeightM: 1.5

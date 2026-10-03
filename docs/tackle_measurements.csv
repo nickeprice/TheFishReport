@@ -1,7 +1,7 @@
 id,type,label,brand,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,sample_length_mm,notes
 corky-14,foam,Corky 14,,,,7.0,0.111,0.168,,0.385,sphere,0.47,,,,,"measured 2026-10-02: caliper D=7.0mm, hole=1.5mm; geometric volume 0.168mL; mass=0.111g; density 0.66"
 corky-12,foam,Corky 12,,,,8.4,0.129,0.296,,0.554,sphere,0.47,,,,,"measured 2026-10-02: caliper D=8.4mm, hole=1.5mm; geometric volume 0.296mL; mass=0.129g; density 0.44"
-corky-10,foam,Corky 10,,,,10.0,0.233,0.493,,0.785,sphere,0.47,,,,,"measured 2026-10-02: caliper D=10mm, hole=2mm; geometric volume 0.493mL; mass=0.233g; density 0.47"
+corky-10,foam,Corky 10,,,,10.0,0.233,0.616,,0.785,other,0.47,,,,,"measured 2026-10-02: ellipsoid 12.5x10mm, 2mm hole; vol 0.616mL; mass=0.233g; density 0.378"
 cheater-12,foam,Cheater 12,,,,,0.276,0.553,,0.933,other,0.5,,,,,"measured 2026-10-02: caliper L=12.5mm, W=9.5mm teardrop with 2mm hole; ellipsoid vol 0.553mL; mass=0.276g; density 0.50"
 bead-4,bead,Bead 4mm,,plastic,,4.0,0.033,0.03,,0.126,sphere,0.47,,,,,"measured 2026-10-02: 4mm sphere, 1mm hole, mass=0.033g; geometric vol 0.0305mL; density 1.08"
 bead-5,bead,Bead 5mm,,plastic,,5.0,0.071,0.062,,0.196,sphere,0.47,,,,,"measured 2026-10-02: 5mm sphere, 1mm hole, mass=0.071g; geometric vol 0.0616mL; density 1.15"

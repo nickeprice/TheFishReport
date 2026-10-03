@@ -10,8 +10,9 @@ Spec: docs/CHAIN_SOLVER.md
 - [x] 6. D50 parameter — hydro.js: make MEDIAN_COBBLE_M overridable
 - [x] 7. chain.js NEW — RK4 + shooting method + air catenary
 - [x] 8. Wire chain solver into drift.js, remove cable/terminal/sinker
-- [ ] 9. DELETE cable.js, terminal.js, sinker.js
+- [x] 9. DELETE cable.js, terminal.js, sinker.js
 - [ ] 10. Update index.html script tags, sw.js SHELL_FILES, bump version
 - [ ] 11. Sanity tests for chain solver, re-pin baselines
 
 ### Fixes
+- [x] Fix Step 9: DELETE cable.js, terminal.js, sinker.js

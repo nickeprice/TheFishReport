@@ -149,7 +149,7 @@ function parseClockMinutes(text) {
 function solarDeclinationDeg(year, month, day) {
     if (!year || !month || !day) return null;
     var n = (Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 1)) / 86400000;
-    return 23.44 * Math.cos((360 / 365) * (n + 10) * Math.PI / 180);
+    return 23.44 * Math.sin((360 / 365) * (n - 81) * Math.PI / 180);
 }
 
 function activeStationLat() {

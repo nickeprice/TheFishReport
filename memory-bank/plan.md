@@ -12,7 +12,7 @@ Spec: docs/CHAIN_SOLVER.md
 - [x] 8. Wire chain solver into drift.js, remove cable/terminal/sinker
 - [x] 9. DELETE cable.js, terminal.js, sinker.js
 - [x] 10. Update index.html script tags, sw.js SHELL_FILES, bump version
-- [ ] 11. Sanity tests for chain solver, re-pin baselines
+- [x] 11. Sanity tests for chain solver, re-pin baselines
 
 ### Fixes
 - [x] Fix Step 9: DELETE cable.js, terminal.js, sinker.js

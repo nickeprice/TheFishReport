@@ -250,7 +250,7 @@ Bisection on z_hook:
 | 8 | drift.js | Wire chain solver, remove cable/terminal/sinker calls | ⬜ |
 | 9 | DELETE cable.js, terminal.js, sinker.js | ⬜ |
 | 10 | index.html, sw.js | Update script tags, SHELL_FILES, version | ⬜ |
-| 11 | Sanity tests for chain solver, re-pin baselines | ⬜ |
+| 11 | Sanity tests for chain solver, re-pin baselines | ✅ DONE |
 
 ---
 

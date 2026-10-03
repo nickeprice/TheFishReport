@@ -86,8 +86,7 @@ async function logData() {
         yarn: getNum('yarn'),
         foam: foamRaw,
         foam2: getStr('foam2'),
-        bdMat: getStr('bd-mat'),
-        bdSz: getNum('bd-sz'),
+        bdSz: getNum('foam3'),
         // Environmental context captured at log time (private row enrichment).
         // Falls back to null when the report/telemetry is unavailable.
         gauge: (activeRep && activeRep.gage != null) ? activeRep.gage : null,

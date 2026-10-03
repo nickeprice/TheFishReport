@@ -27,7 +27,7 @@ var DRIFT_TECHNIQUE = {
         var weightOz = rig.weightOz, ldLen = rig.ldLen, ldMat = rig.ldMat, ldLb = rig.ldLb;
         var weightShape = rig.weightShape;
         var mlMat = rig.mlMat, mlLb = rig.mlLb, hook = rig.hook, yarn = rig.yarn;
-        var foam = rig.foam, foam2 = rig.foam2, bdMat = rig.bdMat, bdSz = rig.bdSz;
+        var foam = rig.foam, foam2 = rig.foam2, bdSz = rig.bdSz;
         var ldDia = rig.ldDia || 0, mlDia = rig.mlDia || 0;
 
         // 2. Pure-math fluid dynamics (no tuned constants) --------------------------
@@ -47,7 +47,7 @@ var DRIFT_TECHNIQUE = {
         var f2G = foam2.net_buoyancy_g;
         var hData = (typeof tackleHookData === 'function') ? tackleHookData(hook) : null;
         var hookMassG = hData ? hData.mass_g : 0;
-        var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdMat, bdSz) : null;
+        var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdSz) : null;
         var beadNetSink = bData ? bData.netSinkG : 0;
         var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(yarn) : 0;
         var liftGf = computeLiftGf(f1G, f2G, hookMassG, beadNetSink, yG);

@@ -34,8 +34,7 @@ function readRigFromForm() {
         yarn: getNum('yarn'),
         foam: parseFoam(getStr('foam')),        // Foam 1
         foam2: parseFoam(getStr('foam2')),      // Foam 2
-        bdMat: getStr('bd-mat'),
-        bdSz: getNum('bd-sz'),
+        bdSz: getNum('foam3'),
         species: getStr('species')
     };
 }

@@ -23,8 +23,7 @@ function saveRig() {
             yarn: getStr('yarn'),
             foam: getStr('foam'),
             foam2: getStr('foam2'),
-            bdMat: getStr('bd-mat'),
-            bdSz: getStr('bd-sz')
+            bdSz: getStr('foam3')
         };
         localStorage.setItem(RIG_STORE_KEY, JSON.stringify(rig));
     } catch (e) {}
@@ -78,7 +77,5 @@ function restoreRig() {
     setBoth('ld-len', rig.ldLen);
     setBoth('hook', rig.hook); setBoth('yarn', rig.yarn);
     setBoth('foam', rig.foam); setBoth('foam2', rig.foam2);
-    setBoth('bd-mat', rig.bdMat);
-    if (rig.bdMat) onBeadMatChange('bd-mat');                   // sizes for that material
-    setBoth('bd-sz', rig.bdSz);
+    setBoth('foam3', rig.bdSz);
 }

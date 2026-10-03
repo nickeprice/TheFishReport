@@ -442,7 +442,7 @@ function staticIntegrity() {
   }
 
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
-  (gearRows === 14 && !html.includes('gear-grid'))
+  (gearRows === 12 && !html.includes('gear-grid'))
     ? ok('both gear forms use 7 resting rows each', `${gearRows} rows total`)
     : fail('both gear forms use 7 resting rows each', `${gearRows} rows found`);
 
@@ -455,7 +455,7 @@ function staticIntegrity() {
   {
     const GEAR_ORDER = ['ml-mat', 'ml-brand', 'ml-lb', 'weight-setup', 'weight-shape', 'weight',
                         'ld-len', 'ld-mat', 'ld-brand', 'ld-lb', 'hook', 'yarn',
-                        'foam', 'foam2', 'bd-mat', 'bd-sz'];
+                        'foam', 'foam2', 'foam3'];
     const blocks = html.split('<div class="gear-rows">');
     const labelsOf = (b) => (b.match(/<label for="[^"]+"/g) || [])
       .map((s) => s.match(/for="([^"]+)"/)[1]);
@@ -814,20 +814,20 @@ function behaviorChecks(done) {
     // verify every rig produces finite, positive physics outputs (no NaN, no crashes).
     // Re-pin baselines once tackle data is validated against real-world measurements.
     const cases = [
-      [1040, 0.5,  12, 'mono', 2, 0, 'hard', 6, 8, '12', '0'],
-      [1040, 0.25, 12, 'mono', 2, 0, 'hard', 6, 8, '14', '12'],
-      [2500, 0.75, 15, 'fluoro', 0, 1, 'soft', 8, 10, '10', '0'],
-      [600,  0.5,  10, 'copoly', -1, 2, 'hard', 4, 6, 'c12', '0'],
+      [1040, 0.5,  12, 'mono', 2, 0, 6, 8, '12', '0'],
+      [1040, 0.25, 12, 'mono', 2, 0, 6, 8, '14', '12'],
+      [2500, 0.75, 15, 'fluoro', 0, 1, 8, 10, '10', '0'],
+      [600,  0.5,  10, 'copoly', -1, 2, 4, 6, 'c12', '0'],
     ];
     let allOk = 0;
     for (const rig of cases) {
-      const [flow, weightOz, ldLb, ldMat, hook, yarn, bdMat, bdSz, ldLen, f1, f2] = rig;
+      const [flow, weightOz, ldLb, ldMat, hook, yarn, bdSz, ldLen, f1, f2] = rig;
       const v = hydraulicVelocity(flow);
       const leaderRow = ldRow(ldMat, ldLb);
       const leaderDia = leaderRow ? Number(leaderRow.diameter_mm) : 0;
       const foam1 = parseFoam(f1), foam2 = parseFoam(f2);
       const hData = tackleHookData(hook);
-      const bData = tackleBeadData(bdMat, bdSz);
+      const bData = tackleBeadData(bdSz);
       const ck1Obj = { areaCm2: foam1.areaCm2, cd: foam1.cd };
       const ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
       const beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
@@ -1916,10 +1916,8 @@ function behaviorChecks(done) {
             foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
             weightShape: 'Lead Cannonball', ldDia: 0.34, mlDia: 0
         };
-        // Bead options come from the library, and what is tied on is always in the list.
-        eqr('hard beads', beadSizeOptions('hard', 6).join(','), '2,4,6,8');
-        eqr('soft beads', beadSizeOptions('soft', 6).join(','), '6,8');
-        eqr('no bead', beadSizeOptions('none', 0).join(','), '0');
+        // Bead options: all sizes plus the tied-on size.
+        eqr('bead sizes', beadSizeOptions(6).join(','), ['0','4','5','5.8','6','8'].join(','));
         eqr('foam naming', [foamShort(parseFoam('10')), foamShort(parseFoam('c12')), foamShort(parseFoam('0'))].join('|'),
             'Corky 10|Cheater 12 (egg 13x9.5mm) float|None');
 
@@ -2059,7 +2057,7 @@ function behaviorChecks(done) {
     // Seed the controls with what the page ships, exactly like the browser does before any
     // script runs: the mock must not accept a value the real form could not hold.
     ['ml-mat', 'ml-brand', 'ml-lb', 'ld-mat', 'ld-brand', 'ld-lb', 'weight-shape', 'weight',
-      'bd-mat', 'bd-sz'].forEach((id) => {
+      'foam3'].forEach((id) => {
       const sel = ctx.document.getElementById(id);
       sel.options = (staticVals(id) === 'MISSING' ? [] : staticVals(id).split(','))
         .map((v) => ({ tag: 'option', value: v, textContent: v }));
@@ -2075,7 +2073,7 @@ function behaviorChecks(done) {
     eq('ml-mat boot', vals('ml-mat'), ',braid,mono,copoly');
     eq('ld-mat boot', vals('ld-mat'), ',mono,copoly,fluoro');
     eq('weight boot', vals('weight'), ',0.25,0.375,0.5,0.625,0.75');
-    eq('bd-sz boot', vals('bd-sz'), ',0,2,4,6,8');
+    eq('foam3 boot', vals('foam3'), ',0,4,5,5.8,8');
 
     // material -> brand -> lb test. The triple must resolve the LIBRARY row, and the
     // Catch Log twin must hold the identical list and value.
@@ -2112,13 +2110,10 @@ function behaviorChecks(done) {
     eq('slinky amounts', vals('weight'), ',0.25,0.375,0.5,0.625,0.75');
     eq('slinky labels', texts('weight').replace('\u2014', ''),
        ',1/4 oz,3/8 oz,1/2 oz,5/8 oz,3/4 oz');
-    // bead material -> size
-    selects['bd-mat'].value = 'soft';
-    ctx.onBeadMatChange('bd-mat');
-    eq('soft bead sizes', vals('bd-sz'), ',6,8');
-    selects['bd-mat'].value = 'none';
-    ctx.onBeadMatChange('bd-mat');
-    eq('no bead size', vals('bd-sz'), ',0');
+    // foam3 (bead) size options loaded from library
+    selects['foam3'].value = '5.8';
+    ctx.onFoam3Change('foam3');
+    eq('foam3 bead size', selects['foam3'].value, '5.8');
 
     // The static fallback lists are now generated by populateStaticGear() from GEAR_OPTIONS.
     // The downstream cascade (tackle.js replacing options with library data) is the real test.
@@ -2140,23 +2135,23 @@ function behaviorChecks(done) {
       i.lb_test === 12 && /^generic/i.test(i.brand))[0];
     saved.v = JSON.stringify({ mlMat: 'mono', mlLb: 12, ldMat: 'mono', ldLb: 12, ldLen: '8',
       weight: '0.5', weightShape: 'Lead Pencil (rubber sleeve)', hook: '2', yarn: '0',
-      foam: '10', foam2: '0', bdMat: 'hard', bdSz: '6' });
+      foam: '10', foam2: '0', bdSz: '6' });
     ctx.restoreRig();
     eq2('old rig resolves', inputs['ml-line'].value, genericMono12.id);
     eq2('old rig recovers brand', [selects['ml-brand'].value, selects['ml-mat-log'].value,
       selects['ml-lb-log'].value].join('|'), [genericMono12.brand, 'mono', '12'].join('|'));
     saved.v = JSON.stringify({ mlMat: 'braid', mlBrand: 'Sufix 832 Advanced Superline',
       mlLb: '30', ldMat: 'fluoro', ldBrand: 'Seaguar Blue Label Leader', ldLb: '12',
-      weightShape: 'Lead Slinky (shot in tubing)', weight: '0.5', bdMat: 'soft', bdSz: '8' });
+      weightShape: 'Lead Slinky (shot in tubing)', weight: '0.5', bdSz: '8' });
     ctx.restoreRig();
     eq2('cascade rig resolves', inputs['ml-line'].value, 'braid-sufix-832-30');
     eq2('children survive', [selects['ml-lb'].value, selects['weight'].value,
-      selects['bd-sz'].value, inputs['ld-line'].value].join('|'),
+      selects['foam3'].value, inputs['ld-line'].value].join('|'),
       ['30', '0.5', '8', 'fluoro-seaguar-blue-label-12'].join('|'));
     ctx.saveRig();
     const stored = JSON.parse(saved.v);
-    eq2('saveRig parts', [stored.mlMat, stored.mlBrand, stored.mlLb, stored.bdMat].join('|'),
-      'braid|Sufix 832 Advanced Superline|30|soft');
+    eq2('saveRig parts', [stored.mlMat, stored.mlBrand, stored.mlLb, stored.bdSz].join('|'),
+      'braid|Sufix 832 Advanced Superline|30|8');
     bad2.length === 0
       ? ok('a saved rig restores through the cascade (parents first)',
            'an older material+lb rig recovers its brand; the saved lb / amount / bead size survive')

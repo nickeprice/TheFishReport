@@ -28,16 +28,11 @@ var GEAR_OPTIONS = {
     { val: '10', label: 'Corky 10 (10mm)' },
     { val: 'c12', label: 'Cheater 10' }
   ],
-  beadMat: [
-    { val: 'none', label: 'None' },
-    { val: 'hard', label: 'Plastic' },
-    { val: 'soft', label: 'Soft' }
-  ],
   beadSize: [
     { val: 0, label: 'None' },
-    { val: 2, label: '2mm' },
     { val: 4, label: '4mm' },
-    { val: 6, label: '6mm' },
+    { val: 5, label: '5mm' },
+    { val: 5.8, label: '5.8mm' },
     { val: 8, label: '8mm' }
   ],
   weight: [
@@ -73,8 +68,7 @@ function populateStaticGear() {
     { id: 'yarn', items: GEAR_OPTIONS.yarn },
     { id: 'foam', items: GEAR_OPTIONS.foam },
     { id: 'foam2', items: GEAR_OPTIONS.foam },
-    { id: 'bd-mat', items: GEAR_OPTIONS.beadMat },
-    { id: 'bd-sz', items: GEAR_OPTIONS.beadSize },
+    { id: 'foam3', items: GEAR_OPTIONS.beadSize },
     { id: 'ml-mat', items: GEAR_OPTIONS.lineMat.ml },
     { id: 'ld-mat', items: GEAR_OPTIONS.lineMat.ld }
   ];

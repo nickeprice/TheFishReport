@@ -11,16 +11,16 @@ var WEIGHT_OPTIONS = GEAR_OPTIONS.weight.map(function(o) { return o.val; });
 var YARN_OPTIONS = GEAR_OPTIONS.yarn.map(function(o) { return o.val; });
 var HOOK_OPTIONS = GEAR_OPTIONS.hook.map(function(o) { return o.val; });
 
-function beadSizeOptions(bdMat, bdSz) {
-    var opts = [];
+function beadSizeOptions(bdSz) {
+    var opts = [0];
     if (typeof tackleBeadSizes === 'function') {
-        tackleBeadSizes(bdMat).forEach(function (o) {
+        tackleBeadSizes().forEach(function (o) {
             var mm = Number(o.value);
             if (isFinite(mm) && opts.indexOf(mm) === -1) opts.push(mm);
         });
     }
     if (opts.indexOf(Number(bdSz)) === -1) opts.push(Number(bdSz));
-    return opts;
+    return opts.sort(function (a, b) { return a - b; });
 }
 
 function foamShort(foam) {
@@ -59,8 +59,8 @@ function rigChangePlain(best, rig) {
     }
     if (Number(best.yarn) !== Number(rig.yarn)) up.push(Number(best.yarn) > Number(rig.yarn) ? 'more yarn' : 'less yarn');
     if (Number(best.bdSz) !== Number(rig.bdSz)) {
-        var bdBest = (typeof tackleBeadData === 'function' ? tackleBeadData(rig.bdMat, best.bdSz) : null);
-        var bdRig = (typeof tackleBeadData === 'function' ? tackleBeadData(rig.bdMat, rig.bdSz) : null);
+        var bdBest = (typeof tackleBeadData === 'function' ? tackleBeadData(best.bdSz) : null);
+        var bdRig = (typeof tackleBeadData === 'function' ? tackleBeadData(rig.bdSz) : null);
         var bdBestNet = bdBest ? bdBest.netSinkG : 0;
         var bdRigNet = bdRig ? bdRig.netSinkG : 0;
         up.push(bdBestNet < bdRigNet ? 'a lighter bead' : 'a heavier bead');
@@ -79,7 +79,7 @@ function joinPlain(items) {
 function bestZoneRig(zone, rig, vel) {
     var target = (zone.min + zone.max) / 2;
     var bed = vel.bottom;
-    var beads = beadSizeOptions(rig.bdMat, rig.bdSz);
+    var beads = beadSizeOptions(rig.bdSz);
     var passes = [
         { weights: [rig.weightOz], leaders: [rig.ldLen] },
         { weights: WEIGHT_OPTIONS, leaders: LEADER_LENGTH_OPTIONS }
@@ -97,7 +97,7 @@ function bestZoneRig(zone, rig, vel) {
                     for (var h = 0; h < HOOK_OPTIONS.length; h++) {
                         for (var b = 0; b < beads.length; b++) {
                             var hData = (typeof tackleHookData === 'function') ? tackleHookData(HOOK_OPTIONS[h]) : null;
-                            var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(rig.bdMat, beads[b]) : null;
+                            var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(beads[b]) : null;
                             var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(YARN_OPTIONS[y]) : 0;
                             var hookMassG = hData ? hData.mass_g : 0;
                             var beadNetSink = bData ? bData.netSinkG : 0;

@@ -225,13 +225,12 @@ function onWeightShapeChange(baseId, fromLog) {
     logDebug('Weight type: ' + getStr(base), 'STATE');
 }
 
-// Bead MATERIAL gates the size list (hard 2/4/6/8mm, soft 6/8mm, None 0mm).
-function onBeadMatChange(fieldId, fromLog) {
+// Foam 3 (bead) change — populates size list.
+function onFoam3Change(fieldId, fromLog) {
     var base = String(fieldId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(fieldId));
-    fillBothSelects('bd-sz', tackleBeadSizes(getStr(base)));
     mirrorValue(base);
-    logDebug('Bead material: ' + getStr(base), 'STATE');
+    logDebug('Foam 3 (bead): ' + getStr(base), 'STATE');
 }
 
 // Weight amount: the nominal oz of a weight row, read from the trailing "<n>/<d> oz" of
@@ -288,17 +287,13 @@ function tackleWeightArea(shapeLabel, oz) {
 // Bead size: the bead rows the material owns. "None" is the ABSENCE of a bead, so its 0
 // is supplied here rather than invented from the library; a blank material lists every
 // size the library has.
-function tackleBeadSizes(mat) {
-    var out = [];
-    if (!mat || mat === 'none') out.push({ value: '0', text: 'None' });
-    if (mat !== 'none') {
-        tackleItems('bead').forEach(function (it) {
-            if (mat && it.material !== mat) return;
-            var mm = Number(it.diameter_mm);
-            if (!mm || out.some(function (o) { return o.value === String(mm); })) return;
-            out.push({ value: String(mm), text: mm + 'mm' });
-        });
-    }
+function tackleBeadSizes() {
+    var out = [{ value: '0', text: 'None' }];
+    tackleItems('bead').forEach(function (it) {
+        var mm = Number(it.diameter_mm);
+        if (!mm || out.some(function (o) { return o.value === String(mm); })) return;
+        out.push({ value: String(mm), text: mm + 'mm' });
+    });
     return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
 }
 
@@ -347,7 +342,7 @@ function populateTacklePickers() {
     shapes.sort(function (a, b) { return a.text.localeCompare(b.text); });
     fillBothSelects('weight-shape', shapes);
     fillBothSelects('weight', tackleWeightOz(getStr('weight-shape')));
-    fillBothSelects('bd-sz', tackleBeadSizes(getStr('bd-mat')));
+    fillBothSelects('foam3', tackleBeadSizes());
 }
 
 // Load once at boot. A failure (offline first run, or a deploy without the file)

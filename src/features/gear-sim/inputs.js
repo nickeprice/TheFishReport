@@ -127,11 +127,11 @@ function tackleHookData(hookVal) {
  * Returns {mass_g, buoyancy_g, areaCm2, cd, netSinkG} or null.
  * netSinkG = max(0, mass_g - buoyancy_g) - positive means bead sinks.
  */
-function tackleBeadData(bdMat, bdSz) {
-    if (!bdMat || bdMat === 'none' || !bdSz) return null;
+function tackleBeadData(bdSz) {
+    if (!bdSz) return null;
     var beads = (typeof tackleItems === 'function') ? tackleItems('bead') : [];
     for (var i = 0; i < beads.length; i++) {
-        if (beads[i].material === bdMat && Math.abs(Number(beads[i].diameter_mm) - Number(bdSz)) < 0.01) {
+        if (Math.abs(Number(beads[i].diameter_mm) - Number(bdSz)) < 0.01) {
             var b = beads[i];
             var massG = b.mass_g || 0, buoyG = b.buoyancy_g || 0;
             return { mass_g: massG, buoyancy_g: buoyG, netSinkG: Math.max(0, massG - buoyG),

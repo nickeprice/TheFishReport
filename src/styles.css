@@ -51,9 +51,9 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
 }
 /* Vertical rule between the two halves (never a horizontal one - they sit side by side). */
 .hud-banner + .hud-banner { border-left: 1px solid #262626; }
-.hud-cap { color: #cbd5e1; font-size: 0.78rem; letter-spacing: 0.02em; }
+.hud-cap { color: #cbd5e1; font-size: 0.9rem; letter-spacing: 0.02em; }
 /* The NUMBER is the point: bigger and bold, coloured by its own grade. */
-.hud-val { font-weight: bold; font-size: 1.2rem; line-height: 1.15; }
+.hud-val { font-weight: bold; font-size: 1.4rem; line-height: 1.3; }
 /* The one cohesive "what the fish are doing and where" paragraph. Deliberately the widest
    text block in the HUD: it is the part an angler actually reads. */
 .hud-outlook {

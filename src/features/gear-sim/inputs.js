@@ -197,13 +197,13 @@ function tackleWeightPhysicsData(shapeLabel, oz) {
     var row = tackleWeightRow(shapeLabel, Number(oz));
     if (!row) return null;
     var mass_g = Number(row.mass_g) || 0;
-    var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 0;
+    var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 11.34;
     var submerged_mass_g = mass_g;
     if (density > 0) {
         submerged_mass_g = mass_g * (1 - WATER_DENSITY_G_CM3 / density);
         if (submerged_mass_g < 0) submerged_mass_g = 0;
     }
-    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: mass_g, submerged_mass_g: submerged_mass_g };
+    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: mass_g, submerged_mass_g: submerged_mass_g, density_g_cm3: density };
 }
 
 // Hydraulic geometry for a PNW gravel-bed river. We only know discharge (CFS), so

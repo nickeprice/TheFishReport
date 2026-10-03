@@ -27,7 +27,8 @@ var NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10°C
 
 function lineCd(reynolds) {
     if (!reynolds || reynolds <= 0) return 1.0;
-    return 1.0 + 10.0 * Math.pow(reynolds, -2.0 / 3.0);
+    var reClamped = Math.max(reynolds, 0.1);          // stagnation safety: floor at 0.1
+    return Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
 }
 
 
@@ -46,7 +47,8 @@ function lineDragPerFt(diameterMm, velocityFtS) {
     var vMs = velocityFtS * CFS_TO_MS;          // ft/s -> m/s
     var areaPerFtM2 = dM * 0.3048;             // m^2 - 1 ft broadside projection
     var re = (vMs * dM) / NU_WATER;            // Reynolds number (dimensionless)
-    var cd = lineCd(re);                       // Re-dependent drag coefficient
+    var reClamped = Math.max(re, 0.1);         // stagnation safety: floor at 0.1
+    var cd = Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
     var forceN = 0.5 * RHO_WATER * cd * areaPerFtM2 * vMs * vMs;
     return Math.max(0.001, forceN * N_TO_GF);
 }

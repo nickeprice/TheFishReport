@@ -201,10 +201,10 @@ function staticIntegrity() {
   // otherwise wrap the lb test onto its own line. Assert the rule exists and that no
   // other row uses it, so a stray 3-up row cannot appear unnoticed.
   const threeUp = (html.match(/class="gear-row gear-row-3"/g) || []).length;
-  (cssSrc.includes('.gear-row {') && cssSrc.includes('.gear-row-3 {') && threeUp === 2)
-    ? ok('resting gear rows present (.gear-row + one 3-up row per form)',
-         `${threeUp} 3-up rows (the 3-part mainline cascade)`)
-    : fail('resting gear rows present (.gear-row + one 3-up row per form)',
+  (cssSrc.includes('.gear-row {') && cssSrc.includes('.gear-row-3 {') && threeUp === 4)
+    ? ok('resting gear rows present (.gear-row + two 3-up rows per form)',
+         `${threeUp} 3-up rows (mainline cascade + weight setup row)`)
+    : fail('resting gear rows present (.gear-row + two 3-up rows per form)',
            `css .gear-row-3=${cssSrc.includes('.gear-row-3 {')} 3-up rows=${threeUp}`);
   (!cssSrc.includes('gear-grid') && !cssSrc.includes('.run-footer'))
     ? ok('dead .gear-grid / .run-footer rules removed', 'no stale layout rules')
@@ -453,7 +453,7 @@ function staticIntegrity() {
   // skipped, so assert the exact per-row `for=` ids in document order for BOTH tabs and
   // fail loudly on any future reorder.
   {
-    const GEAR_ORDER = ['ml-mat', 'ml-brand', 'ml-lb', 'weight-shape', 'weight',
+    const GEAR_ORDER = ['ml-mat', 'ml-brand', 'ml-lb', 'weight-setup', 'weight-shape', 'weight',
                         'ld-len', 'ld-mat', 'ld-brand', 'ld-lb', 'hook', 'yarn',
                         'foam', 'foam2', 'bd-mat', 'bd-sz'];
     const blocks = html.split('<div class="gear-rows">');
@@ -867,7 +867,25 @@ function behaviorChecks(done) {
       ? ok('tackleWeightPhysicsData returns null for unknown shape',
            'null/empty shape -> null')
       : fail('tackleWeightPhysicsData returns null for unknown shape',
-              'expected null');  } catch (e) {
+              'expected null');
+    // Step 3 (2026-10-02): submerged mass correction (Archimedes)
+    // Lead Cannonball 1/2 oz: density=11.34, mass_g=14.17
+    var cbHalf = tackleWeightPhysicsData('Lead Cannonball', 0.5);
+    var cbSub = cbHalf ? cbHalf.submerged_mass_g : 0;
+    var cbMass = cbHalf ? cbHalf.mass_g : 0;
+    var cbExpected = cbMass * (1 - 1.0 / 11.34);
+    Math.abs(cbSub - cbExpected) < 0.01 && cbSub < cbMass && cbSub > 0
+      ? ok('tackleWeightPhysicsData computes submerged_mass_g for lead', cbMass+'g -> '+cbSub.toFixed(3)+'g submerged')
+      : fail('tackleWeightPhysicsData computes submerged_mass_g for lead',
+             'mass_g='+cbMass+' submerged='+cbSub.toFixed(4)+' expected~'+cbExpected.toFixed(4));
+    // Submarine (no density): falls back to mass_g
+    var subHalf = tackleWeightPhysicsData('Lead Submarine (rubber sleeve, swivel)', 0.5);
+    var subSub = subHalf ? subHalf.submerged_mass_g : -1;
+    var subMass = subHalf ? subHalf.mass_g : -1;
+    Math.abs(subSub - subMass) < 0.01 && subSub > 0
+      ? ok('tackleWeightPhysicsData falls back to mass_g when no density', subMass+'g preserved')
+      : fail('tackleWeightPhysicsData falls back to mass_g when no density',
+             'submerged='+subSub+' mass_g='+subMass);  } catch (e) {
     fail('gear-sim physics is deterministic (frozen baseline)', String(e.message).split('\n')[0]);
   }
   // --- Hydro tests: 3D velocity field -----------------------------------------

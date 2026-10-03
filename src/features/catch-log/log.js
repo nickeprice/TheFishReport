@@ -80,6 +80,7 @@ async function logData() {
         ldLine: getStr('ld-line'),
         mlLine: getStr('ml-line'),
         weightShape: getStr('weight-shape'),
+        weightSetup: getStr('weight-setup') || 'sliding',
         weight: getNum('weight'),
         hook: hookValue,
         yarn: getNum('yarn'),

@@ -7,7 +7,7 @@
  * No tuned constants, no reference rig, no calibration anchors.
  * Every value comes from tackle.json or standard physics constants.
  *
- * public: lineDragPerFt(), pointDragGf(), totalDragPerFt(), computeLiftGf(),
+ * public: lineDragPerFt(), lineNetBuoyancyPerFt(), pointDragGf(), totalDragPerFt(), computeLiftGf(),
  *         presentationHeightInches()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
@@ -38,6 +38,24 @@ function lineDragPerFt(diameterMm, velocityFtS) {
     var vMs = velocityFtS * CFS_TO_MS;          // ft/s -> m/s
     var forceN = 0.5 * RHO_WATER * CD_LINE * areaPerFtM2 * vMs * vMs;
     return Math.max(0.001, forceN * N_TO_GF);
+}
+
+/**
+ * Net buoyancy (Archimedes lift) of a 1-foot segment of line.
+ *   F_gf_per_ft = (rho_water - rho_line) * g * volume_per_ft * N_TO_GF
+ * Positive = line floats (braid ≈ 0). Negative = line sinks (mono, fluoro).
+ * density_g_cm3: the line's density (tackle.json density_g_cm3), e.g. 1.15 for mono
+ * diameterMm: the line's measured diameter in mm
+ * Returns grams-force per foot. Negative value means the line sinks.
+ * @provenance: derived — Archimedes net buoyancy = displaced water weight - line weight per ft
+ */
+function lineNetBuoyancyPerFt(density_g_cm3, diameterMm) {
+    if (!diameterMm || diameterMm <= 0 || !density_g_cm3 || density_g_cm3 <= 0) return 0;
+    var dM = diameterMm * 0.001;                 // mm -> m
+    var volPerFtM3 = Math.PI * (dM / 2) * (dM / 2) * 0.3048;  // m^3 per foot
+    var rhoLine = density_g_cm3 * 1000;          // g/cm^3 -> kg/m^3
+    var netForceN = (RHO_WATER - rhoLine) * G * volPerFtM3;
+    return netForceN * N_TO_GF;                  // gf per ft (positive = buoyant)
 }
 
 /**

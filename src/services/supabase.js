@@ -186,6 +186,7 @@ function toCatchRow(payload) {
         mainline_line_id: payload.mlLine || null,
         leader_line_id: payload.ldLine || null,
         weight_shape: payload.weightShape || null,
+        weight_setup: payload.weightSetup || null,
         gauge_height: (payload.gauge !== undefined && payload.gauge !== null) ? payload.gauge : null,
         barometer: (payload.barometer !== undefined && payload.barometer !== null) ? payload.barometer : null,
         water_temp_f: (payload.waterTemp !== undefined && payload.waterTemp !== null) ? payload.waterTemp : null,

@@ -5,6 +5,8 @@
  *         parseFoam/hookLabel, hydraulicVelocity(), getActiveStationId(),
  *         measuredFit(), measuredVelocity(),
  *         tackleFoamById, tackleHookData, tackleBeadData, tackleYarnBuoyancyG,
+ *         tackleWeightPhysicsData,
+ *         WATER_DENSITY_G_CM3,
  *         THERMAL_BANDS, thermalOptimum(tempF)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
@@ -181,14 +183,26 @@ function tackleYarnDragData() {
 
 /**
  * Weight physics data from tackle.json.
- * Returns {areaCm2, cd, mass_g} or null.
+ * Returns {areaCm2, cd, mass_g, submerged_mass_g} or null.
+ * submerged_mass_g is the Archimedes-corrected mass in water (mass_g minus
+ * buoyancy from displaced water). Falls back to mass_g when density is
+ * unavailable (e.g. PENDING measurement rows).
+ * @provenance: derived — Archimedes F_b = rho_water * g * V
  */
+var WATER_DENSITY_G_CM3 = 1.0; // g/cm³, fresh water — @provenance: standard
 function tackleWeightPhysicsData(shapeLabel, oz) {
     if (!shapeLabel || !oz) return null;
     if (typeof tackleWeightRow !== 'function') return null;
     var row = tackleWeightRow(shapeLabel, Number(oz));
     if (!row) return null;
-    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: Number(row.mass_g) || 0 };
+    var mass_g = Number(row.mass_g) || 0;
+    var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 0;
+    var submerged_mass_g = mass_g;
+    if (density > 0) {
+        submerged_mass_g = mass_g * (1 - WATER_DENSITY_G_CM3 / density);
+        if (submerged_mass_g < 0) submerged_mass_g = 0;
+    }
+    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: mass_g, submerged_mass_g: submerged_mass_g };
 }
 
 // Hydraulic geometry for a PNW gravel-bed river. We only know discharge (CFS), so

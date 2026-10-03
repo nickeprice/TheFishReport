@@ -187,10 +187,16 @@
                 </div>
             </div>
 
-            <!-- Row 2: Weight type + Weight amount. The type options are the weight rows'
+            <!-- Row 2: Weight Setup → Weight type → Weight amount. The first field lets the
+                 angler choose between a sliding weight (free to slide on the mainline) or
+                 a weight fixed at a 3-way swivel. The type options are the weight rows'
                  shape_label, so a rubber sleeve and tungsten get their own option; the
                  amount list is the nominal oz those rows carry. -->
-            <div class="gear-row">
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="weight-setup">Weight Setup</label>
+                    <select id="weight-setup" onchange="syncSelect('weight-setup')"><option value="sliding">Sliding</option><option value="fixed">Fixed</option></select>
+                </div>
                 <div class="field">
                     <label for="weight-shape">Weight Type</label>
                     <select id="weight-shape" onchange="onWeightShapeChange('weight-shape')"><option value="">—</option></select>
@@ -315,8 +321,12 @@
                 </div>
             </div>
 
-            <!-- Row 2: Weight type + Weight amount -->
-            <div class="gear-row">
+            <!-- Row 2: Weight Setup → Weight type → Weight amount -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="weight-setup-log">Weight Setup</label>
+                    <select id="weight-setup-log" onchange="syncSelect('weight-setup', true)"><option value="sliding">Sliding</option><option value="fixed">Fixed</option></select>
+                </div>
                 <div class="field">
                     <label for="weight-shape-log">Weight Type</label>
                     <select id="weight-shape-log" onchange="onWeightShapeChange('weight-shape', true)"><option value="">—</option></select>

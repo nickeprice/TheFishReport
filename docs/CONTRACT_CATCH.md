@@ -74,6 +74,7 @@ recover, and inventing one would fabricate data. No FK and no index: the library
 | `mlLine` | `mainline_line_id` | `src/data/tackle.json` item id, e.g. `fluoro-seaguar-sts-12` |
 | `ldLine` | `leader_line_id` | same library, leader role |
 | `weightShape` | `weight_shape` | the weight row's `shape_label`, e.g. `Lead Pencil (rubber sleeve)` |
+| `weightSetup` | `weight_setup` | `'sliding'` or `'fixed'` — how the weight is rigged on the mainline |
 
 `logData()` sends all three from the pickers, and `toCatchRow()` maps an absent id to **NULL, never
 `''`** — an installed client older than P4b sends none, and every reader must tolerate that.

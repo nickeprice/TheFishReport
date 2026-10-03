@@ -16,6 +16,7 @@ function saveRig() {
             mlLine: getStr('ml-line'),
             ldLine: getStr('ld-line'),
             ldLen: getStr('ld-len'),
+            weightSetup: getStr('weight-setup'),
             weight: getStr('weight'),
             weightShape: getStr('weight-shape'),
             hook: getStr('hook'),
@@ -72,6 +73,7 @@ function restoreRig() {
 
     setBoth('weight-shape', rig.weightShape);
     if (rig.weightShape) onWeightShapeChange('weight-shape');   // amounts for that type
+    setBoth('weight-setup', rig.weightSetup || 'sliding');
     setBoth('weight', rig.weight);
     setBoth('ld-len', rig.ldLen);
     setBoth('hook', rig.hook); setBoth('yarn', rig.yarn);

@@ -25,7 +25,7 @@ var RIG_REQUIRED = [
     { id: 'yarn',     label: 'Yarn' },
     { id: 'foam',     label: 'Foam 1' },
     { id: 'foam2',    label: 'Foam 2' },
-    { id: 'foam3',    label: 'Foam 3 (Bead)' }
+    { id: 'foam3',    label: 'Bead' }
 ];
 
 function missingRigFields() {

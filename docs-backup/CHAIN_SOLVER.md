@@ -242,15 +242,15 @@ Bisection on z_hook:
 |------|------|--------|--------|
 | 1 | index.html, sanity_pass.js, solver.js, rig.js, log.js | Add Weight Setup dropdown | ✅ DONE |
 | 2 | physics.js | Add `lineNetBuoyancyPerFt()` | ✅ DONE |
-| 3 | inputs.js | Weight submerged mass in `tackleWeightPhysicsData()` | ✅ DONE |
+| 3 | inputs.js | Weight submerged mass in `tackleWeightPhysicsData()` | ⬜ |
 | 4 | salmon.js | Species registry (Chinook, Steelhead, Coho) | ⬜ |
 | 5 | interception.js | Accept gear mass as parameter | ⬜ |
 | 6 | hydro.js | D₅₀ as configurable parameter | ⬜ |
 | 7 | chain.js | **NEW** — chain solver (RK4 + shooting + air catenary) | ⬜ |
 | 8 | drift.js | Wire chain solver, remove cable/terminal/sinker calls | ⬜ |
-| 9 | DELETE cable.js, terminal.js, sinker.js | ⬜ |
-| 10 | index.html, sw.js | Update script tags, SHELL_FILES, version | ⬜ |
-| 11 | Sanity tests for chain solver, re-pin baselines | ⬜ |
+| 9-11 | cable.js, terminal.js, sinker.js | **DELETE** | ⬜ |
+| 12 | index.html, sw.js | Update script tags, SHELL_FILES, version | ⬜ |
+| 13 | sanity_pass.js | Add chain solver tests, re-pin baselines | ⬜ |
 
 ---
 

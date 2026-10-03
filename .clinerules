@@ -4,10 +4,10 @@
 - Confirm edits with `git diff --stat` or `git diff <file>`.
 - Pipe verification through `tail -n 40`; full logs on failure only.
 
-# Git
-- "commit" and "push" mean stage everything, commit, and push to origin.
-  Never stop at a local commit to ask whether to push.
-- Write commit messages from the actual change; reference issue numbers.
+# Git (phased work only)
+- NEVER invoke `git commit` or `git push` directly in the terminal.
+- Use `node scripts/complete-step.js <N> "<description>"` instead.
+  This atomically verifies code, updates the plan checklist, commits, and pushes.
 
 # Frontend module layout
 - No build step. Plain HTML/CSS + classic JS scripts, one global scope.
@@ -28,10 +28,25 @@
 - After frontend changes: `node sanity_pass.js --quiet`.
 
 # Memory (memory-bank/)
-- New chat: read `plan.md` + `activeContext.md` only (both are small).
-  Do NOT read `history.md` unless explicitly asked.
-- `projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md` are
-  reference docs — read only when needed.
+- New chat: read `plan.md` first. It lists all steps with [x]/[ ] status.
+  Run `node scripts/plan-status.js` for a status summary.
+- NEVER manually edit checkboxes (`- [ ]` / `- [x]`) in plan.md.
+  The plan file is read-only during Act mode — editing is handled by
+  `node scripts/complete-step.js`.
+- Reference docs (`projectbrief.md`, `productContext.md`, `systemPatterns.md`,
+  `techContext.md`) read only when needed.
+- Do NOT read `history.md` unless explicitly asked.
+
+# Phased workflow
+- Start: read memory-bank/plan.md + run scripts/plan-status.js.
+- During a step: implement code changes, but do NOT commit manually.
+- Complete a step: after implementation, run:
+    node scripts/complete-step.js <N> "<description>"
+  This runs verification, updates plan.md, commits, pushes, and prints next step.
+- If you notice an error in a previously completed step, fix the code and run:
+    node scripts/complete-step.js <N> "<description>" --fix
+- To check your current status or find the next task:
+    node scripts/plan-status.js
 
 # Safety
 - Never run the same failing command more than twice; STOP and summarize.

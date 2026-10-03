@@ -1253,6 +1253,66 @@ function behaviorChecks(done) {
     allInRange === 100
       ? ok('salmonPositionZ stays within [0.15, 0.60]m', `${allInRange}/100 in range`)
       : fail('salmonPositionZ stays within [0.15, 0.60]m', `${allInRange}/100 in range`);
+
+    // --- Species registry tests --------------------------------------------------
+    // SALMON_SPECIES has all three species
+    var speciesOk = SALMON_SPECIES.chinook && SALMON_SPECIES.steelhead && SALMON_SPECIES.coho;
+    speciesOk
+      ? ok('SALMON_SPECIES contains chinook, steelhead, coho',
+           Object.keys(SALMON_SPECIES).join(', '))
+      : fail('SALMON_SPECIES contains all three species', JSON.stringify(SALMON_SPECIES));
+
+    // Default species is chinook
+    getSalmonSpecies() === 'chinook' && SALMON_DEFAULTS.label === 'Chinook'
+      ? ok('Default species is chinook', `species=${getSalmonSpecies()}, label=${SALMON_DEFAULTS.label}`)
+      : fail('Default species is chinook', `got ${getSalmonSpecies()}`);
+
+    // setSalmonSpecies switches to steelhead
+    var switched = setSalmonSpecies('steelhead');
+    switched === true && getSalmonSpecies() === 'steelhead' && SALMON_DEFAULTS.label === 'Steelhead'
+      ? ok('setSalmonSpecies(steelhead) switches to steelhead',
+           `species=${getSalmonSpecies()}, label=${SALMON_DEFAULTS.label}`)
+      : fail('setSalmonSpecies(steelhead) switches to steelhead',
+             `switched=${switched}, species=${getSalmonSpecies()}, label=${SALMON_DEFAULTS.label}`);
+
+    // Steelhead mouth cone is smaller than chinook
+    var steelCone = salmonMouthCone(1.0);
+    var steelW = steelCone.widthM;
+    var chinCone = (setSalmonSpecies('chinook'), salmonMouthCone(1.0));
+    steelW < chinCone.widthM
+      ? ok('Steelhead mouth smaller than Chinook',
+           `steel=${(steelW*1000).toFixed(1)}mm, chin=${(chinCone.widthM*1000).toFixed(1)}mm`)
+      : fail('Steelhead mouth smaller than Chinook',
+             `steel=${(steelW*1000).toFixed(1)}mm, chin=${(chinCone.widthM*1000).toFixed(1)}mm`);
+
+    // setSalmonSpecies with unknown name falls back to chinook
+    setSalmonSpecies('chinook');  // reset first
+    var unknownOk = setSalmonSpecies('sockeye');
+    unknownOk === false && getSalmonSpecies() === 'chinook'
+      ? ok('Unknown species name falls back to chinook',
+           `returned=${unknownOk}, species=${getSalmonSpecies()}`)
+      : fail('Unknown species name falls back to chinook',
+             `returned=${unknownOk}, species=${getSalmonSpecies()}`);
+
+    // setSalmonSpecies with empty string falls back to chinook
+    setSalmonSpecies('steelhead');
+    var emptyOk = setSalmonSpecies('');
+    emptyOk === false && getSalmonSpecies() === 'chinook'
+      ? ok('Empty species name falls back to chinook',
+           `returned=${emptyOk}, species=${getSalmonSpecies()}`)
+      : fail('Empty species name falls back to chinook',
+             `returned=${emptyOk}, species=${getSalmonSpecies()}`);
+
+    // Coho parameters are distinct
+    setSalmonSpecies('coho');
+    getSalmonSpecies() === 'coho' && SALMON_DEFAULTS.mouthWidthMm === 55
+      ? ok('Coho species has correct mouthWidthMm=55',
+           `species=${getSalmonSpecies()}, w=${SALMON_DEFAULTS.mouthWidthMm}mm`)
+      : fail('Coho species has correct mouthWidthMm=55',
+             `species=${getSalmonSpecies()}, w=${SALMON_DEFAULTS.mouthWidthMm}mm`);
+
+    // Reset back to chinook for subsequent tests
+    setSalmonSpecies('chinook');
   } catch (e) {
     fail('salmon.js tests', String(e.message).split('\n')[0]);
   }

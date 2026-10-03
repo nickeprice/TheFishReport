@@ -5,19 +5,73 @@
  * Used by interception.js to evaluate gear pass-through probability.
  *
  * public: salmonState(), salmonMouthCone(), salmonPositionZ(),
- *         SALMON_DEFAULTS
+ *         SALMON_DEFAULTS, setSalmonSpecies(), getSalmonSpecies(),
+ *         SALMON_SPECIES
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 
-var SALMON_DEFAULTS = {
-    freqHz: 1.0,           // buccal respiration — @provenance: literature (Kawasaki 1982, 0.8-1.4 Hz)
-    dutyCycle: 0.35,        // fraction of cycle mouth is open — @provenance: literature
-    depthMinM: 0.15,        // typical holding depth (boundary layer) — @provenance: literature
-    depthMaxM: 0.60,        // deeper holding in bright/clear conditions
-    mouthWidthMm: 65,       // inside width, mm — @provenance: literature (adult Chinook)
-    mouthHeightMm: 45,      // inside height, mm — @provenance: literature
-    mouthDepthMm: 80        // mouth cavity depth, mm — @provenance: literature
+/** Species morphological registry. SALMON_DEFAULTS points to the active entry. */
+var SALMON_SPECIES = {
+    chinook: {
+        label: 'Chinook',
+        freqHz: 1.0,
+        dutyCycle: 0.35,
+        depthMinM: 0.15,
+        depthMaxM: 0.60,
+        mouthWidthMm: 65,
+        mouthHeightMm: 45,
+        mouthDepthMm: 80
+    },
+    steelhead: {
+        label: 'Steelhead',
+        freqHz: 1.2,
+        dutyCycle: 0.30,
+        depthMinM: 0.10,
+        depthMaxM: 0.45,
+        mouthWidthMm: 45,
+        mouthHeightMm: 30,
+        mouthDepthMm: 55
+    },
+    coho: {
+        label: 'Coho',
+        freqHz: 1.1,
+        dutyCycle: 0.35,
+        depthMinM: 0.15,
+        depthMaxM: 0.50,
+        mouthWidthMm: 55,
+        mouthHeightMm: 38,
+        mouthDepthMm: 65
+    }
 };
+
+/** Points to the currently selected species entry in SALMON_SPECIES. */
+var SALMON_DEFAULTS = SALMON_SPECIES.chinook;
+
+/** Active species key — default 'chinook'. Updated by setSalmonSpecies(). */
+var ACTIVE_SALMON_SPECIES = 'chinook';
+
+/**
+ * Switch the active species.
+ * @param {string} name — 'chinook', 'steelhead', or 'coho'
+ * Returns true if recognised, false if unknown (defaults to chinook).
+ */
+function setSalmonSpecies(name) {
+    name = (name || '').toLowerCase();
+    if (SALMON_SPECIES[name]) {
+        ACTIVE_SALMON_SPECIES = name;
+        SALMON_DEFAULTS = SALMON_SPECIES[name];
+        return true;
+    }
+    // Unknown species — fall back to chinook
+    ACTIVE_SALMON_SPECIES = 'chinook';
+    SALMON_DEFAULTS = SALMON_SPECIES.chinook;
+    return false;
+}
+
+/** Return the current species key. */
+function getSalmonSpecies() {
+    return ACTIVE_SALMON_SPECIES;
+}
 
 /**
  * Compute the salmon's current state at time t.

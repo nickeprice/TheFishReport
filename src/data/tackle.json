@@ -327,14 +327,14 @@
       "id": "cheater-12",
       "type": "foam",
       "label": "Cheater 12 (egg 13x9.5mm)",
-      "mass_g": 0.3,
-      "buoyancy_g": 0.7,
-      "area_cm2": 0.97,
+      "mass_g": 0.276,
+      "buoyancy_g": 0.553,
+      "area_cm2": 0.933,
       "shape": "other",
       "cd": 0.5,
-      "notes": "egg 13x9.5mm; area = broadside ellipse pi*6.5*4.75mm; cd approx",
-      "volume_cm3": 0.701,
-      "density_g_cm3": 0.428
+      "notes": "measured 2026-10-02: caliper L=12.5mm, W=9.5mm teardrop with 2mm hole; ellipsoid vol 0.553mL; mass=0.276g; density 0.50",
+      "volume_cm3": 0.5538,
+      "density_g_cm3": 0.4984
     },
     {
       "id": "copoly-generic-10",
@@ -584,41 +584,41 @@
       "label": "Corky 10 (10mm)",
       "diameter_mm": 10.0,
       "mass_g": 0.233,
-      "buoyancy_g": 0.6,
+      "buoyancy_g": 0.493,
       "area_cm2": 0.785,
       "shape": "sphere",
       "cd": 0.47,
-      "notes": "measured; density 0.5; 20-count, 0.001 g scale",
-      "volume_cm3": 0.6008,
-      "density_g_cm3": 0.3878
+      "notes": "measured 2026-10-02: caliper D=10mm, hole=2mm; geometric volume 0.493mL; mass=0.233g; density 0.47",
+      "volume_cm3": 0.4937,
+      "density_g_cm3": 0.4719
     },
     {
       "id": "corky-12",
       "type": "foam",
-      "label": "Corky 12 (8mm)",
-      "diameter_mm": 8.0,
+      "label": "Corky 12 (8.4mm)",
+      "diameter_mm": 8.4,
       "mass_g": 0.129,
-      "buoyancy_g": 0.4,
-      "area_cm2": 0.503,
+      "buoyancy_g": 0.296,
+      "area_cm2": 0.554,
       "shape": "sphere",
       "cd": 0.47,
-      "notes": "measured; density 0.5; 20-count, 0.001 g scale",
-      "volume_cm3": 0.4006,
-      "density_g_cm3": 0.322
+      "notes": "measured 2026-10-02: caliper D=8.4mm, hole=1.5mm; geometric volume 0.296mL; mass=0.129g; density 0.44",
+      "volume_cm3": 0.2964,
+      "density_g_cm3": 0.4352
     },
     {
       "id": "corky-14",
       "type": "foam",
-      "label": "Corky 14 (6mm)",
-      "diameter_mm": 6.0,
+      "label": "Corky 14 (7mm)",
+      "diameter_mm": 7.0,
       "mass_g": 0.111,
-      "buoyancy_g": 0.1,
-      "area_cm2": 0.283,
+      "buoyancy_g": 0.168,
+      "area_cm2": 0.385,
       "shape": "sphere",
       "cd": 0.47,
-      "notes": "mass from 6-count batch; buoyancy DERIVED from density 0.5; 20-count, 0.001 g scale",
-      "volume_cm3": 0.1001,
-      "density_g_cm3": 1.1089
+      "notes": "measured 2026-10-02: caliper D=7.0mm, hole=1.5mm; geometric volume 0.168mL; mass=0.111g; density 0.66",
+      "volume_cm3": 0.1682,
+      "density_g_cm3": 0.6599
     },
     {
       "id": "fluoro-berkley-trilene-100-10",
@@ -1042,29 +1042,29 @@
       "id": "hook-1",
       "type": "hook",
       "label": "Hook 1",
-      "mass_g": 0.2,
-      "notes": "dry weight measured"
+      "mass_g": 0.3,
+      "notes": "dry weight measured 2026-10-02 (0.001 g scale)"
     },
     {
       "id": "hook-1-0",
       "type": "hook",
       "label": "Hook 1/0",
-      "mass_g": 0.28,
-      "notes": "dry weight measured"
+      "mass_g": 0.381,
+      "notes": "dry weight measured 2026-10-02 (0.001 g scale)"
     },
     {
       "id": "hook-2",
       "type": "hook",
       "label": "Hook 2",
-      "mass_g": 0.16,
-      "notes": "dry weight measured"
+      "mass_g": 0.219,
+      "notes": "dry weight measured 2026-10-02 (0.001 g scale)"
     },
     {
       "id": "hook-2-0",
       "type": "hook",
       "label": "Hook 2/0",
-      "mass_g": 0.35,
-      "notes": "dry weight measured"
+      "mass_g": 0.482,
+      "notes": "dry weight measured 2026-10-02 (0.001 g scale)"
     },
     {
       "id": "mono-ande-premium-10",

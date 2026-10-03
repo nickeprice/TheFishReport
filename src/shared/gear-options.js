@@ -23,8 +23,8 @@ var GEAR_OPTIONS = {
   ],
   foam: [
     { val: '0', label: 'None' },
-    { val: '14', label: 'Corky 14 (6mm)' },
-    { val: '12', label: 'Corky 12 (8mm)' },
+    { val: '14', label: 'Corky 14 (7mm)' },
+    { val: '12', label: 'Corky 12 (8.4mm)' },
     { val: '10', label: 'Corky 10 (10mm)' },
     { val: 'c12', label: 'Cheater 10' }
   ],

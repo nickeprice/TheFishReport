@@ -1,18 +1,18 @@
 id,type,label,brand,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,sample_length_mm,notes
-corky-14,foam,Corky 14 (6mm),,,,6.0,0.111,0.1,,0.283,sphere,0.47,,,,,"mass from 6-count batch; buoyancy DERIVED from density 0.5; 20-count, 0.001 g scale"
-corky-12,foam,Corky 12 (8mm),,,,8.0,0.129,0.4,,0.503,sphere,0.47,,,,,"measured; density 0.5; 20-count, 0.001 g scale"
-corky-10,foam,Corky 10 (10mm),,,,10.0,0.233,0.6,,0.785,sphere,0.47,,,,,"measured; density 0.5; 20-count, 0.001 g scale"
-cheater-12,foam,Cheater 12 (egg 13x9.5mm),,,,,0.3,0.7,,0.97,other,0.5,,,,,egg 13x9.5mm; area = broadside ellipse pi*6.5*4.75mm; cd approx
+corky-14,foam,Corky 14 (7mm),,,,7.0,0.111,0.168,,0.385,sphere,0.47,,,,,"measured 2026-10-02: caliper D=7.0mm, hole=1.5mm; geometric volume 0.168mL; mass=0.111g; density 0.66"
+corky-12,foam,Corky 12 (8.4mm),,,,8.4,0.129,0.296,,0.554,sphere,0.47,,,,,"measured 2026-10-02: caliper D=8.4mm, hole=1.5mm; geometric volume 0.296mL; mass=0.129g; density 0.44"
+corky-10,foam,Corky 10 (10mm),,,,10.0,0.233,0.493,,0.785,sphere,0.47,,,,,"measured 2026-10-02: caliper D=10mm, hole=2mm; geometric volume 0.493mL; mass=0.233g; density 0.47"
+cheater-12,foam,Cheater 12 (egg 13x9.5mm),,,,,0.276,0.553,,0.933,other,0.5,,,,,"measured 2026-10-02: caliper L=12.5mm, W=9.5mm teardrop with 2mm hole; ellipsoid vol 0.553mL; mass=0.276g; density 0.50"
 bead-hard-2,bead,Bead hard 2mm,,hard,,2.0,0.004,0.004,1.0,0.031,sphere,0.47,,,,,DERIVED geometrically (below 0.01g scale)
 bead-hard-4,bead,Bead hard 4mm,,hard,,4.0,0.034,0.034,1.0,0.126,sphere,0.47,,,,,DERIVED geometrically (density 1.0)
 bead-hard-6,bead,Bead hard 6mm,,hard,,6.0,0.11,0.11,1.0,0.283,sphere,0.47,,,,,= soft 6mm measured mass
 bead-hard-8,bead,Bead hard 8mm,,hard,,8.0,0.25,0.25,1.0,0.503,sphere,0.47,,,,,measured 4-count batch = 1.0g; sinks
 bead-soft-6,bead,Bead soft 6mm,,soft,,6.0,0.11,0.11,1.0,0.283,sphere,0.47,,,,,measured 10-count = 1.1g; neutral (bubble floats it)
 bead-soft-8,bead,Bead soft 8mm,,soft,,8.0,0.25,0.25,1.0,0.503,sphere,0.47,,,,,"= hard 8mm (same size, density 1.0)"
-hook-2-0,hook,Hook 2/0,,,,,0.35,,,,,,,,,,dry weight measured
-hook-1-0,hook,Hook 1/0,,,,,0.28,,,,,,,,,,dry weight measured
-hook-1,hook,Hook 1,,,,,0.2,,,,,,,,,,dry weight measured
-hook-2,hook,Hook 2,,,,,0.16,,,,,,,,,,dry weight measured
+hook-2-0,hook,Hook 2/0,,,,,0.482,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
+hook-1-0,hook,Hook 1/0,,,,,0.381,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
+hook-1,hook,Hook 1,,,,,0.3,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
+hook-2,hook,Hook 2,,,,,0.219,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
 yarn-egg,yarn,Egg yarn (saturated),,,,,,,,1.8,cylinder,0.8,,,-0.012,,ESTIMATED near-neutral; model -0.012/in (slightly sinking - not buoyant)
 braid-generic-20,line,Generic average 20lb,Generic average,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-generic-30,line,Generic average 30lb,Generic average,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)

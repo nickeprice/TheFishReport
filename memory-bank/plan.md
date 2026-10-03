@@ -16,3 +16,7 @@ Spec: docs/CHAIN_SOLVER.md
 
 ### Fixes
 - [x] Fix Step 9: DELETE cable.js, terminal.js, sinker.js
+
+### Physics Validation Tests
+
+- [x] 1. Add rigorous physics validation tests: terminal velocity, Hooke's law + damping, low-Re line drag, shear profile boundaries, and bed contact + Coulomb friction

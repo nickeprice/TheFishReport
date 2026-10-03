@@ -153,7 +153,7 @@ var DRIFT_TECHNIQUE = {
                     rodHeightM: 1.5
                 };
                 var chainResult = chainSolve(rig, chainEnv);
-                hookDepthM = chainResult.hookDepthM;
+                hookDepthM = chainResult.converged ? chainResult.hookDepthM : null;
 
                 if (typeof interceptionProbability === 'function') {
                     var ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);

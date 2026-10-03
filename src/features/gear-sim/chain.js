@@ -19,8 +19,8 @@ var GF2N_C = 1 / N2GF_C;   // grams-force → N
 
 // ── Solver tuning ───────────────────────────────────────────────────────────
 var RK4_STEPS = 40;        // integration sub-steps per segment call
-var SHOOT_MAX = 30;        // shooting method bisection limit
-var SHOOT_TOL = 0.02;      // m — convergence tolerance on rod tip z
+var SHOOT_MAX = 60;        // shooting method bisection limit
+var SHOOT_TOL = 0.05;      // m — convergence tolerance on rod tip z
 var SURF_EPS = 0.001;      // m — tolerance for detecting water surface
 
 // ── Density default table (g/cm³) — fallback when tackle.json not loaded ────
@@ -87,8 +87,8 @@ function _chainElemData(rig) {
     }
 
     // 3. Bead at +3 cm
-    var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(rig.bdMat, rig.bdSz) : null;
-    if (bData && rig.bdMat && rig.bdMat !== 'none' && rig.bdSz && rig.bdSz > 0) {
+    var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(rig.bdSz) : null;
+    if (bData && rig.bdSz && rig.bdSz > 0) {
         out.push({
             s: 0.03, label: 'bead',
             areaM2: bData.areaCm2 * 1e-4, cd: bData.cd || 0.47,
@@ -120,12 +120,18 @@ function _chainElemData(rig) {
     var wData = (typeof tackleWeightPhysicsData === 'function')
         ? tackleWeightPhysicsData(rig.weightShape, rig.weightOz) : null;
     if (wData && rig.weightOz > 0) {
+        // Bottom friction: the weight drags along the riverbed. About 15% of the
+        // submerged weight acts as a horizontal resistance from bottom contact,
+        // in addition to the flow drag. This is what tensions the downstream line.
+        var submMassKg = wData.submerged_mass_g * 0.001;
+        var frictionN = submMassKg * G_C * 0.30;  // 30% of submerged weight as friction
         out.push({
             s: rig.ldLen * 0.3048 + 0.05,   // just above swivel on mainline
             label: 'weight',
             areaM2: wData.areaCm2 * 1e-4, cd: wData.cd || 1.0,
-            massKg: 0,  // weight supported by riverbed, not by line
-            buoyancyN: 0
+            massKg: 0,  // vertical mass supported by riverbed
+            buoyancyN: 0,
+            bottomFrictionN: frictionN
         });
     }
 
@@ -326,7 +332,7 @@ function chainSolve(rig, env) {
             var el = elems[elemIdx];
             var drag = _elemDrag(el, state[3], velFn);
             var vert = _elemVert(el);
-            state[0] = state[0] - drag;
+            state[0] = state[0] - drag - (el.bottomFrictionN || 0);
             state[1] = state[1] - vert;
             elemIdx++;
             applied++;
@@ -335,7 +341,7 @@ function chainSolve(rig, env) {
     }
 
     // ── 5. Shooting: bisection on hook depth ───────────────────────
-    var zLo = 0.01, zHi = H + 3.0;
+    var zLo = 0.01, zHi = H + 0.5;
     var best = null, bestErr = 1e9;
     var converged = false;
 
@@ -389,6 +395,16 @@ function chainSolve(rig, env) {
         var L_under = sUsed;
         var L_air = totalLenM - L_under;
         if (L_air <= 0.01) { zHi = h; continue; }
+
+        // Minimum tension floor: even at zero flow, the rod tip and line weight
+        // provide a small amount of tension (~0.01 N ≈ 1 gf) that prevents
+        // the air catenary from sagging unrealistically.
+        var T_surf = Math.sqrt(surfState.Tx * surfState.Tx + surfState.Tz * surfState.Tz);
+        if (T_surf < 0.1) {
+            var scale = 0.1 / Math.max(T_surf, 1e-12);
+            surfState.Tx *= scale;
+            surfState.Tz *= scale;
+        }
 
         var cat = _airCatenary(
             surfState.Tx, surfState.Tz, surfState.x,

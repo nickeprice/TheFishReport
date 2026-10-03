@@ -558,7 +558,7 @@
       "area_cm2": 0.785,
       "shape": "other",
       "cd": 0.47,
-      "notes": "measured 2026-10-02: ellipsoid 12.5x10mm hole=2mm; vol 0.616mL; mass=0.233g; density 0.378",
+      "notes": "measured 2026-10-02: ellipsoid 12.5x10mm hole=2mm; vol 0.616mL; mass=0.233g; density 0.378; mass\u00b1~0.02g (6-count batch)",
       "volume_cm3": 0.6169,
       "density_g_cm3": 0.3777
     },
@@ -572,7 +572,7 @@
       "area_cm2": 0.554,
       "shape": "other",
       "cd": 0.47,
-      "notes": "measured 2026-10-02: caliper D=8.4mm, hole=1.5mm; ellipsoid vol 0.370mL; mass=0.129g; density 0.35; est L=10.5mm",
+      "notes": "measured 2026-10-02: caliper D=8.4mm, hole=1.5mm; ellipsoid vol 0.370mL; mass=0.129g; density 0.35; est L=10.5mm; mass\u00b1~0.02g (6-count batch); \u26a0\ufe0fL estimate needs caliper",
       "volume_cm3": 0.3705,
       "density_g_cm3": 0.3482
     },
@@ -586,7 +586,7 @@
       "area_cm2": 0.385,
       "shape": "other",
       "cd": 0.47,
-      "notes": "measured 2026-10-02: caliper D=7.0mm, hole=1.5mm; ellipsoid vol 0.209mL; mass=0.111g; density 0.53; est L=8.8mm",
+      "notes": "measured 2026-10-02: caliper D=7.0mm, hole=1.5mm; ellipsoid vol 0.209mL; mass=0.111g; density 0.53; est L=8.8mm; mass\u00b1~0.02g (6-count batch); \u26a0\ufe0fL estimate needs caliper",
       "volume_cm3": 0.2093,
       "density_g_cm3": 0.5303
     },
@@ -1798,7 +1798,7 @@
       "shape": "cylinder",
       "cd": 0.8,
       "buoyancy_per_inch_g": -0.012,
-      "notes": "ESTIMATED near-neutral; model -0.012/in (slightly sinking - not buoyant)"
+      "notes": "\u26a0\ufe0fUNMEASURED \u2014 needs 10 soak buoyancy measurement (replace when measured)\""
     }
   ]
 }

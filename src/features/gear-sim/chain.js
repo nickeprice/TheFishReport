@@ -71,7 +71,7 @@ function _chainElemData(rig) {
         areaM2: (hData ? hData.areaCm2 : 0.1) * 1e-4,
         cd: (hData ? hData.cd : 0.47),
         massKg: (hData ? hData.mass_g : 0.15) * 0.001,
-        buoyancyN: 0
+        buoyancyN: (hData ? hData.buoyancy_g : 0) * GF2N_C
     });
 
     // 2. Yarn at +1 cm

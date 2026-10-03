@@ -46,7 +46,7 @@ var DRIFT_TECHNIQUE = {
         var f1G = foam.net_buoyancy_g;
         var f2G = foam2.net_buoyancy_g;
         var hData = (typeof tackleHookData === 'function') ? tackleHookData(hook) : null;
-        var hookMassG = hData ? hData.mass_g : 0;
+        var hookMassG = hData ? (hData.mass_g - hData.buoyancy_g) : 0;
         var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdSz) : null;
         var beadNetSink = bData ? bData.netSinkG : 0;
         var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(yarn) : 0;

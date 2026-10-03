@@ -119,7 +119,8 @@ function tackleHookData(hookVal) {
     if (!tid) return null;
     var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
     if (!item) return null;
-    return { mass_g: item.mass_g || 0, areaCm2: item.area_cm2 || 0, cd: item.cd || 0.47 };
+    var massG = item.mass_g || 0;
+    return { mass_g: massG, buoyancy_g: massG / 7.85, areaCm2: item.area_cm2 || 0, cd: item.cd || 0.47 };
 }
 
 /**

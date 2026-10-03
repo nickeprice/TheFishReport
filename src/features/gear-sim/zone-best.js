@@ -99,7 +99,7 @@ function bestZoneRig(zone, rig, vel) {
                             var hData = (typeof tackleHookData === 'function') ? tackleHookData(HOOK_OPTIONS[h]) : null;
                             var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(beads[b]) : null;
                             var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(YARN_OPTIONS[y]) : 0;
-                            var hookMassG = hData ? hData.mass_g : 0;
+                            var hookMassG = hData ? (hData.mass_g - hData.buoyancy_g) : 0;
                             var beadNetSink = bData ? bData.netSinkG : 0;
                             var liftGf = computeLiftGf(foam.net_buoyancy_g, foam2.net_buoyancy_g, hookMassG, beadNetSink, yG);
                             var changed = [];

@@ -124,7 +124,7 @@ function _chainElemData(rig) {
             s: rig.ldLen * 0.3048 + 0.05,   // just above swivel on mainline
             label: 'weight',
             areaM2: wData.areaCm2 * 1e-4, cd: wData.cd || 1.0,
-            massKg: wData.submerged_mass_g * 0.001, // already Archimedes-corrected
+            massKg: 0,  // weight supported by riverbed, not by line
             buoyancyN: 0
         });
     }

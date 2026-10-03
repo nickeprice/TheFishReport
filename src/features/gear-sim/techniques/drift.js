@@ -56,6 +56,8 @@ var DRIFT_TECHNIQUE = {
         var wData = (typeof tackleWeightPhysicsData === 'function')
             ? tackleWeightPhysicsData(weightShape, weightOz) : null;
         var weightObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
+        // Gear mass (submerged) for hook-seat momentum calculation in kg
+        var gearMassKg = wData ? wData.submerged_mass_g / 1000 : 0.030;
         var corky1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
         var corky2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
         var beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
@@ -166,7 +168,7 @@ var DRIFT_TECHNIQUE = {
                         var tEq = terminalEquilibrium(liftN, 0, hookMassKg);
                         hookDepthM = ldBotZ + (tEq.isEquilibrium ? 0 : 0.1);
                         if (typeof interceptionProbability === 'function') {
-                            var ip = interceptionProbability(hookDepthM, bedVelMs);
+                            var ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);
                             interceptionProb = ip.probability;
                             sweepQuality = ip.avgSweepQuality;
                         }

@@ -31,6 +31,7 @@ var HOOK_PEN_FORCE_N = 2.0;    // N
  * salmonZ: salmon holding depth (m) — if null, randomised
  * mouthOpen: whether the salmon's mouth is open — if null, randomised
  * flowMs: water velocity at the holding depth (m/s)
+ * gearMassKg: effective gear mass for hook-seat momentum (kg), default 0.030
  *
  * Returns {
  *   phases: [string],         — the phases reached (up to 4)
@@ -41,7 +42,8 @@ var HOOK_PEN_FORCE_N = 2.0;    // N
  * }.
  * @provenance: standard — geometric state machine + force threshold.
  */
-function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs) {
+function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs, gearMassKg) {
+    if (gearMassKg === undefined) gearMassKg = 0.030;
     var phases = [];
     var hooked = false;
     var sZ = salmonZ || salmonPositionZ(0.15, 0.60);
@@ -76,10 +78,11 @@ function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs) {
     // Phase 4: Seat — momentum-threshold sigmoid
     // Hook seats when kinetic energy ½·m·v² exceeds work to penetrate tissue.
     // Threshold velocity v₅₀ = √(2·F_pen·d_stop / m_gear)
-    // For m=0.030 kg (1 oz), F_pen≈2 N, d_stop=0.008 m → v₅₀ ≈ 1.03 m/s
+    // For m=0.030 kg (1 oz default), F_pen≈2 N, d_stop=0.008 m → v₅₀ ≈ 1.03 m/s
+    // gearMassKg parameter overrides default; passed from weight submerged mass.
     // @provenance: derived — momentum-threshold sigmoid
     var relV = flowMs || 1.0;
-    var v50 = Math.sqrt(2 * HOOK_PEN_FORCE_N * SEAT_DISTANCE_M / 0.030);
+    var v50 = Math.sqrt(2 * HOOK_PEN_FORCE_N * SEAT_DISTANCE_M / gearMassKg);
     var seatProb = 1 / (1 + Math.exp(-5 * (relV - v50)));
     var seats = Math.random() < seatProb;
     if (seats) {
@@ -98,6 +101,7 @@ function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs) {
  *
  * hookDepthM: the hook depth from the cable/terminal simulation
  * flowMs: water velocity at the holding zone (m/s)
+ * gearMassKg: effective gear mass for hook-seat momentum (kg), default 0.030
  *
  * Returns {
  *   probability: number,   — 0 to 1
@@ -108,11 +112,12 @@ function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs) {
  * }.
  * @provenance: standard — Monte-Carlo sampling.
  */
-function interceptionProbability(hookDepthM, flowMs) {
+function interceptionProbability(hookDepthM, flowMs, gearMassKg) {
+    if (gearMassKg === undefined) gearMassKg = 0.030;
     var sweeps = 0, collisions = 0, hooked = 0;
     var qualitySum = 0;
     for (var i = 0; i < MC_RUNS; i++) {
-        var r = interceptionRun(hookDepthM, null, null, flowMs);
+        var r = interceptionRun(hookDepthM, null, null, flowMs, gearMassKg);
         if (r.phases.indexOf('SWEEP') >= 0) {
             sweeps++;
             qualitySum += r.sweepQuality;

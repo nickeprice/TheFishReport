@@ -6,7 +6,7 @@ Spec: docs/CHAIN_SOLVER.md
 - [x] 2. lineNetBuoyancyPerFt() — physics.js, Archimedes net buoyancy per foot
 - [x] 3. Weight submerged mass — already in tackleWeightPhysicsData()
 - [x] 4. Salmon species registry — salmon.js: add Chinook/Steelhead/Coho params
-- [ ] 5. Gear mass parameter — interception.js: replace hardcoded 0.030kg
+- [x] 5. Gear mass parameter — interception.js: replace hardcoded 0.030kg
 - [ ] 6. D50 parameter — hydro.js: make MEDIAN_COBBLE_M overridable
 - [ ] 7. chain.js NEW — RK4 + shooting method + air catenary
 - [ ] 8. Wire chain solver into drift.js, remove cable/terminal/sinker

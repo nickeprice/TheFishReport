@@ -82,7 +82,7 @@ function _chainElemData(rig) {
         out.push({
             s: 0.01, label: 'yarn',
             areaM2: yd.areaCm2 * 1e-4, cd: yd.cd,
-            massKg: 0, buoyancyN: yBuoyG * GF2N_C * G_C
+            massKg: 0, buoyancyN: yBuoyG * GF2N_C
         });
     }
 
@@ -102,7 +102,7 @@ function _chainElemData(rig) {
         out.push({
             s: 0.06, label: 'corky1',
             areaM2: (f.areaCm2 || 0) * 1e-4, cd: f.cd || 0.47,
-            massKg: (f.mass_g || 0) * 0.001, buoyancyN: f.net_buoyancy_g * GF2N_C * G_C
+            massKg: (f.mass_g || 0) * 0.001, buoyancyN: f.net_buoyancy_g * GF2N_C
         });
     }
 
@@ -112,7 +112,7 @@ function _chainElemData(rig) {
         out.push({
             s: 0.10, label: 'corky2',
             areaM2: (f2.areaCm2 || 0) * 1e-4, cd: f2.cd || 0.47,
-            massKg: (f2.mass_g || 0) * 0.001, buoyancyN: f2.net_buoyancy_g * GF2N_C * G_C
+            massKg: (f2.mass_g || 0) * 0.001, buoyancyN: f2.net_buoyancy_g * GF2N_C
         });
     }
 

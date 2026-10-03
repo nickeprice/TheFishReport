@@ -73,6 +73,7 @@ var DRIFT_TECHNIQUE = {
             dragGfPerFt += lineDragPerFt(mlDia, velocity.mean);
         }
         var hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
+        var fallbackHgt = hgt;  // preserve for when chain solver does not converge
         var blownOut = (bedVel > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------
@@ -171,6 +172,12 @@ var DRIFT_TECHNIQUE = {
         } catch (e) {
             if (typeof logDebug === 'function')
                 logDebug('Chain solver: ' + String(e.message).split('\n')[0], 'SIM');
+        }
+        // Override presentation height with chain solver result when converged
+        if (chainResult && chainResult.converged) {
+            hgt = chainResult.hookZ * 39.37;  // m → inches above bottom
+        } else {
+            hgt = fallbackHgt;
         }
         // ====== END NEW PIPELINE ======
 

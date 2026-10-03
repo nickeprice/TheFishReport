@@ -65,16 +65,21 @@ def test_line_static_elongation_and_damping():
     """
     Test 2: Lumped-Mass Line Static Stretch (Hooke's Law) & Energy Conservation
     A 5.0m vertical 0.30mm line holding a 1/2 oz sinker in a vacuum/air (no fluid drag)
-    must settle at delta_L = (M * g * L0) / (E * A), and total kinetic energy must decay to zero.
+    must settle at delta_L = ((M + 0.5 * m_line) * g * L0) / (E * A),
+    including the distributed self-weight of the line, and total kinetic energy must
+    decay to zero.
     """
     diameter = 0.0003  # 0.30 mm
     area_line = math.pi * ((diameter / 2.0) ** 2)
     youngs_modulus = 2.5e9  # 2.5 GPa (Copolymer/Nylon baseline)
     l0_total = 5.0  # 5 meters
     load_mass = 0.014175  # 1/2 oz sinker
+    rho_line = 1150.0     # kg/m^3 (nylon/copolymer density)
+    line_mass = rho_line * area_line * l0_total  # distributed self-weight
 
-    # Analytical static elongation
-    delta_l_analytical = (load_mass * G * l0_total) / (youngs_modulus * area_line)
+    # Analytical static elongation including self-weight correction:
+    # delta = ((M + 0.5 * m_line) * g * L0) / (E * A)
+    delta_l_analytical = ((load_mass + 0.5 * line_mass) * G * l0_total) / (youngs_modulus * area_line)
     expected_final_length = l0_total + delta_l_analytical
 
     # Discretize into 10 segments (11 nodes)

@@ -77,7 +77,7 @@ var DRIFT_TECHNIQUE = {
 
         // 3. Where the fish are today, then score the presentation --------------------
         var sonar = communitySonar(dbArray, flow, species, env.siteId);
-        var zone = computeStrikeZone(sonar);
+        var zone = computeStrikeZone(null);  // sonar paused until physics is validated
         var score = 5.0;
         if (blownOut) {
             score = 0.0;

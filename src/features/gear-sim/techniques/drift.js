@@ -179,6 +179,9 @@ var DRIFT_TECHNIQUE = {
         } else {
             hgt = fallbackHgt;
         }
+        // Blend interception probability into score: 70% positional, 30% interception
+        var blendedScore = score * (0.7 + 0.3 * interceptionProb);
+        score = Math.max(0.0, Math.min(5.0, Number(blendedScore.toFixed(3))));
         // ====== END NEW PIPELINE ======
 
         return {

@@ -17,26 +17,37 @@ var RHO_WATER = 998;       // kg/m^3, fresh water at 20degC
 var G = 9.81;              // m/s^2
 var N_TO_GF = 101.97;      // 1 N = 101.97 grams-force
 var CFS_TO_MS = 0.3048;    // ft/s -> m/s
+var NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10°C
 
-// Drag coefficient for a smooth cylinder in crossflow at Re ~ 200-1000
-// (the regime of fishing line in a river). Flat at ~1.0 across this range.
-var CD_LINE = 1.0;
+// ── Re-dependent line drag coefficient ───────────────────────────────────────
+// Smooth cylinder in crossflow: Cd(Re) = 1 + 10·Re⁻²⁄³  (White 1991).
+// For leader diameters 0.2-0.5 mm in river flows 0.2-3 ft/s,
+// Re ranges ≈ 20-1500.  The classical flat Cd=1.0 is ~35% low at Re=150.
+// @provenance: literature — White's empirical fit for smooth circular cylinders.
+
+function lineCd(reynolds) {
+    if (!reynolds || reynolds <= 0) return 1.0;
+    return 1.0 + 10.0 * Math.pow(reynolds, -2.0 / 3.0);
+}
 
 
 // ====== DRAG ======
 
 /**
  * Drag of a 1-foot segment of leader line at broadside to the flow.
- *   w_gf_per_ft = 0.5 * RHO_WATER * CD_LINE * (diam_m * 0.3048) * v_m/s^2 * N_TO_GF
+ *   w_gf_per_ft = 0.5 * RHO_WATER * Cd(Re) * (diam_m * 0.3048) * v_m/s^2 * N_TO_GF
+ * Cd is Reynolds-number dependent via lineCd() — White's smooth-cylinder fit.
  * Returns grams-force per foot of leader.
  * Floored at 0.001 gf/ft to prevent degenerate catenary behaviour.
  */
 function lineDragPerFt(diameterMm, velocityFtS) {
     if (!diameterMm || diameterMm <= 0 || !velocityFtS || velocityFtS <= 0) return 0.001;
     var dM = diameterMm * 0.001;               // mm -> m
-    var areaPerFtM2 = dM * 0.3048;             // m^2 - 1 ft broadside projection
     var vMs = velocityFtS * CFS_TO_MS;          // ft/s -> m/s
-    var forceN = 0.5 * RHO_WATER * CD_LINE * areaPerFtM2 * vMs * vMs;
+    var areaPerFtM2 = dM * 0.3048;             // m^2 - 1 ft broadside projection
+    var re = (vMs * dM) / NU_WATER;            // Reynolds number (dimensionless)
+    var cd = lineCd(re);                       // Re-dependent drag coefficient
+    var forceN = 0.5 * RHO_WATER * cd * areaPerFtM2 * vMs * vMs;
     return Math.max(0.001, forceN * N_TO_GF);
 }
 

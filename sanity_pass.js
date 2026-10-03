@@ -847,16 +847,44 @@ function behaviorChecks(done) {
       ? ok('gear-sim physics engine runs (beta — no baseline)', `${allOk}/${cases.length} rigs produce finite, positive outputs`)
       : fail('gear-sim physics engine runs (beta — no baseline)', `${allOk}/${cases.length} rigs sane`);
 
-    // gap (2026-10-01): line drag is a pure function of diameter in mm.
-    // The NEW physics uses lineDragPerFt(diameterMm, velocity) from first principles.
-    // Two diameters at the same velocity produce a predictable ratio.
+    // gap (2026-10-01): lineDragPerFt uses Re-dependent Cd (White 1991).
+    // The drag ratio between two diameters at the same velocity deviates from the
+    // pure diameter ratio because the smaller-diameter line operates at lower Re,
+    // giving a HIGHER Cd.  This test validates that the Cd correction is active
+    // and moves in the correct direction.
     const vb = hydraulicVelocity(1040).bottom;
-    const dA = lineDragPerFt(0.31, vb);
-    const dB = lineDragPerFt(0.29, vb);
-    const ratio = dA / dB;
-    Math.abs(ratio - (0.31 / 0.29)) < 1e-3
-      ? ok('line drag scales linearly with diameter', '0.31mm drag / 0.29mm drag ~ 0.31/0.29')
-      : fail('line drag scales linearly with diameter', `ratio ${ratio} want ${0.31/0.29}`);
+    const vMs = vb * CFS_TO_MS;
+    const dA = 0.31, dB = 0.29;                     // mm
+    const dAM = dA * 0.001, dBM = dB * 0.001;        // m
+    const reA = vMs * dAM / NU_WATER;
+    const reB = vMs * dBM / NU_WATER;
+    const cdA = lineCd(reA), cdB = lineCd(reB);
+    const dragA = lineDragPerFt(dA, vb);
+    const dragB = lineDragPerFt(dB, vb);
+    const ratio = dragA / dragB;
+
+    // Both Re must be in the subcritical regime where the White fit applies
+    reA > 10 && reB > 10 && reA < 1e5 && reB < 1e5
+      ? ok('line drag Re in valid range for White-fit Cd formulation',
+           `Re(${dA}mm)=${reA.toFixed(1)} Re(${dB}mm)=${reB.toFixed(1)}`)
+      : fail('line drag Re in valid range for White-fit Cd formulation',
+             `reA=${reA} reB=${reB}`);
+
+    // The smaller-diameter line has lower Re → higher Cd
+    cdA > 1.0 && cdB > 1.0 && cdB > cdA
+      ? ok('line drag Cd(Re) is higher for smaller diameter (lower Re → higher Cd)',
+           `Cd(${dA}mm)=${cdA.toFixed(3)} Cd(${dB}mm)=${cdB.toFixed(3)}`)
+      : fail('line drag Cd(Re) is higher for smaller diameter (lower Re → higher Cd)',
+             `cdA=${cdA} cdB=${cdB}`);
+
+    // The drag ratio (1.0589) is between the diameter ratio (1.069) and 1.0,
+    // because the Cd correction partially compensates the size difference.
+    ratio < dA/dB && ratio > 1.0
+      ? ok('line drag uses Re-dependent Cd formulation',
+           `drag(${dA}mm)/drag(${dB}mm) = ${ratio.toFixed(4)} ` +
+           `(dia ratio ${(dA/dB).toFixed(4)} → Cd correction moves toward 1.0)`)
+      : fail('line drag uses Re-dependent Cd formulation',
+             `ratio ${ratio} want between 1.0 and ${dA/dB}`);
 
     // --- P3 (2026-09-30): the weight's SHAPE now reaches the drag term -----------------
     // Before P3 the anchor term was `0.7 + 0.6*oz`, a read of MASS alone, so a slinky (a

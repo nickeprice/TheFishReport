@@ -77,5 +77,5 @@ Branch: `main` (applied directly)
 - [x] Phase 2: Testing infrastructure prep
 - [x] Phase 3: Schema-driven API contract tests
 - [x] Phase 4: Playwright behavioral UI tests
-- [ ] Phase 5: Chain solver fuzzing via Playwright
-- [ ] Phase 6: Strip orchestration tax from sanity_pass.js + CI
+- [x] Phase 5: Chain solver fuzzing via Playwright
+- [x] Phase 6: Strip orchestration tax from sanity_pass.js + CI

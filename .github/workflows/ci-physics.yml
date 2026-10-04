@@ -32,5 +32,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
+      # tests/test_physics_validation.py now bridges to the JS chain solver via
+      # Playwright page.evaluate(), so the chromium binary is required here too.
+      - name: Install Playwright browsers (chromium)
+        run: python -m playwright install --with-deps chromium
+
       - name: Run physics validation tests
-        run: python -m pytest tests/ -v --tb=short
+        run: python -m pytest tests/test_physics_validation.py -v --tb=short

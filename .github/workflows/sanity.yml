@@ -10,23 +10,40 @@ on:
 jobs:
   sanity:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # The sanity pass has zero npm dependencies (plain node + python3), so no
-      # setup-node / setup-python / install step is required. Both are preinstalled
-      # on ubuntu-latest runners.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
 
-      - name: Run sanity pass
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Install Playwright browsers (chromium)
+        run: python -m playwright install --with-deps chromium
+
+      # Full test suite: schema/API contract (offline-mocked upstreams),
+      # Playwright behavioural UI (mocked /api/water_report), physics validation
+      # + chain-solver fuzzing. All hermetic — no live USGS/NOAA/Open-Meteo calls.
+      - name: Run Python test suite
+        run: python -m pytest tests/ -v --tb=short
+
+      # Instantaneous static linting only (no server, no DOM stub, no HTTP):
+      # label[for] resolution, ARIA names, script load order ending in app.js,
+      # sw.js SHELL_FILES parity, Vercel entry points, dead CSS, docs index.
+      - name: Run static sanity pass
         run: node sanity_pass.js
 
       - name: Confirm no leftover dev servers
         run: |
           if pgrep -f "dev_server.py" >/dev/null; then
-            echo "::error::A dev_server.py process leaked from the sanity pass"
+            echo "::error::A dev_server.py process leaked from the test suite"
             exit 1
           fi
           echo "hermetic: no leftover dev servers"

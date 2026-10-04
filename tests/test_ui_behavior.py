@@ -157,15 +157,25 @@ def mock_api_offline(page):
 
 
 def _goto_and_wait(page, url):
-    """Navigate and wait for JS bootstrap to finish."""
-    page.goto(url)
-    page.wait_for_load_state('networkidle')
-    # Wait for app.js onload to finish (which calls applyTabDeepLink)
-    page.wait_for_function(
-        'typeof window.applyTabDeepLink === "function"', timeout=10000)
-    # Wait for the tabs to exist in the DOM (hidden tabs are display:none,
-    # so only check for attachment, not visibility).
-    page.wait_for_selector('.tab-content', state='attached', timeout=10000)
+    """Navigate and wait for JS bootstrap to finish, retrying once on a hang.
+
+    The classic scripts load synchronously, so applyTabDeepLink is available
+    right after DOMContentLoaded; a retry covers a stalled intermediate
+    navigation under sequential full-suite load.
+    """
+    for attempt in range(2):
+        page.goto(url, wait_until='domcontentloaded')
+        try:
+            page.wait_for_function(
+                'typeof window.applyTabDeepLink === "function"',
+                timeout=10000)
+            page.wait_for_selector('.tab-content', state='attached',
+                                   timeout=10000)
+            return
+        except Exception:
+            if attempt == 0:
+                continue
+            raise
 
 
 def _assert_tab_active(page, tab_id):

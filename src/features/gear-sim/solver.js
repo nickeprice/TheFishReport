@@ -19,7 +19,7 @@ function pickedLineDiameter(pickId) {
 }
 
 function readRigFromForm() {
-    var hookRaw = parseFloat(getStr('hook'));
+    var hookRaw = getStr('hook');
     return {
         flow: getCurrentFlow(),
         weightOz: getNum('weight'),
@@ -32,7 +32,7 @@ function readRigFromForm() {
         mlMat: getStr('ml-mat'),
         mlLb: getNum('ml-lb'),
         mlDia: pickedLineDiameter('ml-line'),
-        hook: isNaN(hookRaw) ? 2 : hookRaw,
+        hook: hookRaw,
         yarn: getNum('yarn'),
         foam: parseFoam(getStr('foam')),        // Foam 1
         foam2: parseFoam(getStr('foam2')),      // Foam 2

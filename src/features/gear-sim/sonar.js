@@ -133,9 +133,8 @@ function communitySonar(dbArray, flow, species, siteId) {
         var foam2 = parseFoam(row.foam_2 !== undefined ? row.foam_2 : row.foam2);
         var bdMat = (row.bdMat !== undefined) ? row.bdMat : row.bead_material;
         var bdSzRaw = (row.bdSz !== undefined && row.bdSz !== null) ? row.bdSz : row.bead_size;
-        var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ? Number(row.hook) : 2;
-        if (isNaN(hookNum)) hookNum = 2;
-        // Lift from tackle.json
+var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ? row.hook : 2;
+        // Lift from tackle.json (tackleHookData handles legacy numeric and string hook ids)
         var hData = (typeof tackleHookData === 'function') ? tackleHookData(hookNum) : null;
         var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdMat, bdSzRaw) : null;
         var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(row.yarn || 0) : 0;

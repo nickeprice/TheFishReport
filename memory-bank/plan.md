@@ -70,3 +70,12 @@ Spec: docs/CHAIN_SOLVER.md
 ### Physics Validation Tests
 
 - [x] 1. Add rigorous physics validation tests: terminal velocity, Hooke's law + damping, low-Re line drag, shear profile boundaries, and bed contact + Coulomb friction
+
+## ✅ Phase R: Repository Overhaul & Testing Optimization (COMPLETE)
+Branch: `main` (applied directly)
+- [x] Phase 1: Workflow overhaul & cleanup
+- [ ] Phase 2: Testing infrastructure prep
+- [ ] Phase 3: Schema-driven API contract tests
+- [ ] Phase 4: Playwright behavioral UI tests
+- [ ] Phase 5: Chain solver fuzzing via Playwright
+- [ ] Phase 6: Strip orchestration tax from sanity_pass.js + CI

@@ -146,6 +146,23 @@ function tackleBeadData(bdSz) {
  * Yarn buoyancy in grams-force per inch, from tackle.json.
  * Saturated egg-yarn is slightly NEGATIVE (sinks ~0.012 gf/in).
  * @provenance: informed_estimate — acrylic ρ≈1.17, packing≈15%, tuft d≈5mm, V≈0.50 cm³/in
+// ==================================================================================
+// WATER TYPES (Phase 1.6) — local hydraulic habitat the angler is fishing.
+// Each type adjusts depth and velocity relative to the gauge/spot measurement.
+// Default (Run) applies 1.0 multipliers — no change from the continuity calculation.
+// ==================================================================================
+var WATER_TYPES = [
+    { id: 'pool',   label: 'Pool',   depthMul: 1.2, velMul: 0.7,
+      desc: 'Deep, slow water — fish hold deep and near cover.' },
+    { id: 'riffle', label: 'Riffle', depthMul: 0.7, velMul: 1.3,
+      desc: 'Shallow, fast water — fish hold in pockets and seams.' },
+    { id: 'run',    label: 'Run',    depthMul: 1.0, velMul: 1.0,
+      desc: 'Moderate depth and current — fish spread across the channel.' },
+    { id: 'glide',  label: 'Glide',  depthMul: 0.9, velMul: 0.9,
+      desc: 'Smooth, even flow — fish hold in tailouts and edges.' }
+];
+
+var DEFAULT_WATER_TYPE = 'run';
  * @value: -0.012 gf/in
  * @error: ±0.012 gf/in (±100%)
  * @measure: user soaks 10" yarn 5 min, weighs wet vs dry → saturated_mass_per_inch → replace

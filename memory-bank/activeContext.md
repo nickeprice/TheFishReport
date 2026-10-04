@@ -1,60 +1,95 @@
-# Active Context — Phase 1.1 Complete
+# Active Context — Phase 1.4-1.7 Complete
 
-## What Was Done (this session)
+## What Was Done
 
-### Phase 1.1: Pre-compute channel widths at ~500m intervals along 5 rivers
+### Phase 1.4-1.5: Nearest-neighbor + Manning correction
+(Previous session - continuity.js updated with SPOT_WIDTHS nearest-neighbor lookup and Manning exponents)
 
-**New files:**
-- `scripts/precompute_spot_widths.py` — fetches river centerlines from OSM Overpass API, chains OSM ways into ordered paths, resamples at 500m Haversine intervals, runs `measure_width_elevation()` (3DEP DEM) at each point
-- `src/data/spot_widths.js` — generated static lookup table (54KB)
-
-**Data generated (379 points total):**
-| River | Points | Length |
-|-------|--------|--------|
-| Puyallup | 71 | 35 km |
-| White | 76 | 37.5 km |
-| Carbon | 53 | 26 km |
-| Green | 96 | 47.5 km |
-| Nisqually | 83 | 41 km |
-
-Each point includes: lat, lon, cum_m (cumulative river metres), wetted_ft, bankfull_ft, thalweg_m, truncated flag.
+### Phase 1.6-1.7: Water type selector + Species selector (UI)
 
 **Files modified:**
-- `index.html` — loads `<script src="src/data/spot_widths.js">` after river_widths.js
-- `sw.js` — `'/src/data/spot_widths.js'` added to SHELL_FILES
-- `docs/SYMBOLS.md` — documented as row 4 in load-order table + data section
+- `index.html` — Gear Sim form:
+  - Added Row 0 (first row): Water Type dropdown + ⓘ info button + Species dropdown
+  - Water type options: Run (default), Pool, Riffle, Glide
+  - Species options: —, Chinook, Coho (Silver), Pink, Chum, Steelhead
+  - Both sync with the Catch Log form via `syncSelect()`
+  - Added `#water-type-modal` with a dynamic guide that renders water type cards (icons, descriptions, multiplier values)
+  
+- `index.html` — Catch Log form:
+  - Added Row 0 in gear-rows: Water Type + Species Caught (synced via `-log` pattern)
+  - Both fields moved from the old Catch Result section into proper gear-rows
+
+- `src/features/gear-sim/inputs.js` — Added `WATER_TYPES` constant array:
+  - Pool: depth ×1.2, velocity ×0.7
+  - Riffle: depth ×0.7, velocity ×1.3
+  - Run (default): depth ×1.0, velocity ×1.0
+  - Glide: depth ×0.9, velocity ×0.9
+  - Plus `DEFAULT_WATER_TYPE = 'run'`
+
+- `src/features/gear-sim/solver.js` — Updated:
+  - `readRigFromForm()` now reads `waterType: getStr('water-type') || 'run'`
+  - Added `waterTypeMultiplier(typeId)` — resolves water type id to multiplier object
+  - Added `openWaterTypeGuide()` — renders water type cards and shows the modal
+  - Added `closeWaterTypeGuide()` — hides the modal
+
+- `src/features/gear-sim/techniques/drift.js` — Updated `compute()`:
+  - Velocity: applies water type `velMul` after continuity/Manning correction
+  - Depth: applies water type `depthMul` before the chain solver
+
+- `docs/SYMBOLS.md` — Updated inputs.js, solver.js API listings
+- `sanity_pass.js` — Updated gearRows count (12→14), GEAR_ORDER prepended with water-type,species
+
+**Behavior change:**
+- Water type selection adjusts the simulation velocity and depth for the local hydraulic habitat
+- Species selection in the Gear Sim sets the target fish (was previously only in the Catch Log)
+- Both fields sync bidirectionally between Gear Sim and Catch Log tab
+- The ⓘ button opens a modal guide with descriptions of each water type
 
 **Verification:** `node sanity_pass.js --quiet` → 199/199 GREEN
 
-### Key Technical Notes
-- River geometries come from OSM Overpass API (bbox-constrained per river to avoid wrong-river matches)
-- DEM tile fetches can hang — use subprocess-per-river with 300s timeout (`scripts/run_all_spot_widths.py` pattern)
-- Each river's DEM measurements take 2-4 minutes (71-96 points × ~0.3-2s per measurement)
-- The `})` closing in `render_js()` was a bug (should be `}`) — FIXED before final generation
-- R_EARTH_M = 6371000 must be defined before `haversine_m()` references it (Python scoping)
+## Next Steps
 
-## Next Steps (Phase 1.3-1.9)
+### Phase 2: Progressive Enhancement Architecture
 
-The plan's remaining Phase 1 items:
+- **2.1** docs/ARCHITECTURE.md — tiered fallback pattern
+- **2.2** Audit all data layers for online/cached/fallback tiers
+- **2.3** Standardize output shape: { value, source, uncertainty }
 
-### 1.3 Fit depth rating curves at each gauge
-- d = c × Q^f from existing channel measurements
-- Add to channel_measurements.js alongside existing velocity fit
+## API Routes
 
-### 1.4 Nearest-neighbor search in continuity.js
-### 1.5 Manning + continuity correction
-- d_spot = d_gauge × (w_gauge / w_spot)^(3/5)
-- v_spot = v_gauge × (w_spot / w_gauge)^(2/5)
+| Route | File | Purpose |
+|-------|------|---------|
+| `/api/water_report` | `api/water_report.py` | Main water report (weather, flow, tide, windows) |
+| `/api/nearby_stations` | `api/nearby_stations.py` | Server-side USGS gauge search for "Use My GPS" |
+| `/api/spot-geometry` | `api/spot-geometry.py` | Nearest pre-computed DEM cross-section from SPOT_WIDTHS |
+| `/api/spot_geometry` | (alias) | Python module name for `spot-geometry` (Vercel deploys by filename) |
 
-### 1.6 Water type selector (UI)
-- Dropdown: Pool / Riffle / Run / Glide with depth×vel multipliers
-- Visual guide popup with SVG cross-section diagrams
+### `/api/spot-geometry` contract
 
-### 1.7 Species selector in Gear Sim (UI)
-### 1.8 Online DEM endpoint (api/spot-geometry.py)
-### 1.9 Online StreamStats enhancement
+```http
+GET /api/spot-geometry?lat=47.2&lon=-122.3
+GET /api/spot-geometry?lat=47.2&lon=-122.3&site_id=12101500   # filter to one river
 
-## Architecture Summary
-- `window.SPOT_WIDTHS.rivers` keyed by river id (`"puyallup"`, `"white"`, `"carbon"`, `"green"`, `"nisqually"`)
-- Each river entry: `{ name, site_id, n_points, points: [{lat, lon, cum_m, wetted_ft, bankfull_ft, thalweg_m, truncated}] }`
-- The lookup table works offline; Phase 1.4 will add nearest-neighbor search to `continuity.js`
+200 OK
+{
+  "ok": true,
+  "result": {
+    "lat": 47.20204,           // nearest DEM point lat
+    "lon": -122.29149,         // nearest DEM point lon
+    "cum_m": 32000,            // cumulative river distance from downstream end (m)
+    "wetted_ft": 276.9,        // channel width at ~2m above thalweg (wetted proxy)
+    "bankfull_ft": 308.8,      // width at highest measured elevation
+    "thalweg_m": 6.77,         // thalweg elevation above sea level (m)
+    "truncated": false,        // DEM window was too small
+    "river": "Puyallup River",
+    "site_id": "12101500",
+    "distance_m": 681.8        // distance from requested point to nearest DEM point
+  },
+  "n_rivers": 5,
+  "note": "pre-computed DEM cross-section (spot_widths.js)"
+}
+
+400 { "error": "lat and lon are required numeric query parameters" }
+404 { "error": "no spot geometry found for the given coordinates", "n_rivers": 5 }
+503 { "error": "spot geometry data unavailable" }
+```

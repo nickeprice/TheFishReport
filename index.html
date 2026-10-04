@@ -170,6 +170,35 @@
              nothing downstream changed. The static <option> lists are the no-library
              fallback — tackle.js replaces them with the library's own values at boot. -->
         <div class="gear-rows">
+            <!-- Row 0 (Phase 1.6-1.7): Water type + Species at the top.
+                 Water type adjusts the simulation for the local hydraulic habitat.
+                 Species selects the target fish for interception probability scoring.
+                 Both sync with the Catch Log form via syncSelect(). -->
+            <div class="gear-row">
+                <div class="field">
+                    <div style="display:flex;align-items:center;gap:2px;margin-bottom:3px;">
+                        <label for="water-type" style="margin:0;">Water Type</label>
+                        <span id="wt-guide-btn" style="color:var(--accent-blue);cursor:pointer;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.03em;">ⓘ</span>
+                    </div>
+                    <select id="water-type" onchange="syncSelect('water-type')">
+                        <option value="run">Run (default)</option>
+                        <option value="pool">Pool</option>
+                        <option value="riffle">Riffle</option>
+                        <option value="glide">Glide</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="species">Species</label>
+                    <select id="species" onchange="syncSelect('species')">
+                        <option value="">—</option>
+                        <option value="Chinook">Chinook</option>
+                        <option value="Coho">Coho (Silver)</option>
+                        <option value="Pink">Pink</option>
+                        <option value="Chum">Chum</option>
+                        <option value="Steelhead">Steelhead</option>
+                    </select>
+                </div>
+            </div>
             <!-- Row 1 (3-up): Mainline material → brand → lb test. The ONLY 3-up row: a
                  3-part cascade in 2 columns would wrap the lb test onto its own line. -->
             <div class="gear-row gear-row-3">
@@ -384,7 +413,8 @@
 
         <h2 class="purple-heading">Catch Result</h2>
         <div class="row">
-            <div class="col"><label for="species">Species Caught</label><select id="species"><option value="">—</option><option value="Chinook">Chinook</option><option value="Coho">Coho (Silver)</option><option value="Pink">Pink</option><option value="Chum">Chum</option><option value="Steelhead">Steelhead</option></select></div>
+            <div class="col"><label for="species-log">Species Caught</label><select id="species-log" onchange="syncSelect('species', true)"><option value="">—</option><option value="Chinook">Chinook</option><option value="Coho">Coho (Silver)</option><option value="Pink">Pink</option><option value="Chum">Chum</option><option value="Steelhead">Steelhead</option></select></div>
+            <div class="col"><label for="water-type-log">Water Type</label><select id="water-type-log" onchange="syncSelect('water-type', true)"><option value="run">Run (default)</option><option value="pool">Pool</option><option value="riffle">Riffle</option><option value="glide">Glide</option></select></div>
             <div class="col"><label for="log-datetime">Date &amp; Time</label><input type="datetime-local" id="log-datetime"></div>
         </div>
         
@@ -408,7 +438,7 @@
     </div>
 </div>
 
-<div id="debug-console"><button onclick="if(typeof copyDebugLog==='function')copyDebugLog()" style="position:sticky;top:0;background:#333;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">📋 Copy All</button></div>
+<div id="debug-console"><button onclick="if(typeof copyDebugLog==='function')copyDebugLog()" style="position:sticky;top:0;background:#333;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">📋 Copy All</button> <button onclick="if(typeof reportDebugIssue==='function')reportDebugIssue()" style="position:sticky;top:0;background:#333;color:#ff0;border:1px solid #ff0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">🐛 Report Issue</button></div>
 
 <!-- PERSISTENT BOTTOM TAB BAR (Water Report / Gear Sim / Catch Log) -->
 <nav id="bottom-tab-bar" class="bottom-tab-bar" role="tablist" aria-label="Primary navigation">
@@ -416,6 +446,22 @@
     <button type="button" role="tab" id="tab-btn-gear-sim" class="tab-btn" aria-selected="false" onclick="switchTab('tab-gear-sim')">Gear Sim</button>
     <button type="button" role="tab" id="tab-btn-catch-log" class="tab-btn" aria-selected="false" onclick="switchTab('tab-catch-log')">Catch Log</button>
 </nav>
+
+<!-- WATER TYPE GUIDE MODAL (Phase 1.6) -->
+<div id="water-type-modal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Water Type Guide</h2>
+        <p style="font-size:0.75rem; color:#aaa; margin:0 0 12px 0;">
+            Your presentation (cast upstream and let the rig drift) means the local water
+            type changes how deep and fast the water is at your line. Pick the closest match
+            to where you are fishing to adjust the simulation.
+        </p>
+        <div id="water-type-guide-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <button class="btn-main" onclick="closeWaterTypeGuide()" style="margin-top:14px;min-height:44px;">Got it</button>
+    </div>
+</div>
+
+<!-- WATER TYPE ⓘ button handler already inline in the gear-row button above -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Region registry (data only): window.REGIONS — see docs/CONTRACT_REGIONS.md -->

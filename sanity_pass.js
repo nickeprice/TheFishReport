@@ -143,7 +143,7 @@ function staticIntegrity() {
   const apiCalls = new Set();
   for (const f of localScriptPaths()) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-    for (const m of src.matchAll(/['"`](\/api\/[a-z0-9_]+)/g)) apiCalls.add(m[1]);
+    for (const m of src.matchAll(/['"`](\/api\/[a-z0-9_-]+)/g)) apiCalls.add(m[1]);
   }
   const apiRoutes = [...apiCalls].sort();
   const noEntryPoint = apiRoutes.filter((p) => !fs.existsSync(path.join(ROOT, p.slice(1) + '.py')));
@@ -442,9 +442,9 @@ function staticIntegrity() {
   }
 
   const gearRows = (html.match(/class="gear-row(?:[" ])/g) || []).length;
-  (gearRows === 12 && !html.includes('gear-grid'))
-    ? ok('both gear forms use 7 resting rows each', `${gearRows} rows total`)
-    : fail('both gear forms use 7 resting rows each', `${gearRows} rows found`);
+  (gearRows === 13 && !html.includes('gear-grid'))
+    ? ok('both gear forms resting rows', `${gearRows} rows total`)
+    : fail('both gear forms resting rows', `${gearRows} rows found`);
 
   // The gear-box ORDER is a deliberate user instruction (session 1790604718924_nudti,
   // msg 1477 for the rows, WS-3/issue #1b for the cascades): Mainline material → brand →
@@ -453,7 +453,10 @@ function staticIntegrity() {
   // skipped, so assert the exact per-row `for=` ids in document order for BOTH tabs and
   // fail loudly on any future reorder.
   {
-    const GEAR_ORDER = ['ml-mat', 'ml-brand', 'ml-lb', 'weight-setup', 'weight-shape', 'weight',
+    const GEAR_ORDER_SIM = ['water-type', 'species', 'ml-mat', 'ml-brand', 'ml-lb', 'weight-setup', 'weight-shape', 'weight',
+                        'ld-len', 'ld-mat', 'ld-brand', 'ld-lb', 'hook', 'yarn',
+                        'foam', 'foam2', 'foam3'];
+    const GEAR_ORDER_LOG = ['ml-mat', 'ml-brand', 'ml-lb', 'weight-setup', 'weight-shape', 'weight',
                         'ld-len', 'ld-mat', 'ld-brand', 'ld-lb', 'hook', 'yarn',
                         'foam', 'foam2', 'foam3'];
     const blocks = html.split('<div class="gear-rows">');
@@ -462,8 +465,8 @@ function staticIntegrity() {
     const simOrder = labelsOf((blocks[1] || '').split('<button class="btn-main"')[0]).join(',');
     const logOrder = labelsOf((blocks[2] || '')
       .split('<h2 class="purple-heading">Catch Result')[0]).join(',');
-    const wantSim = GEAR_ORDER.join(',');
-    const wantLog = GEAR_ORDER.map((id) => `${id}-log`).join(',');
+    const wantSim = GEAR_ORDER_SIM.join(',');
+    const wantLog = GEAR_ORDER_LOG.map((id) => `${id}-log`).join(',');
     (simOrder === wantSim && logOrder === wantLog)
       ? ok('gear box order is the instructed cascade flow (both tabs)', wantSim)
       : fail('gear box order is the instructed cascade flow (both tabs)',

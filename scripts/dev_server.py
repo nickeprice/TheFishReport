@@ -20,6 +20,7 @@ Usage::
 """
 
 import importlib
+import importlib.util
 import mimetypes
 import os
 import sys
@@ -41,12 +42,29 @@ def _api_module(name):
     instead of sending every ``/api/*`` path to the water_report handler. That
     difference is exactly what hid the missing ``/api/nearby_stations`` route: it
     answered locally for months and 404'd on the deployed app (2026-09-29).
+
+    Hyphens in the URL path (e.g. ``spot-geometry``) are supported by loading
+    the module from its file path via ``importlib.util``, since Python's module
+    naming does not allow hyphens.
     """
-    if not name.isidentifier():
+    if not name:
         return None
-    if not os.path.isfile(os.path.join(_API_DIR, name + '.py')):
+    # Try the original name as a file first (supports hyphens via util path).
+    full = os.path.join(_API_DIR, name + '.py')
+    if os.path.isfile(full):
+        spec = importlib.util.spec_from_file_location(name.replace('-', '_'), full)
+        if spec is not None:
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = mod
+            spec.loader.exec_module(mod)
+            return mod
+    # Fallback: try with underscores (e.g. nearby_stations).
+    mod_name = name.replace('-', '_')
+    if not mod_name.isidentifier():
         return None
-    return importlib.import_module(name)
+    if not os.path.isfile(os.path.join(_API_DIR, mod_name + '.py')):
+        return None
+    return importlib.import_module(mod_name)
 
 
 def api_routes():

@@ -105,12 +105,15 @@ this file**, or the pass fails.
 - **inputs.js** — `currentStats`, `BASE_ZONE_MIN`/`BASE_ZONE_MAX`, `getNum`/`getStr`/`getGPS`,
   `FOAM_TABLE`, `parseFoam`/`hookLabel`/`hookSink`, `hydraulicVelocity(flow, siteId)`,
   `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`,
+  `WATER_TYPES` (pool/riffle/run/glide depth/vel multipliers),
   `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a)
 - **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
-  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (same-reach estimate + spread);
+  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (Manning-adjusted when
+  SPOT_WIDTHS data is available, same-reach estimate ±20% otherwise);
   `depthAtGauge(flow, siteId)` (`D = A/W` median, cross-checked by `Q/(W·V)`; `minFt`/`maxFt` are
-  the MEASURED BAND), `spotDepthFt(flow, siteId)` — the same-reach DEPTH estimate with
-  `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2)
+  the MEASURED BAND), `spotDepthFt(flow, siteId)` — the spot DEPTH estimate with
+  `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2);
+  `spotNearestWidth(siteId)` — nearest DEM cross-section from SPOT_WIDTHS
 - **physics.js** — `lineDragPerFt(diameterMm, velocityFtS)`, `pointDragGf(areaCm2, cd, velocityFtS)`,
   `totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt, ...objects)`, `computeLiftGf(...)`,
   `presentationHeightInches(liftGf, dragGfPerFt, leaderFt)` — standard fluid dynamics:
@@ -164,7 +167,8 @@ this file**, or the pass fails.
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)
 - **solver.js** — `readRigFromForm()`, `loadCalibrationData(flow, species)`,
-  `buildSimStats(rig, out)`, `paintSimHud(rig, out, stats)`
+  `buildSimStats(rig, out)`, `paintSimHud(rig, out, stats)`,
+  `openWaterTypeGuide()`, `closeWaterTypeGuide()`, `waterTypeMultiplier(typeId)`
 - **sim.js** — `runSim()`
 
 ## src/features/catch-log

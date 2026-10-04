@@ -4,7 +4,9 @@
  * sonar, and painting the HUD.
  *
  * public: readRigFromForm(), loadCalibrationData(flow, species),
- *         buildSimStats(rig, out), paintSimHud(rig, out, stats)
+ *         buildSimStats(rig, out), paintSimHud(rig, out, stats),
+ *         openWaterTypeGuide(), closeWaterTypeGuide(),
+ *         waterTypeMultiplier(typeId)
  *
  * Split out of sim.js in UPDATE 3.0 Phase 1.4 so runSim() is a short orchestrator.
  * Classic script (global scope). Loaded BEFORE src/app.js.
@@ -35,7 +37,8 @@ function readRigFromForm() {
         foam: parseFoam(getStr('foam')),        // Foam 1
         foam2: parseFoam(getStr('foam2')),      // Foam 2
         bdSz: getNum('foam3'),
-        species: getStr('species')
+        species: getStr('species'),
+        waterType: getStr('water-type') || 'run'
     };
 }
 
@@ -118,6 +121,18 @@ function paintSimHud(rig, out, stats) {
     if (simBtn) { simBtn.innerText = 'RUN SIMULATION'; simBtn.disabled = false; }
     // Continuity record: log the gauge value WITH the (currently unmeasured) spot ratio, so
     // the trail shows exactly what was assumed instead of an unexplained single number.
+    // Log the rig inputs alongside the sim output so the debug trail shows what was entered
+    logDebug('Rig: weight ' + rig.weightOz.toFixed(2) + 'oz ' + (rig.weightShape || '?') +
+        ' (' + (rig.weightSetup || 'sliding') + '), leader ' + rig.ldLen + 'ft ' + rig.ldMat +
+        ' ' + rig.ldLb + 'lb, main ' + rig.mlMat + ' ' + rig.mlLb + 'lb' +
+        (rig.ldDia ? ', ldDia=' + rig.ldDia + 'mm' : '') +
+        ', hook ' + (rig.hook || '?') + (rig.yarn ? ', yarn ' + rig.yarn + '"' : '') +
+        ', foam ' + (rig.foam ? rig.foam.label || rig.foam.key || '?' : '?') +
+        (rig.foam2 && rig.foam2.key !== '0' ? ' + ' + (rig.foam2.label || rig.foam2.key) : '') +
+        ', bead ' + (rig.bdSz || '0') + 'mm' +
+        ', species ' + (rig.species || 'default') +
+        ', flow ' + rig.flow + ' cfs', 'RIG');
+
     var shownBottom = velocity.bottom;
     var near = (typeof velocityAtSpot === 'function')
         ? velocityAtSpot(rig.flow, velocity.station || null) : null;
@@ -132,9 +147,17 @@ function paintSimHud(rig, out, stats) {
             ' \u00b1' + Math.round(spotDepth.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
         '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
-        (out.hookDepthM ? '; hook depth ' + out.hookDepthM.toFixed(2) + ' m' : '') +
-        (out.interceptionProb ? '; P(intercept)=' + out.interceptionProb.toFixed(3) : '') +
+        (out.hookDepthM ? '; hook depth ' + out.hookDepthM.toFixed(2) + ' m' : '; hook depth (chain not converged)') +
+        (out.interceptionProb ? '; P(intercept)=' + out.interceptionProb.toFixed(3) : '; P(intercept)=0') +
         (out.sweepQuality ? '; sweepQ=' + out.sweepQuality.toFixed(2) : '') +
+        // Chain solver detail
+        (out.chainResult ? '; chain={' + (out.chainResult.converged ? 'converged' : 'converged=' + out.chainResult.converged) +
+            ' hD=' + out.chainResult.hookDepthM.toFixed(3) + 'm' +
+            (out.chainResult.iterations ? ' iter=' + out.chainResult.iterations : '') +
+            (out.chainResult.detail ? ' ' + out.chainResult.detail : '') + '}' : '') +
+        // Chain env
+        (out.chainEnv ? '; env={H=' + out.chainEnv.depthM.toFixed(2) + 'm uMax=' + out.chainEnv.uMax.toFixed(3) +
+            ' z0=' + out.chainEnv.z0 + ' rodH=' + out.chainEnv.rodHeightM + '}' : '') +
         // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
         // debug trail is where they survive in full - including the community-sonar note.
         (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +
@@ -152,5 +175,49 @@ function paintSimHud(rig, out, stats) {
         for (var bi = 0; bi < nbRows.length; bi++) nbSum += nbRows[bi];
         logDebug('Notebook: model residual ' + (nbSum / nbRows.length).toFixed(2) +
             '" over ' + nbRows.length + ' catch(es) (actual - predicted)', 'SIM');
+// ==================================================================================
+// WATER TYPE GUIDE (Phase 1.6)
+// ==================================================================================
+
+function waterTypeMultiplier(typeId) {
+    var types = (typeof WATER_TYPES !== 'undefined') ? WATER_TYPES : null;
+    var def = types ? types[2] : { id: 'run', label: 'Run', depthMul: 1.0, velMul: 1.0, desc: '' };
+    if (!types || !typeId) return def;
+    for (var i = 0; i < types.length; i++) {
+        if (types[i].id === typeId) return types[i];
+    }
+    return def;
+}
+
+function openWaterTypeGuide() {
+    var list = document.getElementById('water-type-guide-list');
+    if (!list) return;
+    var types = (typeof WATER_TYPES !== 'undefined') ? WATER_TYPES : [];
+    if (!list.getAttribute('data-rendered')) {
+        var html = '';
+        for (var i = 0; i < types.length; i++) {
+            var t = types[i];
+            var icon = t.id === 'pool' ? '\u25cf' : t.id === 'riffle' ? '\u25b3' : t.id === 'run' ? '\u25a1' : '\u2014';
+            html += '<div style="background:#26262a;border-radius:10px;padding:10px 14px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<span style="font-weight:bold;color:#fff;">' + icon + ' ' + t.label + '</span>' +
+                '<span style="font-size:0.7rem;color:#aaa;">' +
+                (t.depthMul !== 1.0 ? '\u00d7' + t.depthMul : '') + ' depth' +
+                (t.velMul !== 1.0 ? ', \u00d7' + t.velMul : '') + ' velocity' +
+                '</span></div>' +
+                '<div style="font-size:0.72rem;color:#d1d5db;margin-top:4px;">' + t.desc + '</div></div>';
+        }
+        list.innerHTML = html;
+        list.setAttribute('data-rendered', '1');
+    }
+    var modal = document.getElementById('water-type-modal');
+    if (modal) modal.style.display = 'block';
+}
+
+function closeWaterTypeGuide() {
+    var modal = document.getElementById('water-type-modal');
+    if (modal) modal.style.display = 'none';
+}
     }
 }
+

@@ -10,6 +10,22 @@
  */
 // --- BOOTSTRAP ---
 window.onload = async function() {
+    // URL param override: ?station=12101500 or ?lat=47.2&lon=-122.3
+    var qs = window.location.search;
+    function qp(name) {
+        var m = qs.match(new RegExp('[?&]' + name + '=([^&]*)'));
+        return m ? decodeURIComponent(m[1]) : null;
+    }
+    var qpStation = qp('station');
+    var qpLat = qp('lat');
+    var qpLon = qp('lon');
+    if (qpStation) {
+        localStorage.setItem('active_station', JSON.stringify({ id: qpStation, name: 'URL override', lat: 0, lon: 0, isGps: false }));
+        logDebug('Station override from URL: ' + qpStation, 'SYS');
+    } else if (qpLat && qpLon) {
+        localStorage.setItem('active_station', JSON.stringify({ id: qpLat + ',' + qpLon, name: 'GPS override', lat: parseFloat(qpLat), lon: parseFloat(qpLon), isGps: true }));
+        logDebug('GPS override from URL: ' + qpLat + ', ' + qpLon, 'SYS');
+    }
     var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('log-datetime').value = d.toISOString().slice(0,16);
     // Load the tackle library BEFORE restoring the rig: the line + weight-shape
@@ -33,5 +49,11 @@ window.onload = async function() {
     // Flush the outbox when the network returns / the app is resumed (Phase 3.3).
     if (typeof initCatchReconcile === 'function') initCatchReconcile();
     if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);
+    // Wire water type guide button (must wait for full DOM + scripts)
+    var guideBtn = document.getElementById('wt-guide-btn');
+    if (guideBtn) {
+        guideBtn.addEventListener('click', openWaterTypeGuide);
+        guideBtn.addEventListener('touchend', function (e) { e.preventDefault(); openWaterTypeGuide(); });
+    }
     loadWaterReport();
 };

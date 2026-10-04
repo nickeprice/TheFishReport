@@ -56,6 +56,8 @@ src/
   utils/regulations.js      WDFW regulations engine + local NOAA/Meeus solar calc
 api/
   water_report.py           Python serverless function: /api/water_report
+  nearby_stations.py        Server-side USGS gauge search: /api/nearby_stations
+  spot-geometry.py          Nearest DEM cross-section lookup: /api/spot-geometry
 supabase/
   migrations/               idempotent schema + RLS migrations
   README.md                 how to link / push / verify

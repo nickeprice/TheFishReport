@@ -24,6 +24,7 @@
         <span id="active-station-badge" class="station-badge badge-manual">📌 USGS: 12101500</span>
     </button>
     <button class="nav-refresh" onclick="refreshNow()" aria-label="Refresh live data" title="Refresh live data">⟳</button>
+    <button onclick="if(typeof toggleDebug==='function')toggleDebug()" aria-label="Toggle debug console" title="Debug console" style="background:none;border:1px solid #4a4a4c;border-radius:8px;color:#0f0;font-size:16px;width:40px;height:40px;cursor:pointer;">🐛</button>
 </div>
 
 <!-- STATION SELECTION MODAL -->
@@ -407,7 +408,7 @@
     </div>
 </div>
 
-<div id="debug-console"></div>
+<div id="debug-console"><button onclick="if(typeof copyDebugLog==='function')copyDebugLog()" style="position:sticky;top:0;background:#333;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">📋 Copy All</button></div>
 
 <!-- PERSISTENT BOTTOM TAB BAR (Water Report / Gear Sim / Catch Log) -->
 <nav id="bottom-tab-bar" class="bottom-tab-bar" role="tablist" aria-label="Primary navigation">
@@ -423,6 +424,8 @@
 <script src="src/data/channel_measurements.js"></script>
 <!-- Routed channel widths (USGS-validated): window.RIVER_WIDTHS (generated) -->
 <script src="src/data/river_widths.js"></script>
+<!-- Spot-level channel widths (3DEP DEM): window.SPOT_WIDTHS (generated) -->
+<script src="src/data/spot_widths.js"></script>
 <script src="src/utils/regulations.js"></script>
 <script src="src/services/supabase.js"></script>
 <script src="src/services/water.js"></script>

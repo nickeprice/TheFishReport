@@ -50,7 +50,7 @@ function rigChangePlain(best, rig) {
         else if (rig.foam2.key === '0') up.push('a second corky');
         else up.push(best.foam2.lift > rig.foam2.lift ? 'a bigger second corky' : 'a smaller second corky');
     }
-    if (Number(best.hook) !== Number(rig.hook)) {
+    if (String(best.hook) !== String(rig.hook)) {
         var hkBest = (typeof tackleHookData === 'function' ? tackleHookData(best.hook) : null);
         var hkRig = (typeof tackleHookData === 'function' ? tackleHookData(rig.hook) : null);
         var hkBestMass = hkBest ? hkBest.mass_g : 0;
@@ -105,7 +105,7 @@ function bestZoneRig(zone, rig, vel) {
                             var changed = [];
                             if (FOAM_KEYS[f] !== rig.foam.key) changed.push('foam');
                             if (FOAM_KEYS[f2] !== rig.foam2.key) changed.push('foam2');
-                            if (HOOK_OPTIONS[h] !== Number(rig.hook)) changed.push('hook');
+                            if (HOOK_OPTIONS[h] !== String(rig.hook)) changed.push('hook');
                             if (YARN_OPTIONS[y] !== Number(rig.yarn)) changed.push('yarn');
                             if (beads[b] !== Number(rig.bdSz)) changed.push('bead');
                             for (var w = 0; w < passes[p].weights.length; w++) {

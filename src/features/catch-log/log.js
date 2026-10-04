@@ -57,7 +57,7 @@ async function logData() {
     var simFlow = (currentStats && currentStats.flow != null) ? currentStats.flow : null;
     // Flow is derived from the live report now — never read off a form field.
     var flowValue = (simFlow != null) ? simFlow : getCurrentFlow();
-    var hookValue = (currentStats && currentStats.hook != null) ? currentStats.hook : (parseFloat(getStr('hook')) || 2);
+    var hookValue = (currentStats && currentStats.hook != null) ? currentStats.hook : (getStr('hook') || 'gam-oct-2');
     var payload = {
         // Client-generated id -> becomes the row's primary key, so a retry that follows a
         // lost response is deduped instead of logging the fish twice (Phase 3.2).

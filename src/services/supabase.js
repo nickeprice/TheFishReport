@@ -172,7 +172,7 @@ function toCatchRow(payload) {
         leader_length: payload.ldLen,
         leader_material: payload.ldMat || null,
         leader_lb: payload.ldLb,
-        hook_size: (payload.hook !== undefined && payload.hook !== null) ? Number(payload.hook) : null,
+        hook_size: (payload.hook !== undefined && payload.hook !== null) ? String(payload.hook) : null,
         yarn: payload.yarn,
         foam: payload.foam || null,
         foam_2: payload.foam2 || null,

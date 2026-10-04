@@ -11,45 +11,8 @@ Branch: `feature/hydrodynamic-refactor`
 - [x] Step 7: Frozen baselines re-pinned (sanity 198/198)
 - [x] Debug console improvements: 🐛 toggle button, 📋 Copy All, rig input logging
 
-## 🔜 Phase 1: Spot Geometry System
-Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected depth/velocity
-
-### 1.1 Pre-compute channel widths
-- Run width_elevation.py at ~500m intervals along 5 rivers (~1,000 pts)
-- Output: lat/lon/wetted_ft/bankfull_ft/thalweg_m per point
-
-### 1.2 Create spot_widths.js lookup table (~50 KB)
-- New data file, loaded as window.SPOT_WIDTHS
-- Works offline, no API calls
-
-### 1.3 Fit depth rating curves at each gauge
-- d = c × Q^f from existing channel measurements
-- Add to channel_measurements.js alongside existing velocity fit
-
-### 1.4 Nearest-neighbor search in continuity.js
-### 1.5 Manning + continuity correction
-- d_spot = d_gauge × (w_gauge / w_spot)^(3/5)
-- v_spot = v_gauge × (w_spot / w_gauge)^(2/5)
-
-### 1.6 Water type selector (UI)
-- Dropdown: Pool / Riffle / Run / Glide with depth×vel multipliers
-- **Visual guide popup** — ⓘ button shows SVG cross-section diagrams
-### 1.7 Species selector in Gear Sim (UI)
-### 1.8 Online DEM endpoint (api/spot-geometry.py)
-### 1.9 Online StreamStats enhancement
-
-## 🔜 Phase 2: Progressive Enhancement Architecture
-### 2.1 docs/ARCHITECTURE.md — tiered fallback pattern
-### 2.2 Audit all data layers for online/cached/fallback tiers
-### 2.3 Standardize output shape: { value, source, uncertainty }
-
-## 🔜 Phase 3: Enhanced UI
-### 3.1 Debug console persistence
-### 3.2 Visual water type guide (SVG cross-sections)
-### 3.3 Width slider supplement
-
+### Chain Solver Spec (complete)
 Spec: docs/CHAIN_SOLVER.md
-
 - [x] 1. Weight Setup dropdown — index.html, solver.js, rig.js, log.js, sanity
 - [x] 2. lineNetBuoyancyPerFt() — physics.js, Archimedes net buoyancy per foot
 - [x] 3. Weight submerged mass — already in tackleWeightPhysicsData()
@@ -68,8 +31,66 @@ Spec: docs/CHAIN_SOLVER.md
 - [x] Fix Step 9: DELETE cable.js, terminal.js, sinker.js
 
 ### Physics Validation Tests
-
 - [x] 1. Add rigorous physics validation tests: terminal velocity, Hooke's law + damping, low-Re line drag, shear profile boundaries, and bed contact + Coulomb friction
+
+## 🚧 Phase 1: Spot Geometry System (8/9)
+Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected depth/velocity
+
+### 1.1 Pre-compute channel widths
+- [x] Run width_elevation.py at ~500m intervals along 5 rivers (~1,000 pts)
+- [x] Output: lat/lon/wetted_ft/bankfull_ft/thalweg_m per point
+
+### 1.2 Create spot_widths.js lookup table (~50 KB)
+- [x] New data file, loaded as window.SPOT_WIDTHS
+- [x] Works offline, no API calls
+
+### 1.3 Fit depth rating curves at each gauge
+- [x] d = c × Q^f from existing channel measurements (implemented as measurement-lookup median in continuity.js `depthAtGauge`)
+- [x] Add to channel_measurements.js alongside existing velocity fit
+
+### 1.4 Nearest-neighbor search in continuity.js
+- [x] Haversine nearest-neighbour lookup over SPOT_WIDTHS by station GPS
+
+### 1.5 Manning + continuity correction
+- [x] d_spot = d_gauge × (w_gauge / w_spot)^(3/5)
+- [x] v_spot = v_gauge × (w_spot / w_gauge)^(2/5)
+
+### 1.6 Water type selector (UI)
+- [x] Dropdown: Pool / Riffle / Run / Glide with depth×vel multipliers
+- [x] Visual guide popup — ⓘ button shows SVG cross-section diagrams
+
+### 1.7 Species selector in Gear Sim (UI)
+- [x] Dropdown synced bidirectionally with the Catch Log
+
+### 1.8 Online DEM endpoint (api/spot-geometry.py)
+- [x] Serverless endpoint resolving DEM widths for a lat/lon
+
+### 1.9 Online StreamStats enhancement
+- [ ] USGS StreamStats basin characterization endpoint (api/streamstats.py)
+- [ ] Drainage area / mean basin elevation / mean annual precip at a lat/lon
+- [ ] Graceful offline fallback + uncertainty surfaced to the frontend
+
+## 🔜 Phase 2: Progressive Enhancement Architecture (0/3)
+### 2.1 docs/ARCHITECTURE.md — tiered fallback pattern
+- [ ] Document every data path with its tier: online-only / IndexedDB-cached / local fallback
+- [ ] Pipeline reference for each domain (flow/velocity/depth, weather, tides, species calendar, legal hours)
+
+### 2.2 Audit all data layers for online/cached/fallback tiers
+- [ ] Inventory every fetch() / urlopen / IndexedDB / localStorage read
+- [ ] Classify each source by tier; flag online-only gaps that should be cached
+- [ ] Append the audit table to docs/ARCHITECTURE.md
+
+### 2.3 Standardize output shape: { value, source, uncertainty }
+- [ ] Refactor all data producers to return { value, source, uncertainty | null }
+- [ ] Extend beyond continuity.js (velocity/depth) to: telemetry (CFS, gage, temp, turbidity), weather (pressure, rain, cloud%), tides, species calendar
+- [ ] Every consumer keeps a provenance trail; full suite still green
+
+## ✅ Phase 3: Enhanced UI (COMPLETE)
+### 3.2 Visual water type guide (SVG cross-sections)
+- [x] ⓘ button opens a modal rendering water type cards with descriptions + multiplier values
+
+> 3.1 Debug console persistence and 3.3 Width slider supplement were REMOVED by
+> decision on 2026-10-04 — not planned.
 
 ## ✅ Phase R: Repository Overhaul & Testing Optimization (COMPLETE)
 Branch: `main` (applied directly)

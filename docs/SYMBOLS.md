@@ -57,7 +57,8 @@ this file**, or the pass fails.
 - **water.js** — `fetchCFSMomentum(siteId)`, `fetchCfsReadingsWdfn(siteId)`,
   `fetchCfsReadingsLegacy(siteId)`, `applyOwnGaugeWaterQuality(waterTempF, turbidityFnu)`,
   `applyReportWeather(rep)`, `loadEscapementData(siteId)`, `refreshEscapement(siteId)`,
-  `refreshWdfwForecast()`, `hatcheryEscapement`, `escapementFacilities`
+  `refreshWdfwForecast()`, `fetchStreamStats(lat, lon, siteId)`, `hatcheryEscapement`,
+  `escapementFacilities`
 
 ## src/shared
 - **debug.js** — `logDebug(msg, source)` (+ the double-tap header matrix)

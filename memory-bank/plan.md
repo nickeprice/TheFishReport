@@ -33,7 +33,7 @@ Spec: docs/CHAIN_SOLVER.md
 ### Physics Validation Tests
 - [x] 1. Add rigorous physics validation tests: terminal velocity, Hooke's law + damping, low-Re line drag, shear profile boundaries, and bed contact + Coulomb friction
 
-## 🚧 Phase 1: Spot Geometry System (8/9)
+## ✅ Phase 1: Spot Geometry System (COMPLETE 9/9)
 Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected depth/velocity
 
 ### 1.1 Pre-compute channel widths
@@ -66,9 +66,9 @@ Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected de
 - [x] Serverless endpoint resolving DEM widths for a lat/lon
 
 ### 1.9 Online StreamStats enhancement
-- [ ] USGS StreamStats basin characterization endpoint (api/streamstats.py)
-- [ ] Drainage area / mean basin elevation / mean annual precip at a lat/lon
-- [ ] Graceful offline fallback + uncertainty surfaced to the frontend
+- [x] USGS StreamStats basin characterization endpoint (api/streamstats.py)
+- [x] Drainage area / mean basin elevation / mean annual precip at a lat/lon
+- [x] Graceful offline fallback + uncertainty surfaced to the frontend
 
 ## 🔜 Phase 2: Progressive Enhancement Architecture (0/3)
 ### 2.1 docs/ARCHITECTURE.md — tiered fallback pattern

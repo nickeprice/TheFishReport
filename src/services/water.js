@@ -458,3 +458,26 @@ async function refreshEscapement(siteId) {
         el.textContent = formatEscapementUpdated(rec.lastUpdated);
     });
 }
+// ============================================================================
+// StreamStats basin characteristics (Phase 1.9) — live delineation with an
+// offline fallback served by api/streamstats.py. Every metric arrives in the
+// { value, source, uncertainty } provenance shape, so the caller can always
+// tell a live USGS delineation from an offline estimate.
+// ============================================================================
+// public: fetchStreamStats(lat, lon, siteId) -> { ok, mode, drainage_area_sq_mi,
+//   mean_elevation_ft, mean_precip_in } | null on hard failure.
+
+async function fetchStreamStats(lat, lon, siteId) {
+    var query = '/api/streamstats?lat=' + encodeURIComponent(String(lat)) +
+                '&lon=' + encodeURIComponent(String(lon));
+    if (siteId) query += '&site_id=' + encodeURIComponent(String(siteId));
+    try {
+        var res = await apiGetJson(query, { label: 'streamstats' });
+        if (res && res.ok && res.data && res.data.ok === true) {
+            return res.data;   // { mode: 'live'|'offline', ...provenance }
+        }
+    } catch (e) { /* fall through */ }
+    // The endpoint is unreachable entirely (no offline cache for this): the
+    // caller degrades to whatever it has — never invent a figure here.
+    return null;
+}

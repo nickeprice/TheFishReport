@@ -147,6 +147,22 @@ MOCK_METEO = {
 }
 
 MOCK_COOPS = {"stations":[{"id":"9446484","name":"Seattle"}]}
+
+MOCK_STREAMSTATS_DELINEATION = {
+    "wscode": 200,
+    "featurecollection": [{
+        "features": [],
+        "parameters": [
+            {"id": "DRNAREA", "name": "Drainage Area", "value": "948",
+             "unit": "mi2", "type": "basin"},
+            {"id": "ELEV", "name": "Mean Basin Elevation", "value": "1100",
+             "unit": "ft", "type": "basin"},
+            {"id": "PRECIP", "name": "Mean Annual Precipitation", "value": "70",
+             "unit": "in", "type": "basin"},
+        ],
+    }],
+    "workspaceId": "ws-test-123",
+}
 MOCK_TIDES = {"predictions":[
     {"t":"2026-10-04 06:00","v":"8.5"},{"t":"2026-10-04 12:00","v":"3.2"},
     {"t":"2026-10-04 18:00","v":"9.1"},{"t":"2026-10-05 06:30","v":"8.7"},
@@ -160,6 +176,8 @@ MOCK_TIDES = {"predictions":[
 class _MockBytesIO(BytesIO):
     def __init__(self, data):
         super().__init__(data); self.status = 200; self.headers = {}
+    def getcode(self):
+        return self.status
 
 
 _MOCK_CALLS = []
@@ -179,6 +197,8 @@ def _mock_urlopen(req, *a, **kw):
         data = json.dumps(MOCK_TIDES)
     elif 'tidesandcurrents' in url: data = json.dumps(MOCK_COOPS)
     elif 'api_key' in url or 'ogcapi' in url: data = json.dumps(MOCK_WDFN)
+    elif 'streamstatsservices' in url or 'delineateByLatLon' in url:
+        data = json.dumps(MOCK_STREAMSTATS_DELINEATION)
     else:                        data = '{}'
     return _MockBytesIO(data.encode('utf-8'))
 # ======== Fixture: in-process server with patches ===========================
@@ -240,3 +260,121 @@ def test_water_report_contract(server_with_patch, endpoint):
     assert isinstance(d0['tide_curve'], list)
     assert isinstance(d0['species_calendar'], list)
     assert isinstance(d0['windows'], list)
+
+
+# ======== StreamStats endpoint tests =========================================
+
+@pytest.fixture(scope='function')
+def streamstats_server():
+    """In-process server serving streamstats.handler with live-mock urlopen."""
+    sys.path.insert(0, API_DIR)
+    with patch('urllib.request.urlopen', side_effect=_mock_urlopen):
+        import streamstats
+        port = _free_port()
+        srv = ThreadingHTTPServer(('127.0.0.1', port),
+                                  streamstats.handler)
+        srv.timeout = 0.5
+        url = f'http://127.0.0.1:{port}'
+        t = Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            try:
+                urllib.request.urlopen(
+                    urllib.request.Request(
+                        url + '/api/streamstats?lat=47&lon=-122'), timeout=2)
+                break
+            except Exception:
+                time.sleep(0.1)
+        else:
+            srv.shutdown()
+            raise RuntimeError('StreamStats server did not start')
+        yield url
+        srv.shutdown()
+
+
+@pytest.fixture(scope='function')
+def streamstats_server_offline():
+    """In-process streamstats server where the upstream urlopen RAISES.
+
+    Forces the offline-estimate fallback path. Local (127.0.0.1) calls are
+    passed through to the real urlopen so the test can still talk to the
+    in-process server.
+    """
+    def offline_urlopen(req, *a, **kw):
+        url = req.full_url if hasattr(req, 'full_url') else str(req)
+        if '127.0.0.1' in url:
+            return _real_urlopen(req, *a, **kw)
+        raise urllib.error.URLError('streamstats upstream unreachable (test)')
+
+    sys.path.insert(0, API_DIR)
+    with patch('urllib.request.urlopen', side_effect=offline_urlopen):
+        import streamstats
+        port = _free_port()
+        srv = ThreadingHTTPServer(('127.0.0.1', port),
+                                  streamstats.handler)
+        srv.timeout = 0.5
+        url = f'http://127.0.0.1:{port}'
+        t = Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            try:
+                urllib.request.urlopen(
+                    urllib.request.Request(
+                        url + '/api/streamstats?lat=47&lon=-122'), timeout=2)
+                break
+            except Exception:
+                time.sleep(0.1)
+        else:
+            srv.shutdown()
+            raise RuntimeError('StreamStats server did not start')
+        yield url
+        srv.shutdown()
+
+
+STREAMSTATS_URL = '/api/streamstats?lat=47.1950&lon=-122.3020'
+
+
+def test_streamstats_live_mode(streamstats_server):
+    """Live StreamStats delineation returns provenance-shape metrics."""
+    resp = urllib.request.urlopen(
+        urllib.request.Request(streamstats_server + STREAMSTATS_URL),
+        timeout=10)
+    out = json.loads(resp.read().decode('utf-8'))
+    assert out['ok'] is True
+    assert out['mode'] == 'live'
+    d = out['drainage_area_sq_mi']
+    assert d['value'] == 948
+    assert 'source' in d and 'uncertainty' in d
+    assert out['mean_elevation_ft']['value'] == 1100
+    assert out['mean_precip_in']['value'] == 70
+
+
+def test_streamstats_offline_fallback(streamstats_server_offline):
+    """When the upstream fails, the offline fallback serves honest estimates."""
+    resp = urllib.request.urlopen(
+        urllib.request.Request(streamstats_server_offline + STREAMSTATS_URL),
+        timeout=10)
+    out = json.loads(resp.read().decode('utf-8'))
+    assert out['ok'] is True
+    assert out['mode'] == 'offline'
+    assert out['resolved_site_id'] == '12101500'
+    for key in ('drainage_area_sq_mi', 'mean_elevation_ft', 'mean_precip_in'):
+        metric = out[key]
+        assert 'value' in metric and 'source' in metric and 'uncertainty' in metric
+        assert isinstance(metric['value'], (int, float)) and metric['value'] > 0
+    assert out['drainage_area_sq_mi']['value'] == 948
+    assert out['note'], 'offline mode must explain the fallback'
+
+
+def test_streamstats_rejects_bad_coords(streamstats_server_offline):
+    """Coordinates outside the covered region are refused, not fanned out."""
+    url = streamstats_server_offline + '/api/streamstats?lat=0&lon=0'
+    try:
+        urllib.request.urlopen(urllib.request.Request(url), timeout=10)
+        assert False, 'expected non-2xx for out-of-region coordinates'
+    except urllib.error.HTTPError as e:
+        assert e.code == 400
+        body = json.loads(e.read().decode('utf-8'))
+        assert 'outside' in body.get('error', '').lower()

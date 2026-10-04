@@ -1,0 +1,242 @@
+"""Schema-driven API contract tests for /api/water_report.
+
+Patches every upstream HTTP call (USGS, NOAA, Open-Meteo) with dummy JSON
+so tests are fast, deterministic, and offline.  Uses an in-process HTTP
+server so patches are visible to the handler code.
+"""
+
+import json, os, sys, time, urllib.request
+from io import BytesIO
+from http.server import ThreadingHTTPServer
+from threading import Thread
+from unittest.mock import patch
+import pytest, jsonschema
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+API_DIR = os.path.join(ROOT, 'api')
+
+
+def _free_port():
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('127.0.0.1', 0)); p = s.getsockname()[1]; s.close(); return p
+
+
+# ======== JSON Schema (per CONTRACT.md) =====================================
+PER_DAY_SCHEMA = {
+    "type": "object",
+    "required": [
+        "id","title","tag","peak","cfs","gage","water_temp_f","turbidity_fnu",
+        "flow_idx","pressure","press_delta","rain","lunar_icon","cloud_pct",
+        "sunrise","sunset","lines_in","lines_out","legal_hours",
+        "moon_upper","moon_lower","net_status","is_netting",
+        "transit_state","transit_time","tide_chart","tide_curve","tide_points",
+        "species_calendar","windows","api_offline","is_active",
+        "site_name","site_id",
+    ],
+    "properties": {
+        "id":{"type":"string"},"title":{"type":"string"},"tag":{"type":"string"},
+        "peak":{"type":"number","minimum":0,"maximum":100},
+        "cfs":{"anyOf":[{"type":"integer"},{"type":"null"}]},
+        "gage":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "water_temp_f":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "turbidity_fnu":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "flow_idx":{"type":"integer","minimum":1,"maximum":100},
+        "pressure":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "press_delta":{"type":"number"},
+        "rain":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "lunar_icon":{"anyOf":[{"type":"string"},{"type":"null"}]},
+        "cloud_pct":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "sunrise":{"type":"string"},"sunset":{"type":"string"},
+        "lines_in":{"anyOf":[{"type":"string"},{"type":"null"}]},
+        "lines_out":{"anyOf":[{"type":"string"},{"type":"null"}]},
+        "legal_hours":{"type":"string",
+                       "enum":["daylight","24hr","custom","unknown"]},
+        "moon_upper":{"anyOf":[{"type":"string"},{"pattern":"^--$"}]},
+        "moon_lower":{"anyOf":[{"type":"string"},{"pattern":"^--$"}]},
+        "net_status":{"type":"string"},"is_netting":{"type":"boolean"},
+        "transit_state":{"type":"string"},"transit_time":{"type":"string"},
+        "tide_chart":{"type":"string"},
+        "tide_curve":{"type":"array",
+            "items":{"type":"object","required":["t","h","type"],
+                     "properties":{"t":{"type":"string"},"h":{"type":"number"},
+                                    "type":{"type":"string","enum":["H","L"]}}}},
+        "tide_points":{"type":"array",
+            "items":{"type":"object","required":["t","h"],
+                     "properties":{"t":{"type":"string"},"h":{"type":"number"}}}},
+        "species_calendar":{"type":"array",
+            "items":{"type":"object",
+                "required":["species","window_start","window_end","peak_date",
+                            "days_until_peak","position","status_text",
+                            "progress","peak_frac"],
+                "properties":{
+                    "species":{"type":"string"},
+                    "window_start":{"type":"string"},
+                    "window_end":{"type":"string"},
+                    "peak_date":{"type":"string"},
+                    "days_until_peak":{"anyOf":[{"type":"integer"},
+                                                {"type":"null"}]},
+                    "position":{"type":"string"},
+                    "status_text":{"type":"string"},
+                    "progress":{"type":"number","minimum":0,"maximum":1},
+                    "peak_frac":{"type":"number","minimum":0,"maximum":1},
+                }}},
+        "windows":{"type":"array",
+            "items":{"type":"object",
+                "required":["start","end","score","triggers",
+                            "start_str","end_str"],
+                "properties":{
+                    "start":{"type":"string"},"end":{"type":"string"},
+                    "score":{"type":"number"},"triggers":{"anyOf":[{"type":"array"},{"type":"string"}]},
+                    "start_str":{"type":"string"},"end_str":{"type":"string"},
+                }}},
+        "api_offline":{"type":"boolean"},"is_active":{"type":"boolean"},
+        "site_name":{"type":"string"},"site_id":{"type":"string"},
+    },
+}
+# ======== Mock upstream responses ===========================================
+
+MOCK_USGS_NWIS = {
+    "value": {"timeSeries": [
+        {"sourceInfo":{"siteName":"Puyallup River at Puyallup, WA"},
+         "variable":{"variableName":"Discharge, cubic feet per second",
+                     "unit":{"unitCode":"ft3/s"},"noDataValue":-999999.0},
+         "values":[{"value":[{"dateTime":"2026-10-04T08:00:00.000-07:00",
+                              "value":"1040"}]}]},
+        {"sourceInfo":{"siteName":"Puyallup River at Puyallup, WA"},
+         "variable":{"variableName":"Gage height, feet",
+                     "unit":{"unitCode":"ft"},"noDataValue":-999999.0},
+         "values":[{"value":[{"dateTime":"2026-10-04T08:00:00.000-07:00",
+                              "value":"5.2"}]}]},
+        {"sourceInfo":{"siteName":"Puyallup River at Puyallup, WA"},
+         "variable":{"variableName":"Temperature, water, deg Fahrenheit",
+                     "unit":{"unitCode":"deg F"},"noDataValue":-999999.0},
+         "values":[{"value":[{"dateTime":"2026-10-04T08:00:00.000-07:00",
+                              "value":"55"}]}]},
+        {"sourceInfo":{"siteName":"Puyallup River at Puyallup, WA"},
+         "variable":{"variableName":"Turbidity, FNU",
+                     "unit":{"unitCode":"FNU"},"noDataValue":-999999.0},
+         "values":[{"value":[{"dateTime":"2026-10-04T08:00:00.000-07:00",
+                              "value":"5.2"}]}]},
+    ]}
+}
+
+MOCK_WDFN = {"value": []}
+
+MOCK_METEO = {
+    "hourly": {
+        "time":[f"2026-10-{d:02d}T{h:02d}:00" for d in range(4,8)
+                for h in range(24)],
+        "cloud_cover":[30]*96,"precipitation":[0.0]*96,
+        "pressure_msl":[1020]*96,"surface_pressure":[1015]*96,
+        "temperature_2m":[55]*96,"wind_speed_10m":[5]*96,
+        "wind_direction_10m":[180]*96,"shortwave_radiation":[300]*96,
+        "uv_index":[2]*96,"precipitation_probability":[10]*96,
+        "visibility":[16093]*96,},
+    "daily":{
+        "time":["2026-10-04","2026-10-05","2026-10-06","2026-10-07"],
+        "sunrise":["2026-10-04T07:00","2026-10-05T07:01",
+                   "2026-10-06T07:02","2026-10-07T07:03"],
+        "sunset":["2026-10-04T19:00","2026-10-05T18:59",
+                  "2026-10-06T18:58","2026-10-07T18:57"],
+        "temperature_2m_max":[60,62,61,59],
+        "temperature_2m_min":[50,51,50,48],
+        "precipitation_sum":[0.0,0.1,0.0,0.0],
+        "cloud_cover_mean":[30,40,20,50],"uv_index_max":[3,4,3,2],
+    }
+}
+
+MOCK_COOPS = {"stations":[{"id":"9446484","name":"Seattle"}]}
+MOCK_TIDES = {"predictions":[
+    {"t":"2026-10-04 06:00","v":"8.5"},{"t":"2026-10-04 12:00","v":"3.2"},
+    {"t":"2026-10-04 18:00","v":"9.1"},{"t":"2026-10-05 06:30","v":"8.7"},
+    {"t":"2026-10-05 13:00","v":"3.5"},{"t":"2026-10-05 19:00","v":"8.9"},
+    {"t":"2026-10-06 07:00","v":"8.3"},{"t":"2026-10-06 13:30","v":"3.8"},
+    {"t":"2026-10-06 19:30","v":"9.3"},{"t":"2026-10-07 07:30","v":"8.1"},
+    {"t":"2026-10-07 14:00","v":"4.0"},{"t":"2026-10-07 20:00","v":"9.5"},
+]}
+
+
+class _MockBytesIO(BytesIO):
+    def __init__(self, data):
+        super().__init__(data); self.status = 200; self.headers = {}
+
+
+_MOCK_CALLS = []
+_real_urlopen = urllib.request.urlopen
+
+def _mock_urlopen(req, *a, **kw):
+    """Pass-through for local server; return mock data for upstream APIs."""
+    url = req.full_url if hasattr(req, 'full_url') else str(req)
+    _MOCK_CALLS.append(url[:120])
+    # Let requests to the in-process server go through to the real handler
+    if '127.0.0.1' in url:
+        return _real_urlopen(req, *a, **kw)
+    # Upstream API → return mock data
+    if 'nwis/iv' in url:       data = json.dumps(MOCK_USGS_NWIS)
+    elif 'api.open-meteo.com' in url: data = json.dumps(MOCK_METEO)
+    elif 'tidesandcurrents' in url and 'predict' in url:
+        data = json.dumps(MOCK_TIDES)
+    elif 'tidesandcurrents' in url: data = json.dumps(MOCK_COOPS)
+    elif 'api_key' in url or 'ogcapi' in url: data = json.dumps(MOCK_WDFN)
+    else:                        data = '{}'
+    return _MockBytesIO(data.encode('utf-8'))
+# ======== Fixture: in-process server with patches ===========================
+
+@pytest.fixture(scope='function')
+def server_with_patch():
+    """Start dev server in-process WITH urlopen patched.
+
+    The ``with patch():`` context starts BEFORE any water_report code runs,
+    so the handler uses mocked upstream calls throughout.
+    """
+    _MOCK_CALLS.clear()
+    sys.path.insert(0, API_DIR)
+    with patch('urllib.request.urlopen',
+               side_effect=_mock_urlopen):
+        import water_report   # noqa: import under patch
+        port = _free_port()
+        srv = ThreadingHTTPServer(('127.0.0.1', port),
+                                  water_report.handler)
+        srv.timeout = 0.5
+        url = f'http://127.0.0.1:{port}'
+        t = Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            try:
+                urllib.request.urlopen(
+                    urllib.request.Request(url), timeout=2)
+                break
+            except Exception:
+                time.sleep(0.1)
+        else:
+            srv.shutdown()
+            raise RuntimeError('In-process server did not start')
+        yield url
+        srv.shutdown()
+
+
+# ======== Tests =============================================================
+WATER_REPORT = '/api/water_report?lat=47.1950&lon=-122.3020'
+
+
+@pytest.mark.parametrize("endpoint", [WATER_REPORT,
+                                       WATER_REPORT + '&site=12101500'])
+def test_water_report_contract(server_with_patch, endpoint):
+    """Validate every per-day object against the strict JSON schema."""
+    resp = urllib.request.urlopen(
+        urllib.request.Request(server_with_patch + endpoint), timeout=10)
+    raw = resp.read().decode('utf-8')
+    report = json.loads(raw)
+    assert isinstance(report, list), (
+        f"Got {type(report).__name__}, status={resp.status}, "
+        f"mock_calls={len(_MOCK_CALLS)}")
+    assert len(report) == 4
+    for day in report:
+        jsonschema.validate(instance=day, schema=PER_DAY_SCHEMA)
+    d0 = report[0]
+    assert d0['site_id'] == '12101500'
+    assert isinstance(d0['tide_curve'], list)
+    assert isinstance(d0['species_calendar'], list)
+    assert isinstance(d0['windows'], list)

@@ -74,7 +74,7 @@ Spec: docs/CHAIN_SOLVER.md
 ## ✅ Phase R: Repository Overhaul & Testing Optimization (COMPLETE)
 Branch: `main` (applied directly)
 - [x] Phase 1: Workflow overhaul & cleanup
-- [ ] Phase 2: Testing infrastructure prep
+- [x] Phase 2: Testing infrastructure prep
 - [ ] Phase 3: Schema-driven API contract tests
 - [ ] Phase 4: Playwright behavioral UI tests
 - [ ] Phase 5: Chain solver fuzzing via Playwright

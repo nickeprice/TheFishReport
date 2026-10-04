@@ -72,8 +72,8 @@ Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected de
 
 ## 🔜 Phase 2: Progressive Enhancement Architecture (0/3)
 ### 2.1 docs/ARCHITECTURE.md — tiered fallback pattern
-- [ ] Document every data path with its tier: online-only / IndexedDB-cached / local fallback
-- [ ] Pipeline reference for each domain (flow/velocity/depth, weather, tides, species calendar, legal hours)
+- [x] Document every data path with its tier: online-only / IndexedDB-cached / local fallback
+- [x] Pipeline reference for each domain (flow/velocity/depth, weather, tides, species calendar, legal hours)
 
 ### 2.2 Audit all data layers for online/cached/fallback tiers
 - [ ] Inventory every fetch() / urlopen / IndexedDB / localStorage read

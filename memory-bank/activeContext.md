@@ -1,40 +1,49 @@
-## Phase 0 Complete (2026-10-01)
+# Active Context — Hydrodynamic Refactor + Spot Geometry
 
-**What shipped (commit 73d77be):**
-- **0.1 Net corky buoyancy** — `parseFoam()` returns `net_buoyancy_g = buoyancy_g - mass_g`; all 4 call sites pass net values.
-- **0.2 Yarn buoyancy sign** — CSV `buoyancy_per_inch_g` changed from `+0.01` (buoyant) to `-0.012` (sinking), matching JS default.
-- **0.3 Yarn drag fields** — CSV/JSON yarn row carries `area_cm2=1.8`, `shape=cylinder`, `cd=0.8`. Converter updated.
-- **0.4-0.5 Yarn/mainline drag wiring** — all 3 call sites verified using `tackleYarnDragData()` and `lineDragPerFt()` with null guards.
-- **0.6 Sanity baselines re-pinned** — 149/149 passing. Physics test uses `net_buoyancy_g`; suggestions flipped to "running low".
+## Previous Work (Phase 0 — DONE)
 
-**Plan status:** Phase 0 all items checked. Phases 1-8 ready to execute.
+**Branch:** `feature/hydrodynamic-refactor`
 
-## Phase 1-8 Complete (2026-10-02) — Physics Engine Rebuild
+All 7 steps of the chain solver integration are complete on this branch. The chain solver is wired as the primary presentation height in drift.js, with interception probability blended into the score. Debug console has 🐛 toggle and 📋 Copy All. Frozen baselines re-pinned.
 
-**What shipped (commits b0c0f36..75d92cc):**
+**Verification:**
+- `python3 -m pytest tests/ -v` → 10/10 pass
+- `node sanity_pass.js --quiet` → 198/198 pass (ALL GREEN)
 
-**New modules (6 added to src/features/gear-sim/):**
+## Current Findings (DEM Valley Width Research)
 
-| File | Lines | Functions | Purpose |
-|------|-------|-----------|---------|
-| `hydro.js` | 116 | `logLawVelocity`, `uStarFromMax`, `velocityProfile`, `turbulenceFluctuation` | 3D log-law velocity field |
-| `riverbed.js` | 140 | `bedElevation`, `contactForce`, `frictionForce`, `isSnagged` | Cobble-bed substrate & contact |
-| `cable.js` | 114 | `cablePreset`, `cableNodes`, `resolveCable` | Lumped-mass cable dynamics |
-| `sinker.js` | 101 | `sinkerForceBalance`, `sinkerBounceStep` | Bouncing sinker model |
-| `terminal.js` | 74 | `terminalEquilibrium`, `vivFrequency`, `vivAmplitude` | Hook + corky/yarn equilibrium |
-| `salmon.js` | 82 | `salmonState`, `salmonMouthCone`, `salmonPositionZ` | Target fish entity |
-| `interception.js` | 84 | `interceptionRun`, `interceptionProbability` | Flossing state machine |
+### Existing Infrastructure
+- `scripts/width_elevation.py` already has validated method for measuring channel width from 3DEP DEM
+- At Puyallup gauge: elevation method gives 202ft vs USGS 215ft (94% accuracy)
+- At user's spot (47.2008, -122.2896): wetted width = 202ft (same as gauge, 1.5km downstream)
+- Data source: AWS Terrain Tiles (z15, ~3.25m/pixel), free, no API key
+- `src/data/channel_measurements.js` has 234 field measurements per gauge with Q/w/a/v
 
-**Integration:**
-- Extended `drift.js compute()` to run the new pipeline additively, outputting `hookDepthM`, `interceptionProb`, `sweepQuality`, `salmonDepthM`
-- Extended `solver.js` `buildSimStats()` and `paintSimHud()` for new fields
-- All modules wired into `index.html`, `sw.js` SHELL_FILES, `docs/SYMBOLS.md`
-- `sw.js` VERSION → `v2.03.39`
+### Key Design Decisions Made
+1. **Layered estimation cascade** (online → cached → pre-computed → fallback) — applied app-wide
+2. **Manning + continuity correction**: d_spot = d_gauge × (w_gauge/w_spot)^(3/5)
+3. **Water type multipliers**: Pool x1.3 depth/x0.7 vel, Riffle x0.7/x1.3, Run x1.0/x1.0, Glide x1.1/x0.85
+4. **Visual water type guide**: ⓘ popup with SVG cross-section diagrams
+5. **Species picker** goes into Gear Sim form (auto-fills Catch Log)
+6. **Width slider** supplement for manual override
 
-**Verification:** 56 new sanity tests. **208/208 GREEN**. All baselines untouched.
+## Multi-Phase Plan
 
-**Notable decisions:**
-- `cable.js` uses 10× convergence boost — physical stiffness ~10⁴ N/m makes direct integration glacial
-- Drag sign corrected in `resolveCable`: flow pushes nodes downstream (+x)
-- Seat probability model: `P = min(1, max(0, (v-0.5)/1.5))` — reliable above 2 m/s
-- All modules under 150 lines; all literals carry `@provenance:` tags
+See `memory-bank/plan.md` for the full roadmap:
+- **Phase 1**: Spot Geometry System (DEM widths, Manning, rating curves, water type + species UI)
+- **Phase 2**: Progressive Enhancement Architecture (tiered fallback docs)
+- **Phase 3**: Enhanced UI (debug persistence, visual guide, width slider)
+
+## Files Modified in Phase 0
+- `tests/test_physics_validation.py` — self-weight correction in Test 2
+- `tests/test_physics_benchmarks_extended.py` — Tests 6-10
+- `src/features/gear-sim/techniques/drift.js` — chain solver as primary hgt, dynamic depth, scoring blend
+- `src/features/gear-sim/inputs.js` — density fallback 11.34
+- `src/features/gear-sim/physics.js` — Re clamping in lineDragPerFt
+- `src/features/gear-sim/chain.js` — substrate boundary clamping
+- `src/features/gear-sim/solver.js` — enhanced debug logging
+- `src/shared/debug.js` — toggle button, copy all
+- `src/app.js` — URL param override (?station=, ?lat=&lon=)
+- `index.html` — 🐛 debug toggle button
+- `sanity_pass.js` — re-pinned all 6 frozen baselines
+- `memory-bank/activeContext.md` — this file

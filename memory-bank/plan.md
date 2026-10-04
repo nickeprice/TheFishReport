@@ -75,7 +75,7 @@ Spec: docs/CHAIN_SOLVER.md
 Branch: `main` (applied directly)
 - [x] Phase 1: Workflow overhaul & cleanup
 - [x] Phase 2: Testing infrastructure prep
-- [ ] Phase 3: Schema-driven API contract tests
+- [x] Phase 3: Schema-driven API contract tests
 - [ ] Phase 4: Playwright behavioral UI tests
 - [ ] Phase 5: Chain solver fuzzing via Playwright
 - [ ] Phase 6: Strip orchestration tax from sanity_pass.js + CI

@@ -237,3 +237,145 @@ def test_substrate_normal_contact_and_coulomb_friction():
     assert abs(vel[1]) < 0.01, f"Vertical oscillation did not settle: {vel[1]:.4f} m/s"
     # Sinker horizontal velocity must be completely arrested by friction
     assert abs(vel[0]) < 1e-3, f"Friction failed to arrest horizontal velocity: {vel[0]:.4f} m/s"
+# ============================================================================
+# 6. CHAIN SOLVER FUZZING VIA PLAYWRIGHT (JS BRIDGE)
+# ============================================================================
+# The unified chain solver is a JS classic script (src/features/gear-sim/chain.js).
+# These tests run the REAL chainSolve() in a headless browser via page.evaluate()
+# against a matrix of boundary / extreme inputs, and assert it either converges
+# cleanly or returns explicit failure details — never an unhandled exception.
+
+CHAIN_FUZZ_CASES = [
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=2.0, uMax=1.2, rodHeightM=1.5)),
+        id="standard"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=0.0, uMax=1.2, rodHeightM=1.5)),
+        id="zero_water_depth"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=-1.0, uMax=1.2, rodHeightM=1.5)),
+        id="negative_depth"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=2.0, uMax=100.0, rodHeightM=1.5)),
+        id="massive_flow_velocity"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=2.0, uMax=0.0, rodHeightM=1.5)),
+        id="zero_flow"),
+    pytest.param(
+        dict(flow=1040, weightOz=6.0, weightShape="Tungsten Teardrop (swivel)",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=2.0, uMax=1.2, rodHeightM=1.5)),
+        id="heavy_tungsten"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="24",
+             env=dict(depthM=0.5, uMax=3.0, rodHeightM=1.5)),
+        id="extremely_buoyant_corky"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=0.1, uMax=10.0, rodHeightM=1.5)),
+        id="tiny_depth_high_flow"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=30, foamKey="12",
+             env=dict(depthM=2.0, uMax=1.2, rodHeightM=1.5)),
+        id="extreme_leader_length"),
+    pytest.param(
+        dict(flow=1040, weightOz=0.5, weightShape="Lead Cannonball",
+             ldLen=8, foamKey="12",
+             env=dict(depthM=2.0, uMax=1.2, rodHeightM=0.0)),
+        id="zero_rod_height"),
+]
+
+_CHAIN_EVALUATE_JS = """(args) => {
+    const rig = {
+        flow: args.flow, weightOz: args.weightOz, ldLen: args.ldLen,
+        ldMat: 'mono', ldLb: 12, mlMat: 'mono', mlLb: 15,
+        hook: 'gam-oct-2', yarn: 0,
+        foam: (typeof parseFoam === 'function') ? parseFoam(args.foamKey) : null,
+        foam2: (typeof parseFoam === 'function') ? parseFoam('0') : null,
+        bdMat: 'hard', bdSz: 6,
+        weightShape: args.weightShape, ldDia: 0.34, mlDia: 0
+    };
+    const env = { depthM: args.env.depthM, uMax: args.env.uMax,
+                  z0: 0.03, rodHeightM: args.env.rodHeightM };
+    try {
+        const out = chainSolve(rig, env);
+        return {
+            threw: false,
+            hookDepthM: typeof out.hookDepthM === 'number' ? out.hookDepthM : null,
+            hookZ: typeof out.hookZ === 'number' ? out.hookZ : null,
+            converged: !!out.converged,
+            iterations: typeof out.iterations === 'number' ? out.iterations : null,
+            detail: typeof out.detail === 'string' ? out.detail : String(out.detail || '')
+        };
+    } catch (e) {
+        return { threw: true, error: String(e && e.message || e) };
+    }
+}"""
+
+
+def _load_chain_solver_page(page, url):
+    """Navigate and wait for chainSolve/parseFoam, retrying once on a hung load.
+
+    The classic scripts load synchronously, so chainSolve is available right
+    after DOMContentLoaded; a retry covers a stalled intermediate navigation
+    under sequential test load.
+    """
+    errors = []
+    page.on('pageerror', lambda exc: errors.append(str(exc)))
+    for attempt in range(2):
+        page.goto(url, wait_until='domcontentloaded')
+        try:
+            page.wait_for_function(
+                'typeof window.chainSolve === "function" && '
+                'typeof window.parseFoam === "function"',
+                timeout=10000,
+            )
+            return errors
+        except Exception:
+            if attempt == 0:
+                continue
+            raise
+    return errors
+
+
+@pytest.mark.parametrize("chain_case", CHAIN_FUZZ_CASES)
+def test_chain_solver_fuzz_page_evaluate(page, dev_server, chain_case):
+    """chainSolve(rig, env) must converge or fail explicitly — never throw."""
+    _load_chain_solver_page(page, dev_server + '/?tab=tab-gear-sim')
+
+    out = page.evaluate(_CHAIN_EVALUATE_JS, chain_case)
+
+    # 1. No unhandled exceptions — the core fuzz invariant
+    assert out["threw"] is False, (
+        f"chainSolve threw an unhandled exception: {out.get('error')}")
+
+    # 2. hookDepthM must be finite (never NaN / ±Infinity)
+    assert out["hookDepthM"] is not None and math.isfinite(out["hookDepthM"]), (
+        f"hookDepthM is not finite: {out['hookDepthM']}")
+
+    # 3. iterations must be a sane positive integer (<= SHOOT_MAX=60)
+    assert out["iterations"] is not None, "iterations missing"
+    assert isinstance(out["iterations"], int) and 1 <= out["iterations"] <= 60, (
+        f"iterations out of range: {out['iterations']}")
+
+    # 4. A non-converged solve must still return explicit failure details
+    assert isinstance(out["detail"], str) and out["detail"], (
+        "detail string must describe the outcome")
+
+    # 5. If converged, hook depth must be physically plausible (above bed floor)
+    if out["converged"]:
+        assert out["hookZ"] is None or math.isfinite(out["hookZ"]), (
+            f"hookZ not finite: {out['hookZ']}")

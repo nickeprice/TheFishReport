@@ -308,6 +308,24 @@ function staticIntegrity() {
     ? ok('honest fallback when no :updated_at stamp exists', 'never a fake date')
     : fail('honest fallback when no :updated_at stamp exists', 'fallback wording missing');
 
+  // Phase 1.6: water type guide is a standalone module (functions must be global).
+  // Regression guard: the three guide functions were previously trapped inside paintSimHud
+  // due to misplaced closing braces in solver.js. Verify they live in water-types.js now.
+  const waterTypesSrc = fs.existsSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'water-types.js'))
+    ? fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'water-types.js'), 'utf8')
+    : '';
+  const solverSrcFinal = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'solver.js'), 'utf8');
+  const wtLoaded = localScriptPaths().some((p) => p.indexOf('gear-sim/water-types.js') !== -1);
+  (wtLoaded &&
+   /function openWaterTypeGuide/.test(waterTypesSrc) &&
+   /function closeWaterTypeGuide/.test(waterTypesSrc) &&
+   !/function openWaterTypeGuide/.test(solverSrcFinal) &&
+   !/function closeWaterTypeGuide/.test(solverSrcFinal))
+    ? ok('water type guide is a standalone module, functions are global',
+         'water-types.js loaded after solver.js; solver.js no longer contains guide functions')
+    : fail('water type guide is a standalone module, functions are global',
+           `fileExists=${fs.existsSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'water-types.js'))} loaded=${wtLoaded} inWaterTypes=${/function openWaterTypeGuide/.test(waterTypesSrc)} inSolver=${/function openWaterTypeGuide/.test(solverSrcFinal)}`);
+
   const appSrc = readAllScripts();
   (!appSrc.includes('hero-lbl') && appSrc.includes('[ FISHING OUTLOOK ]') &&
    appSrc.includes('Forecast &amp; Hatchery Report') && appSrc.includes('data-esc-updated'))

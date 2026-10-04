@@ -63,6 +63,7 @@ Spec: docs/CHAIN_SOLVER.md
 - [x] 11. Sanity tests for chain solver, re-pin baselines
 
 ### Fixes
+- [x] Fix Step 1.6: Extract water type guide to standalone module; fix brace nesting bug in solver.js
 - [x] Fix Step 9: DELETE cable.js, terminal.js, sinker.js
 
 ### Physics Validation Tests

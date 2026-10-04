@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.41';
+const VERSION = 'v2.03.42';
 const SHELL_CACHE = 'tfr-shell-' + VERSION;
 const API_CACHE = 'tfr-api-' + VERSION;
 const ASSET_CACHE = 'tfr-assets-' + VERSION;
@@ -71,6 +71,7 @@ const SHELL_FILES = [
     '/src/features/gear-sim/techniques/drift.js',
     '/src/features/gear-sim/registry.js',
     '/src/features/gear-sim/solver.js',
+    '/src/features/gear-sim/water-types.js',
     '/src/features/gear-sim/sim.js',
     '/src/features/catch-log/board.js',
     '/src/features/catch-log/mycatches.js',

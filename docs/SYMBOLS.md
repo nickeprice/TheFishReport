@@ -167,8 +167,9 @@ this file**, or the pass fails.
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)
 - **solver.js** — `readRigFromForm()`, `loadCalibrationData(flow, species)`,
-  `buildSimStats(rig, out)`, `paintSimHud(rig, out, stats)`,
-  `openWaterTypeGuide()`, `closeWaterTypeGuide()`, `waterTypeMultiplier(typeId)`
+  `buildSimStats(rig, out)`, `paintSimHud(rig, out, stats)`
+- **water-types.js** — `waterTypeMultiplier(typeId)`, `openWaterTypeGuide()`,
+  `closeWaterTypeGuide()`
 - **sim.js** — `runSim()`
 
 ## src/features/catch-log

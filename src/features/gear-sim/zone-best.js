@@ -34,7 +34,7 @@ function rigChangeList(best, rig) {
     if (best.foam2.key !== rig.foam2.key) {
         out.push(best.foam2.key === '0' ? 'drop the second corky' : 'a second ' + foamShort(best.foam2));
     }
-    if (Number(best.hook) !== Number(rig.hook)) out.push('hook size ' + hookLabel(Number(best.hook)));
+    if (String(best.hook) !== String(rig.hook)) out.push('hook size ' + hookLabel(best.hook));
     if (Number(best.yarn) !== Number(rig.yarn)) out.push('yarn at ' + best.yarn + '"');
     if (Number(best.bdSz) !== Number(rig.bdSz)) out.push(best.bdSz + 'mm bead');
     if (Number(best.leader) !== Number(rig.ldLen)) out.push('a ' + best.leader + ' ft leader');

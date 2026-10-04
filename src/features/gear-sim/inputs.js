@@ -75,14 +75,14 @@ function parseFoam(rawValue) {
     var tid = FOAM_PICKER_MAP[key];
     var item = tid ? (typeof tackleById === 'function' ? tackleById(tid) : null) : null;
     if (item) {
-        var size = (key === 'c12') ? 10 : parseFloat(key);
+        var size = parseFloat(key);
+        if (isNaN(size)) size = 0;
         var rawBuoy = item.buoyancy_g || 0;
-        var mass = item.mass_g || 0;
         return {
             key: key, size: size,
             buoyancy_g: rawBuoy,
-            mass_g: mass,
-            net_buoyancy_g: Math.max(0, rawBuoy - mass),  // corky's own mass subtracted
+            mass_g: 0,  // PU/EPS foam mass is negligible per ASTM marine standard
+            net_buoyancy_g: rawBuoy,  // no mass subtract — foam mass << water displacement
             label: item.label || ('Corky - Size ' + key),
             areaCm2: item.area_cm2 || 0,
             cd: item.cd || 0.47
@@ -100,11 +100,12 @@ function foamLabelFromRecord(row) {
 }
 
 function hookLabel(hook) {
-    if (hook === -1) return '2/0';
-    if (hook === 0) return '1/0';
-    if (hook === 2) return 'Size 2';
-    if (hook === 1) return 'Size 1';
-    return 'Sz ' + hook;
+    if (!hook) return '--';
+    var MAP = GEAR_OPTIONS.hookIdMap;
+    var tid = MAP[String(hook)];
+    if (!tid) return '--';
+    var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
+    return item ? item.label : '--';
 }
 
 // ====== TACKLE DATA LOOKUPS (from tackle.json) ======
@@ -120,7 +121,8 @@ function tackleHookData(hookVal) {
     var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
     if (!item) return null;
     var massG = item.mass_g || 0;
-    return { mass_g: massG, buoyancy_g: massG / 7.85, areaCm2: item.area_cm2 || 0, cd: item.cd || 0.47 };
+    var buoyG = item.buoyancy_g || (massG / 7.85);
+    return { mass_g: massG, buoyancy_g: buoyG, areaCm2: item.area_cm2 || 0, cd: item.cd || 1.05 };
 }
 
 /**
@@ -146,6 +148,11 @@ function tackleBeadData(bdSz) {
  * Yarn buoyancy in grams-force per inch, from tackle.json.
  * Saturated egg-yarn is slightly NEGATIVE (sinks ~0.012 gf/in).
  * @provenance: informed_estimate — acrylic ρ≈1.17, packing≈15%, tuft d≈5mm, V≈0.50 cm³/in
+ * @value: -0.012 gf/in
+ * @error: ±0.012 gf/in (±100%)
+ * @measure: user soaks 10" yarn 5 min, weighs wet vs dry → saturated_mass_per_inch → replace
+ */
+
 // ==================================================================================
 // WATER TYPES (Phase 1.6) — local hydraulic habitat the angler is fishing.
 // Each type adjusts depth and velocity relative to the gauge/spot measurement.
@@ -163,10 +170,7 @@ var WATER_TYPES = [
 ];
 
 var DEFAULT_WATER_TYPE = 'run';
- * @value: -0.012 gf/in
- * @error: ±0.012 gf/in (±100%)
- * @measure: user soaks 10" yarn 5 min, weighs wet vs dry → saturated_mass_per_inch → replace
- */
+
 function tackleYarnBuoyancyG(inches) {
     if (!inches || inches <= 0) return 0;
     var yb = -0.012;

@@ -9,10 +9,21 @@
 
 var GEAR_OPTIONS = {
   hook: [
-    { val: 2, label: 'Size 2' },
-    { val: 1, label: 'Size 1' },
-    { val: 0, label: '1/0' },
-    { val: -1, label: '2/0' }
+    { val: 'gam-oct-3', label: 'Gamakatsu Octopus 3' },
+    { val: 'gam-oct-2', label: 'Gamakatsu Octopus 2' },
+    { val: 'gam-oct-1', label: 'Gamakatsu Octopus 1' },
+    { val: 'gam-oct-1-0', label: 'Gamakatsu Octopus 1/0' },
+    { val: 'gam-oct-2-0', label: 'Gamakatsu Octopus 2/0' },
+    { val: 'gam-fwg-3', label: 'Gamakatsu Wide Gap 3' },
+    { val: 'gam-fwg-2', label: 'Gamakatsu Wide Gap 2' },
+    { val: 'gam-fwg-1', label: 'Gamakatsu Wide Gap 1' },
+    { val: 'gam-fwg-1-0', label: 'Gamakatsu Wide Gap 1/0' },
+    { val: 'gam-fwg-2-0', label: 'Gamakatsu Wide Gap 2/0' },
+    { val: 'owner-ssw-3', label: 'Owner SSW 3' },
+    { val: 'owner-ssw-2', label: 'Owner SSW 2' },
+    { val: 'owner-ssw-1', label: 'Owner SSW 1' },
+    { val: 'owner-ssw-1-0', label: 'Owner SSW 1/0' },
+    { val: 'owner-ssw-2-0', label: 'Owner SSW 2/0' }
   ],
   yarn: [
     { val: 0, label: 'None' },
@@ -26,7 +37,13 @@ var GEAR_OPTIONS = {
     { val: '14', label: 'Corky 14' },
     { val: '12', label: 'Corky 12' },
     { val: '10', label: 'Corky 10' },
-    { val: 'c12', label: 'Cheater 10' }
+    { val: '8', label: 'Corky 8' },
+    { val: '6', label: 'Corky 6' },
+    { val: 'c14', label: 'Cheater 14' },
+    { val: 'c12', label: 'Cheater 12' },
+    { val: 'c10', label: 'Cheater 10' },
+    { val: 'c8', label: 'Cheater 8' },
+    { val: 'c6', label: 'Cheater 6' }
   ],
   beadSize: [
     { val: 0, label: 'None' },
@@ -55,8 +72,8 @@ var GEAR_OPTIONS = {
     ]
   },
   leaderLen: [6, 7, 8, 9, 10, 11, 12],
-  foamMap: { '14': 'corky-14', '12': 'corky-12', '10': 'corky-10', 'c12': 'cheater-12' },
-  hookIdMap: { '2': 'hook-2', '1': 'hook-1', '0': 'hook-1-0', '-1': 'hook-2-0' }
+  foamMap: { '14': 'corky-14', '12': 'corky-12', '10': 'corky-10', '8': 'corky-8', '6': 'corky-6', 'c14': 'cheater-14', 'c12': 'cheater-12', 'c10': 'cheater-10', 'c8': 'cheater-8', 'c6': 'cheater-6' },
+  hookIdMap: { 'gam-oct-3': 'hook-gam-oct-3', 'gam-oct-2': 'hook-gam-oct-2', 'gam-oct-1': 'hook-gam-oct-1', 'gam-oct-1-0': 'hook-gam-oct-1-0', 'gam-oct-2-0': 'hook-gam-oct-2-0', 'gam-fwg-3': 'hook-gam-fwg-3', 'gam-fwg-2': 'hook-gam-fwg-2', 'gam-fwg-1': 'hook-gam-fwg-1', 'gam-fwg-1-0': 'hook-gam-fwg-1-0', 'gam-fwg-2-0': 'hook-gam-fwg-2-0', 'owner-ssw-3': 'hook-owner-ssw-3', 'owner-ssw-2': 'hook-owner-ssw-2', 'owner-ssw-1': 'hook-owner-ssw-1', 'owner-ssw-1-0': 'hook-owner-ssw-1-0', 'owner-ssw-2-0': 'hook-owner-ssw-2-0' }
 };
 
 // Populate all static gear dropdowns from GEAR_OPTIONS (offline fallback before

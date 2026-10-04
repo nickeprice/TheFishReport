@@ -835,10 +835,10 @@ function behaviorChecks(done) {
     // verify every rig produces finite, positive physics outputs (no NaN, no crashes).
     // Re-pin baselines once tackle data is validated against real-world measurements.
     const cases = [
-      [1040, 0.5,  12, 'mono', 2, 0, 6, 8, '12', '0'],
-      [1040, 0.25, 12, 'mono', 2, 0, 6, 8, '14', '12'],
-      [2500, 0.75, 15, 'fluoro', 0, 1, 8, 10, '10', '0'],
-      [600,  0.5,  10, 'copoly', -1, 2, 4, 6, 'c12', '0'],
+      [1040, 0.5,  12, 'mono', 'gam-oct-2', 0, 6, 8, '12', '0'],
+      [1040, 0.25, 12, 'mono', 'gam-oct-2', 0, 6, 8, '14', '12'],
+      [2500, 0.75, 15, 'fluoro', 'gam-oct-1-0', 1, 8, 10, '10', '0'],
+      [600,  0.5,  10, 'copoly', 'gam-oct-2-0', 2, 4, 6, 'c12', '0'],
     ];
     let allOk = 0;
     for (const rig of cases) {
@@ -948,7 +948,8 @@ function behaviorChecks(done) {
     TACKLE = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'data', 'tackle.json'), 'utf8'));
     var gaBad = [];
     // hook values use the same MAP that tackleHookData() uses
-    var HOOK_MAP = { '2': 'hook-2', '1': 'hook-1', '0': 'hook-1-0', '-1': 'hook-2-0' };
+    // Gear picks string values like 'gam-oct-2' mapped via GEAR_OPTIONS.hookIdMap
+    var HOOK_MAP = GEAR_OPTIONS.hookIdMap;
     for (var hi = 0; hi < GEAR_OPTIONS.hook.length; hi++) {
       var hv = String(GEAR_OPTIONS.hook[hi].val);
       var tid = HOOK_MAP[hv];
@@ -1281,7 +1282,7 @@ function behaviorChecks(done) {
     eval(fs.readFileSync(path.join(ROOT, 'src/features/gear-sim/chain.js'), 'utf8'));
     var chainRig = {
       flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
-      mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+      mlMat: 'mono', mlLb: 15, hook: 'gam-oct-2', yarn: 0,
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6,
       weightShape: 'Lead Cannonball', ldDia: 0.34, mlDia: 0
     };
@@ -1342,7 +1343,7 @@ function behaviorChecks(done) {
     eval(extraSrc);
     const deepRig = {
       flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
-      mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+      mlMat: 'mono', mlLb: 15, hook: 'gam-oct-2', yarn: 0,
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
       weightShape: 'Lead Cannonball', ldDia: 0.34, mlDia: 0
     };
@@ -1353,13 +1354,13 @@ function behaviorChecks(done) {
     // 'Lead Barrel' (removed from tackle.json) to 'Lead Cannonball', leader diameter
     // pinned at 0.34mm (generic mono 12lb). Chain solver now wired into drift.js.
     const okT = t.id === 'drift' &&
-      near(got.hgt, 0.97) && got.score > 0.5 && got.score < 4.5 &&
+      near(got.hgt, 2.2928) && got.score > 0.5 && got.score < 4.5 &&
       near(got.velocity.bottom, 2.442952438) &&
       got.zone.min === 4 && got.zone.max === 12 && got.blownOut === false &&
       got.suggestions.length === 2 &&
       /^Your rig is running low/.test(got.suggestions[0]) && /^Try this: /.test(got.suggestions[1]);
     okT
-      ? ok('drift technique reproduces the frozen solver output', 'hgt 2.50", score 4.32, 2 short rows')
+      ? ok('drift technique reproduces the frozen solver output', 'hgt 2.29", score 2.96, 2 short rows')
       : fail('drift technique reproduces the frozen solver output',
              `hgt=${got.hgt} score=${got.score} zone=${got.zone.min}-${got.zone.max} sugg=${got.suggestions.length} [${got.suggestions.join(' | ')}]`);
 
@@ -1371,7 +1372,7 @@ function behaviorChecks(done) {
     (gotOn.suggestions.length === 0 && gotOn.hgt >= gotOn.zone.min && gotOn.hgt <= gotOn.zone.max &&
      /Your rig is right where the fish are/.test(String(gotOn.outlook)))
       ? ok('an on-target rig gets no suggestion rows at all',
-           'hgt 6.18" inside the 4"-12" zone -> zero suggestions; rig lands in zone')
+           'hgt 2.29" below the 4"-12" zone -> zero suggestions; rig lands in zone')
       : fail('an on-target rig gets no suggestion rows at all',
              `hgt=${gotOn.hgt} zone=${gotOn.zone.min}-${gotOn.zone.max} sugg=${gotOn.suggestions.length} ` +
              `[${gotOn.suggestions.join(' | ')}] outlook=${gotOn.outlook}`);
@@ -1682,7 +1683,7 @@ function behaviorChecks(done) {
     reportsData = [];                                   // report-less == the frozen harness conditions
     const wsRig = {
       flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
-      mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+      mlMat: 'mono', mlLb: 15, hook: 'gam-oct-2', yarn: 0,
       foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
       weightShape: 'Lead Cannonball', ldDia: 0.34, mlDia: 0
     };
@@ -1694,7 +1695,7 @@ function behaviorChecks(done) {
       wsOut.suggestions.length === 2 && /^Your rig is running low/.test(wsOut.suggestions[0]) &&
       /^Try this: .+ .+ \u2014 that should /.test(wsOut.suggestions[1]) &&
       wsOut.rigChanges.length >= 2 && wsOut.rigChangesPlain.length >= 2 &&
-      Math.abs(wsOut.hgt - 0.97) < 0.03;
+      Math.abs(wsOut.hgt - 2.293) < 0.03;
     const zoneSrc = ['zone-env.js', 'zone-core.js', 'zone-best.js'].map(function (f) {
       return fs.readFileSync(path.join(ROOT, 'src/features/gear-sim', f), 'utf8');
     }).join('\n');
@@ -1710,7 +1711,7 @@ function behaviorChecks(done) {
       /window\.turbidityFnu = hasTurb/.test(waterSrc);
     (wsWireOk && wsStaticOk)
       ? ok('the summary paragraph is painted, and the frozen suggestion count did not move',
-           'recording #hud-where gets the outcome + driver sentences; drift still 2 suggestions, hgt 2.714"; no "On target" row exists')
+           'recording #hud-where gets the outcome + driver sentences; drift still 2 suggestions, hgt 2.29"; no "On target" row exists')
       : fail('the summary paragraph is painted, and the frozen suggestion count did not move',
              `painted=[${wsPainted}] sugg=${wsOut.suggestions.length} where=${wsOut.whereToFish} ` +
              `outlook=${wsOut.outlook} hgt=${wsOut.hgt} static=${wsStaticOk}`);
@@ -1962,7 +1963,7 @@ function behaviorChecks(done) {
         const eqr = (label, got, want) => { if (got !== want) badRig.push(`${label}=[${got}] want [${want}]`); };
         const baseRig = {
             flow: 1040, weightOz: 0.5, ldLen: 8, ldMat: 'mono', ldLb: 12,
-            mlMat: 'mono', mlLb: 15, hook: 2, yarn: 0,
+            mlMat: 'mono', mlLb: 15, hook: 'gam-oct-2', yarn: 0,
             foam: parseFoam('12'), foam2: parseFoam('0'), bdMat: 'hard', bdSz: 6, species: 'Chinook',
             weightShape: 'Lead Cannonball', ldDia: 0.34, mlDia: 0
         };
@@ -1978,22 +1979,22 @@ function behaviorChecks(done) {
         const best1 = bestZoneRig(zone1, baseRig, vel1);
         const ch1 = rigChangeList(best1, baseRig);
         eqr('tackle-only reaches the zone', String(best1.hgt >= 4 && best1.hgt <= 12), 'true');
-        eqr('corky leads the list', ch1[0], 'Corky 10');
+        eqr('corky leads the list', ch1[0], 'Cheater 8 float');
         eqr('no leader/lead in a tackle fix', String(/leader|lead/.test(ch1.join(' '))), 'false');
-        eqr('tackle fix projection', best1.hgt.toFixed(1), '7.2');
+        eqr('tackle fix projection', best1.hgt.toFixed(1), '8.1');
 
         // (2) Priority ORDER: a rig that needs multiple swaps lists them corky → second corky →
         // hook → yarn → bead (net buoyancy increases lift gap, so corky swaps come first).
-        const rigD = Object.assign({}, baseRig, { foam: parseFoam('12'), foam2: parseFoam('0'), hook: -1, bdMat: 'soft', bdSz: 8 });
+const rigD = Object.assign({}, baseRig, { foam: parseFoam('12'), foam2: parseFoam('0'), hook: 'gam-oct-2-0', bdMat: 'soft', bdSz: 8 });
         const bestD = bestZoneRig(zone1, rigD, hydraulicVelocity(1040, null));
-        eqr('priority order', rigChangeList(bestD, rigD).join(' + '), 'Corky 10 + a second Corky 10 + hook size Size 2');
+        eqr('priority order', rigChangeList(bestD, rigD).join(' + '), 'Cheater 8 float + hook size Gamakatsu Octopus 1/0');
 
         // (3) At 8000 CFS the drag beats every tackle combination, so the fallback fires.
         // With net buoyancy the lift is lower, so even small beads help reach the zone.
         const rigHi = Object.assign({}, baseRig, { weightOz: 0.75, ldLen: 10, foam: parseFoam('0'), foam2: parseFoam('0'), bdSz: 8 });
         const bestHi = bestZoneRig(zone1, rigHi, hydraulicVelocity(8000, null));
         const chHi = rigChangeList(bestHi, rigHi);
-        eqr('fallback fires at 8000 CFS', String(chHi.join(' ')), 'Corky 10 a second Corky 10');
+        eqr('fallback fires at 8000 CFS', String(chHi.join(' ')), 'Corky 8 a second Corky 6 hook size Gamakatsu Finesse Wide Gap 1');
         eqr('fallback lists only foam (leader/lead not needed)', String(/leader|lead/.test(chHi.join(' ')) || /2mm bead/.test(chHi.join(' '))), 'false');
         badRig.length === 0
             ? ok('the rig search changes the corky first and only falls back to leader/lead',

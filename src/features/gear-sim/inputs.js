@@ -116,7 +116,12 @@ function hookLabel(hook) {
  */
 function tackleHookData(hookVal) {
     var MAP = GEAR_OPTIONS.hookIdMap;
-    var tid = MAP[String(hookVal)];
+    var key = String(hookVal);
+    var tid = MAP[key];
+    if (!tid) {
+        var LEGACY = { '2': 'gam-oct-2', '1': 'gam-oct-1', '0': 'gam-oct-1-0', '-1': 'gam-oct-2-0' };
+        tid = MAP[LEGACY[key]];
+    }
     if (!tid) return null;
     var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
     if (!item) return null;

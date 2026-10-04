@@ -1,159 +1,176 @@
 id,type,label,brand,material,lb_test,diameter_mm,mass_g,buoyancy_g,density_g_cm3,area_cm2,shape,cd,gap_width_mm,wire_diameter_mm,buoyancy_per_inch_g,sample_length_mm,notes
-corky-14,foam,Corky 14,,,,7.0,0.111,0.209,,0.385,other,0.47,,,,,"measured 2026-10-02: caliper D=7.0mm, hole=1.5mm; ellipsoid vol 0.209mL; mass=0.111g; density 0.53; est L=8.8mm; mass±~0.02g (6-count batch); ⚠️L estimate needs caliper"
-corky-12,foam,Corky 12,,,,8.4,0.129,0.370,,0.554,other,0.47,,,,,"measured 2026-10-02: caliper D=8.4mm, hole=1.5mm; ellipsoid vol 0.370mL; mass=0.129g; density 0.35; est L=10.5mm; mass±~0.02g (6-count batch); ⚠️L estimate needs caliper"
-corky-10,foam,Corky 10,,,,10.0,0.233,0.616,,0.785,other,0.47,,,,,"measured 2026-10-02: ellipsoid 12.5x10mm hole=2mm; vol 0.616mL; mass=0.233g; density 0.378; mass±~0.02g (6-count batch)"
-cheater-12,foam,Cheater 12,,,,,0.276,0.553,,0.933,other,0.5,,,,,"measured 2026-10-02: caliper L=12.5mm, W=9.5mm teardrop with 2mm hole; ellipsoid vol 0.553mL; mass=0.276g; density 0.50"
 bead-4,bead,Bead 4mm,,plastic,,4.0,0.033,0.03,,0.126,sphere,0.47,,,,,"measured 2026-10-02: 4mm sphere, 1mm hole, mass=0.033g; geometric vol 0.0305mL; density 1.08"
 bead-5,bead,Bead 5mm,,plastic,,5.0,0.071,0.062,,0.196,sphere,0.47,,,,,"measured 2026-10-02: 5mm sphere, 1mm hole, mass=0.071g; geometric vol 0.0616mL; density 1.15"
 bead-6,bead,Bead 6mm,,plastic,,5.8,0.098,0.095,,0.264,sphere,0.47,,,,,"measured 2026-10-02: actual D=5.8mm, hole=1.25mm, mass=0.098g; geometric vol 0.0953mL; density 1.03"
 bead-8,bead,Bead 8mm,,plastic,,8.0,0.25,0.25,1.0,0.503,sphere,0.47,,,,,measured 4-count batch = 1.0g; sinks
-hook-2-0,hook,Hook 2/0,,,,,0.482,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
-hook-1-0,hook,Hook 1/0,,,,,0.381,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
-hook-1,hook,Hook 1,,,,,0.3,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
-hook-2,hook,Hook 2,,,,,0.219,,,,,,,,,,"dry weight measured 2026-10-02 (0.001 g scale)"
-yarn-egg,yarn,Egg yarn (saturated),,,,,,,,1.8,cylinder,0.8,,,-0.012,,"⚠️UNMEASURED — needs 10" soak buoyancy measurement (replace when measured)"
-braid-generic-20,line,Generic average 20lb,Generic average,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-generic-30,line,Generic average 30lb,Generic average,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-generic-40,line,Generic average 40lb,Generic average,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-powerpro-super8slick-v2-20,line,PowerPro Super8Slick V2 20lb,PowerPro Super8Slick V2,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-powerpro-super8slick-v2-30,line,PowerPro Super8Slick V2 30lb,PowerPro Super8Slick V2,braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-powerpro-super8slick-v2-40,line,PowerPro Super8Slick V2 40lb,PowerPro Super8Slick V2,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-powerpro-original-20,line,PowerPro Original (4-carrier) 20lb,PowerPro Original (4-carrier),braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-powerpro-original-30,line,PowerPro Original (4-carrier) 30lb,PowerPro Original (4-carrier),braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-powerpro-original-40,line,PowerPro Original (4-carrier) 40lb,PowerPro Original (4-carrier),braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-sufix-832-20,line,Sufix 832 Advanced Superline 20lb,Sufix 832 Advanced Superline,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-sufix-832-30,line,Sufix 832 Advanced Superline 30lb,Sufix 832 Advanced Superline,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-braid-sufix-832-40,line,Sufix 832 Advanced Superline 40lb,Sufix 832 Advanced Superline,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-daiwa-j-braid-x8-grand-20,line,Daiwa J-Braid x8 Grand 20lb,Daiwa J-Braid x8 Grand,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-daiwa-j-braid-x8-grand-30,line,Daiwa J-Braid x8 Grand 30lb,Daiwa J-Braid x8 Grand,braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-daiwa-j-braid-x8-grand-40,line,Daiwa J-Braid x8 Grand 40lb,Daiwa J-Braid x8 Grand,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-generic-20,line,Generic average 20lb,Generic average,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-generic-30,line,Generic average 30lb,Generic average,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-generic-40,line,Generic average 40lb,Generic average,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-original-20,line,PowerPro Original (4-carrier) 20lb,PowerPro Original (4-carrier),braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-original-30,line,PowerPro Original (4-carrier) 30lb,PowerPro Original (4-carrier),braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-original-40,line,PowerPro Original (4-carrier) 40lb,PowerPro Original (4-carrier),braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-super8slick-v2-20,line,PowerPro Super8Slick V2 20lb,PowerPro Super8Slick V2,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-super8slick-v2-30,line,PowerPro Super8Slick V2 30lb,PowerPro Super8Slick V2,braid,30,0.28,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-powerpro-super8slick-v2-40,line,PowerPro Super8Slick V2 40lb,PowerPro Super8Slick V2,braid,40,0.32,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-seaguar-smackdown-20,line,Seaguar Smackdown 20lb,Seaguar Smackdown,braid,20,0.235,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-seaguar-smackdown-30,line,Seaguar Smackdown 30lb,Seaguar Smackdown,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-seaguar-smackdown-40,line,Seaguar Smackdown 40lb,Seaguar Smackdown,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-spiderwire-stealth-20,line,SpiderWire Stealth 20lb,SpiderWire Stealth,braid,20,0.25,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-spiderwire-stealth-30,line,SpiderWire Stealth 30lb,SpiderWire Stealth,braid,30,0.3,,,1.0,,,,,,,,published average diameter (not caliper-measured)
 braid-spiderwire-stealth-40,line,SpiderWire Stealth 40lb,SpiderWire Stealth,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
-fluoro-generic-8,line,Generic average 8lb,Generic average,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-generic-10,line,Generic average 10lb,Generic average,fluoro,10,0.265,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-generic-12,line,Generic average 12lb,Generic average,fluoro,12,0.295,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-generic-15,line,Generic average 15lb,Generic average,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-generic-17,line,Generic average 17lb,Generic average,fluoro,17,0.375,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-sts-8,line,Seaguar STS (Salmon/Steelhead) 8lb,Seaguar STS (Salmon/Steelhead),fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-sts-10,line,Seaguar STS (Salmon/Steelhead) 10lb,Seaguar STS (Salmon/Steelhead),fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-sts-12,line,Seaguar STS (Salmon/Steelhead) 12lb,Seaguar STS (Salmon/Steelhead),fluoro,12,0.31,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-sts-15,line,Seaguar STS (Salmon/Steelhead) 15lb,Seaguar STS (Salmon/Steelhead),fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-sts-17,line,Seaguar STS (Salmon/Steelhead) 17lb,Seaguar STS (Salmon/Steelhead),fluoro,17,0.37,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-blue-label-8,line,Seaguar Blue Label Leader 8lb,Seaguar Blue Label Leader,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-blue-label-10,line,Seaguar Blue Label Leader 10lb,Seaguar Blue Label Leader,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-blue-label-12,line,Seaguar Blue Label Leader 12lb,Seaguar Blue Label Leader,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-blue-label-15,line,Seaguar Blue Label Leader 15lb,Seaguar Blue Label Leader,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-red-label-invix-8,line,Seaguar Red Label / InvizX 8lb,Seaguar Red Label / InvizX,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-red-label-invix-10,line,Seaguar Red Label / InvizX 10lb,Seaguar Red Label / InvizX,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-red-label-invix-12,line,Seaguar Red Label / InvizX 12lb,Seaguar Red Label / InvizX,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-red-label-invix-15,line,Seaguar Red Label / InvizX 15lb,Seaguar Red Label / InvizX,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-seaguar-red-label-invix-17,line,Seaguar Red Label / InvizX 17lb,Seaguar Red Label / InvizX,fluoro,17,0.37,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-sunline-fc-sniper-8,line,Sunline FC Sniper 8lb,Sunline FC Sniper,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-sunline-fc-sniper-10,line,Sunline FC Sniper 10lb,Sunline FC Sniper,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-sunline-fc-sniper-12,line,Sunline FC Sniper 12lb,Sunline FC Sniper,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-sunline-fc-sniper-15,line,Sunline FC Sniper 15lb,Sunline FC Sniper,fluoro,15,0.31,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-sunline-fc-sniper-17,line,Sunline FC Sniper 17lb,Sunline FC Sniper,fluoro,17,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-berkley-trilene-100-8,line,Berkley Trilene 100% Fluoro 8lb,Berkley Trilene 100% Fluoro,fluoro,8,0.254,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-berkley-trilene-100-10,line,Berkley Trilene 100% Fluoro 10lb,Berkley Trilene 100% Fluoro,fluoro,10,0.279,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-berkley-trilene-100-12,line,Berkley Trilene 100% Fluoro 12lb,Berkley Trilene 100% Fluoro,fluoro,12,0.304,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-berkley-trilene-100-15,line,Berkley Trilene 100% Fluoro 15lb,Berkley Trilene 100% Fluoro,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-berkley-trilene-100-17,line,Berkley Trilene 100% Fluoro 17lb,Berkley Trilene 100% Fluoro,fluoro,17,0.381,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-maxima-8,line,Maxima Fluorocarbon Leader 8lb,Maxima Fluorocarbon Leader,fluoro,8,0.24,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-maxima-10,line,Maxima Fluorocarbon Leader 10lb,Maxima Fluorocarbon Leader,fluoro,10,0.28,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-maxima-12,line,Maxima Fluorocarbon Leader 12lb,Maxima Fluorocarbon Leader,fluoro,12,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-maxima-15,line,Maxima Fluorocarbon Leader 15lb,Maxima Fluorocarbon Leader,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-p-line-tactical-halo-8,line,P-Line Tactical / HALO Leader 8lb,P-Line Tactical / HALO Leader,fluoro,8,0.23,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-p-line-tactical-halo-10,line,P-Line Tactical / HALO Leader 10lb,P-Line Tactical / HALO Leader,fluoro,10,0.28,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-p-line-tactical-halo-12,line,P-Line Tactical / HALO Leader 12lb,P-Line Tactical / HALO Leader,fluoro,12,0.3,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-p-line-tactical-halo-15,line,P-Line Tactical / HALO Leader 15lb,P-Line Tactical / HALO Leader,fluoro,15,0.35,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-fluoro-p-line-tactical-halo-17,line,P-Line Tactical / HALO Leader 17lb,P-Line Tactical / HALO Leader,fluoro,17,0.38,,,1.78,,,,,,,,published average diameter (not caliper-measured)
-mono-generic-8,line,Generic average 8lb,Generic average,mono,8,0.265,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-generic-10,line,Generic average 10lb,Generic average,mono,10,0.295,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-generic-12,line,Generic average 12lb,Generic average,mono,12,0.34,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-generic-15,line,Generic average 15lb,Generic average,mono,15,0.38,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-generic-17,line,Generic average 17lb,Generic average,mono,17,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-xl-8,line,Berkley Trilene XL 8lb,Berkley Trilene XL,mono,8,0.254,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-xl-10,line,Berkley Trilene XL 10lb,Berkley Trilene XL,mono,10,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-xl-12,line,Berkley Trilene XL 12lb,Berkley Trilene XL,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-xl-17,line,Berkley Trilene XL 17lb,Berkley Trilene XL,mono,17,0.406,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-big-game-8,line,Berkley Trilene Big Game 8lb,Berkley Trilene Big Game,mono,8,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-big-game-10,line,Berkley Trilene Big Game 10lb,Berkley Trilene Big Game,mono,10,0.304,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-big-game-12,line,Berkley Trilene Big Game 12lb,Berkley Trilene Big Game,mono,12,0.355,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-berkley-trilene-big-game-15,line,Berkley Trilene Big Game 15lb,Berkley Trilene Big Game,mono,15,0.381,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-stren-original-8,line,Stren Original 8lb,Stren Original,mono,8,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-stren-original-10,line,Stren Original 10lb,Stren Original,mono,10,0.304,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-stren-original-12,line,Stren Original 12lb,Stren Original,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-stren-original-17,line,Stren Original 17lb,Stren Original,mono,17,0.406,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-ande-premium-8,line,Ande Premium 8lb,Ande Premium,mono,8,0.25,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-ande-premium-10,line,Ande Premium 10lb,Ande Premium,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-ande-premium-12,line,Ande Premium 12lb,Ande Premium,mono,12,0.35,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-ande-premium-15,line,Ande Premium 15lb,Ande Premium,mono,15,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-sufix-superior-8,line,Sufix Superior 8lb,Sufix Superior,mono,8,0.28,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-sufix-superior-10,line,Sufix Superior 10lb,Sufix Superior,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-sufix-superior-12,line,Sufix Superior 12lb,Sufix Superior,mono,12,0.35,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-sufix-superior-15,line,Sufix Superior 15lb,Sufix Superior,mono,15,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-maxima-ultragreen-8,line,Maxima Ultragreen 8lb,Maxima Ultragreen,mono,8,0.28,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-maxima-ultragreen-10,line,Maxima Ultragreen 10lb,Maxima Ultragreen,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-maxima-ultragreen-12,line,Maxima Ultragreen 12lb,Maxima Ultragreen,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-mono-maxima-ultragreen-15,line,Maxima Ultragreen 15lb,Maxima Ultragreen,mono,15,0.38,,,1.15,,,,,,,,published average diameter (not caliper-measured)
-copoly-generic-8,line,Generic average 8lb,Generic average,copoly,8,0.275,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+braid-sufix-832-20,line,Sufix 832 Advanced Superline 20lb,Sufix 832 Advanced Superline,braid,20,0.23,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-sufix-832-30,line,Sufix 832 Advanced Superline 30lb,Sufix 832 Advanced Superline,braid,30,0.285,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+braid-sufix-832-40,line,Sufix 832 Advanced Superline 40lb,Sufix 832 Advanced Superline,braid,40,0.33,,,1.0,,,,,,,,published average diameter (not caliper-measured)
+cheater-10,foam,Cheater 10,,,,9.53,0.015,0.385,,0.713,other,0.43,,,,,
+cheater-12,foam,Cheater 12,,,,7.94,0.009,0.223,,0.495,other,0.43,,,,,
+cheater-14,foam,Cheater 14,,,,6.35,0.005,0.114,,0.317,other,0.43,,,,,
+cheater-6,foam,Cheater 6,,,,15.88,0.071,1.780,,1.980,other,0.43,,,,,
+cheater-8,foam,Cheater 8,,,,12.70,0.036,0.912,,1.267,other,0.43,,,,,
 copoly-generic-10,line,Generic average 10lb,Generic average,copoly,10,0.31,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-generic-12,line,Generic average 12lb,Generic average,copoly,12,0.35,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-generic-15,line,Generic average 15lb,Generic average,copoly,15,0.395,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-generic-17,line,Generic average 17lb,Generic average,copoly,17,0.45,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-izorline-platinum-8,line,Izorline Platinum 8lb,Izorline Platinum,copoly,8,0.25,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-generic-8,line,Generic average 8lb,Generic average,copoly,8,0.275,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-izorline-platinum-10,line,Izorline Platinum 10lb,Izorline Platinum,copoly,10,0.3,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-izorline-platinum-12,line,Izorline Platinum 12lb,Izorline Platinum,copoly,12,0.35,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-izorline-platinum-15,line,Izorline Platinum 15lb,Izorline Platinum,copoly,15,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-p-line-cxx-8,line,P-Line CXX X-Tra Strong 8lb,P-Line CXX X-Tra Strong,copoly,8,0.29,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-izorline-platinum-8,line,Izorline Platinum 8lb,Izorline Platinum,copoly,8,0.25,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-10,line,McCoy Mean Green 10lb,McCoy Mean Green,copoly,10,0.3,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-12,line,McCoy Mean Green 12lb,McCoy Mean Green,copoly,12,0.33,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-15,line,McCoy Mean Green 15lb,McCoy Mean Green,copoly,15,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-mccoy-mean-green-8,line,McCoy Mean Green 8lb,McCoy Mean Green,copoly,8,0.28,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-p-line-cxx-10,line,P-Line CXX X-Tra Strong 10lb,P-Line CXX X-Tra Strong,copoly,10,0.35,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-p-line-cxx-12,line,P-Line CXX X-Tra Strong 12lb,P-Line CXX X-Tra Strong,copoly,12,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-p-line-cxx-15,line,P-Line CXX X-Tra Strong 15lb,P-Line CXX X-Tra Strong,copoly,15,0.43,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-p-line-cxx-17,line,P-Line CXX X-Tra Strong 17lb,P-Line CXX X-Tra Strong,copoly,17,0.45,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-yo-zuri-hybrid-8,line,Yo-Zuri Hybrid 8lb,Yo-Zuri Hybrid,copoly,8,0.284,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+copoly-p-line-cxx-8,line,P-Line CXX X-Tra Strong 8lb,P-Line CXX X-Tra Strong,copoly,8,0.29,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-yo-zuri-hybrid-10,line,Yo-Zuri Hybrid 10lb,Yo-Zuri Hybrid,copoly,10,0.308,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-yo-zuri-hybrid-12,line,Yo-Zuri Hybrid 12lb,Yo-Zuri Hybrid,copoly,12,0.338,,,1.2,,,,,,,,published average diameter (not caliper-measured)
 copoly-yo-zuri-hybrid-15,line,Yo-Zuri Hybrid 15lb,Yo-Zuri Hybrid,copoly,15,0.405,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-mccoy-mean-green-8,line,McCoy Mean Green 8lb,McCoy Mean Green,copoly,8,0.28,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-mccoy-mean-green-10,line,McCoy Mean Green 10lb,McCoy Mean Green,copoly,10,0.3,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-mccoy-mean-green-12,line,McCoy Mean Green 12lb,McCoy Mean Green,copoly,12,0.33,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-copoly-mccoy-mean-green-15,line,McCoy Mean Green 15lb,McCoy Mean Green,copoly,15,0.38,,,1.2,,,,,,,,published average diameter (not caliper-measured)
-weight-lead-teardrop-1-4,weight,Lead Teardrop 1/4 oz,,lead,,,7.09,,11.34,1.082,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-3-8,weight,Lead Teardrop 3/8 oz,,lead,,,10.63,,11.34,1.418,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-1-2,weight,Lead Teardrop 1/2 oz,,lead,,,14.17,,11.34,1.717,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-5-8,weight,Lead Teardrop 5/8 oz,,lead,,,17.72,,11.34,1.993,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-teardrop-3-4,weight,Lead Teardrop 3/4 oz,,lead,,,21.26,,11.34,2.250,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
-weight-lead-cannonball-1-4,weight,Lead Cannonball 1/4 oz,,lead,,,7.09,,11.34,0.884,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-1-4,weight,"Lead Cannonball (rubber sleeve, swivel) 1/4 oz",,lead,,,7.92,,5.74,1.497,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
-weight-lead-cannonball-3-8,weight,Lead Cannonball 3/8 oz,,lead,,,10.63,,11.34,1.158,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-3-8,weight,"Lead Cannonball (rubber sleeve, swivel) 3/8 oz",,lead,,,11.68,,6.17,1.849,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
+copoly-yo-zuri-hybrid-8,line,Yo-Zuri Hybrid 8lb,Yo-Zuri Hybrid,copoly,8,0.284,,,1.2,,,,,,,,published average diameter (not caliper-measured)
+corky-10,foam,Corky 10,,,,9.53,0.018,0.453,,0.713,sphere,0.47,,,,,
+corky-12,foam,Corky 12,,,,7.94,0.010,0.262,,0.495,sphere,0.47,,,,,
+corky-14,foam,Corky 14,,,,6.35,0.003,0.134,,0.317,sphere,0.47,,,,,
+corky-6,foam,Corky 6,,,,15.88,0.084,2.094,,1.980,sphere,0.47,,,,,
+corky-8,foam,Corky 8,,,,12.70,0.043,1.073,,1.267,sphere,0.47,,,,,
+fluoro-berkley-trilene-100-10,line,Berkley Trilene 100% Fluoro 10lb,Berkley Trilene 100% Fluoro,fluoro,10,0.279,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-12,line,Berkley Trilene 100% Fluoro 12lb,Berkley Trilene 100% Fluoro,fluoro,12,0.304,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-15,line,Berkley Trilene 100% Fluoro 15lb,Berkley Trilene 100% Fluoro,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-17,line,Berkley Trilene 100% Fluoro 17lb,Berkley Trilene 100% Fluoro,fluoro,17,0.381,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-berkley-trilene-100-8,line,Berkley Trilene 100% Fluoro 8lb,Berkley Trilene 100% Fluoro,fluoro,8,0.254,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-10,line,Generic average 10lb,Generic average,fluoro,10,0.265,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-12,line,Generic average 12lb,Generic average,fluoro,12,0.295,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-15,line,Generic average 15lb,Generic average,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-17,line,Generic average 17lb,Generic average,fluoro,17,0.375,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-generic-8,line,Generic average 8lb,Generic average,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-10,line,Maxima Fluorocarbon Leader 10lb,Maxima Fluorocarbon Leader,fluoro,10,0.28,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-12,line,Maxima Fluorocarbon Leader 12lb,Maxima Fluorocarbon Leader,fluoro,12,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-15,line,Maxima Fluorocarbon Leader 15lb,Maxima Fluorocarbon Leader,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-maxima-8,line,Maxima Fluorocarbon Leader 8lb,Maxima Fluorocarbon Leader,fluoro,8,0.24,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-10,line,P-Line Tactical / HALO Leader 10lb,P-Line Tactical / HALO Leader,fluoro,10,0.28,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-12,line,P-Line Tactical / HALO Leader 12lb,P-Line Tactical / HALO Leader,fluoro,12,0.3,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-15,line,P-Line Tactical / HALO Leader 15lb,P-Line Tactical / HALO Leader,fluoro,15,0.35,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-17,line,P-Line Tactical / HALO Leader 17lb,P-Line Tactical / HALO Leader,fluoro,17,0.38,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-p-line-tactical-halo-8,line,P-Line Tactical / HALO Leader 8lb,P-Line Tactical / HALO Leader,fluoro,8,0.23,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-10,line,Seaguar Blue Label Leader 10lb,Seaguar Blue Label Leader,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-12,line,Seaguar Blue Label Leader 12lb,Seaguar Blue Label Leader,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-15,line,Seaguar Blue Label Leader 15lb,Seaguar Blue Label Leader,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-blue-label-8,line,Seaguar Blue Label Leader 8lb,Seaguar Blue Label Leader,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-10,line,Seaguar Red Label / InvizX 10lb,Seaguar Red Label / InvizX,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-12,line,Seaguar Red Label / InvizX 12lb,Seaguar Red Label / InvizX,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-15,line,Seaguar Red Label / InvizX 15lb,Seaguar Red Label / InvizX,fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-17,line,Seaguar Red Label / InvizX 17lb,Seaguar Red Label / InvizX,fluoro,17,0.37,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-red-label-invix-8,line,Seaguar Red Label / InvizX 8lb,Seaguar Red Label / InvizX,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-10,line,Seaguar STS (Salmon/Steelhead) 10lb,Seaguar STS (Salmon/Steelhead),fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-12,line,Seaguar STS (Salmon/Steelhead) 12lb,Seaguar STS (Salmon/Steelhead),fluoro,12,0.31,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-15,line,Seaguar STS (Salmon/Steelhead) 15lb,Seaguar STS (Salmon/Steelhead),fluoro,15,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-17,line,Seaguar STS (Salmon/Steelhead) 17lb,Seaguar STS (Salmon/Steelhead),fluoro,17,0.37,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-seaguar-sts-8,line,Seaguar STS (Salmon/Steelhead) 8lb,Seaguar STS (Salmon/Steelhead),fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-10,line,Sunline FC Sniper 10lb,Sunline FC Sniper,fluoro,10,0.26,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-12,line,Sunline FC Sniper 12lb,Sunline FC Sniper,fluoro,12,0.285,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-15,line,Sunline FC Sniper 15lb,Sunline FC Sniper,fluoro,15,0.31,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-17,line,Sunline FC Sniper 17lb,Sunline FC Sniper,fluoro,17,0.33,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+fluoro-sunline-fc-sniper-8,line,Sunline FC Sniper 8lb,Sunline FC Sniper,fluoro,8,0.235,,,1.78,,,,,,,,published average diameter (not caliper-measured)
+hook-gam-fwg-1,hook,Gamakatsu Finesse Wide Gap 1,,,,,0.138,0.018,,0.2844,other,1.05,,0.79,,,
+hook-gam-fwg-1-0,hook,Gamakatsu Finesse Wide Gap 1/0,,,,,0.200,0.026,,0.3649,other,1.05,,0.89,,,
+hook-gam-fwg-2,hook,Gamakatsu Finesse Wide Gap 2,,,,,0.104,0.013,,0.2294,other,1.05,,0.74,,,
+hook-gam-fwg-2-0,hook,Gamakatsu Finesse Wide Gap 2/0,,,,,0.267,0.034,,0.4462,other,1.05,,0.97,,,
+hook-gam-fwg-3,hook,Gamakatsu Finesse Wide Gap 3,,,,,0.080,0.010,,0.1904,other,1.05,,0.68,,,
+hook-gam-oct-1,hook,Gamakatsu Octopus 1,,,,,0.191,0.024,,0.3612,other,1.05,,0.86,,,
+hook-gam-oct-1-0,hook,Gamakatsu Octopus 1/0,,,,,0.290,0.037,,0.4752,other,1.05,,0.99,,,
+hook-gam-oct-2,hook,Gamakatsu Octopus 2,,,,,0.145,0.019,,0.2916,other,1.05,,0.81,,,
+hook-gam-oct-2-0,hook,Gamakatsu Octopus 2/0,,,,,0.381,0.049,,0.5778,other,1.05,,1.07,,,
+hook-gam-oct-3,hook,Gamakatsu Octopus 3,,,,,0.108,0.014,,0.2368,other,1.05,,0.74,,,
+hook-owner-ssw-1,hook,Owner SSW 1,,,,,0.255,0.033,,0.4268,other,1.05,,0.97,,,
+hook-owner-ssw-1-0,hook,Owner SSW 1/0,,,,,0.373,0.048,,0.5500,other,1.05,,1.10,,,
+hook-owner-ssw-2,hook,Owner SSW 2,,,,,0.185,0.024,,0.3382,other,1.05,,0.89,,,
+hook-owner-ssw-2-0,hook,Owner SSW 2/0,,,,,0.498,0.063,,0.6783,other,1.05,,1.19,,,
+hook-owner-ssw-3,hook,Owner SSW 3,,,,,0.137,0.018,,0.2754,other,1.05,,0.81,,,
+mono-ande-premium-10,line,Ande Premium 10lb,Ande Premium,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-12,line,Ande Premium 12lb,Ande Premium,mono,12,0.35,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-15,line,Ande Premium 15lb,Ande Premium,mono,15,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-ande-premium-8,line,Ande Premium 8lb,Ande Premium,mono,8,0.25,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-10,line,Berkley Trilene Big Game 10lb,Berkley Trilene Big Game,mono,10,0.304,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-12,line,Berkley Trilene Big Game 12lb,Berkley Trilene Big Game,mono,12,0.355,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-15,line,Berkley Trilene Big Game 15lb,Berkley Trilene Big Game,mono,15,0.381,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-big-game-8,line,Berkley Trilene Big Game 8lb,Berkley Trilene Big Game,mono,8,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-10,line,Berkley Trilene XL 10lb,Berkley Trilene XL,mono,10,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-12,line,Berkley Trilene XL 12lb,Berkley Trilene XL,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-17,line,Berkley Trilene XL 17lb,Berkley Trilene XL,mono,17,0.406,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-berkley-trilene-xl-8,line,Berkley Trilene XL 8lb,Berkley Trilene XL,mono,8,0.254,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-10,line,Generic average 10lb,Generic average,mono,10,0.295,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-12,line,Generic average 12lb,Generic average,mono,12,0.34,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-15,line,Generic average 15lb,Generic average,mono,15,0.38,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-17,line,Generic average 17lb,Generic average,mono,17,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-generic-8,line,Generic average 8lb,Generic average,mono,8,0.265,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-10,line,Maxima Ultragreen 10lb,Maxima Ultragreen,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-12,line,Maxima Ultragreen 12lb,Maxima Ultragreen,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-15,line,Maxima Ultragreen 15lb,Maxima Ultragreen,mono,15,0.38,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-maxima-ultragreen-8,line,Maxima Ultragreen 8lb,Maxima Ultragreen,mono,8,0.28,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-10,line,Stren Original 10lb,Stren Original,mono,10,0.304,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-12,line,Stren Original 12lb,Stren Original,mono,12,0.33,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-17,line,Stren Original 17lb,Stren Original,mono,17,0.406,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-stren-original-8,line,Stren Original 8lb,Stren Original,mono,8,0.279,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-10,line,Sufix Superior 10lb,Sufix Superior,mono,10,0.3,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-12,line,Sufix Superior 12lb,Sufix Superior,mono,12,0.35,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-15,line,Sufix Superior 15lb,Sufix Superior,mono,15,0.4,,,1.15,,,,,,,,published average diameter (not caliper-measured)
+mono-sufix-superior-8,line,Sufix Superior 8lb,Sufix Superior,mono,8,0.28,,,1.15,,,,,,,,published average diameter (not caliper-measured)
 weight-lead-cannonball-1-2,weight,Lead Cannonball 1/2 oz,,lead,,,14.17,,11.34,1.403,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-1-2,weight,"Lead Cannonball (rubber sleeve, swivel) 1/2 oz",,lead,,,15.42,,6.48,2.156,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
-weight-lead-cannonball-5-8,weight,Lead Cannonball 5/8 oz,,lead,,,17.72,,11.34,1.628,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
-weight-lead-cannonball-rubber-5-8,weight,"Lead Cannonball (rubber sleeve, swivel) 5/8 oz",,lead,,,19.14,,6.70,2.433,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
+weight-lead-cannonball-1-4,weight,Lead Cannonball 1/4 oz,,lead,,,7.09,,11.34,0.884,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
 weight-lead-cannonball-3-4,weight,Lead Cannonball 3/4 oz,,lead,,,21.26,,11.34,1.838,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
+weight-lead-cannonball-3-8,weight,Lead Cannonball 3/8 oz,,lead,,,10.63,,11.34,1.158,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
+weight-lead-cannonball-5-8,weight,Lead Cannonball 5/8 oz,,lead,,,17.72,,11.34,1.628,cannonball,0.47,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect sphere)
+weight-lead-cannonball-rubber-1-2,weight,"Lead Cannonball (rubber sleeve, swivel) 1/2 oz",,lead,,,15.42,,6.48,2.156,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
+weight-lead-cannonball-rubber-1-4,weight,"Lead Cannonball (rubber sleeve, swivel) 1/4 oz",,lead,,,7.92,,5.74,1.497,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
 weight-lead-cannonball-rubber-3-4,weight,"Lead Cannonball (rubber sleeve, swivel) 3/4 oz",,lead,,,22.85,,6.89,2.687,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
-weight-tungsten-teardrop-1-4,weight,Tungsten Teardrop (swivel) 1/4 oz,,tungsten,,,7.09,,19.30,0.759,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
-weight-tungsten-teardrop-3-8,weight,Tungsten Teardrop (swivel) 3/8 oz,,tungsten,,,10.63,,19.30,0.994,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
-weight-tungsten-teardrop-1-2,weight,Tungsten Teardrop (swivel) 1/2 oz,,tungsten,,,14.17,,19.30,1.205,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
-weight-tungsten-teardrop-5-8,weight,Tungsten Teardrop (swivel) 5/8 oz,,tungsten,,,17.72,,19.30,1.398,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
-weight-tungsten-teardrop-3-4,weight,Tungsten Teardrop (swivel) 3/4 oz,,tungsten,,,21.26,,19.30,1.579,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
-weight-tungsten-cylinder-1-4,weight,Tungsten Cylinder (swivel) 1/4 oz,,tungsten,,,7.09,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
-weight-stainless-barrel-1-4,weight,Stainless Steel Barrel (swivel) 1/4 oz,,stainless_steel,,,7.09,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
-weight-lead-submarine-1-4,weight,"Lead Submarine (rubber sleeve, swivel) 1/4 oz",,lead,,,7.09,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
-weight-tungsten-cylinder-3-8,weight,Tungsten Cylinder (swivel) 3/8 oz,,tungsten,,,10.63,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
-weight-stainless-barrel-3-8,weight,Stainless Steel Barrel (swivel) 3/8 oz,,stainless_steel,,,10.63,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
-weight-lead-submarine-3-8,weight,"Lead Submarine (rubber sleeve, swivel) 3/8 oz",,lead,,,10.63,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
-weight-tungsten-cylinder-1-2,weight,Tungsten Cylinder (swivel) 1/2 oz,,tungsten,,,14.18,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
-weight-stainless-barrel-1-2,weight,Stainless Steel Barrel (swivel) 1/2 oz,,stainless_steel,,,14.18,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-cannonball-rubber-3-8,weight,"Lead Cannonball (rubber sleeve, swivel) 3/8 oz",,lead,,,11.68,,6.17,1.849,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
+weight-lead-cannonball-rubber-5-8,weight,"Lead Cannonball (rubber sleeve, swivel) 5/8 oz",,lead,,,19.14,,6.70,2.433,cannonball,0.47,,,,,"STATIC area/density ESTIMATED from mass/density geometry (aspect sphere, rubber sleeve modelled); swivel top"
 weight-lead-submarine-1-2,weight,"Lead Submarine (rubber sleeve, swivel) 1/2 oz",,lead,,,14.18,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
-weight-tungsten-cylinder-5-8,weight,Tungsten Cylinder (swivel) 5/8 oz,,tungsten,,,17.72,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
-weight-stainless-barrel-5-8,weight,Stainless Steel Barrel (swivel) 5/8 oz,,stainless_steel,,,17.72,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
-weight-lead-submarine-5-8,weight,"Lead Submarine (rubber sleeve, swivel) 5/8 oz",,lead,,,17.72,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
-weight-tungsten-cylinder-3-4,weight,Tungsten Cylinder (swivel) 3/4 oz,,tungsten,,,21.26,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
-weight-stainless-barrel-3-4,weight,Stainless Steel Barrel (swivel) 3/4 oz,,stainless_steel,,,21.26,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-lead-submarine-1-4,weight,"Lead Submarine (rubber sleeve, swivel) 1/4 oz",,lead,,,7.09,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
 weight-lead-submarine-3-4,weight,"Lead Submarine (rubber sleeve, swivel) 3/4 oz",,lead,,,21.26,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-lead-submarine-3-8,weight,"Lead Submarine (rubber sleeve, swivel) 3/8 oz",,lead,,,10.63,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-lead-submarine-5-8,weight,"Lead Submarine (rubber sleeve, swivel) 5/8 oz",,lead,,,17.72,,,,other,0.7,,,,,"PENDING measurement; fluted lead core, rubber sleeve, integrated swivel"
+weight-lead-teardrop-1-2,weight,Lead Teardrop 1/2 oz,,lead,,,14.17,,11.34,1.717,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
+weight-lead-teardrop-1-4,weight,Lead Teardrop 1/4 oz,,lead,,,7.09,,11.34,1.082,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
+weight-lead-teardrop-3-4,weight,Lead Teardrop 3/4 oz,,lead,,,21.26,,11.34,2.250,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
+weight-lead-teardrop-3-8,weight,Lead Teardrop 3/8 oz,,lead,,,10.63,,11.34,1.418,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
+weight-lead-teardrop-5-8,weight,Lead Teardrop 5/8 oz,,lead,,,17.72,,11.34,1.993,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0)
+weight-stainless-barrel-1-2,weight,Stainless Steel Barrel (swivel) 1/2 oz,,stainless_steel,,,14.18,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-1-4,weight,Stainless Steel Barrel (swivel) 1/4 oz,,stainless_steel,,,7.09,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-3-4,weight,Stainless Steel Barrel (swivel) 3/4 oz,,stainless_steel,,,21.26,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-3-8,weight,Stainless Steel Barrel (swivel) 3/8 oz,,stainless_steel,,,10.63,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-stainless-barrel-5-8,weight,Stainless Steel Barrel (swivel) 5/8 oz,,stainless_steel,,,17.72,,7.85,,barrel,0.9,,,,,PENDING measurement; swivel top
+weight-tungsten-cylinder-1-2,weight,Tungsten Cylinder (swivel) 1/2 oz,,tungsten,,,14.18,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-tungsten-cylinder-1-4,weight,Tungsten Cylinder (swivel) 1/4 oz,,tungsten,,,7.09,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-tungsten-cylinder-3-4,weight,Tungsten Cylinder (swivel) 3/4 oz,,tungsten,,,21.26,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-tungsten-cylinder-3-8,weight,Tungsten Cylinder (swivel) 3/8 oz,,tungsten,,,10.63,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-tungsten-cylinder-5-8,weight,Tungsten Cylinder (swivel) 5/8 oz,,tungsten,,,17.72,,19.3,,cylinder,1.0,,,,,PENDING measurement; swivel top
+weight-tungsten-teardrop-1-2,weight,Tungsten Teardrop (swivel) 1/2 oz,,tungsten,,,14.17,,19.30,1.205,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-1-4,weight,Tungsten Teardrop (swivel) 1/4 oz,,tungsten,,,7.09,,19.30,0.759,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-3-4,weight,Tungsten Teardrop (swivel) 3/4 oz,,tungsten,,,21.26,,19.30,1.579,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-3-8,weight,Tungsten Teardrop (swivel) 3/8 oz,,tungsten,,,10.63,,19.30,0.994,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+weight-tungsten-teardrop-5-8,weight,Tungsten Teardrop (swivel) 5/8 oz,,tungsten,,,17.72,,19.30,1.398,teardrop,0.5,,,,,STATIC area/density ESTIMATED from mass/density geometry (aspect 2.0); swivel top
+yarn-egg,yarn,Egg yarn (saturated),,,,,,,,1.27,cylinder,0.85,,,-0.012,,

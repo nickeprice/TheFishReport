@@ -1,18 +1,20 @@
 /**
  * src/features/gear-sim/continuity.js - gauge velocity -> "near you" velocity.
  *
- * The Gear Sim knows the velocity AT THE GAUGE. Continuity says the same discharge
- * spreading into a wider channel runs slower:
+ * The Gear Sim knows the velocity AT THE GAUGE. Since Phase 1.4-1.5, the app also
+ * knows the channel width at the angler's spot from a pre-computed DEM lookup table
+ * (`src/data/spot_widths.js`). Continuity + Manning gives the adjustment:
  *
- *     v_spot ~= v_gauge * (width_gauge / width_spot)
+ *     v_spot = v_gauge * (w_spot / w_gauge)^(2/5)
+ *     d_spot = d_gauge * (w_gauge / w_spot)^(3/5)
  *
- * `src/data/river_widths.js` carries a per-gauge channel width routed between two
- * measurement methods and validated against the USGS field widths
- * (scripts/extract_river_widths.py). The SPOT width is the missing half: NAIP cannot
- * measure these glacial rivers at all, so the routed table falls back to the USGS width
- * and there is no per-spot number yet. Until a spot-width source lands (a dated 3DEP
- * endpoint, or a client-side DEM read) the honest answer is the gauge value LABELLED as a
- * same-reach estimate - never a fabricated spot number.
+ * The Manning exponents (2/5, 3/5) assume a wide rectangular channel with constant
+ * slope and roughness — the standard hydraulic-geometry scaling for gravel-bed rivers.
+ *
+ * `src/data/river_widths.js` carries per-gauge channel width (validated against USGS
+ * field widths). `src/data/spot_widths.js` carries DEM-measured cross-sections at
+ * ~500m intervals along 5 core rivers. The nearest-neighbor lookup finds the closest
+ * DEM point to the active station's GPS coordinates.
  *
  * The premise that fish hold in LOWER-velocity water is corroborated in the hydraulic-habitat
  * literature: Luis & Pasternack 2023 (Fisheries Research 262:106634) found migrating Chinook
@@ -20,10 +22,21 @@
  * docs/LITERATURE.md §6 (and its conveyance/Froude candidate).
  *
  * public: gaugeWidthFt(siteId), spotWidthRatio(siteId), velocityAtSpot(flow, siteId),
- *         depthAtGauge(flow, siteId), spotDepthFt(flow, siteId)
+ *         depthAtGauge(flow, siteId), spotDepthFt(flow, siteId),
+ *         spotNearestWidth(siteId)
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
-var SAME_REACH_UNCERTAINTY = 0.20;   // +/- this much until a real spot width exists
+var SAME_REACH_UNCERTAINTY = 0.20;        // +/- this much without a spot measurement
+var SAME_REACH_MEASURED_UNCERTAINTY = 0.10; // +/- 10% when spot width IS measured
+
+// Site ID -> SPOT_WIDTHS river key lookup.
+var SPOT_WIDTHS_SITE_MAP = {
+    "12101500": "puyallup",
+    "12098500": "white",
+    "12094000": "carbon",
+    "12113000": "green",
+    "12089500": "nisqually"
+};
 
 function gaugeWidthFt(siteId) {
     var all = (typeof window !== 'undefined') ? window.RIVER_WIDTHS : null;
@@ -32,25 +45,95 @@ function gaugeWidthFt(siteId) {
     return (w > 0) ? w : null;
 }
 
+// Haversine distance in metres (used for nearest-neighbour SPOT_WIDTHS lookup).
+function haversineM(lat1, lon1, lat2, lon2) {
+    var R = 6371000;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// Nearest SPOT_WIDTHS DEM cross-section to the active station's GPS coordinates.
+// Returns { point, distance_m } or null when unavailable.
+function spotNearestWidth(siteId) {
+    if (!siteId) return null;
+    var key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
+    if (!key) return null;
+    var all = (typeof window !== 'undefined') ? window.SPOT_WIDTHS : null;
+    if (!all || !all.rivers) return null;
+    var river = all.rivers[key];
+    if (!river || !river.points || !river.points.length) return null;
+
+    // Read the active station's GPS coordinates from localStorage.
+    var lat = null, lon = null;
+    try {
+        var raw = localStorage.getItem('active_station');
+        if (raw) {
+            var st = JSON.parse(raw);
+            if (st.lat != null && st.lon != null) {
+                lat = Number(st.lat);
+                lon = Number(st.lon);
+            }
+        }
+    } catch (e) {}
+    if (lat == null || lon == null) return null;
+
+    // Linear scan — SPOT_WIDTHS is small (under 100 points per river).
+    var best = null, bestDist = Infinity;
+    for (var i = 0; i < river.points.length; i++) {
+        var p = river.points[i];
+        var d = haversineM(lat, lon, p.lat, p.lon);
+        if (d < bestDist) {
+            bestDist = d;
+            best = p;
+        }
+    }
+    return best ? { point: best, distance_m: bestDist } : null;
+}
+
 // width_gauge / width_spot. Returns provenance, not a bare number, so callers cannot
 // quietly present an unmeasured ratio as if it were measured.
+// When SPOT_WIDTHS data exists for the active station's river, uses the nearest
+// DEM cross-section. Otherwise falls back to 1.0 (same-reach estimate).
 function spotWidthRatio(siteId) {
-    return { ratio: 1.0, measured: false, gaugeFt: gaugeWidthFt(siteId) };
+    var gaugeFt = gaugeWidthFt(siteId);
+    var near = spotNearestWidth(siteId);
+    if (near && near.point && near.point.wetted_ft > 0 && gaugeFt && gaugeFt > 0) {
+        var ratio = gaugeFt / near.point.wetted_ft;
+        return {
+            ratio: ratio,
+            measured: true,
+            gaugeFt: gaugeFt,
+            spotFt: near.point.wetted_ft,
+            spotDistanceM: Math.round(near.distance_m)
+        };
+    }
+    return { ratio: 1.0, measured: false, gaugeFt: gaugeFt };
 }
 
 // Velocity at the angler's spot in TRUE ft/s, with its provenance and honest spread.
+// When the spot width is measured (SPOT_WIDTHS), uses the Manning-based adjustment:
+//     v_spot = v_gauge * (w_spot / w_gauge)^(2/5)
+// Otherwise falls back to the simple continuity ratio (w_gauge / w_spot).
 function velocityAtSpot(flow, siteId) {
     var v = hydraulicVelocity(flow, siteId);
     var r = spotWidthRatio(siteId);
     var has = v && v.mean && v.mean > 0;
+    // Manning velocity exponent: (w_spot/w_gauge)^(2/5) = (1/r.ratio)^(2/5) = r.ratio^(-0.4)
+    var velFactor = (r.measured && r.ratio > 0) ? Math.pow(r.ratio, -0.4) : r.ratio;
+    var uncertainty = r.measured ? SAME_REACH_MEASURED_UNCERTAINTY : SAME_REACH_UNCERTAINTY;
     return {
-        mean: has ? v.mean * r.ratio : null,
-        bottom: has ? v.bottom * r.ratio : null,
-        atGauge: true,
+        mean: has ? v.mean * velFactor : null,
+        bottom: has ? v.bottom * velFactor : null,
+        atGauge: !r.measured,
         ratio: r.ratio,
         ratioMeasured: r.measured,
         gaugeWidthFt: r.gaugeFt,
-        uncertainty: SAME_REACH_UNCERTAINTY,
+        uncertainty: uncertainty,
         source: v ? v.source : 'none',
         thinRecent: v ? !!v.thinRecent : false
     };
@@ -140,30 +223,33 @@ function depthAtGauge(flow, siteId) {
     };
 }
 
-// Depth at the angler's spot, in the SAME provenance shape as velocityAtSpot(): the
-// value IS the gauge's (no spot-width/depth source exists yet), so it is labelled as a
-// same-reach estimate with its honest spread. value === null means "unmeasured", never
-// a placeholder number.
+// Depth at the angler's spot, in the SAME provenance shape as velocityAtSpot().
+// When the spot width is measured (SPOT_WIDTHS), applies the Manning depth correction:
+//     d_spot = d_gauge * (w_gauge / w_spot)^(3/5)
+// Otherwise returns the gauge depth as-is.
+// value === null means "unmeasured", never a placeholder number.
 function spotDepthFt(flow, siteId) {
     var d = depthAtGauge(flow, siteId);
+    var r = spotWidthRatio(siteId);
+    // Manning depth exponent: (w_gauge/w_spot)^(3/5) = r.ratio^0.6
+    var depthFactor = (r.measured && r.ratio > 0) ? Math.pow(r.ratio, 0.6) : 1.0;
+    var uncertainty = r.measured ? SAME_REACH_MEASURED_UNCERTAINTY : SAME_REACH_UNCERTAINTY;
     if (!d) {
         return {
-            value: null, bandLow: null, bandHigh: null, atGauge: false, ratio: 1.0, ratioMeasured: false,
-            gaugeWidthFt: gaugeWidthFt(siteId), uncertainty: SAME_REACH_UNCERTAINTY,
+            value: null, bandLow: null, bandHigh: null, atGauge: false, ratio: r.ratio, ratioMeasured: r.measured,
+            gaugeWidthFt: gaugeWidthFt(siteId), uncertainty: uncertainty,
             source: 'none'
         };
     }
     return {
-        value: d.value,                   // central estimate (ft)
-        // WS-8b a2: the MEASURED BAND, i.e. what the gauge's own cross-section rows actually
-        // span in this flow window. The HUD leads with this; `value` is its centre.
-        bandLow: d.minFt,
-        bandHigh: d.maxFt,
-        atGauge: true,
-        ratio: 1.0,                       // depth is not scaled by the width ratio
-        ratioMeasured: false,
+        value: d.value * depthFactor,          // central estimate (ft), Manning-corrected
+        bandLow: d.minFt * depthFactor,
+        bandHigh: d.maxFt * depthFactor,
+        atGauge: !r.measured,
+        ratio: r.ratio,
+        ratioMeasured: r.measured,
         gaugeWidthFt: gaugeWidthFt(siteId),
-        uncertainty: SAME_REACH_UNCERTAINTY,
+        uncertainty: uncertainty,
         spreadFt: d.spreadFt,
         spreadPct: d.spreadPct,
         crossCheckPct: d.crossCheckPct,

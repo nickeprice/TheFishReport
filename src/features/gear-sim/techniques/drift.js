@@ -42,6 +42,21 @@ var DRIFT_TECHNIQUE = {
         }
         var bedVel = velocity.bottom;
 
+        // Apply water type multipliers (Phase 1.6): local hydraulic habitat adjusts
+        // the Manning/continuity-corrected velocity and depth.
+        var wtMultiplier = (typeof waterTypeMultiplier === 'function')
+            ? waterTypeMultiplier(rig.waterType) : null;
+        if (wtMultiplier && wtMultiplier.velMul !== 1.0) {
+            velocity = {
+                mean: velocity.mean * wtMultiplier.velMul,
+                bottom: velocity.bottom * wtMultiplier.velMul,
+                source: velocity.source,
+                station: velocity.station,
+                spotRatio: velocity.spotRatio || null
+            };
+            bedVel = velocity.bottom;
+        }
+
         // Lift: read NET values from tackle.json (buoyancy_g - mass_g)
         var f1G = foam.net_buoyancy_g;
         var f2G = foam2.net_buoyancy_g;
@@ -73,6 +88,7 @@ var DRIFT_TECHNIQUE = {
             dragGfPerFt += lineDragPerFt(mlDia, velocity.mean);
         }
         var hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
+        var fallbackHgt = hgt;  // preserve for when chain solver does not converge
         var blownOut = (bedVel > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------
@@ -141,18 +157,28 @@ var DRIFT_TECHNIQUE = {
         // ====== NEW PIPELINE (Phase 8): chain solver ======
         // Use the unified chain solver (RK4 + shooting + air catenary)
         // which replaces cable.js, terminal.js, and sinker.js with one ODE.
+        // Dynamic spot depth: pull from continuity.js, fall back to 6.0 ft.
+        var spotDepth = (typeof spotDepthFt === 'function')
+            ? spotDepthFt(env.flow, env.siteId) : null;
+        var depthFt = (spotDepth && spotDepth.value) ? spotDepth.value : 6.0;
+        // Water type depth multiplier (Phase 1.6)
+        if (wtMultiplier && wtMultiplier.depthMul !== 1.0 && depthFt > 0) {
+            depthFt *= wtMultiplier.depthMul;
+        }
+        var H = depthFt * 0.3048;  // ft → m
         var hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
+        var chainResult = null, chainEnv = null;
         try {
             if (typeof chainSolve === 'function') {
                 var bedVelMs = bedVel * CFS_TO_MS;
                 var meanVelMs = velocity.mean * CFS_TO_MS;
-                var chainEnv = {
-                    depthM: 2.0,
+                chainEnv = {
+                    depthM: H,
                     uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
                     z0: ROUGHNESS_COBBLE,
                     rodHeightM: 1.5
                 };
-                var chainResult = chainSolve(rig, chainEnv);
+                chainResult = chainSolve(rig, chainEnv);
                 hookDepthM = chainResult.converged ? chainResult.hookDepthM : null;
 
                 if (typeof interceptionProbability === 'function') {
@@ -167,6 +193,15 @@ var DRIFT_TECHNIQUE = {
             if (typeof logDebug === 'function')
                 logDebug('Chain solver: ' + String(e.message).split('\n')[0], 'SIM');
         }
+        // Override presentation height with chain solver result when converged
+        if (chainResult && chainResult.converged) {
+            hgt = chainResult.hookZ * 39.37;  // m → inches above bottom
+        } else {
+            hgt = fallbackHgt;
+        }
+        // Blend interception probability into score: 70% positional, 30% interception
+        var blendedScore = score * (0.7 + 0.3 * interceptionProb);
+        score = Math.max(0.0, Math.min(5.0, Number(blendedScore.toFixed(3))));
         // ====== END NEW PIPELINE ======
 
         return {
@@ -174,7 +209,8 @@ var DRIFT_TECHNIQUE = {
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
             whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges,
             hookDepthM: hookDepthM, interceptionProb: interceptionProb,
-            sweepQuality: sweepQuality, salmonDepthM: salmonDepthM
+            sweepQuality: sweepQuality, salmonDepthM: salmonDepthM,
+            chainResult: chainResult, chainEnv: chainEnv
         };
     }
 };

@@ -75,14 +75,14 @@ function parseFoam(rawValue) {
     var tid = FOAM_PICKER_MAP[key];
     var item = tid ? (typeof tackleById === 'function' ? tackleById(tid) : null) : null;
     if (item) {
-        var size = (key === 'c12') ? 10 : parseFloat(key);
+        var size = parseFloat(key);
+        if (isNaN(size)) size = 0;
         var rawBuoy = item.buoyancy_g || 0;
-        var mass = item.mass_g || 0;
         return {
             key: key, size: size,
             buoyancy_g: rawBuoy,
-            mass_g: mass,
-            net_buoyancy_g: Math.max(0, rawBuoy - mass),  // corky's own mass subtracted
+            mass_g: 0,  // PU/EPS foam mass is negligible per ASTM marine standard
+            net_buoyancy_g: rawBuoy,  // no mass subtract — foam mass << water displacement
             label: item.label || ('Corky - Size ' + key),
             areaCm2: item.area_cm2 || 0,
             cd: item.cd || 0.47
@@ -100,11 +100,12 @@ function foamLabelFromRecord(row) {
 }
 
 function hookLabel(hook) {
-    if (hook === -1) return '2/0';
-    if (hook === 0) return '1/0';
-    if (hook === 2) return 'Size 2';
-    if (hook === 1) return 'Size 1';
-    return 'Sz ' + hook;
+    if (!hook) return '--';
+    var MAP = GEAR_OPTIONS.hookIdMap;
+    var tid = MAP[String(hook)];
+    if (!tid) return '--';
+    var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
+    return item ? item.label : '--';
 }
 
 // ====== TACKLE DATA LOOKUPS (from tackle.json) ======
@@ -120,7 +121,8 @@ function tackleHookData(hookVal) {
     var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
     if (!item) return null;
     var massG = item.mass_g || 0;
-    return { mass_g: massG, buoyancy_g: massG / 7.85, areaCm2: item.area_cm2 || 0, cd: item.cd || 0.47 };
+    var buoyG = item.buoyancy_g || (massG / 7.85);
+    return { mass_g: massG, buoyancy_g: buoyG, areaCm2: item.area_cm2 || 0, cd: item.cd || 1.05 };
 }
 
 /**
@@ -150,6 +152,25 @@ function tackleBeadData(bdSz) {
  * @error: ±0.012 gf/in (±100%)
  * @measure: user soaks 10" yarn 5 min, weighs wet vs dry → saturated_mass_per_inch → replace
  */
+
+// ==================================================================================
+// WATER TYPES (Phase 1.6) — local hydraulic habitat the angler is fishing.
+// Each type adjusts depth and velocity relative to the gauge/spot measurement.
+// Default (Run) applies 1.0 multipliers — no change from the continuity calculation.
+// ==================================================================================
+var WATER_TYPES = [
+    { id: 'pool',   label: 'Pool',   depthMul: 1.2, velMul: 0.7,
+      desc: 'Deep, slow water — fish hold deep and near cover.' },
+    { id: 'riffle', label: 'Riffle', depthMul: 0.7, velMul: 1.3,
+      desc: 'Shallow, fast water — fish hold in pockets and seams.' },
+    { id: 'run',    label: 'Run',    depthMul: 1.0, velMul: 1.0,
+      desc: 'Moderate depth and current — fish spread across the channel.' },
+    { id: 'glide',  label: 'Glide',  depthMul: 0.9, velMul: 0.9,
+      desc: 'Smooth, even flow — fish hold in tailouts and edges.' }
+];
+
+var DEFAULT_WATER_TYPE = 'run';
+
 function tackleYarnBuoyancyG(inches) {
     if (!inches || inches <= 0) return 0;
     var yb = -0.012;
@@ -197,13 +218,13 @@ function tackleWeightPhysicsData(shapeLabel, oz) {
     var row = tackleWeightRow(shapeLabel, Number(oz));
     if (!row) return null;
     var mass_g = Number(row.mass_g) || 0;
-    var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 0;
+    var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 11.34;
     var submerged_mass_g = mass_g;
     if (density > 0) {
         submerged_mass_g = mass_g * (1 - WATER_DENSITY_G_CM3 / density);
         if (submerged_mass_g < 0) submerged_mass_g = 0;
     }
-    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: mass_g, submerged_mass_g: submerged_mass_g };
+    return { areaCm2: Number(row.area_cm2) || 0, cd: Number(row.cd) || 1.0, mass_g: mass_g, submerged_mass_g: submerged_mass_g, density_g_cm3: density };
 }
 
 // Hydraulic geometry for a PNW gravel-bed river. We only know discharge (CFS), so

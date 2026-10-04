@@ -16,7 +16,7 @@ async function loadWaterReport(silent) {
         if (active) station = JSON.parse(active);
     } catch(e) {}
     if (!station || station.id === '12096500' || !station.id) {
-        station = { id: '12101500', lat: 47.1950, lon: -122.3020, name: 'Puyallup River at Puyallup, WA', isGps: false };
+        station = { id: '12101500', lat: 47.200917, lon: -122.2897, name: 'Puyallup River at Puyallup, WA', isGps: true };
         localStorage.setItem('active_station', JSON.stringify(station));
     }
     

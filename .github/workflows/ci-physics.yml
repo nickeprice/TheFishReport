@@ -1,0 +1,36 @@
+# Physics validation — numerical vs analytical benchmarks
+# Runs separately from sanity-pass so physics failures never block the deploy gate.
+
+name: ci-physics
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/test_physics_validation.py'
+      - 'requirements-dev.txt'
+      - '.github/workflows/ci-physics.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/**'
+      - 'requirements-dev.txt'
+      - '.github/workflows/ci-physics.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run physics validation tests
+        run: python -m pytest tests/ -v --tb=short

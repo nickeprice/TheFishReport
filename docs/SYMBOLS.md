@@ -15,7 +15,8 @@ this file**, or the pass fails.
 | 1 | `src/data/regions/washington.js` | `window.REGIONS.WA` (strict JSON; schema `CONTRACT_REGIONS.md`) |
 | 2 | `src/data/channel_measurements.js` | `window.CHANNEL_MEASUREMENTS` — USGS field-measurement velocity fits (generated) |
 | 3 | `src/data/river_widths.js` | `window.RIVER_WIDTHS` — routed channel widths (generated) |
-| 4 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
+| 4 | `src/data/spot_widths.js` | `window.SPOT_WIDTHS` — 3DEP-DEM channel widths at ~500m intervals (generated) |
+| 5 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
 | 5 | `src/services/supabase.js` | auth, catch writes, public feed, calibration RPC |
 | 6 | `src/services/water.js` | USGS WDFN / Open-Meteo / WDFW Socrata data layer |
 | 7 | `src/shared/*` | debug, ui, nav, format, api, forms, idb, gear-options, refresh, pwa |
@@ -24,7 +25,7 @@ this file**, or the pass fails.
 
 ## src/data — measured gauge velocity & width
 
-`channel_measurements.js` and `river_widths.js` are GENERATED; never hand-edit.
+`channel_measurements.js`, `river_widths.js` and `spot_widths.js` are GENERATED; never hand-edit.
 - `channel_measurements.js` (`scripts/fetch_channel_measurements.py`) — one USGS field-measurement
   fit per gauge, `fit = { a, b, r2 }` for `v = a * Q^b`, plus `first_yr`/`last_yr`/`recent_n`/
   `thin_recent` and the underlying `points[]`. `hydraulicVelocity(flow, siteId)` uses the measured
@@ -32,6 +33,10 @@ this file**, or the pass fails.
 - `river_widths.js` (`scripts/extract_river_widths.py`) — per-gauge `width_ft` + the `method` that
   produced it (`elevation` / `naip` / `usgs`), validated against the USGS field width. `dem_vintage`
   is `"unknown"` (the DEM tile exposes no collection date).
+- `spot_widths.js` (`scripts/precompute_spot_widths.py`) — channel widths measured from the 3DEP DEM
+  (AWS Terrain Tiles / terrarium z15) at ~500m intervals along 5 core rivers. Each point includes
+  `lat`/`lon`, `wetted_ft`, `bankfull_ft`, `thalweg_m`, and a `truncated` flag. Consumed by the
+  nearest-neighbor spot-width lookup in `continuity.js` (Phase 1.4).
 
 ## src/utils — regulations.js
 `loadRules(customPath)` · `setRulesCache(rules)` / `getRulesCache()` ·
@@ -100,12 +105,15 @@ this file**, or the pass fails.
 - **inputs.js** — `currentStats`, `BASE_ZONE_MIN`/`BASE_ZONE_MAX`, `getNum`/`getStr`/`getGPS`,
   `FOAM_TABLE`, `parseFoam`/`hookLabel`/`hookSink`, `hydraulicVelocity(flow, siteId)`,
   `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`,
+  `WATER_TYPES` (pool/riffle/run/glide depth/vel multipliers),
   `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a)
 - **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
-  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (same-reach estimate + spread);
+  `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (Manning-adjusted when
+  SPOT_WIDTHS data is available, same-reach estimate ±20% otherwise);
   `depthAtGauge(flow, siteId)` (`D = A/W` median, cross-checked by `Q/(W·V)`; `minFt`/`maxFt` are
-  the MEASURED BAND), `spotDepthFt(flow, siteId)` — the same-reach DEPTH estimate with
-  `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2)
+  the MEASURED BAND), `spotDepthFt(flow, siteId)` — the spot DEPTH estimate with
+  `bandLow`/`bandHigh` (`value: null` = unmeasured) (WS-8a + a2);
+  `spotNearestWidth(siteId)` — nearest DEM cross-section from SPOT_WIDTHS
 - **physics.js** — `lineDragPerFt(diameterMm, velocityFtS)`, `pointDragGf(areaCm2, cd, velocityFtS)`,
   `totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt, ...objects)`, `computeLiftGf(...)`,
   `presentationHeightInches(liftGf, dragGfPerFt, leaderFt)` — standard fluid dynamics:
@@ -160,6 +168,8 @@ this file**, or the pass fails.
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)
 - **solver.js** — `readRigFromForm()`, `loadCalibrationData(flow, species)`,
   `buildSimStats(rig, out)`, `paintSimHud(rig, out, stats)`
+- **water-types.js** — `waterTypeMultiplier(typeId)`, `openWaterTypeGuide()`,
+  `closeWaterTypeGuide()`
 - **sim.js** — `runSim()`
 
 ## src/features/catch-log

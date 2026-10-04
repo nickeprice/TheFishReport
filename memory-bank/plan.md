@@ -64,6 +64,8 @@ Spec: docs/CHAIN_SOLVER.md
 
 ### Fixes
 - [x] Fix Step 12: update foam/yarn/hook with spec-derived physics values (PU/EPS density, sphere geometry, Cd=1.05 hooks, validated yarn)
+- [x] Fix Step 12: update foam/yarn/hook with spec-derived physics values (PU/EPS density, sphere geometry, Cd=1.05 hooks, validated yarn)
+- [x] Fix Step 12: update foam/yarn/hook with spec-derived physics values (PU/EPS density, sphere geometry, Cd=1.05 hooks, validated yarn)
 - [x] Fix Step 1.6: Extract water type guide to standalone module; fix brace nesting bug in solver.js
 - [x] Fix Step 9: DELETE cable.js, terminal.js, sinker.js
 

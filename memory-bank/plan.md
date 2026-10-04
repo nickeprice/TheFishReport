@@ -70,15 +70,15 @@ Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected de
 - [x] Drainage area / mean basin elevation / mean annual precip at a lat/lon
 - [x] Graceful offline fallback + uncertainty surfaced to the frontend
 
-## 🔜 Phase 2: Progressive Enhancement Architecture (0/3)
+## 🔜 Phase 2: Progressive Enhancement Architecture (2/3)
 ### 2.1 docs/ARCHITECTURE.md — tiered fallback pattern
 - [x] Document every data path with its tier: online-only / IndexedDB-cached / local fallback
 - [x] Pipeline reference for each domain (flow/velocity/depth, weather, tides, species calendar, legal hours)
 
 ### 2.2 Audit all data layers for online/cached/fallback tiers
-- [ ] Inventory every fetch() / urlopen / IndexedDB / localStorage read
-- [ ] Classify each source by tier; flag online-only gaps that should be cached
-- [ ] Append the audit table to docs/ARCHITECTURE.md
+- [x] Inventory every fetch() / urlopen / IndexedDB / localStorage read
+- [x] Classify each source by tier; flag online-only gaps that should be cached
+- [x] Append the audit table to docs/ARCHITECTURE.md
 
 ### 2.3 Standardize output shape: { value, source, uncertainty }
 - [ ] Refactor all data producers to return { value, source, uncertainty | null }

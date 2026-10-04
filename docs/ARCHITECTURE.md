@@ -194,7 +194,81 @@ convert: telemetry scalars, weather fields, tides, species calendar (Phase 2.3).
 
 ## Data Layer Audit (Phase 2.2)
 
-_To be appended by Phase 2.2 — the exhaustive call-site inventory (every
-`fetch()` / `urllib.request.urlopen()` / IndexedDB store / `localStorage` key),
-classified by tier, with online-only gaps flagged._
+Complete call-site inventory of network + storage touchpoints. Tiers:
+**T0** local/offline-first · **T1** cached · **T2** own API (serverless) ·
+**T3** live upstream (server-side or client-direct).
+
+### A. Frontend → own API (Tier 2)
+
+| Call site | Domain | Reads | Tier | Notes / gaps |
+|---|---|---|---|---|
+| `src/features/telemetry/report.js:47` | telemetry, weather, tides, species | GET `/api/water_report` | T2 | SW `API_CACHE` serves it offline after a prior online fetch; **no durable IDB snapshot** |
+| `src/features/station/picker.js:81` | station discovery | GET `/api/nearby_stations` | T2 | 2 attempts, abort timeout |
+| `src/features/map/map.js:130` | station discovery | GET `/api/nearby_stations` | T2 | via `apiGetJson` (1 retry) |
+| `src/features/map/spots.js:189` | spot station resolution | GET `/api/nearby_stations` | T2 | via `apiGetJson` |
+| `src/shared/api.js:80` | generic | GET any `/api/*` | T2 | retry + 12 s timeout wrapper |
+| `src/services/water.js:475` | basin characteristics | GET `/api/streamstats` | T2→T3 | offline mode + `{value,source,uncertainty}` |
+| `src/shared/debug.js:70` | diagnostics | POST `/api/report-issue` | T2 | GitHub issue proxy |
+
+### B. Own API → live upstream (Tier 3, server-side)
+
+| Call site | Domain | Reads | Tier | Notes |
+|---|---|---|---|---|
+| `api/water_report.py:320` | telemetry | USGS WDFN OGC `_wdfn_get` | T3 | primary |
+| `api/water_report.py:451` | telemetry | USGS NWIS `/iv` | T3 | legacy fallback (decommissioned Q1 2027) |
+| `api/water_report.py:595,846` | site name / clarity | WDFN monitoring-locations + `/daily` | T3 | own-gauge only |
+| `api/water_report.py:917` | tides | NOAA CO-OPS stations | T3 | |
+| `api/water_report.py:1014` | tides | NOAA CO-OPS predictions | T3 | |
+| `api/water_report.py:1039` | weather | Open-Meteo | T3 | |
+| `api/streamstats.py:167` | basin | USGS StreamStats `delineateByLatLon` | T3 | **host currently 404s → offline path** |
+| `api/report-issue.py:93` | diagnostics | GitHub API | T3 | |
+| `api/spot-geometry.py` | hydraulic geometry | none — reads local data only | T0 | endpoint mirrors client SPOT_WIDTHS; no live consumer yet |
+### C. Frontend → live upstream (Tier 3, client-direct)
+
+| Call site | Domain | Reads | Tier | Notes / gaps |
+|---|---|---|---|---|
+| `src/services/water.js:25` | telemetry momentum | USGS WDFN `/continuous` | T3 | **no cache** |
+| `src/services/water.js:38` | telemetry momentum | USGS NWIS `/iv` legacy | T3 | fallback reader |
+| `src/services/water.js:285` | escapement | WDFW Socrata `9q4e-xhag` | T3 | **no cache**; cards show "—" offline |
+| `src/features/station/search.js:60,81,93` | station search | WDFN monitoring-locations + latest | T3 | **no cache**; retry only |
+| `src/services/supabase.js` (board, mycatches, auth, spots) | auth, catches, favorite spots | Supabase REST via supabase-js | T3 | reads online-only; writes outbox-protected |
+
+### D. Local / static (Tier 0)
+
+| Call site | What | Domain | Notes |
+|---|---|---|---|
+| `src/data/*.js` classic scripts | regions, channel_measurements, river_widths, spot_widths | all domains | precached in SW shell |
+| `src/utils/regulations.js:120` | `src/data/wdfw_rules.json` | legal hours / regs | bundled JSON |
+| `src/shared/tackle.js:353` | `src/data/tackle.json` | gear sim | bundled JSON |
+| `src/services/water.js:403` | `src/data/wdfw_forecasts.json` | species / escapement | bundled JSON |
+| `continuity.js` + `tide.js` | Manning/continuity + Meeus algorithms | hydraulic geometry, legal hours | pure compute, zero network |
+
+### E. Cached (Tier 1)
+
+| Key / store | Domain | Written by | Notes |
+|---|---|---|---|
+| IndexedDB `catches` | catch log | `outbox.js` | durable; localStorage fallback |
+| `localStorage 'catch_db'` (`LEGACY_CATCH_KEY`) | catch log | `outbox.js` | legacy buffer |
+| `localStorage 'active_station'` | station | picker, report, log, app | read across 7 modules |
+| `localStorage RIG_STORE_KEY` | gear sim | `rig.js` | stored rig |
+| `localStorage favorite_spots_cache` (`SPOTS_CACHE_KEY`) | map | `spots.js` | offline star layer |
+| `localStorage GUEST_NAME_KEY` | auth | `supabase.js` | guest identity |
+| sw.js `SHELL_CACHE` | app shell | install | precache of shell + data |
+| sw.js `API_CACHE` | `/api/*` | fetch handler | stale-while-revalidate |
+| sw.js `ASSET_CACHE` | static assets | fetch handler | runtime asset cache |
+
+### F. Critical online-only gaps (should be cached)
+
+| # | Gap | Impact | Suggested fix |
+|---|---|---|---|
+| G1 | **Water report has no durable offline snapshot** — only sw.js `API_CACHE` (requires an earlier online fetch in the same browser profile) | Cold offline open shows an empty state with no last-known conditions | Persist the latest per-waterbody report day-rows to a new IndexedDB `telemetry` store on each successful fetch; hydrate from it on cold offline start (idb.js already documents this intent) |
+| G2 | **Escapement feed (WDFW Socrata) is client-direct online-only** | Run cards show "—" in dead zones; planning data lost | Cache last-known stats per site in IDB, stamp with WDFW `:updated_at` |
+| G3 | **Station search (WDFN direct) is online-only** | Manual gauge search fails offline | Small localStorage cache of the recent/known station list |
+| G4 | **CFS momentum readings (WDFN direct) are online-only** | Momentum calc unavailable offline | Persist the last short window of readings per site |
+| G5 | **Supabase reads (board / my catches) are online-only** | Board + private list empty offline (writes are already safe via outbox) | Last-known read-through cache per scope, cleared on successful refresh |
+
+**Priorities:** G1 is the only high-impact gap — it is exactly the "dead zone
+where this app is supposed to earn its keep" case. G2–G5 are medium and can be
+folded into the same Phase 2.3 "provenance + cache" work (each cached value
+carries its fetch time as `source`).
   fake date).

@@ -331,6 +331,48 @@ Puget-specific relationship that would need a trained model + real sample size �
 gate as the rest of the notebook, not just a missing number. Method: `/tmp/dart_flow.py` style
 spec, public CSVs, no invented inputs.
 
+## 3.14 Data infrastructure & new data pipelines (horizon 2)
+
+Items discovered during the drift-fishing sim rebuild (2026-10-04). Gated behind
+Phase 0–6 completion. Offline-first invariant preserved.
+
+### Data infrastructure
+
+- **NHDPlus offline bundle:** Extract WA state stream reaches from USGS .gdb,
+  convert to indexed GeoJSON, precache in service worker. Removes API
+  dependency for water-type detection at the river (no cell service).
+- **Sinuosity from NHDPlus geometry:** Compute per-reach sinuosity (channel
+  length ÷ straight-line distance) from stored geometry for refined
+  water-type auto-detection.
+- **USGS NWIS daily values:** Historical daily discharge for richer
+  flow-vs-normal context beyond the statistics service.
+
+### New data pipelines
+
+- **NOAA National Water Model (NWM):** Streamflow forecasts 18 hours to
+  10 days out for 2.7M reaches. Requires backend server to download + extract
+  NetCDF files — not feasible client-side. Would enable "flow will be 950 CFS
+  tomorrow morning" predictions for trip planning.
+- **USGS Network Linked Data Index (NLDI):** River network navigation.
+  Given a reach, find upstream tributaries, downstream confluences, dams,
+  and gauge relationships. "You're 3.2 miles below the Carbon confluence"
+  and "dam release 2 hours upstream — anticipate rise."
+- **SNOTEL snowpack monitoring:** Snow Water Equivalent data from NRCS.
+  Predicts spring/summer flows from mountain snowpack. Requires mapping
+  each river basin to its contributing SNOTEL stations. Seasonal value.
+- **GOES satellite water temperature:** River surface temperature from
+  NOAA GOES satellites (2km resolution). Could replace Open-Meteo's
+  air-temperature-based water temp estimates. Complex processing pipeline
+  (NetCDF, cloud masking, coordinate matching).
+
+### Product features
+
+- **Flow forecasts in fishing outlook:** "Flow expected to rise to 1,200
+  CFS by evening — fish will move to the deeper edges."
+- **Crew-shared rig presets:** DB-backed preset sync for signed-in users.
+- **Per-reach regulation polygons:** Regulatory boundary data overlayed
+  on the map.
+
 ## 4. Suggested phasing within 4.0
 
 1. **Accounts + RLS tier** (unblocks everything social).

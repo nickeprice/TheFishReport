@@ -2,7 +2,7 @@
 
 ## 🛠 UI Polish & Data Pipeline
 
-- [ ] Phase A1: Fix forecast leak (gauge→waterbody lookup)
+- [x] Phase A1: Fix forecast leak (gauge→waterbody lookup)
       → water.js, report.js
       [Detail → docs/PLAN_REFERENCE.md#data-forecast-leak]
 

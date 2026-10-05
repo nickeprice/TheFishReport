@@ -1,23 +1,5 @@
 # Plan Reference — Implementation Details
-<a id="data-forecast-leak"></a>
-## Phase A1: Fix Forecast Leak (gauge→waterbody lookup)
 
-**Bug:** `refreshWdfwForecast()` in `water.js` maps forecasts by species name 
-only (`bySp['chinook'] = 18890`) and applies to ALL `.run-card[data-species]` 
-cards regardless of active river. Green River shows Puyallup's 18,890 Chinook.
-
-**Fix approach:**
-1. Pass `actId` (active gauge ID) to `refreshWdfwForecast(actId)` from 
-   `report.js` line 276 (where `refreshEscapement(actId)` is already called)
-2. Build a `gaugeId → waterbodyId` reverse lookup from `REGIONS.WA.waterbodies` 
-   (each waterbody has `gauge.site_id` → its own `id`)
-3. Only fill cards when the active station's waterbody matches the JSON entry
-
-**Files:**
-- `src/services/water.js` — fix `refreshWdfwForecast()`, add gauge→waterbody lookup
-- `src/features/telemetry/report.js` — pass `actId` into function call
-
----
 
 <a id="data-forecast-json"></a>
 ## Phase A2: Restructure wdfw_forecasts.json (waterbody-keyed)

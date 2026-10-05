@@ -324,4 +324,96 @@ All consume the single NHDPlus response from Phase 0.
 ---
 
 
+### Phase 7: River Entry Conditions — "Are the fish even here yet?"
+
+**Goal:** Tell the angler if fish are staging in Puget Sound or actively entering
+the river, using sound-to-river temperature differential + flow percentiles +
+rain forecast + tide cycle.
+
+**Root cause:** Fish stage in the sound waiting for triggers (rain, flow pulse,
+temperature drop) before entering the river. The current app assumes they're in
+the river. The user observed Coho stacking up in the sound while the river was
+dead — confirmed by WDFW creel data (19 Coho at Point Defiance on Oct 2).
+
+#### Data sources (all already in or near the app)
+
+| Input | Source | Status |
+|-------|--------|--------|
+| River water temp (riverTemp) | USGS gauge via `water.js` | ✅ Live |
+| Sound water temp (soundTemp) | NOAA Tacoma 9446484 — new fetch | 🔲 Add |
+| Current flow | USGS gauge via `water.js` | ✅ Live |
+| Flow percentile (p50) | USGS Statistics Service — Phase 5 | 🔲 Phase 5 |
+| 48hr rain forecast | Open-Meteo via `water.js` | ✅ Live |
+| Tide stage/spring cycle | NOAA Tides via `water.js` | ✅ Live |
+
+#### New API call in `src/services/water.js` (one fetch per report load)
+
+```
+GET https://api.tidesandcurrents.noaa.gov/api/prod/datagetter
+  ?date=latest&station=9446484&product=water_temperature
+  &units=english&time_zone=lst_ldt&format=json
+→ Returns { v: "56.3" }  — Puget Sound water temp at Tacoma in °F
+```
+
+Wired into the water report fetch alongside the existing USGS/Open-Meteo/NOAA
+calls. Cached in report snapshot so it's available offline. Falls back to null
+if unreachable — downstream code handles null gracefully.
+
+#### Score formula in `src/features/telemetry/report.js`
+
+```js
+function computeEntryScore(tempDiff, flowDeficit, rainSignal, tide) {
+    // tempDiff = riverTemp - soundTemp  (positive = river warmer → fish hold)
+    // flowDeficit = 1 - (currentCFS / p50)  (0.91 = 9th percentile → deficit)
+    // rainSignal = precip48hr > 0.25" ? 1 : 0
+    // tide = isSpringTide ? 1 : 0
+
+    var score = -tempDiff * 2 - flowDeficit * 3 + rainSignal * 2 + tide * 1;
+
+    if (score < -3) return { band: 'heldeep', label: 'Fish holding deep in Sound — wait for rain' };
+    if (score < 0)  return { band: 'staging', label: 'Fish staging near river mouth — fish salt or lower river' };
+    if (score < 3)  return { band: 'entry',   label: 'Fish beginning to enter river — target lower reaches' };
+    return { band: 'active', label: 'Fish actively moving upriver — prime conditions' };
+}
+```
+
+Called from the report processing pipeline after all data is gathered.
+Output stored in the report object and consumed by hero.js.
+
+#### UI — `src/features/telemetry/hero.js` + `index.html` + `src/styles.css`
+
+New inline panel in the fishing outlook area (below the run cards, above gear
+sim button):
+
+```
+┌──────────────────────────────────┐
+│ ⓘ Fish Location:                │
+│ Staging near river mouth         │
+│ ─────────────────────────────── │
+│ River: 58°F   Sound: 56°F       │
+│ Flow: 1,060 CFS (9th percentile)  │
+│ Rain forecast: 0.4″ in 24hr ↗    │
+└──────────────────────────────────┘
+```
+
+Color-coded: amber for staging, green for active entry, red for deep hold.
+
+#### Offline degradation
+
+- Sound temp unreachable → score uses only flow + rain + tide → label says
+  "(sound temp unavailable)"
+- Statistics unreachable → falls back to NHDPlus qa_MA (Phase 5 fallback)
+- Both unreachable → panel hidden, no error shown
+
+#### Files
+
+| File | Change | Lines |
+|------|--------|-------|
+| `src/services/water.js` | Add `fetchSoundWaterTemp()` in the fan-out fetch | +15 |
+| `src/features/telemetry/report.js` | Add `computeEntryScore()` | +25 |
+| `src/features/telemetry/hero.js` | Add `renderEntryPanel()` + wiring | +20 |
+| `index.html` | Add `#entry-panel` DOM element in fishing outlook | +3 |
+| `src/styles.css` | `.entry-panel` styling (amber/green/red bands) | +10 |
+
+- [ ] Phase 7: River entry conditions
 - [ ] Phase 2: Bottom contact check

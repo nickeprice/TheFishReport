@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 echo "== syntax =="
 find src -name '*.js' -print0 | xargs -0 -n1 node --check
 node --check sw.js
-node --check sanity_pass.js
+node --check sanity_pass.cjs
 python3 -m py_compile api/water_report.py scripts/dev_server.py scripts/scrape_wdfw.py scripts/refresh_wdfw_forecast.py
 echo "syntax OK"
 
@@ -18,4 +18,4 @@ if [[ "${1:-}" == "--quick" ]]; then
 fi
 
 echo "== sanity pass =="
-node sanity_pass.js --quiet
+node sanity_pass.cjs --quiet

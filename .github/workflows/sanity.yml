@@ -39,7 +39,7 @@ jobs:
       # label[for] resolution, ARIA names, script load order ending in app.js,
       # sw.js SHELL_FILES parity, Vercel entry points, dead CSS, docs index.
       - name: Run static sanity pass
-        run: node sanity_pass.js
+        run: node sanity_pass.cjs
 
       - name: Confirm no leftover dev servers
         run: |

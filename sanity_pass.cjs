@@ -43,7 +43,14 @@ function localScriptPaths() {
 }
 /** Concatenated source of every loaded classic script — for static pattern scans. */
 function readAllScripts() {
-  return localScriptPaths().map((s) => fs.readFileSync(path.join(ROOT, s), 'utf8')).join('\n');
+  return localScriptPaths().map((s) => {
+    // Data files migrated to public/ — check both locations
+    var f = path.join(ROOT, s);
+    if (fs.existsSync(f)) return fs.readFileSync(f, 'utf8');
+    var pf = path.join(ROOT, 'public', s);
+    if (fs.existsSync(pf)) return fs.readFileSync(pf, 'utf8');
+    throw new Error('cannot find ' + s);
+  }).join('\n');
 }
 
 
@@ -108,7 +115,9 @@ function staticIntegrity() {
   // frontend fetches must have its own api/<name>.py entry point.
   const apiCalls = new Set();
   for (const f of localScriptPaths()) {
-    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    var srcPath = path.join(ROOT, f);
+    if (!fs.existsSync(srcPath)) srcPath = path.join(ROOT, 'public', f);
+    const src = fs.readFileSync(srcPath, 'utf8');
     for (const m of src.matchAll(/['"`](\/api\/[a-z0-9_-]+)/g)) apiCalls.add(m[1]);
   }
   const apiRoutes = [...apiCalls].sort();
@@ -317,7 +326,13 @@ function staticIntegrity() {
   // for the legacy localStorage buffer directly any more.
   const catchDbOffenders = localScriptPaths()
     .filter((p) => p.indexOf('catch-log/outbox.js') === -1)
-    .filter((p) => fs.readFileSync(path.join(ROOT, p), 'utf8').indexOf("'catch_db'") !== -1);
+    .filter((p) => {
+    var path1 = path.join(ROOT, p);
+    if (fs.existsSync(path1)) return fs.readFileSync(path1, 'utf8').indexOf("'catch_db'") !== -1;
+    var path2 = path.join(ROOT, 'public', p);
+    if (fs.existsSync(path2)) return fs.readFileSync(path2, 'utf8').indexOf("'catch_db'") !== -1;
+    return false;
+  });
   catchDbOffenders.length === 0
     ? ok('catch storage goes through the outbox', 'no direct catch_db access outside outbox.js')
     : fail('catch storage goes through the outbox', catchDbOffenders.join(', '));
@@ -394,7 +409,9 @@ function staticIntegrity() {
     const rodHits = [];
     if (/rod-ft|rod-in|Rod Length/.test(html)) rodHits.push('index.html');
     for (const p of localScriptPaths()) {
-      const s = fs.readFileSync(path.join(ROOT, p), 'utf8');
+      const sPath = path.join(ROOT, p);
+          const s = fs.existsSync(sPath) ? fs.readFileSync(sPath, 'utf8')
+            : fs.readFileSync(path.join(ROOT, 'public', p), 'utf8');
       if (/rodFt|getRodLengthFt|formatRodLength|onRodChange|rod_ft/.test(s)) rodHits.push(p);
     }
     rodHits.length === 0
@@ -408,7 +425,7 @@ function staticIntegrity() {
   // and that the legacy fallbacks survive for a registry-less deploy.
   try {
     const py = fs.readFileSync(path.join(ROOT, 'api', 'water_report.py'), 'utf8');
-    const regSrc = fs.readFileSync(path.join(ROOT, 'src', 'data', 'regions', 'washington.js'), 'utf8');
+    const regSrc = fs.readFileSync(path.join(ROOT, 'public', 'src', 'data', 'regions', 'washington.js'), 'utf8');
     const stub = {};
     new Function('window', regSrc)(stub);
     const WA = stub.REGIONS && stub.REGIONS.WA;
@@ -511,7 +528,10 @@ function main() {
   describe('Syntax');
   try {
     const jsFiles = localScriptPaths().concat('sw.js');
-    for (const f of jsFiles) execFileSync('node', ['--check', f], { cwd: ROOT, stdio: 'pipe' });
+    for (const f of jsFiles) {
+      var checkPath = fs.existsSync(path.join(ROOT, f)) ? f : 'public/' + f;
+      execFileSync('node', ['--check', checkPath], { cwd: ROOT, stdio: 'pipe' });
+    }
     ok('node --check on JS + sw.js', jsFiles.join(', '));
   } catch (e) {
     fail('node --check on JS + sw.js', String(e.message).split('\n')[0]);

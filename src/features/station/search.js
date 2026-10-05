@@ -44,9 +44,6 @@ function presetButtonHtml(id, name, lat, lon) {
 function searchErrorHtml(msg) {
     return '<div style="color:var(--accent-red); font-weight:bold; padding:8px;">\u274c ' + msg + '</div>';
 }
-function searchErrorHtml(msg) {
-    return '<div style="color:var(--accent-red); font-weight:bold; padding:8px;">\u274c ' + msg + '</div>';
-}
 
 // G3 (Phase 2.4): when there is no network, WDFN search cannot work — disable the
 // input and point the angler at the static discovery pool. Re-enabled automatically.

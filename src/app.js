@@ -1,13 +1,24 @@
 /**
  * src/app.js - The Fish Report BOOTSTRAP.
  *
- * The classic-script monolith was split into modules during UPDATE 3.0 Phase 1.1
- * (2,460 lines -> 24). Everything now lives under src/shared/* and src/features/*
- * (telemetry, gear-sim, catch-log, station, auth). This file owns ONLY the
- * window.onload bootstrap and is still loaded LAST, so every global it calls
- * (restoreRig, registerServiceWorker, ...) is already
- * defined by the scripts loaded above it in index.html.
+ * ES module entry point. Imports every public symbol it needs.
+ * Loaded LAST (via <script type="module" src="/src/app.js"> in Phase V3).
+ * For now, all dependencies are available via window.* shims.
  */
+import { logDebug } from './shared/debug.js';
+import { showToast } from './shared/ui.js';
+import { switchTab } from './shared/nav.js';
+import { restoreRig } from './features/gear-sim/rig.js';
+import { loadPresets } from './features/gear-sim/presets.js';
+import { registerServiceWorker, applyTabDeepLink } from './shared/pwa.js';
+import { startAutoRefresh } from './shared/refresh.js';
+import { getGPS } from './features/gear-sim/inputs.js';
+import { initAuth } from './features/auth/auth.js';
+import { initCatchReconcile } from './features/catch-log/reconcile.js';
+import { setCatchScope, CATCH_SCOPE } from './features/catch-log/board.js';
+import { loadWaterReport } from './services/water.js';
+import { openWaterTypeGuide } from './features/gear-sim/water-types.js';
+import { outboxLoad } from './features/catch-log/outbox.js';
 // --- BOOTSTRAP ---
 window.onload = async function() {
     // URL param override: ?station=12101500 or ?lat=47.2&lon=-122.3
@@ -30,26 +41,22 @@ window.onload = async function() {
     document.getElementById('log-datetime').value = d.toISOString().slice(0,16);
     // Load the tackle library BEFORE restoring the rig: the line + weight-shape
     // pickers only have options once it lands, and restoreRig() selects into them.
-    if (typeof tackleLoad === 'function') {
-        try { await tackleLoad(); } catch (e) { logDebug('Tackle load failed: ' + e.message, 'DB'); }
-    }
+    // (tackle is now loaded statically at build time — no async fetch needed.)
     restoreRig();
-    if (typeof loadPresets === 'function') loadPresets();
+    loadPresets();
     applyTabDeepLink();
     registerServiceWorker();
     startAutoRefresh();
 
     // Load the durable catch outbox BEFORE anything reads it: the board fallback, the
     // gear-sim calibration fallback and the pending-sync flush all read it synchronously.
-    if (typeof outboxLoad === 'function') {
-        try { await outboxLoad(); } catch (e) { logDebug('Outbox load failed: ' + e.message, 'DB'); }
-    }
+    try { await outboxLoad(); } catch (e) { logDebug('Outbox load failed: ' + e.message, 'DB'); }
 
     getGPS();
     initAuth();
     // Flush the outbox when the network returns / the app is resumed (Phase 3.3).
-    if (typeof initCatchReconcile === 'function') initCatchReconcile();
-    if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);
+    initCatchReconcile();
+    setCatchScope(CATCH_SCOPE);
     // Wire water type guide button (must wait for full DOM + scripts)
     var guideBtn = document.getElementById('wt-guide-btn');
     if (guideBtn) {

@@ -28,17 +28,23 @@ from urllib.parse import urlparse, parse_qs
 
 _SPOT_CANDIDATES = (
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "public", "src", "data", "spot_widths.js"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "..", "src", "data", "spot_widths.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "data", "spot_widths.js"),
 )
 _CHANNEL_CANDIDATES = (
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "public", "src", "data", "channel_measurements.js"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "..", "src", "data", "channel_measurements.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "data", "channel_measurements.js"),
 )
 _WIDTHS_CANDIDATES = (
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "public", "src", "data", "river_widths.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "..", "src", "data", "river_widths.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)),

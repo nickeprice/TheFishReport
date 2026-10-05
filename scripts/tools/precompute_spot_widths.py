@@ -44,7 +44,7 @@ OVERPASS_TIMEOUT = 120
 DEM_HALF_M = 250.0
 OUTPUT_JS = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "src", "data", "spot_widths.js"
+    "public", "src", "data", "spot_widths.js"
 )
 UA = "TheFishReport/1.0 (spot-widths precompute)"
 

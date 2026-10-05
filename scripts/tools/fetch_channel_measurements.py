@@ -64,7 +64,7 @@ SITES = [
 CONTINUITY_TOL = 0.05       # |Q - v*A| / Q must stay inside 5%
 MIN_POINTS = 2              # a one-point "curve" has no shape
 THIN_RECENT_MIN = 5         # fewer than this many measurements in the last 10y -> flag it
-DEFAULT_OUT = "src/data/channel_measurements.js"
+DEFAULT_OUT = "public/src/data/channel_measurements.js"
 
 
 def fetch_site(site_id, limit=2000):

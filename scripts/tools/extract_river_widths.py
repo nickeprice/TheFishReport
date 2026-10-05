@@ -47,8 +47,8 @@ STAC_SEARCH = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
 NAIP_COLLECTION = "naip"
 
 # Where the USGS field-measurement widths (the ground truth at each gauge) live.
-CHANNEL_MEASUREMENTS_JS = "src/data/channel_measurements.js"
-DEFAULT_WIDTHS_JS = "src/data/river_widths.js"
+CHANNEL_MEASUREMENTS_JS = "public/src/data/channel_measurements.js"
+DEFAULT_WIDTHS_JS = "public/src/data/river_widths.js"
 # A method is only trusted for a river if it reproduces the USGS measured width this closely.
 VALIDATION_TOL = 0.25
 

@@ -180,6 +180,8 @@ def _fetch_streamstats(lat, lon):
 
 _SPOT_CANDIDATES = (
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "public", "src", "data", "spot_widths.js"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "..", "src", "data", "spot_widths.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "data", "spot_widths.js"),

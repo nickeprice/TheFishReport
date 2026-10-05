@@ -24,6 +24,7 @@ SSL_CONTEXT = ssl._create_unverified_context()
 # ==================================================================================
 _REGION_STATE = "WA"
 _REGION_CANDIDATES = (
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public", "src", "data", "regions", "washington.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "data", "regions", "washington.js"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "regions", "washington.js"),
 )

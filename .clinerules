@@ -19,7 +19,7 @@
   snippets, formulas, data tables, file-level breakdowns.
   - One `##` section per `PLAN.md` task, keyed by anchor.
   - Every `- [ ]` MUST have a matching `##` section. No orphans.
-  - DELETE the section when its task is `[x]` complete.
+  - DELETE the section immediately when its task is `[x]` complete.
 - Anchor format: `#domain-slug` (lowercase, hyphens). Never rename an anchor.
   Domains: `data`, `ui`, `drift`, `sim`. Slug = shortest unique task keyword.
 
@@ -56,6 +56,7 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 - Delete the completed `- [x]` line from `PLAN.md` after commit (git history is the record).
 
 # File discipline
+- Always check `docs/SYMBOLS.md` first before reading entire files.
 - Use replace_in_file; never rewrite files over 400 lines in one shot.
 - Search first, then read ±30 lines. Never whole-read large files unless small.
 - Confirm edits with `git diff --stat` or `git diff <file>`.
@@ -77,9 +78,8 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 - One-time data fixes are migrations too, guarded as no-ops on re-run.
 
 # Verification
-- After frontend changes: `node sanity_pass.js --quiet`.
-- Run `python -m pytest tests/ -v --tb=short` to execute the full test suite:
-  contract/API tests, Playwright UI behaviour tests, and physics validation.
+- After frontend changes: `node sanity_pass.js --quiet`. Never run without `--quiet`.
+- Run tests compactly: `python -m pytest tests/ -q --tb=line`.
 
 # Safety
 - Never run the same failing command more than twice; STOP and summarize.

@@ -1,5 +1,24 @@
+# Archived & historical documentation
 docs/archive/
+docs/LITERATURE.md
 docs/ROADMAP.md
+docs/CHAIN_SOLVER.md
+docs/ARCHITECTURE.md
+docs/MEASUREMENT_PROTOCOL.md
+
+# Large CSVs and templates
 docs/tackle_measurements.csv
 docs/tackle_measure_template.csv
+
+# Large precomputed datasets & JSON data files
+src/data/tackle.json
+src/data/wdfw_rules.json
+src/data/spot_widths.js
+src/data/channel_measurements.js
+src/data/river_widths.js
+
+# Test suites & benchmarks (executed via CLI only)
+tests/
+
+# CI / CD
 .github/

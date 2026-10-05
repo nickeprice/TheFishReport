@@ -1,38 +1,5 @@
 # Plan Reference — Implementation Details
 
-
-<a id="data-forecast-json"></a>
-## Phase A2: Restructure wdfw_forecasts.json (waterbody-keyed)
-
-**Change:** Restructure from flat `stocks[]` to `waterbodies.{id}.stocks[]` 
-keyed by waterbody id from `REGIONS.WA.waterbodies`.
-
-```json
-{
-  "_readme": "WDFW run forecasts. Values written only after human confirmation.",
-  "waterbodies": {
-    "puyallup": {
-      "name": "Puyallup River",
-      "stocks": [
-        { "species": "Chinook", "forecast": 18890, "year": 2026, "source_url": "..." },
-        { "species": "Coho", "forecast": 53588, "year": 2026, "source_url": "..." }
-      ]
-    },
-    ... all 15 waterbodies, forecast: null for unconfirmed ...
-  }
-}
-```
-
-**Expand:** Pre-populate all 15 waterbodies from `REGIONS.WA.waterbodies[]`.
-Unconfirmed stocks keep `"forecast": null` → UI renders `--`.
-Update `refreshWdfwForecast()` in water.js to read the new format.
-
-**Files:**
-- `src/data/wdfw_forecasts.json` — restructure + pre-populate all 15
-- `src/services/water.js` — update `refreshWdfwForecast()` for new JSON shape
-
----
-
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

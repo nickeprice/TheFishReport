@@ -1,7 +1,7 @@
 # Fish Report — Active Plan
 
 ## 🛠 UI Polish & Data Pipeline
-- [ ] Phase A2: Restructure wdfw_forecasts.json (waterbody-keyed)
+- [x] Phase A2: Restructure wdfw_forecasts.json (waterbody-keyed)
       → wdfw_forecasts.json, water.js
       [Detail → docs/PLAN_REFERENCE.md#data-forecast-json]
 

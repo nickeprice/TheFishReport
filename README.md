@@ -7,9 +7,10 @@ Cedar, Cowlitz, Toutle, Lewis and Kalama. Three tools in one shell:
 1. **Water Report** — live USGS flow, barometer, tides, solunar, hatchery
    escapement, fishing-window scoring, a thermal run-status advisory and WDFW legal
    hours.
-2. **Gear Sim** — a deterministic fluid-dynamics engine that solves your rig
-   against today's strike zone.
-3. **Catch Log** — private catch records with a four-column public Brag Board.
+2. **Gear Sim** — a unified chain-solver (RK4 + shooting + air catenary) that
+   solves your full rig from hook to rod tip against today's strike zone.
+3. **Catch Log** — private catch records with offline-first durable sync
+   (IndexedDB outbox + optimistic UI + automatic reconciliation).
 
 Installable as a PWA and usable offline from a cached app shell.
 
@@ -22,46 +23,72 @@ order at the end of `<body>`.
 ```
 index.html                  markup only (tabs, forms, ARIA labels, script tags)
 manifest.json               PWA manifest (icons, shortcuts, theme)
-sw.js                       service worker (offline + caching strategy)
+sw.js                       service worker (v2.03.42; offline + caching strategy)
 icons/                      generated app icons (any + maskable)
 src/
-  styles.css                all styling, incl. toasts / empty states / focus rings
-  app.js                    BOOTSTRAP ONLY (33 lines): window.onload + the outbox load
+  styles.css                all styling (toasts, empty states, focus rings, tabs)
+  app.js                    BOOTSTRAP ONLY (59 lines): window.onload wiring
   shared/                   reusable primitives (classic scripts, one global scope)
     debug.js                logDebug + the double-tap debug matrix
     ui.js                   the toast stack
     nav.js                  switchTab / resetToToday
+    api.js                  provVal() unwrap helper for provenance envelopes
     format.js               feed-row normalise, time format, escaping, newUuid
     forms.js                line/material/field sync (shared by BOTH tabs)
     idb.js                  tiny promise wrapper over IndexedDB
-    refresh.js / pwa.js     auto-refresh; service-worker registration + deep links
+    refresh.js              auto-refresh timer (hooks into water report)
+    pwa.js                  service-worker registration + deep links
+    tackle.js               tackle library loader + line/weight/hook lookups
+    gear-options.js         gear-sim dropdown option builders
   features/
-    auth/                   anonymous guest session + pending-catch flush
-    telemetry/              tide, hero, day-nav, the water-report pipeline
-    gear-sim/               inputs, physics (Cd locked 1.0), sonar, zone, rig,
-                            solver, sim, techniques/drift.js, registry
-    catch-log/              outbox (durable), pending (optimistic rows),
-                            board, mycatches, log
-    station/                picker (modal/GPS) + search (USGS by id/name)
-    map/                    Leaflet station map (lazy-loaded enhancement)
+    auth/                   anonymous guest session + OAuth-ready upgrade path
+    telemetry/              report.js (pipeline), hero.js (run cards), hourly.js,
+                            daynav.js (date nav), tide.js (tide curve SVG)
+    gear-sim/               chain.js (unified RK4+solver), continuity.js,
+                            hydro.js, inputs.js, interception.js, physics.js,
+                            registry.js, rig.js, riverbed.js, salmon.js,
+                            sim.js, solver.js, sonar.js, water-types.js,
+                            zone-best.js, zone-core.js, zone-env.js,
+                            techniques/drift.js
+    catch-log/              outbox.js (durable IndexedDB), pending.js (optimistic),
+                            board.js (scope switcher), mycatches.js (your list),
+                            log.js (catch form), reconcile.js (auto-flush)
+    station/                picker.js (modal + GPS), search.js (USGS by id/name)
+    map/                    map.js (Leaflet), spots.js (spot save/load),
+                            spots-map.js (spot-pick mode)
   data/
-    regions/washington.js   the WA region registry (strict JSON payload; read by
-                            BOTH the frontend and api/water_report.py)
-    wdfw_rules.json         fetched WDFW rules cache
+    regions/washington.js   the WA region registry (strict JSON; read by BOTH
+                            JS frontend and api/water_report.py)
+    tackle.json             measured tackle specs (density, drag, buoyancy)
+    spot_widths.js          precomputed DEM cross-sections for each spot
+    channel_measurements.js velocity/depth power-law fits per site
+    river_widths.js         measured width at each gauge
+    wdfw_rules.json         cached WDFW regulatory rules
+    wdfw_forecasts.json     harvested WDFW hatchery escapement forecasts
   services/
     supabase.js             Supabase client: anonymous auth, catch writes,
-                            public feed, calibration RPC
+                            public feed, favorite_spots, calibration RPC
     water.js                telemetry data layer: USGS WDFN, Open-Meteo,
                             WDFW Socrata escapement
   utils/regulations.js      WDFW regulations engine + local NOAA/Meeus solar calc
 api/
-  water_report.py           Python serverless function: /api/water_report
-  nearby_stations.py        Server-side USGS gauge search: /api/nearby_stations
+  water_report.py           Python serverless function: /api/water_report (~1500 lines)
+  streamstats.py            USGS StreamStats watershed geometry: /api/streamstats
   spot-geometry.py          Nearest DEM cross-section lookup: /api/spot-geometry
+  nearby_stations.py        Server-side USGS gauge search: /api/nearby_stations
+  report-issue.py           GitHub issue reporter: /api/report-issue
 supabase/
-  migrations/               idempotent schema + RLS migrations
+  migrations/               16 idempotent schema + RLS migrations
   README.md                 how to link / push / verify
-scripts/                    dev_server.py, scrape_wdfw.py, refresh_wdfw_forecast.py
+scripts/
+  dev_server.py             local dev server (static + /api/* routing)
+  tackle_csv_to_json.py     converter: tackle_measurements.csv → src/data/tackle.json
+  session_instructions.py   instructions generator for MuPDF extraction
+  scrape_wdfw.py            WDFW regulation scraper
+  refresh_wdfw_forecast.py  forecast scraper
+  smoke.sh                  live API contract smoke test
+  check.sh                  quick syntax check
+  tools/                    PDF-extraction helper scripts
 ```
 
 ### Script load order
@@ -80,6 +107,9 @@ depends on being fully defined first. `sanity_pass.js` derives this list from
 | `AGENTS.md` + `.clinerules` | working rules and the plan/act workflow |
 | `docs/SYMBOLS.md` | file → public API index (find a function without opening files) |
 | `docs/CONTRACT*.md` | API, region, technique, tackle and catch contracts |
+| `docs/ARCHITECTURE.md` | tiered data architecture & fallback pattern |
+| `docs/CHAIN_SOLVER.md` | unified chain-solver physics design & governing equations |
+| `docs/MEASUREMENT_PROTOCOL.md` | tackle measurement protocols & CSV spec |
 | `docs/LITERATURE.md` | the studies behind the environment model — thresholds + provenance |
 | `docs/ROADMAP.md` | forward plan (Update 4.0) |
 | `docs/ARCHIVE_UPDATE_3.0.md`, `docs/ARCHIVE.md`, `docs/CHANGELOG.md` | how the current code got here |
@@ -116,9 +146,12 @@ them.
   the sim uses (`envSignature()` — no wind, no moon), applies a **capped, silent** pull
   (no catch count / confidence is shown), and keeps a private **notebook** of its own
   residual error for later correction.
-- **Physics is locked** at drag coefficient 1.0. Every simulation output is a
-  pure function of the form inputs plus the catch log, so identical inputs
-  always return identical numbers.
+- **Unified chain solver** (`chain.js`): an RK4-based shooting-method ODE solver
+  models the full rig from hook to rod tip. Concentrated elements (hook, bead,
+  corky, weight) apply discrete buoyancy/drag/friction at their arc-length
+  positions; the air segment above the waterline uses a closed-form catenary.
+  Every simulation output is a pure function of the form inputs, so identical
+  inputs always return identical numbers.
 - **Offline-first writes**: a logged catch goes into a durable **IndexedDB outbox**
   (`src/features/catch-log/outbox.js`) first, then is pushed to Supabase. Each row carries
   a client-generated `clientId`, and the write is an upsert with `ignoreDuplicates`, so a
@@ -167,28 +200,49 @@ second `BaseHTTPRequestHandler`. Constructing a new handler re-runs `handle()`,
 which reads a *new* request line off a socket that has already been consumed —
 the request then blocks forever. Subclassing avoids that entirely.
 
-Note that the API is genuinely slow (4–6 s): it fans out to USGS NWIS,
-Open-Meteo and NOAA tides on every call. The service worker caches the result,
-so repeat loads are instant.
+Note that the API is genuinely slow (4–6 s): it fans out to USGS WDFN OGC API
+(primary; legacy NWIS fallback, decommissioned Q1 2027), Open-Meteo and NOAA
+tides on every call. The service worker caches the result, so repeat loads are
+instant.
 
 ## Testing
 
-There is no committed test runner; the codebase is validated by:
+31 hermetic tests across 4 files. All upstream APIs (USGS, NOAA, Open-Meteo) are
+mocked — no live network calls run in CI.
 
-- `find src -name '*.js' -print0 | xargs -0 -n1 node --check` and `node --check sw.js` (syntax).
-- `python3 -m py_compile api/water_report.py scripts/dev_server.py scripts/scrape_wdfw.py`.
-- **`node sanity_pass.js`** — a zero-dependency sanity pass that starts the dev server
-  and checks (exit 0 = all green):
-  - `label[for]` / accessible-name integrity against the markup + classic script order.
-  - HTTP: static assets serve 200 with correct content types; `/api/water_report`
-    returns 4 report days incl. `tide_curve` + `species_calendar`.
-  - Behavior (real `app.js` functions in a DOM-stubbed Node context): toast renders
-    in a `role=status` stack, `?tab=` deep links activate the target tab, `switchTab`
-    toggles `tab-active`, and the water-report empty state renders.
+| Test file | Scope | Count |
+|---|---|---|
+| `test_api_contract.py` | Schema-driven `/api/water_report` contract tests (JSON Schema + provenance envelope) | 5 |
+| `test_physics_benchmarks_extended.py` | Analytical-solution benchmarks: terminal velocity, oblique drag, submerged density, air catenary continuity, boundary-layer shear | 5 |
+| `test_physics_validation.py` | Physics unit validation + 10 chain-solver fuzz cases (negative depth, zero flow, buoyant corky, heavy tungsten, extreme leader length, etc.) | 15 |
+| `test_ui_behavior.py` | Playwright behavioural: deep-link tab activation, switchTab toggle, toast stack rendering, empty-state rendering | 6 |
 
-Run it with `node sanity_pass.js` (it picks a free port and cleans up after itself).
+Run locally:
+```bash
+pip install -r requirements-dev.txt
+python -m playwright install --with-deps chromium
+python -m pytest tests/ -v --tb=short
+```
 
-A CI workflow (`.github/workflows/sanity.yml`) runs `node sanity_pass.js` on every
-push/PR to `main` (and on manual `workflow_dispatch`). It needs no install step — the
-pass is plain Node + Python, both preinstalled on GitHub Actions runners. It also
-asserts the pass leaves no dev-server process behind.
+### Static sanity pass
+
+**`node sanity_pass.js`** — zero-dependency static checks only (no server, no DOM stub,
+no HTTP). Exit 0 = all green:
+
+- Syntax: `node --check` on every JS script + sw.js; `python3 -m py_compile` on API scripts
+- Markup integrity: `label[for]` → `id` resolution, accessible names on all controls,
+  script load order ends with `app.js`
+- Service-worker parity: `sw.js` `SHELL_FILES` matches the `index.html` script list
+- Doc index: `docs/SYMBOLS.md` covers every loaded module; all 4 contract docs present
+- Tackle spec: `tackle_csv_to_json.py --check` validates measurement CSV integrity
+- Source-level guards: nav-bar station presets, species/technique registries,
+  HEAD navigation ↔ tab parity, API route integrity
+
+### CI
+
+Two GitHub Actions workflows run on push/PR to `main`:
+
+| Workflow | Runs | Path-gated |
+|---|---|---|
+| **sanity.yml** | Full test suite + static sanity pass + dev-server leak check | All changes |
+| **ci-physics.yml** | Physics validation + chain-solver fuzzing | `tests/**`, `requirements-dev.txt`, `.github/workflows/ci-physics.yml` |

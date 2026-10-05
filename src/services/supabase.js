@@ -1,14 +1,16 @@
+import { createClient } from '@supabase/supabase-js';
+
 /**
  * Supabase service layer: anonymous auth, private catch writes, public reads.
  *
- * public: isConfigured(), ensureSdk(), getClient(), rememberName(name), recallName(),
+ * public: isConfigured(), getClient(), rememberName(name), recallName(),
  *         signInGuest(name), signOut(), getSession(), toCatchRow(payload),
  *         insertCatch(payload), fetchMyCatches(), updateMyCatch(id, patch),
  *         deleteMyCatch(id), fetchPublicFeed(limit), fetchGlobalCalibration(flow, species),
  *         toSpotRow(payload), saveFavoriteSpot(payload), fetchFavoriteSpots(),
  *         deleteFavoriteSpot(id)
  *
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  *
  * The catch payload -> `public.catches` column map is the contract in
  * `docs/CONTRACT_CATCH.md` — read that instead of re-deriving it here, and verify with the
@@ -20,42 +22,19 @@
 const SUPABASE_URL = 'https://pztcfsqifbfkjvosygcy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CJcIKTHTSUGSFkw6POK6XA_tNfo37Gr';
 
-const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const GUEST_NAME_KEY = 'angler_display_name';
 
 var _client = null;
-var _sdkPromise = null;
 
-function isConfigured() {
+export function isConfigured() {
     return SUPABASE_URL.indexOf('PASTE_YOUR') !== 0 && SUPABASE_ANON_KEY.indexOf('PASTE_YOUR') !== 0;
 }
 
-// The CDN bundle is normally loaded by a <script> tag in index.html. If that failed
-// (offline, blocked, cached miss) inject it on demand so the app can still try to connect.
-function ensureSdk() {
-    if (typeof window !== 'undefined' && window.supabase && window.supabase.createClient) {
-        return Promise.resolve(true);
-    }
-    if (_sdkPromise) return _sdkPromise;
-    _sdkPromise = new Promise(function (resolve) {
-        if (typeof document === 'undefined' || !document.head) return resolve(false);
-        var tag = document.createElement('script');
-        tag.src = SUPABASE_CDN;
-        tag.async = true;
-        tag.onload = function () { resolve(!!(window.supabase && window.supabase.createClient)); };
-        tag.onerror = function () { resolve(false); };
-        document.head.appendChild(tag);
-        setTimeout(function () { resolve(!!(window.supabase && window.supabase.createClient)); }, 6000);
-    });
-    return _sdkPromise;
-}
-
-function getClient() {
+export function getClient() {
     if (_client) return _client;
     if (!isConfigured()) return null;
-    if (typeof window === 'undefined' || !window.supabase || !window.supabase.createClient) return null;
     try {
-        _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: { persistSession: true, autoRefreshToken: true, storageKey: 'puyallup_angler_auth' }
         });
     } catch (e) {
@@ -64,11 +43,11 @@ function getClient() {
     return _client;
 }
 
-function rememberName(name) {
+export function rememberName(name) {
     try { localStorage.setItem(GUEST_NAME_KEY, name); } catch (e) {}
 }
 
-function recallName() {
+export function recallName() {
     try { return localStorage.getItem(GUEST_NAME_KEY) || ''; } catch (e) { return ''; }
 }
 
@@ -78,13 +57,12 @@ function recallName() {
  * Anonymous (guest) sign in. No email or password: Supabase issues an anonymous user and
  * we stash the display name in user_metadata so the public feed can show it.
  */
-async function signInGuest(name) {
+export async function signInGuest(name) {
     var clean = String(name || '').trim().slice(0, 24);
     if (!clean) return { ok: false, error: 'Enter a name to start fishing.' };
     rememberName(clean);
 
-    var sdk = await ensureSdk();
-    var client = sdk ? getClient() : null;
+    var client = getClient();
     // Local-only guest: Supabase is not configured, or the SDK failed to load / could
     // not be reached. NOTE: anonymous sign-ins ARE ENABLED on this project (verified
     // 2026-09-28 against the live DB: 7 anonymous auth users, and one private catch row
@@ -104,7 +82,7 @@ async function signInGuest(name) {
     }
 }
 
-async function signOut() {
+export async function signOut() {
     var client = getClient();
     try { if (client) await client.auth.signOut(); } catch (e) {}
     try { localStorage.removeItem(GUEST_NAME_KEY); } catch (e) {}
@@ -115,7 +93,7 @@ async function signOut() {
  * Returns { user, session, name, isGuest }. `name` falls back to the cached display name so
  * the UI still shows an identity when Supabase is unreachable.
  */
-async function getSession() {
+export async function getSession() {
     var sdk = await ensureSdk();
     var client = sdk ? getClient() : null;
     if (!client) return { session: null, user: null, name: recallName(), isGuest: false, offline: true };
@@ -145,7 +123,7 @@ async function getSession() {
 //   brand ids + weight shape, which ride ALONGSIDE the material+lb fallback),
 // hook -> hook_size, yarn -> yarn, foam -> foam (+ foam2 -> foam_2),
 // bdMat/bdSz -> bead_material/bead_size.
-function toCatchRow(payload) {
+export function toCatchRow(payload) {
     var t = payload.time ? new Date(payload.time) : new Date();
     if (isNaN(t.getTime())) t = new Date();
     var lat = null, lon = null;
@@ -219,7 +197,7 @@ function toCatchRow(payload) {
  * than inserting a second copy of the catch. No DB change was needed: `public.catches`
  * already has `PRIMARY KEY (id)`.
  */
-async function insertCatch(payload) {
+export async function insertCatch(payload) {
     var client = getClient();
     if (!client) return { ok: false, offline: true, error: 'Supabase not configured or offline' };
     try {
@@ -238,7 +216,7 @@ async function insertCatch(payload) {
 }
 
 /** Private read: the signed-in user's own catch rows (RLS guarantees ownership). */
-async function fetchMyCatches() {
+export async function fetchMyCatches() {
     var client = getClient();
     if (!client) return [];
     try {

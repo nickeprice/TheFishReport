@@ -1,10 +1,11 @@
 /**
  * Scalable GPS-Aware Regulations Engine for Washington Rivers.
  * Evaluates WDFW fishing rules against GPS coordinates and date.
+ * ES module.
  */
 
 // GPS Bounding Boxes for major Washington river zones
-const ZONE_GPS_CONFIG = {
+export const ZONE_GPS_CONFIG = {
   "Puyallup River": [
     {
       zoneIndex: 0,
@@ -94,11 +95,11 @@ const ZONE_GPS_CONFIG = {
 
 let _rulesCache = null;
 
-function setRulesCache(rules) {
+export function setRulesCache(rules) {
   _rulesCache = rules;
 }
 
-function getRulesCache() {
+export function getRulesCache() {
   if (!_rulesCache) {
     if (typeof window !== 'undefined' && window.__WDFW_RULES__) {
       _rulesCache = window.__WDFW_RULES__;
@@ -111,7 +112,7 @@ function getRulesCache() {
   return _rulesCache;
 }
 
-async function loadRules(customPath) {
+export async function loadRules(customPath) {
   if (_rulesCache) return _rulesCache;
   if (typeof window !== 'undefined') {
     const urls = customPath ? [customPath] : ['/src/data/wdfw_rules.json', 'src/data/wdfw_rules.json', './src/data/wdfw_rules.json'];
@@ -133,7 +134,7 @@ if (typeof window !== 'undefined') {
   try { loadRules(); } catch(e) {}
 }
 
-function parseGPS(gpsInput) {
+export function parseGPS(gpsInput) {
   if (!gpsInput) return null;
   if (typeof gpsInput === 'object') {
     const lat = Number(gpsInput.lat ?? gpsInput.latitude);
@@ -156,7 +157,7 @@ function parseGPS(gpsInput) {
   return null;
 }
 
-function matchRiverRules(rules, riverName) {
+export function matchRiverRules(rules, riverName) {
   if (!rules || !riverName) return null;
   const cleanName = riverName.trim().toLowerCase();
 
@@ -191,7 +192,7 @@ function matchRiverRules(rules, riverName) {
   return null;
 }
 
-function findZoneForGPS(riverName, zones, gpsCoords) {
+export function findZoneForGPS(riverName, zones, gpsCoords) {
   if (!zones || zones.length === 0) return null;
   const parsedGPS = parseGPS(gpsCoords);
 
@@ -247,7 +248,7 @@ const MONTH_NAMES = {
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-function getMemorialDaySaturday(year) {
+export function getMemorialDaySaturday(year) {
   // Memorial Day is the last Monday of May
   const may31 = new Date(year, 4, 31);
   const dayOfWeek = may31.getDay();
@@ -256,7 +257,7 @@ function getMemorialDaySaturday(year) {
   return new Date(year, 4, lastMondayDate - 2, 0, 0, 0);
 }
 
-function parseDateToken(token, targetYear) {
+export function parseDateToken(token, targetYear) {
   const clean = token.trim().toLowerCase();
   if (clean.includes('memorial day')) {
     return getMemorialDaySaturday(targetYear);
@@ -273,7 +274,7 @@ function parseDateToken(token, targetYear) {
   return null;
 }
 
-function isDateInRange(targetDate, dateRangeStr) {
+export function isDateInRange(targetDate, dateRangeStr) {
   if (!dateRangeStr) return true;
   const str = dateRangeStr.trim().toLowerCase();
   if (str.includes('year-round')) return true;
@@ -309,7 +310,7 @@ function isDateInRange(targetDate, dateRangeStr) {
   return tTime >= sTime && tTime <= eTime;
 }
 
-function evaluateZoneRules(zone, targetDate) {
+export function evaluateZoneRules(zone, targetDate) {
   if (!zone) return { isOpen: false, reason: "Zone not found" };
 
   // 1. Permanent closed waters
@@ -370,7 +371,7 @@ function evaluateZoneRules(zone, targetDate) {
   return { isOpen: true, reason: "Open" };
 }
 
-function checkRiverStatus(date, gpsCoords, activeRiverName, overrideRules) {
+export function checkRiverStatus(date, gpsCoords, activeRiverName, overrideRules) {
   const rules = overrideRules || getRulesCache();
   const targetDate = (date instanceof Date) ? date : new Date(date || Date.now());
   const riverLookup = activeRiverName || "Puyallup River";
@@ -428,7 +429,7 @@ function checkRiverStatus(date, gpsCoords, activeRiverName, overrideRules) {
  * Robust Solar Math: Official Sunrise/Sunset and WDFW Legal Hours.
  * Legal Hours: 1 hour before sunrise to 1 hour after sunset.
  */
-function calculateSolarHours(date, lat = 47.1950, lon = -122.3020) {
+export function calculateSolarHours(date, lat = 47.1950, lon = -122.3020) {
   const d = (date instanceof Date) ? date : new Date(date || Date.now());
   const rad = Math.PI / 180;
   const deg = 180 / Math.PI;

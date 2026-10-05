@@ -1,5 +1,242 @@
 # Plan Reference — Implementation Details
 
+<a id="build-setup"></a>
+## Phase V0: Setup & Scaffold
+
+**Goal:** Create the build toolchain (`package.json` + `vite.config.js`), move data files to `public/`, and update all Python paths so the filesystem stays consistent.
+
+**New files:**
+- `package.json` — `npm init -y`, then `npm install vite @supabase/supabase-js vite-plugin-pwa leaflet`
+- `vite.config.js` — Vite config with PWA plugin + `/api` proxy
+
+**Files to move to `public/`:**
+| File | Source | Destination |
+|---|---|---|
+| `washington.js` | `src/data/regions/washington.js` | `public/src/data/regions/washington.js` |
+| `channel_measurements.js` | `src/data/channel_measurements.js` | `public/src/data/channel_measurements.js` |
+| `river_widths.js` | `src/data/river_widths.js` | `public/src/data/river_widths.js` |
+| `spot_widths.js` | `src/data/spot_widths.js` | `public/src/data/spot_widths.js` |
+| Icons | `icons/*` | `public/icons/*` |
+| Manifest | `manifest.json` | `public/manifest.json` |
+
+**NOT moved:** `tackle.json` stays at `src/data/tackle.json` — Vite imports it statically at build time, Python scripts read/write it unchanged.
+
+**Python output scripts — path updates (append `public/` prefix):**
+| File | Line | Change |
+|---|---|---|
+| `scripts/tools/fetch_channel_measurements.py` | 67: `DEFAULT_OUT` | `"src/data/channel_measurements.js"` → `"public/src/data/channel_measurements.js"` |
+| `scripts/tools/precompute_spot_widths.py` | 47: path join | `"src"` → `"public"`, `"src"` chain |
+| `scripts/tools/extract_river_widths.py` | 50-51: `CHANNEL_MEASUREMENTS_JS`, `DEFAULT_WIDTHS_JS` | prepend `"public"` |
+
+**Python API files — path updates (append `public/` prefix):**
+| File | Path | Change |
+|---|---|---|
+| `api/water_report.py` | `REGION_CANDIDATES` | `"..","src",...` → `"..","public","src",...`; keep both candidates |
+| `api/streamstats.py` | `spot_widths.js` read | `"..","src",...` → `"..","public","src",...` |
+| `api/spot-geometry.py` | `spot_widths.js` read | `"..","src",...` → `"..","public","src",...` |
+
+**Dev workflow after migration:** `python3 scripts/dev_server.py 8000` (term 1) + `npm run dev` (term 2).
+
+---
+
+<a id="build-state"></a>
+## Phase V1: Shared State Extraction
+
+**Goal:** Remove `window.*` globals for cross-feature shared state. Replace with a proper module.
+
+**New file:** `src/shared/state.js`
+```js
+export var userGPSCoords = null;
+export var waterTempF = null;
+export var turbidityFnu = null;
+export var currentWindMph = null;
+export var currentWindDir = null;
+```
+
+**Files to update (replace `window.X =` with `import { X } from '../shared/state.js'`):**
+| File | What changes |
+|---|---|
+| `inputs.js` | `window.userGPSCoords =` → state import + direct assign |
+| `picker.js` | `window.userGPSCoords =` — same |
+| `log.js` | `window.currentWindMph` reads → import |
+| `zone-env.js` | `window.waterTempF`, `window.turbidityFnu` → import |
+| `map.js` | `window.userGPSCoords` reads → import |
+| `daynav.js` | `window.userGPSCoords` reads → import |
+
+**Risk:** Low. Pure variable extraction. No logic changes.
+
+---
+
+<a id="build-modules"></a>
+## Phase V2: ES Module Conversion + Code Deletions
+
+**Goal:** Convert all ~35 JS source files from global scope to `import`/`export`. Add `window.*` compatibility shims for Playwright tests. Delete ~120 lines of defensive scaffolding that the build step renders unnecessary.
+
+**Conversion order (batched by dependency):**
+
+| Batch | Files | Depends on |
+|---|---|---|
+| A | `debug.js`, `ui.js`, `nav.js`, `format.js`, `api.js`, `forms.js`, `idb.js`, `gear-options.js`, `refresh.js`, `pwa.js` | Nothing |
+| B | `state.js` | Already done (V1) |
+| C | `regulations.js` | Data globals (window.REGIONS) |
+| D | `supabase.js` | `@supabase/supabase-js` npm package |
+| E | `water.js` | supabase.js, data globals |
+| F | `auth.js`, `tide.js`, `hero.js`, `daynav.js`, `hourly.js`, `report.js` | water.js, supabase.js |
+| G | `inputs.js`, `continuity.js`, `physics.js`, `hydro.js`, `riverbed.js`, `chain.js`, `salmon.js`, `interception.js`, `sonar.js`, `zone-env.js`, `zone-core.js`, `zone-best.js`, `rig.js`, `presets.js`, `drift.js`, `registry.js`, `solver.js`, `water-types.js`, `sim.js` | state.js, water.js, data globals |
+| H | `tackle.js` | tackle.json static import, gear-options.js |
+| I | `outbox.js`, `pending.js`, `board.js`, `mycatches.js`, `log.js`, `reconcile.js` | tackle.js, supabase.js, state.js |
+| J | `picker.js`, `search.js` | water.js, state.js, data globals |
+| K | `spots.js`, `spots-map.js`, `map.js` | Leaflet npm import, state.js, supabase.js |
+| L | `app.js` | Everything (handled in V3) |
+
+**Conversion pattern per file:**
+
+Before:
+```js
+// public: fetchCFSMomentum(siteId) — get CFS momentum data
+var TACKLE = null;
+function tackleLoad() { return fetch('/src/data/tackle.json')... }
+function tackleItems(type) { ... }
+```
+
+After:
+```js
+import TACKLE_DATA from '../data/tackle.json';
+export function tackleLoad() { /* TACKLE_DATA available sync */ }
+export function tackleItems(type) { ... }
+// Test compat shim:
+window.tackleLoad = tackleLoad;
+window.tackleItems = tackleItems;
+```
+
+**Specific deletions (~120 lines total):**
+
+| Deletion | File | Lines | Reason |
+|---|---|---|---|
+| `tackleLoad()` fetch + error handling | `tackle.js` | ~15 | Static import at build time |
+| Supabase `ensureSdk()` dynamic CDN loader | `supabase.js` | ~25 | npm import guaranteed |
+| 15 `typeof === 'function'` guards | app.js + others | ~15 | Import guarantees existence |
+| Leaflet JS + CSS dynamic loaders | `map.js` | ~20 | npm import handles both |
+| Data file `|| {}` guards | 4 data files | ~4 | Loaded once from public/ |
+| Supabase CDN `<script>` in HTML | index.html | ~1 | Handled in V3 |
+
+**Verification:** After each batch, run `npm run build`. If it passes, batch is clean. Rollback via `git checkout`.
+
+---
+
+<a id="build-html"></a>
+## Phase V3: Entry Points (index.html + app.js)
+
+**Goal:** Replace ~40 classic `<script>` tags with 4 data scripts + 1 module entry point. Rewrite `app.js` with explicit imports.
+
+**index.html after:**
+```html
+<!-- Data globals (loaded as classic scripts from public/) -->
+<script src="/src/data/regions/washington.js"></script>
+<script src="/src/data/channel_measurements.js"></script>
+<script src="/src/data/river_widths.js"></script>
+<script src="/src/data/spot_widths.js"></script>
+
+<!-- ES module entry point (Vite resolves all imports) -->
+<script type="module" src="/src/app.js"></script>
+```
+
+**Removed:** Supabase CDN script, all 35+ classic JS `<script>` tags.
+
+**app.js after:** imports tackleLoad, restoreRig, loadPresets, applyTabDeepLink, registerServiceWorker, startAutoRefresh, outboxLoad, getGPS, initAuth, initCatchReconcile, setCatchScope, CATCH_SCOPE, loadWaterReport, openWaterTypeGuide, logDebug from their respective modules. No `typeof` guards. No `try/catch` on tackleLoad. Window.onload body is identical logic — just explicit imports at the top.
+
+---
+
+<a id="build-tests"></a>
+## Phase V4: Test & CI Migration
+
+**Goal:** Update all tests and CI pipelines for the new module structure.
+
+**test_gear_sim_run.js — rewrite:** Current concat + eval dies with ES modules. **Option A (recommended):** Rewrite as Playwright test — opens built app, runs compute via `page.evaluate()`, consistent with existing tests. **Option B:** Node dynamic import against Vite library-mode output. Effort: medium.
+
+**conftest.py:** Update `ROOT` to point at `dist/` instead of repo root.
+
+**dev_server.py:** Add `--root` CLI flag or `TFR_SERVE_ROOT` env var. Default to `dist/`.
+
+**CI workflows — additions to both `ci-physics.yml` and `sanity.yml`:**
+```yaml
+- uses: actions/setup-node@v4
+  with: { node-version: '20', cache: 'npm' }
+- run: npm ci
+- run: npm run build
+```
+
+**Files:** `test_gear_sim_run.js` (rewrite), `conftest.py` (ROOT update), `dev_server.py` (--root flag), `.github/workflows/ci-physics.yml` (+Node steps), `.github/workflows/sanity.yml` (+Node steps).
+
+---
+
+<a id="build-tooling"></a>
+## Phase V5: Tooling (sanity_pass, sw.js, docs, rules)
+
+**Goal:** Update all tooling and documentation to match the new architecture.
+
+**sanity_pass.js:**
+- DELETE: "Script load order ends with app.js" (vite build covers it)
+- DELETE: "SHELL_FILES matches script list" (PWA plugin generates manifest)
+- UPDATE: path to washington.js — add `public/` prefix
+- KEEP: label/ARIA resolution, dead CSS, Python syntax checks
+
+**sw.js:** Replace with `vite-plugin-pwa` config:
+```js
+VitePWA({ registerType: 'autoUpdate', manifest: false,
+  workbox: { globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'] } })
+```
+Delete manual `sw.js` — plugin generates it in `dist/`.
+
+**SYMBOLS.md:** "classic (non-module) script" → "ES modules". Remove load order table.
+
+**.clinerules:** "No build step" → "Vite build step". "classic JS" → "ES modules". "app.js is LAST" → "app.js is entry point".
+
+---
+
+<a id="build-split"></a>
+## Phase V6: Split Oversized Files (<150 lines)
+
+**Goal:** Split 6 files exceeding the 150-line target. The real token savings live here.
+
+**Split map:**
+| File (lines) | Into | Target |
+|---|---|---|
+| water.js (548) | water-gauge.js + water-weather.js + water-escapement.js | ~180ea |
+| supabase.js (491) | supabase-client.js + supabase-auth.js + supabase-crud.js | ~165ea |
+| chain.js (444) | chain-core.js + chain-forces.js + chain-shooting.js | ~150ea |
+| tackle.js (363) | tackle-data.js + tackle-pickers.js | ~180ea |
+| inputs.js (353) | inputs-constants.js + inputs-readers.js | ~175ea |
+| report.js (348) | report-fetch.js + report-render.js | ~175ea |
+
+**Pattern:** New focused files, thin re-export wrapper at original path. Callers unaffected.
+
+**Token impact:** ~1,800 tokens/read → ~600 tokens/read. Per session: ~3,000-5,000 tokens saved.
+
+---
+
+<a id="build-deploy"></a>
+## Phase V7: Ship & Validate
+
+**Goal:** Build, test, PWA, deploy — everything works.
+
+**Checklist:**
+- [ ] `npm run build` exits 0, outputs to `dist/`
+- [ ] `npm run preview` serves app — all tabs work
+- [ ] Physics: `python -m pytest tests/test_physics_validation.py -q --tb=line`
+- [ ] UI: `python -m pytest tests/test_ui_behavior.py -q --tb=line`
+- [ ] API: `python -m pytest tests/test_api_contract.py -q --tb=line`
+- [ ] `node sanity_pass.js --quiet` exits 0
+- [ ] PWA offline: install → disconnect → app loads
+- [ ] Vercel auto-deploys (detects Vite, runs build, serves dist/)
+- [ ] Dev workflow: `python3 scripts/dev_server.py 8000` + `npm run dev`
+
+**dev_server.py update:** `SERVE_ROOT = os.environ.get('TFR_SERVE_ROOT', os.path.join(ROOT, 'dist'))`
+
+**Rollback:** Every phase is a separate git commit. Revert any independently.
+
+---
+
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

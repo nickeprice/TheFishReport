@@ -387,7 +387,7 @@ function staticIntegrity() {
              `sim=[${simOrder}] log=[${logOrder}]`);
   }
 
-  // Rod length was REMOVED 2026-09-28 (it moved no number — see memory-bank/activeContext.md).
+  // Rod length was REMOVED 2026-09-28 (it moved no number).
   // This guard exists because the removal was once instructed, acknowledged and then silently
   // dropped, so a stray form field or a resurrected code path must fail loudly instead.
   {
@@ -481,15 +481,7 @@ function symbolsIndex() {
     fail('tackle spec validates', String(e.stderr || e.message).trim().split('\n').pop());
   }
 
-  try {
-    const mb = ['projectbrief', 'productContext', 'activeContext', 'systemPatterns', 'techContext'];
-    const absent = mb.filter((f) => !fs.existsSync(path.join(ROOT, 'memory-bank', f + '.md')));
-    absent.length === 0
-      ? ok('memory-bank/ complete', mb.join(', '))
-      : fail('memory-bank/ complete', 'missing: ' + absent.join(', '));
-  } catch (e) {
-    fail('memory-bank/ complete', String(e.message).split('\n')[0]);
-  }
+  
 }
 
 

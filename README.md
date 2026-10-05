@@ -77,7 +77,6 @@ depends on being fully defined first. `sanity_pass.js` derives this list from
 
 | Where | What |
 | --- | --- |
-| `memory-bank/` | the six-file front page — project brief, product context, **current work focus**, system patterns, tech context, progress |
 | `AGENTS.md` + `.clinerules` | working rules and the plan/act workflow |
 | `docs/SYMBOLS.md` | file → public API index (find a function without opening files) |
 | `docs/CONTRACT*.md` | API, region, technique, tackle and catch contracts |

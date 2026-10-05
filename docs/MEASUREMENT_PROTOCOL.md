@@ -42,4 +42,4 @@ soft; hooks above. Line diameters (110) and weight geometry are already locked: 
 Extend `docs/tackle_measurements.csv` + `scripts/tackle_csv_to_json.py` with `sd` / `n`;
 make `scripts/derive_tackle.py` run a seeded Monte Carlo (fixed seed, byte-identical runs)
 reporting median and 5th-95th percentile height and the fraction of draws with net lift <= 0.
-Then the physics rebuild (see `memory-bank/activeContext.md`).
+

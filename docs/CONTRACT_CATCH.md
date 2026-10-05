@@ -109,7 +109,7 @@ retry outcome, so it is reported as success (`deduped: true`) rather than retrie
 - `public.catches` has **RLS**; a client only ever reads its own rows.
 - The public board reads `public_catch_feed`, which is location-free by construction.
 - GPS, reach and tackle details are private in every tier — see
-  `memory-bank/productContext.md`.
+  `.clinerules`.
 
 ## Removed columns (do not resurrect)
 

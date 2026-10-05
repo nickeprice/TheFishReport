@@ -3,7 +3,7 @@
 
 ONE-TIME EXTRACTION, re-run per region when stations are added. Measures the wetted
 channel width from a 0.6 m USDA NAIP aerial image and prints the result, which feeds the
-`v = Q/A` velocity estimate (see the accuracy roadmap in memory-bank/activeContext.md).
+`v = Q/A` velocity estimate.
 
 Source: Microsoft Planetary Computer STAC API — free, and explicitly permits commercial
 use (unlike the Google Earth Engine non-commercial tier). Collection `naip`, 4 bands

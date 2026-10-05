@@ -1,15 +1,22 @@
+# Product Invariants (Non-Negotiable)
+- Never fabricate data (absent data renders `--` or empty states).
+- A spot is never public (GPS/reach/tackle stay private).
+- Offline is a first-class state.
+
+# Icebox Rule (CRITICAL)
+- `docs/ROADMAP.md` is strictly for parking future ideas.
+- You are FORBIDDEN from adding tasks from `ROADMAP.md` into the active `PLAN.md` unless the user explicitly commands you to do so.
+- If the user proposes a new future idea, append it to `docs/ROADMAP.md` and immediately return to the active tasks in `PLAN.md`.
+
+# Workflow
+- Use native Git CLI commands (`git add`, `git commit -m "..."`, `git push`) for version control. Do not use custom node scripts.
+- Manually edit `PLAN.md` to check off tasks (`- [x]`) as they are completed.
+
 # File discipline
 - Use replace_in_file; never rewrite files over 400 lines in one shot.
 - Search first, then read ±30 lines. Never whole-read large files unless small.
 - Confirm edits with `git diff --stat` or `git diff <file>`.
 - Pipe verification through `tail -n 40`; full logs on failure only.
-
-# Git workflow
-- Use native Git CLI commands: `git add`, `git commit -m "..."`, `git push`.
-- After completing a step, update the corresponding checkbox in
-  `memory-bank/plan.md` directly with a `- [x]` marker.
-- Do not use `scripts/complete-step.js` or `scripts/plan-status.js` — they
-  have been removed.
 
 # Frontend module layout
 - No build step. Plain HTML/CSS + classic JS scripts, one global scope.
@@ -30,14 +37,6 @@
 - After frontend changes: `node sanity_pass.js --quiet`.
 - Run `python -m pytest tests/ -v --tb=short` to execute the full test suite:
   contract/API tests, Playwright UI behaviour tests, and physics validation.
-
-# Memory (memory-bank/)
-- New chat: read `plan.md` first. It lists all steps with [x]/[ ] status.
-- Edit checkboxes (`- [ ]` → `- [x]`) directly in `plan.md` when completing
-  a step.
-- Reference docs (`projectbrief.md`, `productContext.md`, `systemPatterns.md`,
-  `techContext.md`) read only when needed.
-- Do NOT read `history.md` unless explicitly asked.
 
 # Safety
 - Never run the same failing command more than twice; STOP and summarize.

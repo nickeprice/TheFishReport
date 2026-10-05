@@ -272,7 +272,7 @@ CHAIN_FUZZ_CASES = [
              env=dict(depthM=2.0, uMax=0.0, rodHeightM=1.5)),
         id="zero_flow"),
     pytest.param(
-        dict(flow=1040, weightOz=6.0, weightShape="Tungsten Teardrop (swivel)",
+        dict(flow=1040, weightOz=6.0, weightShape="Tungsten Teardrop",
              ldLen=8, foamKey="12",
              env=dict(depthM=2.0, uMax=1.2, rodHeightM=1.5)),
         id="heavy_tungsten"),

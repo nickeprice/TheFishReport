@@ -5,13 +5,55 @@
 
 # Icebox Rule (CRITICAL)
 - `docs/ROADMAP.md` is the **single icebox** — all future ideas go there.
-- `PLAN.md` contains only `- [ ]` checkbox tasks. No roadmap section, no future-idea lists.
-- You are FORBIDDEN from adding tasks from `ROADMAP.md` into the active `PLAN.md` unless the user explicitly commands you to do so.
+- You are FORBIDDEN from adding tasks from `ROADMAP.md` into `PLAN.md` unless the user explicitly commands you to do so.
 - If the user proposes a new future idea, append it to `docs/ROADMAP.md` and immediately return to the active tasks in `PLAN.md`.
+
+# Plan Discipline (CRITICAL)
+
+- `PLAN.md` is the SINGLE active task list. Contains ONLY checkbox tasks 
+  (`- [ ]` / `- [x]`), affected-file lists, and a `[Detail → 
+  docs/PLAN_REFERENCE.md#anchor]` link.
+  - Maximum 3 lines per task.
+  - NO code blocks, NO markdown tables, NO paragraphs of explanation.
+- `docs/PLAN_REFERENCE.md` contains ALL implementation detail: goals, code 
+  snippets, formulas, data tables, file-level breakdowns.
+  - One `##` section per `PLAN.md` task, keyed by anchor.
+  - Every `- [ ]` MUST have a matching `##` section. No orphans.
+  - DELETE the section when its task is `[x]` complete.
+- Anchor format: `#domain-slug` (lowercase, hyphens). Never rename an anchor.
+  Domains: `data`, `ui`, `drift`, `sim`. Slug = shortest unique task keyword.
+
+# Phase Transition Protocol (CRITICAL)
+
+- **Phase boundary** = one `- [ ]` checkbox in `PLAN.md`.
+- **Before the first phase**, suggest a reasoning effort for it the same way.
+- **Hard pause** between every phase. Never auto-proceed unless the user 
+  explicitly says "run all phases continuously" or "run phases X–Y."
+- At phase completion, state completion + suggest reasoning effort. Then
+  say "Let me know when you want to proceed to Phase [N+1]: [Name]."
+  Do not proceed until the user responds.
+- Suggest a reasoning effort level for the next phase:
+
+| Level | Use when |
+|---|---|
+| **None** | File creation, boilerplate, docs, minor text edits |
+| **Low** | Styling tweaks, isolated bug fixes, basic CRUD |
+| **Medium** | Multi-file refactors, API integrations, test suites |
+| **High** | Architecture design, state management, ambiguous bugs |
+| **xHigh** | Foundational architecture, complex algorithms, physics |
+
+- Suggested reasoning effort is ADVISORY — you control the toggle.
+
+## Handoff Format
+
+"✅ Phase [X] complete.
+**Suggested Reasoning Effort for Phase [X+1]:** [Level] — [1 sentence why]
+Let me know when you want to proceed to Phase [X+1]: [Name]."
 
 # Workflow
 - Use native Git CLI commands (`git add`, `git commit -m "..."`, `git push`) for version control. Do not use custom node scripts.
-- Manually edit `PLAN.md` to check off tasks (`- [x]`) as they are completed.
+- After a phase handoff is accepted, check off the task in `PLAN.md` (`- [x]`) and delete its `##` section from `PLAN_REFERENCE.md`.
+- Delete the completed `- [x]` line from `PLAN.md` after commit (git history is the record).
 
 # File discipline
 - Use replace_in_file; never rewrite files over 400 lines in one shot.

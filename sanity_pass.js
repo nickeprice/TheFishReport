@@ -438,6 +438,20 @@ function staticIntegrity() {
   }
 
 
+// PLAN.md anchor integrity: every [Detail → docs/PLAN_REFERENCE.md#anchor]
+  // link must have a matching <a id="anchor"> in PLAN_REFERENCE.md.
+  describe('Plan integrity');
+  try {
+    const planMd = fs.readFileSync(path.join(ROOT, 'PLAN.md'), 'utf8');
+    const refMd = fs.readFileSync(path.join(ROOT, 'docs/PLAN_REFERENCE.md'), 'utf8');
+    const anchors = [...planMd.matchAll(/PLAN_REFERENCE\.md#([a-z0-9-]+)/g)].map((m) => m[1]);
+    const broken = anchors.filter((a) => refMd.indexOf('<a id="' + a + '">') === -1);
+    broken.length
+      ? fail('PLAN.md anchor → PLAN_REFERENCE.md', 'missing: ' + broken.join(', '))
+      : ok('PLAN.md → PLAN_REFERENCE.md anchors', anchors.length + ' links resolve');
+  } catch (e) {
+    fail('PLAN.md anchor → PLAN_REFERENCE.md', String(e.message).split('\\n')[0]);
+  }
 }
 // Docs index — every module loaded by index.html must be listed in docs/SYMBOLS.md.
 // This is what keeps the index from silently going stale as files move or get renamed:

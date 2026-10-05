@@ -85,6 +85,36 @@ function outboxAdd(row) {
     return row.clientId;
 }
 
+// ===== G5 (Phase 2.4): Brag Board + calibration snapshots ====================
+// read-through snapshots of Supabase reads, stored as ONE IndexedDB row
+// { id: '_snapshot', ts, value } per store so the public board and the Gear Sim
+// community sonar still have real (honestly stale) data offline.
+function snapshotSave(store, value) {
+    var row = { id: '_snapshot', ts: Date.now(), value: value };
+    if (typeof idbPutAll === 'function') {
+        idbPutAll(store, [row]);   // write-through
+    }
+    try { localStorage.setItem('snap_' + store, JSON.stringify(row)); } catch (e) {}
+}
+
+async function snapshotLoad(store) {
+    var row = null;
+    if (typeof idbGetAll === 'function') {
+        try {
+            var rowsGet = await idbGetAll(store);
+            if (rowsGet && rowsGet.length && rowsGet[0] && rowsGet[0].value) row = rowsGet[0];
+        } catch (e) {}
+    }
+    if (!row) {
+        try { row = JSON.parse(localStorage.getItem('snap_' + store) || 'null'); } catch (e) { row = null; }
+    }
+    return (row && row.value) ? row.value : null;
+}
+
+function snapshotsAvailable() {
+    return (typeof idbPutAll === 'function' && typeof idbGetAll === 'function');
+}
+
 function outboxUpdate(clientId, patch) {
     for (var i = 0; i < OUTBOX.length; i++) {
         if (OUTBOX[i] && OUTBOX[i].clientId === clientId) {

@@ -44,8 +44,43 @@ function presetButtonHtml(id, name, lat, lon) {
 function searchErrorHtml(msg) {
     return '<div style="color:var(--accent-red); font-weight:bold; padding:8px;">\u274c ' + msg + '</div>';
 }
+function searchErrorHtml(msg) {
+    return '<div style="color:var(--accent-red); font-weight:bold; padding:8px;">\u274c ' + msg + '</div>';
+}
+
+// G3 (Phase 2.4): when there is no network, WDFN search cannot work — disable the
+// input and point the angler at the static discovery pool. Re-enabled automatically.
+function updateSearchAvailability() {
+    var input = document.getElementById('station-search');
+    if (!input) return;
+    var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    input.disabled = offline;
+    input.placeholder = offline ? 'Search unavailable offline — use the quick picker below' : 'Search by USGS station ID or river name';
+    var results = document.getElementById('search-results');
+    if (offline && results) {
+        results.style.display = 'block';
+        results.innerHTML = searchErrorHtml('Search is unavailable offline. Use the station presets or GPS lookup below.');
+    }
+}
+if (typeof window !== 'undefined') {
+    if (window.addEventListener) {
+        window.addEventListener('online', updateSearchAvailability);
+        window.addEventListener('offline', updateSearchAvailability);
+    }
+    updateSearchAvailability();
+}
 
 async function searchStation() {
+    // G3 (Phase 2.4): hard guard even if the input was somehow still enabled.
+    var offlineNow = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    if (offlineNow) {
+        var rb = document.getElementById('search-results');
+        if (rb) {
+            rb.style.display = 'block';
+            rb.innerHTML = searchErrorHtml('Search is unavailable offline. Use the station presets or GPS lookup below.');
+        }
+        return;
+    }
     var term = document.getElementById('station-search').value.trim();
     var resultsBox = document.getElementById('search-results');
 

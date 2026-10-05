@@ -48,46 +48,70 @@ async function fetchCfsReadingsLegacy(siteId) {
 async function fetchCFSMomentum(siteId) {
     if (!siteId) return;
     try {
+        // G4 (Phase 2.4): cache the last momentum window so a dead zone still shows the
+        // trend if it is fresh (< 12 h old); stale cache -> hide the arrow, never lie.
+        var CACHE_PREFIX = 'cfs_momentum_';
+        var FRESH_MS = 12 * 3600 * 1000;
+
         // WDFN first; legacy nwis/iv only when the modern endpoint is unusable.
         let readings = null;
         try { readings = await fetchCfsReadingsWdfn(siteId); } catch (e) { readings = null; }
         if (!readings || !readings.length) {
             try { readings = await fetchCfsReadingsLegacy(siteId); } catch (e) { readings = []; }
         }
-        if (!readings || readings.length < 2) return;
+        if (!readings || readings.length < 2) {
+            // Unreachable: fall back to a fresh cached trend, else paint nothing.
+            var cachedRaw = null;
+            try { cachedRaw = JSON.parse(localStorage.getItem(CACHE_PREFIX + siteId) || 'null'); } catch (e) { cachedRaw = null; }
+            if (cachedRaw && cachedRaw.readings && (Date.now() - (cachedRaw.ts || 0)) < FRESH_MS) {
+                renderCfsTrend(siteId, cachedRaw.readings);
+                logDebug("CFS momentum cached (fresh, " + siteId + ")", "NET");
+            }
+            return;
+        }
 
         // Sort chronologically so the 4-hour delta never depends on USGS return order.
         const sorted = readings.slice().sort(function (a, b) { return a.t - b.t; });
-        const oldest = sorted[0].v;
-        const latest = sorted[sorted.length - 1].v;
-        if (isNaN(oldest) || isNaN(latest)) return;
-        const delta = latest - oldest;
-
-        // Salmon fishing logic: a rise means blowout risk (red),
-        // a drop means the river is clearing (green), otherwise neutral (gray).
-        let trendText = "Stable";
-        let trendColor = "#94a3b8";
-        if (delta > 15) {
-            trendText = "\u2191 Rising";
-            trendColor = "#ef4444";
-        } else if (delta < -15) {
-            trendText = "\u2193 Dropping";
-            trendColor = "#22c55e";
-        }
-
-        document.querySelectorAll('.cfs-val').forEach(function(el) {
-            const existing = el.parentElement.querySelector('.cfs-trend-badge');
-            if (existing) existing.remove();
-            const span = document.createElement('span');
-            span.className = 'cfs-trend-badge';
-            span.style.color = trendColor;
-            span.innerText = trendText;
-            el.insertAdjacentElement('afterend', span);
-        });
-        logDebug("CFS momentum (" + siteId + "): " + oldest + " -> " + latest + " (delta " + delta.toFixed(0) + ") " + trendText, "NET");
+        try {
+            localStorage.setItem(CACHE_PREFIX + siteId,
+                JSON.stringify({ readings: sorted, ts: Date.now() }));
+        } catch (e) { /* quota / private mode — non-fatal */ }
+        renderCfsTrend(siteId, sorted);
     } catch(e) {
         logDebug("CFS Momentum error: " + e.message, "ERR");
     }
+}
+
+// Pure-ish: paints the "Rising / Dropping / Stable" trend badge from a sorted window.
+function renderCfsTrend(siteId, sorted) {
+    if (!sorted || sorted.length < 2) return;
+    const oldest = sorted[0].v;
+    const latest = sorted[sorted.length - 1].v;
+    if (isNaN(oldest) || isNaN(latest)) return;
+    const delta = latest - oldest;
+
+    // Salmon fishing logic: a rise means blowout risk (red),
+    // a drop means the river is clearing (green), otherwise neutral (gray).
+    let trendText = "Stable";
+    let trendColor = "#94a3b8";
+    if (delta > 15) {
+        trendText = "\u2191 Rising";
+        trendColor = "#ef4444";
+    } else if (delta < -15) {
+        trendText = "\u2193 Dropping";
+        trendColor = "#22c55e";
+    }
+
+    document.querySelectorAll('.cfs-val').forEach(function(el) {
+        const existing = el.parentElement.querySelector('.cfs-trend-badge');
+        if (existing) existing.remove();
+        const span = document.createElement('span');
+        span.className = 'cfs-trend-badge';
+        span.style.color = trendColor;
+        span.innerText = trendText;
+        el.insertAdjacentElement('afterend', span);
+    });
+    logDebug("CFS momentum (" + siteId + "): " + oldest + " -> " + latest + " (delta " + delta.toFixed(0) + ") " + trendText, "NET");
 }
 
 // Own-gauge water temp + turbidity. Locked decision: query ONLY the active
@@ -366,26 +390,42 @@ async function loadEscapementData(siteId) {
     try {
         var live = await fetchEscapementLive(key);
         if (live && live.stocks) {
-            rec.stocks.forEach(function(st) {
-                var want = String(st.name).toLowerCase();
-                var base = want.replace(/^(fall|spring|summer|winter)\s+/, '');
-                var hit = null;
-                Object.keys(live.stocks).forEach(function(sp) {
-                    var l = sp.toLowerCase().replace(/^(fall|spring|summer|winter)\s+/, '');
-                    if (!hit && (sp.toLowerCase() === want || l === base)) hit = live.stocks[sp];
-                });
-                if (hit) {
-                    st.totalReturn = hit.totalReturn;
-                    st.trapCount = hit.trapCount;
-                    st.fiveYrAvg = hit.fiveYrAvg;
-                    st.wow = hit.wow;
-                }
-            });
-            rec.lastUpdated = live.lastUpdated || null;
-            logDebug("Escapement synced for " + key, "NET");
+            // G2 (Phase 2.4): cache the last-known live numbers so the run cards
+            // keep real figures in a dead zone instead of reverting to "--".
+            try {
+                localStorage.setItem('esc_snapshot_' + key,
+                    JSON.stringify({ stocks: live.stocks, lastUpdated: live.lastUpdated || null, ts: Date.now() }));
+            } catch (e) { /* quota / private mode — non-fatal */ }
         }
     } catch(e) {
-        logDebug("Escapement feed unavailable, keeping -- placeholders: " + e.message, "ERR");
+        // Offline fallback (G2): serve the cached snapshot, honestly stale.
+        var cached = null;
+        try { cached = JSON.parse(localStorage.getItem('esc_snapshot_' + key) || 'null'); } catch (e2) { cached = null; }
+        if (cached && cached.stocks) {
+            live = { stocks: cached.stocks, lastUpdated: cached.lastUpdated || null };
+            logDebug("Escapement feed unavailable - using cached snapshot for " + key, "ERR");
+        } else {
+            logDebug("Escapement feed unavailable, keeping -- placeholders: " + e.message, "ERR");
+        }
+    }
+    if (live && live.stocks) {
+        rec.stocks.forEach(function(st) {
+            var want = String(st.name).toLowerCase();
+            var base = want.replace(/^(fall|spring|summer|winter)\s+/, '');
+            var hit = null;
+            Object.keys(live.stocks).forEach(function(sp) {
+                var l = sp.toLowerCase().replace(/^(fall|spring|summer|winter)\s+/, '');
+                if (!hit && (sp.toLowerCase() === want || l === base)) hit = live.stocks[sp];
+            });
+            if (hit) {
+                st.totalReturn = hit.totalReturn;
+                st.trapCount = hit.trapCount;
+                st.fiveYrAvg = hit.fiveYrAvg;
+                st.wow = hit.wow;
+            }
+        });
+        rec.lastUpdated = live.lastUpdated || null;
+        logDebug("Escapement synced for " + key, "NET");
     }
     return rec;
 }

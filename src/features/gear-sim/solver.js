@@ -52,8 +52,15 @@ async function loadCalibrationData(flow, species) {
         try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }
     }
     if (!dbArray.length) {
-        // Offline fallback: the durable outbox (in-memory mirror, loaded at boot).
-        dbArray = (typeof outboxAll === 'function') ? outboxAll() : [];
+        // Offline fallback: the durable calibration snapshot first (exact match
+        // to the same flow/species is not guaranteed here — the snapshot is a
+        // per-call capture), then the durable outbox.
+        var snap = (typeof snapshotLoad === 'function') ? await snapshotLoad('calibration_snapshot') : null;
+        if (Array.isArray(snap) && snap.length) {
+            dbArray = snap;
+        } else {
+            dbArray = (typeof outboxAll === 'function') ? outboxAll() : [];
+        }
     }
     return dbArray;
 }

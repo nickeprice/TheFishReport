@@ -379,6 +379,14 @@ async function fetchPublicFeed(limit) {
             });
         }
         if (!res.data) return [];
+        // G5: snapshot the successful read so the board renders offline.
+        if (typeof snapshotSave === 'function') {
+            try {
+                snapshotSave('feed_snapshot', res.data.map(function (r) {
+                    return { name: r.name, time: r.time, river: (r.river !== undefined && r.river !== null) ? r.river : '--', spc: (r.fish !== undefined) ? r.fish : null };
+                }));
+            } catch (e) {}
+        }
         return res.data.map(function (r) {
             return { name: r.name, time: r.time, river: (r.river !== undefined && r.river !== null) ? r.river : '--', spc: (r.fish !== undefined) ? r.fish : null };
         });
@@ -408,6 +416,10 @@ async function fetchGlobalCalibration(flow, species) {
     try {
         var res = await client.rpc('get_global_calibration', { p_flow: flow, p_species: species });
         if (res.error || !res.data) return [];
+        // G5: snapshot the successful read so community sonar works offline.
+        if (typeof snapshotSave === 'function') {
+            try { snapshotSave('calibration_snapshot', res.data); } catch (e) {}
+        }
         return res.data.map(function (r) {
             var num = function (v) {
                 if (v === null || v === undefined || v === '') return null;

@@ -54,7 +54,8 @@ this file**, or the pass fails.
   `toSpotRow(payload)`, `saveFavoriteSpot(payload)`, `fetchFavoriteSpots()`,
   `deleteFavoriteSpot(id)` — the private favourite-spot CRUD (WS-5; `user_id` is never
   client-supplied, the DB default owns it)
-- **water.js** — `fetchCFSMomentum(siteId)`, `fetchCfsReadingsWdfn(siteId)`,
+- **water.js** — `fetchCFSMomentum(siteId)`, `renderCfsTrend(siteId, sorted)`,
+  `fetchCfsReadingsWdfn(siteId)`,
   `fetchCfsReadingsLegacy(siteId)`, `applyOwnGaugeWaterQuality(waterTempF, turbidityFnu)`,
   `applyReportWeather(rep)`, `loadEscapementData(siteId)`, `refreshEscapement(siteId)`,
   `refreshWdfwForecast()`, `fetchStreamStats(lat, lon, siteId)`, `hatcheryEscapement`,
@@ -175,7 +176,8 @@ this file**, or the pass fails.
 
 ## src/features/catch-log
 - **outbox.js** — `outboxLoad()`, `outboxAll()`, `outboxPending()`, `outboxAdd(row)`,
-  `outboxUpdate(clientId, patch)`, `outboxStoreKind()`
+  `outboxUpdate(clientId, patch)`, `outboxStoreKind()`; G5 snapshots:
+  `snapshotSave(store, value)`, `snapshotLoad(store)`, `snapshotsAvailable()`
 - **log.js** — `deriveRiverName()`, `logData()`
 - **board.js** — `CATCH_SCOPE`, `setCatchScope(scope)`, `loadDatabase()`
 - **mycatches.js** — `_myCatches`, `renderMyCatches()`, `editMyCatch(row)`, `deleteMyCatch(id)`
@@ -186,7 +188,7 @@ this file**, or the pass fails.
 ## src/features/station
 - **picker.js** — `openStationModal()`, `closeStationModal()`, `selectPreset()`,
   `calcDistance()`, `useGPS()`
-- **search.js** — `searchStation()`
+- **search.js** — `searchStation()`, `updateSearchAvailability()`
 
 ## src/features/map
 - **spots.js** — private favourite spots (WS-5): `SPOTS_CACHE_KEY`, `SPOT_LABEL_MAX`,

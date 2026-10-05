@@ -70,7 +70,7 @@ Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected de
 - [x] Drainage area / mean basin elevation / mean annual precip at a lat/lon
 - [x] Graceful offline fallback + uncertainty surfaced to the frontend
 
-## 🔜 Phase 2: Progressive Enhancement Architecture (2/3)
+## ✅ Phase 2: Progressive Enhancement Architecture (COMPLETE 4/4)
 ### 2.1 docs/ARCHITECTURE.md — tiered fallback pattern
 - [x] Document every data path with its tier: online-only / IndexedDB-cached / local fallback
 - [x] Pipeline reference for each domain (flow/velocity/depth, weather, tides, species calendar, legal hours)
@@ -81,16 +81,16 @@ Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected de
 - [x] Append the audit table to docs/ARCHITECTURE.md
 
 ### 2.3 Standardize output shape: { value, source, uncertainty }
-- [ ] Refactor all data producers to return { value, source, uncertainty | null }
-- [ ] Extend beyond continuity.js (velocity/depth) to: telemetry (CFS, gage, temp, turbidity), weather (pressure, rain, cloud%), tides, species calendar
-- [ ] Every consumer keeps a provenance trail; full suite still green
+- [x] Refactor all data producers to return { value, source, uncertainty | null }
+- [x] Extend beyond continuity.js (velocity/depth) to: telemetry (CFS, gage, temp, turbidity), weather (pressure, rain, cloud%), tides, species calendar
+- [x] Every consumer keeps a provenance trail; full suite still green
 
 ### 2.4 Offline Resilience (Closing Audit Gaps)
-- [ ] G1: Water Report Snapshot (IndexedDB)
-- [ ] G2: Socrata Escapement Cache (localStorage)
-- [ ] G3: WDFN Station Search Offline Degradation
-- [ ] G4: CFS Momentum Cache with Freshness Guard (localStorage)
-- [ ] G5: Supabase Feed & Calibration Snapshots (IndexedDB)
+- [x] G1: Water Report Snapshot (IndexedDB)
+- [x] G2: Socrata Escapement Cache (localStorage)
+- [x] G3: WDFN Station Search Offline Degradation
+- [x] G4: CFS Momentum Cache with Freshness Guard (localStorage)
+- [x] G5: Supabase Feed & Calibration Snapshots (IndexedDB)
 
 ## ✅ Phase 3: Enhanced UI (COMPLETE)
 ### 3.2 Visual water type guide (SVG cross-sections)

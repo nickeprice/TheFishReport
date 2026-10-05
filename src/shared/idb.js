@@ -11,10 +11,17 @@
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
 var IDB_NAME = 'puyallup_companion';
-var IDB_VERSION = 1;
+var IDB_VERSION = 2;
 // Only stores that are actually used — onupgradeneeded adds any missing one, so a future
-// store just needs a version bump here.
-var IDB_KEYPATH = { catches: 'clientId' };
+// store just needs a version bump here (or a new key with a bumped IDB_VERSION).
+var IDB_KEYPATH = {
+    catches: 'clientId',
+    // Phase 2.4 offline-resilience snapshots: each store holds ONE row
+    // { id: '_snapshot', ts: <ms>, value: <payload> } written on success.
+    telemetry_snapshots: 'id',
+    feed_snapshot: 'id',
+    calibration_snapshot: 'id',
+};
 var _idbPromise = null;
 
 function idbAvailable() {

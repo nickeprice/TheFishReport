@@ -54,10 +54,18 @@ async function loadDatabase() {
     }
 
     if (!fromCloud) {
-        // Offline fallback: the durable outbox (in-memory mirror, loaded at boot).
-        var local = (typeof outboxAll === 'function') ? outboxAll() : [];
-        rows = local.slice().reverse();
-        logDebug('Brag board falling back to ' + rows.length + ' buffered row(s)', 'DB');
+        // Offline fallback: first the durable read-through snapshot (last-known
+        // public board), then the durable outbox, then nothing.
+        var snapRows = (typeof snapshotLoad === 'function') ? await snapshotLoad('feed_snapshot') : null;
+        if (snapRows && snapRows.length) {
+            rows = snapRows;
+            logDebug('Brag board falling back to cached snapshot: ' + rows.length + ' row(s)', 'DB');
+        } else {
+            // Fallback: the durable outbox (in-memory mirror, loaded at boot).
+            var local = (typeof outboxAll === 'function') ? outboxAll() : [];
+            rows = local.slice().reverse();
+            logDebug('Brag board falling back to ' + rows.length + ' buffered row(s)', 'DB');
+        }
     }
 
     // Phase 3.4: rows still sitting in the outbox are shown optimistically at the top with

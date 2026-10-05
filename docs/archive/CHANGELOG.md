@@ -1,8 +1,7 @@
 # Internal Change Log
 
 Keep this LEAN by design: a fresh chat reads only the LAST entries to restore context.
-`memory-bank/progress.md` is the two-paragraph summary; this file is the per-change record.
-Completed-phase detail lives in `docs/ARCHIVE.md` + `git log`.
+Completed-phase detail lives in `docs/archive/ARCHIVE.md` + `git log`.
 
 ## 2026-09-30 — P3: the weight's REAL geometry enters the drag term (slinky vs cannonball fixed)
 

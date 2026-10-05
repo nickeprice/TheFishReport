@@ -16,7 +16,7 @@ Usage:
     python3 scripts/session_instructions.py --width 0       # no truncation
 
 At each phase end: run this, reconcile every line against what actually shipped
-(`docs/CHANGELOG.md`, `git log`), and either do the
+(`docs/archive/CHANGELOG.md`, `git log`), and either do the
 missing item or mark it open-by-design. Read-only, stdlib only, deterministic; session
 data never leaves this machine.
 """
@@ -107,7 +107,7 @@ def main():
         ellipsis = "" if len(text) <= limit else " ..."
         ack = "   <ack>" if text.lower().strip(" .!") in ACK else ""
         print(f"[{index:>4} {mode:<4}] {text[:limit]}{ellipsis}{ack}")
-    print(f"\n{count} turn(s). Reconcile each against docs/CHANGELOG.md, "
+    print(f"\n{count} turn(s). Reconcile each against docs/archive/CHANGELOG.md, "
           f"git log before calling the phase done.")
 
 

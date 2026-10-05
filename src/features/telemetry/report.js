@@ -273,7 +273,7 @@ async function loadWaterReport(silent) {
         refreshEscapement(actId || station.id);
         // Phase 2.1: apply the human-confirmed WDFW annual forecast (static JSON,
         // graceful -- if absent). Same "fill only matching count cell" contract.
-        refreshWdfwForecast();
+        refreshWdfwForecast(actId || station.id);
 
         // Live telemetry: two independent reads (USGS CFS momentum, Open-Meteo
         // surface conditions). Water temp + turbidity no longer need their own

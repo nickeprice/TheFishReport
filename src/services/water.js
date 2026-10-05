@@ -436,20 +436,49 @@ async function loadEscapementData(siteId) {
 // refresh_wdfw_forecast.py --confirm --chinook=/--coho= (never fabricated).
 // To fetch the latest forecast JSON, use wdfw_forecasts.json directly.
 // Until a real number exists the UI keeps its "--" placeholder.
-async function refreshWdfwForecast() {
+// actId = active USGS gauge ID (site_id) — used to filter forecasts to the
+// active waterbody so Green River doesn't show Puyallup's numbers.
+async function refreshWdfwForecast(actId) {
     var cell = document.querySelector('[data-count="wdfw"]');
     if (!cell) return;
+    if (!actId) return;
     try {
+        // Build gauge → waterbody reverse lookup from the region registry
+        // so we know which waterbody the active station belongs to.
+        var wb = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+        if (!wb) return;
+        var gaugeToWb = {};
+        wb.forEach(function (w) {
+            if (w.gauge && w.gauge.site_id) {
+                gaugeToWb[String(w.gauge.site_id)] = String(w.id);
+            }
+            // Also map related gauges (upstream/downstream, same river system)
+            if (w.related_gauges) {
+                w.related_gauges.forEach(function (rg) {
+                    if (rg.site_id) {
+                        gaugeToWb[String(rg.site_id)] = String(w.id);
+                    }
+                });
+            }
+        });
+        var wbId = gaugeToWb[String(actId)];
+        if (!wbId) return;  // No matching waterbody → never leak forecasts
+
         var res = await fetch('/src/data/wdfw_forecasts.json', { cache: 'no-store' });
         var data = await res.json();
         if (!data || !data.stocks) return;
-        // Map card species (Chinook / Coho) to the registry's stock names
-        // ("Puyallup Chinook" / "Puyallup Coho") by trailing species token.
+        // Filter stocks to only those belonging to the active waterbody,
+        // then map by trailing species token as before.
+        var wbKey = wbId.toLowerCase();
         var bySp = {};
         data.stocks.forEach(function (st) {
             var name = String(st.stock || '');
-            var m = name.match(/\s+(Chinook|Coho|Sockeye|Pink|Jacks)$/i);
-            if (m) bySp[m[1].toLowerCase()] = st.forecast;
+            var stockKey = name.toLowerCase();
+            // Stock name starts with the waterbody's key (e.g. "puyallup Chinook")
+            if (stockKey.startsWith(wbKey + ' ') || stockKey === wbKey) {
+                var m = name.match(/\s+(Chinook|Coho|Sockeye|Pink|Jacks)$/i);
+                if (m) bySp[m[1].toLowerCase()] = st.forecast;
+            }
         });
         if (!Object.keys(bySp).length) return;
         document.querySelectorAll('.run-card[data-species]').forEach(function (card) {

@@ -2,10 +2,6 @@
 
 ## ⚡ Vite Migration — Foundation (DO FIRST)
 
-- [ ] Phase V2: ES Module Conversion + Code Deletions
-      → 35 JS files convert to import/export; delete tackleLoad, ensureSdk, 15 typeof guards, Leaflet loader
-      [Detail → docs/PLAN_REFERENCE.md#build-modules]
-
 - [ ] Phase V3: Entry Points (index.html + app.js)
       → index.html, app.js
       [Detail → docs/PLAN_REFERENCE.md#build-html]

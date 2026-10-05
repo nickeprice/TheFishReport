@@ -466,19 +466,15 @@ async function refreshWdfwForecast(actId) {
 
         var res = await fetch('/src/data/wdfw_forecasts.json', { cache: 'no-store' });
         var data = await res.json();
-        if (!data || !data.stocks) return;
-        // Filter stocks to only those belonging to the active waterbody,
-        // then map by trailing species token as before.
-        var wbKey = wbId.toLowerCase();
+        if (!data || !data.waterbodies) return;
+        // Look up the active waterbody's stocks directly — the JSON is keyed
+        // by waterbody id (e.g. "puyallup", "green"), so no cross-river leak.
+        var wbEntry = data.waterbodies[wbId];
+        if (!wbEntry || !wbEntry.stocks) return;
         var bySp = {};
-        data.stocks.forEach(function (st) {
-            var name = String(st.stock || '');
-            var stockKey = name.toLowerCase();
-            // Stock name starts with the waterbody's key (e.g. "puyallup Chinook")
-            if (stockKey.startsWith(wbKey + ' ') || stockKey === wbKey) {
-                var m = name.match(/\s+(Chinook|Coho|Sockeye|Pink|Jacks)$/i);
-                if (m) bySp[m[1].toLowerCase()] = st.forecast;
-            }
+        wbEntry.stocks.forEach(function (st) {
+            if (!st.species) return;
+            bySp[st.species.toLowerCase()] = st.forecast;
         });
         if (!Object.keys(bySp).length) return;
         document.querySelectorAll('.run-card[data-species]').forEach(function (card) {

@@ -2,7 +2,7 @@
  * src/shared/refresh.js - auto-refresh of the live report (a homescreen PWA has
  * no pull-to-refresh): every 5 min while visible+online, on foreground, on regain.
  * public: AUTO_REFRESH_MS, silenceableRefresh(), startAutoRefresh(), refreshNow()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- AUTO-REFRESH ---
 // A homescreen PWA has no pull-to-refresh, so the live telemetry is re-fetched
@@ -10,16 +10,16 @@
 // back to the foreground, and when connectivity returns. All three routes call
 // loadWaterReport(true) — a "silent" refresh that updates the whole report +
 // hero but never overwrites a Gear Sim CFS the angler typed by hand.
-var AUTO_REFRESH_MS = 5 * 60 * 1000;
+export var AUTO_REFRESH_MS = 5 * 60 * 1000;
 var autoRefreshTimer = null;
 
-function silenceableRefresh() {
+export function silenceableRefresh() {
     if (document.visibilityState === 'visible' && navigator.onLine !== false) {
         loadWaterReport(true);
     }
 }
 
-function startAutoRefresh() {
+export function startAutoRefresh() {
     if (autoRefreshTimer) return;
     // Periodic: keep the data fresh while the app sits open.
     autoRefreshTimer = setInterval(silenceableRefresh, AUTO_REFRESH_MS);
@@ -31,7 +31,10 @@ function startAutoRefresh() {
 }
 
 // Manual refresh affordance (header ⟳) for a standalone PWA.
-function refreshNow() {
+export function refreshNow() {
     loadWaterReport(true);
     showToast('Refreshing live data\u2026', 'info', 2000);
 }
+window.refreshNow = refreshNow;
+window.silenceableRefresh = silenceableRefresh;
+window.startAutoRefresh = startAutoRefresh;

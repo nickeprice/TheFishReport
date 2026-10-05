@@ -2,7 +2,7 @@
  * src/shared/pwa.js - service-worker registration (tap-to-apply updates; never an
  * auto-reload that would discard a half-typed catch) + ?tab= deep links.
  * public: registerServiceWorker(), applyTabDeepLink()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- PWA: SERVICE WORKER REGISTRATION ---
 // Called from window.onload, so the document is already fully loaded and the
@@ -12,7 +12,7 @@
 // NOTE: this must NOT wrap registration in another 'load' listener. window.onload
 // runs *during* the load event's dispatch, and the DOM copies the listener list
 // before invoking it, so a listener added here would never fire.
-function registerServiceWorker() {
+export function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) {
         logDebug('Service worker unsupported - PWA caching disabled', 'PWA');
         return;
@@ -64,9 +64,10 @@ function registerServiceWorker() {
         });
     }
 }
+window.registerServiceWorker = registerServiceWorker;
 
 // Apply a ?tab= deep link so the PWA manifest shortcuts land on the right tool.
-function applyTabDeepLink() {
+export function applyTabDeepLink() {
     try {
         var params = new URLSearchParams(window.location.search);
         var tab = params.get('tab');
@@ -82,3 +83,4 @@ function applyTabDeepLink() {
         return false;
     }
 }
+window.applyTabDeepLink = applyTabDeepLink;

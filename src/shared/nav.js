@@ -1,10 +1,10 @@
 /**
  * src/shared/nav.js - tab navigation + date reset.
  * public: switchTab(tabId), resetToToday()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- NAVIGATION ---
-function switchTab(tabId) {
+export function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('tab-active'); });
     document.getElementById(tabId).classList.add('tab-active');
     // Keep the persistent bottom tab bar in sync (deep links / bootstrap call
@@ -21,10 +21,12 @@ function switchTab(tabId) {
     });
     logDebug("Switched to " + tabId, "UI");
 }
+window.switchTab = switchTab;
 
 // Tapping the date header resets paging back to "Today" (offset 0).
-function resetToToday() {
+export function resetToToday() {
     if (activeDateOffset === 0) return;
     activeDateOffset = 0;
     updateActiveDateUI();
 }
+window.resetToToday = resetToToday;

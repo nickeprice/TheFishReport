@@ -1,7 +1,7 @@
 /**
  * src/shared/ui.js - UI primitives: the toast stack.
  * public: showToast(msg, kind, ms, action)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- UTILITIES: toast notifications ---
 
@@ -26,7 +26,7 @@ var TOAST_KIND_CLASS = {
  *                         can offer a choice (used by the PWA update prompt).
  * @returns {function}     dismisses the toast immediately
  */
-function showToast(msg, kind, ms, action) {
+export function showToast(msg, kind, ms, action) {
     if (typeof document === 'undefined') return;
     var stack = document.getElementById('toast-stack');
     if (!stack) {
@@ -87,3 +87,4 @@ function showToast(msg, kind, ms, action) {
     toast.addEventListener('click', dismiss);
     return dismiss;
 }
+window.showToast = showToast;

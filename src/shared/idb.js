@@ -24,15 +24,16 @@ var IDB_KEYPATH = {
 };
 var _idbPromise = null;
 
-function idbAvailable() {
+export function idbAvailable() {
     try {
         return typeof indexedDB !== 'undefined' && !!indexedDB;
     } catch (e) {
         return false;
     }
 }
+window.idbAvailable = idbAvailable;
 
-function idbOpen() {
+export function idbOpen() {
     if (_idbPromise) return _idbPromise;
     _idbPromise = new Promise(function (resolve) {
         if (!idbAvailable()) return resolve(null);
@@ -55,6 +56,7 @@ function idbOpen() {
     });
     return _idbPromise;
 }
+window.idbOpen = idbOpen;
 
 // One transaction; resolves true on commit, a read request's result for reads, or null
 // if IndexedDB is unavailable / the transaction fails.
@@ -78,15 +80,17 @@ function idbRun(store, mode, work) {
     });
 }
 
-function idbGetAll(store) {
+export function idbGetAll(store) {
     return idbRun(store, 'readonly', function (os) { return os.getAll(); })
         .then(function (r) { return Array.isArray(r) ? r : []; })
         .catch(function () { return []; });
 }
+window.idbGetAll = idbGetAll;
 
-function idbPutAll(store, rows) {
+export function idbPutAll(store, rows) {
     return idbRun(store, 'readwrite', function (os) {
         (rows || []).forEach(function (row) { os.put(row); });
         return true;
     }).catch(function () { return null; });
 }
+window.idbPutAll = idbPutAll;

@@ -2,23 +2,24 @@
  * src/shared/format.js - feed-row normalisation, time formatting + text escaping.
  * public: normalizeFeedRow(row), formatCatchTime(value), provVal(x),
  *         escapeHtml(value), escapeJsString(value), newUuid()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // Phase 2.3 provenance unwrap: data producers emit { value, source, uncertainty }
 // envelopes; every UI / gear-sim consumer reads the scalar via provVal(). A raw
 // primitive (old cached payload) is tolerated so a stale SW cache or snapshot
 // degrades to the same number instead of silently reading undefined.
-function provVal(x) {
+export function provVal(x) {
     if (x === null || x === undefined) return x;
     if (typeof x === 'object' && Object.prototype.hasOwnProperty.call(x, 'value')) {
         return x.value;
     }
     return x;
 }
+window.provVal = provVal;
 // Client-generated id for a logged catch. Sending it makes the write IDEMPOTENT: a
 // retry after a lost response conflicts on the primary key and is ignored rather than
 // inserting a second copy of the same fish.
-function newUuid() {
+export function newUuid() {
     try {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
     } catch (e) {}
@@ -31,22 +32,24 @@ function newUuid() {
 }
 // Third-party text (USGS station names, WDFW strings) must never be interpolated into
 // an HTML string raw — AGENTS.md forbids unsanitised HTML interpolation.
-function escapeHtml(value) {
+export function escapeHtml(value) {
     return String(value === null || value === undefined ? '' : value)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+window.escapeHtml = escapeHtml;
 
 // Escape text for a JS string literal inside an HTML attribute (e.g. onclick="...").
 // Also neutralises "</script>"-style breakouts and newlines.
-function escapeJsString(value) {
+export function escapeJsString(value) {
     return String(value === null || value === undefined ? '' : value)
         .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"')
         .replace(/</g, '\\x3c').replace(/\r?\n/g, ' ');
 }
+window.escapeJsString = escapeJsString;
 // Accepts either Supabase (angler_name/catch_time/river/species) or local buffer
 // (name/time/river/spc) shapes so the offline fallback renders identically.
-function normalizeFeedRow(row) {
+export function normalizeFeedRow(row) {
     if (!row) return null;
     return {
         name: (row.angler_name !== undefined) ? row.angler_name : row.name,
@@ -55,8 +58,9 @@ function normalizeFeedRow(row) {
         spc: (row.species !== undefined) ? row.species : row.spc
     };
 }
+window.normalizeFeedRow = normalizeFeedRow;
 
-function formatCatchTime(value) {
+export function formatCatchTime(value) {
     if (!value) return '--';
     var d = new Date(value);
     if (isNaN(d.getTime())) return String(value).slice(0, 16).replace('T', ' ');
@@ -67,3 +71,4 @@ function formatCatchTime(value) {
     var mins = d.getMinutes(); if (mins < 10) mins = '0' + mins;
     return months[d.getMonth()] + ' ' + d.getDate() + ', ' + h12 + ':' + mins + ' ' + suffix;
 }
+window.formatCatchTime = formatCatchTime;

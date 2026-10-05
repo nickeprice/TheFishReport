@@ -1,11 +1,11 @@
 /**
  * src/shared/debug.js - debug console + double-tap header matrix.
- * public: logDebug(msg, source)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * public: logDebug(msg, source), toggleDebug(), copyDebugLog(), reportDebugIssue()
+ * ES module.
  */
 // --- DEBUG MATRIX (Double Tap / Double Click Header, or Debug button) ---
 var lastTap = 0;
-function toggleDebug() {
+export function toggleDebug() {
     var con = document.getElementById('debug-console');
     con.classList.toggle('open');
     logDebug(con.classList.contains('open') ? 'Debug Matrix Opened' : 'Debug Matrix Closed', "SYS");
@@ -23,16 +23,16 @@ document.getElementById('top-nav').addEventListener('click', _toggleDebug);
 // Expose toggleDebug globally so any button can call it
 window.toggleDebug = toggleDebug;
 
-function logDebug(msg, source) {
+export function logDebug(msg, source) {
     var con = document.getElementById('debug-console');
     var time = new Date().toISOString().split('T')[1].slice(0,-1);
     con.innerHTML += '<div class="log-entry">[' + time + '] <b>' + source + '</b>: ' + msg + '</div>';
     con.scrollTop = con.scrollHeight;
 }
+window.logDebug = logDebug;
 
 // Copy all debug entries as plain text
-// Copy all debug entries as plain text
-function copyDebugLog() {
+export function copyDebugLog() {
     var con = document.getElementById('debug-console');
     var text = '';
     var entries = con.querySelectorAll('.log-entry');
@@ -55,7 +55,7 @@ function copyDebugLog() {
 window.copyDebugLog = copyDebugLog;
 
 // Open a GitHub issue with the current debug log as the body.
-function reportDebugIssue() {
+export function reportDebugIssue() {
     var con = document.getElementById('debug-console');
     var entries = con.querySelectorAll('.log-entry');
     var logText = '';

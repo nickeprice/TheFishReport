@@ -4,10 +4,10 @@
  * Reference `GEAR_OPTIONS` instead.
  *
  * public: GEAR_OPTIONS, populateStaticGear()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
-var GEAR_OPTIONS = {
+export var GEAR_OPTIONS = {
   hook: [
     { val: 'gam-oct-3', label: 'Gamakatsu Octopus 3' },
     { val: 'gam-oct-2', label: 'Gamakatsu Octopus 2' },
@@ -75,10 +75,11 @@ var GEAR_OPTIONS = {
   foamMap: { '14': 'corky-14', '12': 'corky-12', '10': 'corky-10', '8': 'corky-8', '6': 'corky-6', 'c14': 'cheater-14', 'c12': 'cheater-12', 'c10': 'cheater-10', 'c8': 'cheater-8', 'c6': 'cheater-6' },
   hookIdMap: { 'gam-oct-3': 'hook-gam-oct-3', 'gam-oct-2': 'hook-gam-oct-2', 'gam-oct-1': 'hook-gam-oct-1', 'gam-oct-1-0': 'hook-gam-oct-1-0', 'gam-oct-2-0': 'hook-gam-oct-2-0', 'gam-fwg-3': 'hook-gam-fwg-3', 'gam-fwg-2': 'hook-gam-fwg-2', 'gam-fwg-1': 'hook-gam-fwg-1', 'gam-fwg-1-0': 'hook-gam-fwg-1-0', 'gam-fwg-2-0': 'hook-gam-fwg-2-0', 'owner-ssw-3': 'hook-owner-ssw-3', 'owner-ssw-2': 'hook-owner-ssw-2', 'owner-ssw-1': 'hook-owner-ssw-1', 'owner-ssw-1-0': 'hook-owner-ssw-1-0', 'owner-ssw-2-0': 'hook-owner-ssw-2-0' }
 };
+window.GEAR_OPTIONS = GEAR_OPTIONS;
 
 // Populate all static gear dropdowns from GEAR_OPTIONS (offline fallback before
 // tackle.json loads). Runs immediately on load. Mirrors both -sim and -log tabs.
-function populateStaticGear() {
+export function populateStaticGear() {
   var fields = [
     { id: 'weight', items: GEAR_OPTIONS.weight },
     { id: 'hook', items: GEAR_OPTIONS.hook },

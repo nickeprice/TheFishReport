@@ -20,11 +20,12 @@
  * logDebug() writes with innerHTML.
  *
  * Classic script (global scope). Loaded AFTER src/shared/format.js (uses escapeHtml).
+ * ES module.
  */
 var API_RETRY_DELAY_MS = 700;
 var API_TIMEOUT_MS = 12000;
 
-function apiSleep(ms) {
+export function apiSleep(ms) {
     return new Promise(function (r) { setTimeout(r, ms); });
 }
 
@@ -68,7 +69,7 @@ function apiTimeout(ms) {
     return { signal: c.signal, done: function () { clearTimeout(t); } };
 }
 
-async function apiGetJson(path, opts) {
+export async function apiGetJson(path, opts) {
     opts = opts || {};
     var attempts = opts.attempts || 2;
     var status = 0;

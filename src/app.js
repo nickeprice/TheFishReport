@@ -34,6 +34,7 @@ window.onload = async function() {
         try { await tackleLoad(); } catch (e) { logDebug('Tackle load failed: ' + e.message, 'DB'); }
     }
     restoreRig();
+    if (typeof loadPresets === 'function') loadPresets();
     applyTabDeepLink();
     registerServiceWorker();
     startAutoRefresh();

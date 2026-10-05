@@ -87,6 +87,11 @@ label { font-size: 0.65rem; color: #aaa; margin-bottom: 3px; text-transform: upp
    room to breathe under the banner (gear-sim only: the Catch Log tab starts with the
    sign-in block, which already has its own spacing). */
 #tab-gear-sim #hud + .bucket { padding-top: 14px; }
+
+/* Preset bar: dropdown + save/delete buttons between HUD and gear form. */
+#tab-gear-sim .preset-bar { display: flex; align-items: center; gap: 6px; padding: 8px 0; flex-wrap: wrap; }
+#tab-gear-sim .preset-bar .preset-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 0; }
+#tab-gear-sim .preset-bar select { flex: 1; min-width: 100px; font-size: 16px; padding: 4px 8px; }
 /* Paired feet / inches entry — REMOVED with rod length (2026-09-28): .dual-input had
    no other user, so the rule is gone rather than left as dead CSS. */
 select { max-width: 100%; min-width: 0; }

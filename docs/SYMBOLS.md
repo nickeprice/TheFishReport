@@ -165,6 +165,7 @@ this file**, or the pass fails.
   `rigChangeList()` (precise), `rigChangePlain()` + `joinPlain()` (beginner) —
   deterministic two-pass tackle search: leader/lead fixed first (corky → 2nd corky → hook →
   yarn → bead), leader/lead only as the fallback.
+- **presets.js** — `PRESET_STORE_KEY`, `savePreset()`, `deletePreset()`, `applyPreset()`, `loadPresets()` — multi-slot named rig presets in localStorage
 - **rig.js** — `RIG_STORE_KEY`, `saveRig()`, `restoreRig()`
 - **registry.js** — `GEAR_TECHNIQUES`, `GEAR_DEFAULT_TECHNIQUE`, `gearTechnique(id)`
 - **techniques/drift.js** — `DRIFT_TECHNIQUE` (`CONTRACT_TECHNIQUE.md`)

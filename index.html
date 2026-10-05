@@ -157,6 +157,16 @@
         <ul id="hud-changes" class="hud-changes"></ul>
     </div>
 
+    <!-- Preset bar: saved rig configurations (localStorage MVP). -->
+    <div id="preset-bar" class="preset-bar">
+        <label for="preset-select" class="preset-label">Saved Rigs</label>
+        <select id="preset-select" onchange="onPresetSelect()">
+            <option value="">— Load a saved rig —</option>
+        </select>
+        <button type="button" id="btn-save-preset" onclick="saveCurrentPreset()" class="mini-btn">SAVE</button>
+        <button type="button" id="btn-delete-preset" onclick="deleteCurrentPreset()" class="mini-btn mini-btn-danger" style="display:none">✕</button>
+    </div>
+
     <div class="bucket">
         <!-- Resting gear ROWS — ONE gear group per line, field ORDER is the
              user-specified CASCADE flow (sanity asserts it):
@@ -504,6 +514,7 @@
 <script src="src/features/gear-sim/zone-core.js"></script>
 <script src="src/features/gear-sim/zone-best.js"></script>
 <script src="src/features/gear-sim/rig.js"></script>
+<script src="src/features/gear-sim/presets.js"></script>
 <script src="src/features/gear-sim/techniques/drift.js"></script>
 <script src="src/features/gear-sim/registry.js"></script>
 <script src="src/features/gear-sim/solver.js"></script>

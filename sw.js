@@ -26,7 +26,7 @@
  *                       (no CORS) so they cannot be inspected or trusted in cache.
  */
 
-const VERSION = 'v2.03.42';
+const VERSION = 'v2.03.43';
 const SHELL_CACHE = 'tfr-shell-' + VERSION;
 const API_CACHE = 'tfr-api-' + VERSION;
 const ASSET_CACHE = 'tfr-assets-' + VERSION;
@@ -68,6 +68,7 @@ const SHELL_FILES = [
     '/src/features/gear-sim/zone-core.js',
     '/src/features/gear-sim/zone-best.js',
     '/src/features/gear-sim/rig.js',
+    '/src/features/gear-sim/presets.js',
     '/src/features/gear-sim/techniques/drift.js',
     '/src/features/gear-sim/registry.js',
     '/src/features/gear-sim/solver.js',

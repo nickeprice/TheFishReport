@@ -44,8 +44,8 @@ function openHourlyPopup(metricKey) {
         if (ref && ref.label) bits.push('reporting ' + ref.label);
         // The DAILY precipitation total is honest context for both precip metrics (the pill
         // itself shows the reference hour); it is the same number the Gear Sim calls rain.
-        if ((metricKey === 'precip_in' || metricKey === 'pop_pct') && rep && rep.rain != null) {
-            bits.push('day total ' + Number(rep.rain).toFixed(2) + '"');
+        if ((metricKey === 'precip_in' || metricKey === 'pop_pct') && rep && provVal(rep.rain) != null) {
+            bits.push('day total ' + Number(provVal(rep.rain)).toFixed(2) + '"');
         }
         if (!rows.length) bits.push('hourly forecast unavailable');
         sub.innerText = bits.join(' \u00b7 ');

@@ -89,8 +89,8 @@ async function logData() {
         bdSz: getNum('foam3'),
         // Environmental context captured at log time (private row enrichment).
         // Falls back to null when the report/telemetry is unavailable.
-        gauge: (activeRep && activeRep.gage != null) ? activeRep.gage : null,
-        barometer: (activeRep && activeRep.pressure != null) ? activeRep.pressure : null,
+        gauge: (activeRep && provVal(activeRep.gage) != null) ? provVal(activeRep.gage) : null,
+        barometer: (activeRep && provVal(activeRep.pressure) != null) ? provVal(activeRep.pressure) : null,
         waterTemp: getWaterTempF(),
         windSpeed: (typeof window.currentWindMph !== 'undefined' && window.currentWindMph != null) ? window.currentWindMph : null,
         windDir: (typeof window.currentWindDir !== 'undefined' && window.currentWindDir != null) ? window.currentWindDir : null,

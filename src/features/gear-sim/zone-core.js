@@ -18,12 +18,12 @@ function computeStrikeZone(sonar) {
             if (pressureDelta <= -0.03) { zone.shift += 1.2; zone.notes.push('Barometer falling ' + pressureDelta.toFixed(2) + ' inHg: bladders expand, fish ride a little higher.'); }
             else if (pressureDelta >= 0.03) { zone.shift -= 1.2; zone.notes.push('Barometer rising ' + pressureDelta.toFixed(2) + ' inHg: fish pin down a little (lockjaw).'); }
         }
-        var cloud = Number(rep.cloud_pct);
+        var cloud = Number(provVal(rep.cloud_pct));
         if (!isNaN(cloud)) {
             if (cloud >= 70) { zone.shift += 1.5; zone.notes.push('Heavy cloud cover (' + cloud + '%): fish feel safe riding higher.'); }
             else if (cloud <= 30) { zone.shift -= 1.5; zone.notes.push('Bright sun (' + cloud + '% cloud): fish hold deep and tight.'); }
         }
-        var rain = Number(rep.rain);
+        var rain = Number(provVal(rep.rain));
         if (!isNaN(rain) && rain > 0.25) { zone.shift += 1.0; zone.notes.push('Rain freshet (' + rain.toFixed(2) + '"): coloured water, run a bigger profile.'); }
         var temp = getWaterTempF();
         var th = (typeof thermalOptimum === 'function') ? thermalOptimum(temp) : null;

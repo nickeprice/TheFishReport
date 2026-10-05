@@ -10,22 +10,29 @@ Verify against live output with `scripts/smoke.sh`.
 > fallback only — it is decommissioned in Q1 2027. WDFN ids carry a `USGS-` prefix
 > internally; the `site_id` reported to the frontend stays unprefixed (`12101500`).
 
+> **Provenance envelopes (Phase 2.3):** fields marked **prov** are wrapped as
+> `{ value, source, uncertainty }` (or `null` when absent). `source` names the
+> producer (`usgs-telemetry`, `open-meteo`, `noaa-coops`, `region-registry+wdfw`);
+> `uncertainty` is a fractional ± band or `null` for direct readings. Consumers
+> read the scalar via `provVal(rep.<field>)` — never `rep.<field>` directly — so a
+> stale SW-cached old-shape payload still renders correctly.
+
 ## Per-day object keys
 
 | key | type | meaning | consumer (frontend) |
 |---|---|---|---|
 | `id`, `title`, `tag` | string | day slug / header / TODAY-TOMORROW-… | `app.js` card header |
 | `peak` | number 0-100 | best window score this day | card peak display |
-| `cfs` | int\|null | discharge (00060), null when absent | telemetry + catch log |
-| `gage` | float\|null | gage height (00065) | telemetry |
-| `water_temp_f` | float\|null | own-gauge 00010 only (deg F) | `.water-temp`; hidden when null |
-| `turbidity_fnu` | float\|null | own-gauge 63680 only; NEVER invented | `.turbidity-val` |
+| `cfs` | prov | discharge (00060), `{value: int\|null, source, uncertainty}` — null when absent | telemetry + catch log (`provVal(rep.cfs)`) |
+| `gage` | prov | gage height (00065) | telemetry (`provVal(rep.gage)`) |
+| `water_temp_f` | prov | own-gauge 00010 only (deg F) | `.water-temp`; hidden when null (`provVal`) |
+| `turbidity_fnu` | prov | own-gauge 63680 only; NEVER invented | `.turbidity-val` (`provVal`) |
 | `flow_idx` | int 1-100 | speed index from `calculate_transit_time_and_flow` | env scoring |
-| `pressure` | float\|null | current baro inHg | barometer pill + catch env |
+| `pressure` | prov | current baro inHg | barometer pill + catch env (`provVal`) |
 | `press_delta` | float | current − 6h prior (inHg) | pressure-trend trigger |
-| `rain` | float\|null | precip in inches (24h) | freshet trigger |
+| `rain` | prov | precip in inches (24h) | freshet trigger (`provVal`) |
 | `lunar_icon` | string\|null | emoji + phase name | moon pill + catch env |
-| `cloud_pct` | number\|null | daily mean cloud % | twilight UV/overcast |
+| `cloud_pct` | prov | daily mean cloud % | twilight UV/overcast (`provVal`)|
 | `sunrise`/`sunset` | string | 12h display | twilight calc |
 | `lines_in`/`lines_out` | string\|**null** | legal window (string) — **null** unless `legal_hours` is `daylight`/`24hr` | hero `legalHoursLabel()` |
 | `legal_hours` | string | `daylight`\|`24hr`\|`custom`\|`unknown` — per-waterbody FACT from the region registry (UPDATE 3.0 Phase 1.5) | `legalHoursLabel()` |
@@ -35,9 +42,9 @@ Verify against live output with `scripts/smoke.sh`.
 | `transit_state` | string | "High Velocity Push"/"Steady Migration"/"Bay Staging…"/"Bank Hugging…"/"RIVER CORKED" | MOVEMENT INDEX (2.1b) |
 | `transit_time` | string\|"BLOCKED" | "15 to 17 hrs" etc (6.0 mi at modeled speed) | MOVEMENT INDEX (2.1b) |
 | `tide_chart` | string | "High: 4:15 AM (11.2 ft) | Low: …" | tide pills fallback |
-| `tide_curve` | array | extremes `{t, h, type:H|L}` (12h times) | `tideCurveSvg` labels |
-| `tide_points` | array | ~240 hourly NOAA points `{t, h}` for THIS day | `tideCurveSvg` area curve |
-| `species_calendar` | array | per-stock `{species, window_start, window_end, peak_date, days_until_peak, position(pre/peak/post/off), status_text, progress 0-1, peak_frac 0-1}` | run cards (2.1b) |
+| `tide_curve` | prov | extremes `{t, h, type:H|L}` (12h times) — `{value:[…]}` | `tideCurveSvg` labels |
+| `tide_points` | prov | ~240 hourly NOAA points `{t, h}` — `{value:[…]}` | `tideCurveSvg` area curve |
+| `species_calendar` | prov | per-stock `{species, window_start, window_end, peak_date, days_until_peak, position(pre/peak/post/off), status_text, progress 0-1, peak_frac 0-1}` — `{value:[…]}` | run cards (2.1b) |
 | `windows` | array | `{start, end, score, triggers, start_str, end_str}` | legal-hours timeline |
 | `api_offline` | bool | USGS unreachable vs seasonal | empty-state |
 | `is_active` | bool | fresh 00060/00065 <=24h | station active badge |

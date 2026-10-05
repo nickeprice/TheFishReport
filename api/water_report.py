@@ -308,6 +308,14 @@ WDFN_TIMEOUT = 8
 WDFN_API_KEY = os.environ.get("USGS_API_KEY", "").strip()
 
 
+# ── Provenance helper (Phase 2.3) ─────────────────────────────────────────────
+# Wraps a scalar or list value into the standard { value, source, uncertainty }
+# envelope so every consumer can tell a live reading from an offline estimate.
+# Returns None when value is None (no-fabricate rule preserved).
+def _prov(value, source, uncertainty=None):
+    return None if value is None else {"value": value, "source": source, "uncertainty": uncertainty}
+
+
 def _wdfn_get(url, timeout=WDFN_TIMEOUT):
     """GET + JSON-decode a WDFN OGC API url. Raises on any failure.
 
@@ -1570,10 +1578,15 @@ class handler(BaseHTTPRequestHandler):
             reports.append({
                 "id": f"day-{i}",
                 "title": dt.strftime('%A, %b %d'), "tag": "TODAY" if i == 0 else "TOMORROW" if i == 1 else dt.strftime('%A').upper(),
-                "peak": peak_potential, "cfs": int(round(usgs_data["cfs"])) if usgs_data["cfs"] is not None else None, "gage": round(usgs_data["gage"], 2) if usgs_data["gage"] is not None else None,
-                "water_temp_f": usgs_data.get("water_temp_f"), "turbidity_fnu": usgs_data.get("turbidity_fnu"),
+                "peak": peak_potential,
+                "cfs": _prov(int(round(usgs_data["cfs"])) if usgs_data["cfs"] is not None else None, "usgs-telemetry"),
+                "gage": _prov(round(usgs_data["gage"], 2) if usgs_data["gage"] is not None else None, "usgs-telemetry"),
+                "water_temp_f": _prov(usgs_data.get("water_temp_f"), "usgs-telemetry"),
+                "turbidity_fnu": _prov(usgs_data.get("turbidity_fnu"), "usgs-telemetry"),
                 "flow_idx": flow_index,
-                "pressure": round(press_curr_inHg, 2), "press_delta": round(press_curr_inHg - press_prev_inHg, 2), "rain": round(rain_in, 2),
+                "pressure": _prov(round(press_curr_inHg, 2) if press_curr_inHg is not None else None, "open-meteo"),
+                "press_delta": round(press_curr_inHg - press_prev_inHg, 2) if (press_curr_inHg is not None and press_prev_inHg is not None) else None,
+                "rain": _prov(round(rain_in, 2) if rain_in is not None else None, "open-meteo"),
                 "air_temp_f": air_temp_f, "wind_speed_mph": wind_speed_mph, "wind_dir_compass": compass_from_deg(wind_dir_deg), "pop_pct": pop_pct,
                 "temp_prev_f": temp_prev_f, "temp_delta_f": temp_delta_f,
                 "precip_phase": precip_phase_key, "precip_start_text": precip_start_text, "precip_end_text": precip_end_text,
@@ -1581,7 +1594,7 @@ class handler(BaseHTTPRequestHandler):
                 # 24 hourly rows for the tap-to-expand popup. `rain` above stays the DAILY
                 # total (the freshet input); `weather_hour['precip_in']` is that hour's volume.
                 "weather_hour": weather_hour, "weather_hourly": weather_hourly,
-                "lunar_icon": lunar_icon, "cloud_pct": cloud_pct,
+                "lunar_icon": lunar_icon, "cloud_pct": _prov(cloud_pct, "open-meteo"),
                 "sunrise": sunrise_dt.strftime('%-I:%M %p'), "sunset": sunset_dt.strftime('%-I:%M %p'),
                 "moon_upper": moon_upper_str, "moon_lower": moon_lower_str,
                 "lines_in": lines_in_str, "lines_out": lines_out_str,
@@ -1590,9 +1603,10 @@ class handler(BaseHTTPRequestHandler):
                 "transit_state": transit_state, "transit_time": transit_time,
                 "clarity_outlook": clarity_outlook,
                 "tide_station": tide_pair['id'] if tide_pair else None,
-                "tide_chart": tide_chart_str, "tide_curve": tide_curve,
-                "tide_points": tide_points,
-                "species_calendar": species_calendar, "windows": timeline_windows, "is_netting": is_netting_day,
+                "tide_chart": tide_chart_str,
+                "tide_curve": _prov(tide_curve, "noaa-coops"),
+                "tide_points": _prov(tide_points, "noaa-coops"),
+                "species_calendar": _prov(species_calendar, "region-registry+wdfw"), "windows": timeline_windows, "is_netting": is_netting_day,
                 "is_active": usgs_data["is_active"], "updated_time": usgs_data["updated_time"], "api_offline": bool(usgs_data.get("api_offline", False)),
                 "site_name": usgs_data["site_name"], "site_id": site
             })

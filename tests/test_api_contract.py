@@ -23,6 +23,26 @@ def _free_port():
 
 
 # ======== JSON Schema (per CONTRACT.md) =====================================
+# Provenance envelope (Phase 2.3): { value, source, uncertainty | null }.
+# The schema accepts BOTH the old plain scalar and the new envelope so a stale
+# SW-cached payload never fails validation shape-wise (the frontend provVal()
+# tolerance matches this).
+def _prov_item(value_schema):
+    return {
+        "anyOf": [
+            {
+                "type": "object",
+                "required": ["value", "source", "uncertainty"],
+                "properties": {
+                    "value": value_schema,
+                    "source": {"type": "string"},
+                    "uncertainty": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                },
+            },
+            {"type": "null"},
+        ]
+    }
+
 PER_DAY_SCHEMA = {
     "type": "object",
     "required": [
@@ -37,16 +57,16 @@ PER_DAY_SCHEMA = {
     "properties": {
         "id":{"type":"string"},"title":{"type":"string"},"tag":{"type":"string"},
         "peak":{"type":"number","minimum":0,"maximum":100},
-        "cfs":{"anyOf":[{"type":"integer"},{"type":"null"}]},
-        "gage":{"anyOf":[{"type":"number"},{"type":"null"}]},
-        "water_temp_f":{"anyOf":[{"type":"number"},{"type":"null"}]},
-        "turbidity_fnu":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "cfs": _prov_item({"oneOf": [{"type": "integer"}, {"type": "number"}]}),
+        "gage": _prov_item({"type": "number"}),
+        "water_temp_f": _prov_item({"type": "number"}),
+        "turbidity_fnu": _prov_item({"type": "number"}),
         "flow_idx":{"type":"integer","minimum":1,"maximum":100},
-        "pressure":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "pressure": _prov_item({"type": "number"}),
         "press_delta":{"type":"number"},
-        "rain":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "rain": _prov_item({"type": "number"}),
         "lunar_icon":{"anyOf":[{"type":"string"},{"type":"null"}]},
-        "cloud_pct":{"anyOf":[{"type":"number"},{"type":"null"}]},
+        "cloud_pct": _prov_item({"type": "number"}),
         "sunrise":{"type":"string"},"sunset":{"type":"string"},
         "lines_in":{"anyOf":[{"type":"string"},{"type":"null"}]},
         "lines_out":{"anyOf":[{"type":"string"},{"type":"null"}]},
@@ -57,14 +77,14 @@ PER_DAY_SCHEMA = {
         "net_status":{"type":"string"},"is_netting":{"type":"boolean"},
         "transit_state":{"type":"string"},"transit_time":{"type":"string"},
         "tide_chart":{"type":"string"},
-        "tide_curve":{"type":"array",
+        "tide_curve": _prov_item({"type":"array",
             "items":{"type":"object","required":["t","h","type"],
                      "properties":{"t":{"type":"string"},"h":{"type":"number"},
-                                    "type":{"type":"string","enum":["H","L"]}}}},
-        "tide_points":{"type":"array",
+                                    "type":{"type":"string","enum":["H","L"]}}}}),
+        "tide_points": _prov_item({"type":"array",
             "items":{"type":"object","required":["t","h"],
-                     "properties":{"t":{"type":"string"},"h":{"type":"number"}}}},
-        "species_calendar":{"type":"array",
+                     "properties":{"t":{"type":"string"},"h":{"type":"number"}}}}),
+        "species_calendar": _prov_item({"type":"array",
             "items":{"type":"object",
                 "required":["species","window_start","window_end","peak_date",
                             "days_until_peak","position","status_text",
@@ -80,7 +100,7 @@ PER_DAY_SCHEMA = {
                     "status_text":{"type":"string"},
                     "progress":{"type":"number","minimum":0,"maximum":1},
                     "peak_frac":{"type":"number","minimum":0,"maximum":1},
-                }}},
+                }}}),
         "windows":{"type":"array",
             "items":{"type":"object",
                 "required":["start","end","score","triggers",
@@ -257,8 +277,12 @@ def test_water_report_contract(server_with_patch, endpoint):
         jsonschema.validate(instance=day, schema=PER_DAY_SCHEMA)
     d0 = report[0]
     assert d0['site_id'] == '12101500'
-    assert isinstance(d0['tide_curve'], list)
-    assert isinstance(d0['species_calendar'], list)
+    tc = d0['tide_curve']
+    assert (isinstance(tc, dict) and isinstance(tc.get('value'), list)) or isinstance(tc, list), (
+        f"tide_curve should be an envelope with value array, got {type(tc)}")
+    sc = d0['species_calendar']
+    assert (isinstance(sc, dict) and isinstance(sc.get('value'), list)) or isinstance(sc, list), (
+        f"species_calendar should be an envelope with value array, got {type(sc)}")
     assert isinstance(d0['windows'], list)
 
 

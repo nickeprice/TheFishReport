@@ -85,6 +85,13 @@ Goal: Replace `ratio: 1.0` with real DEM-based spot width + Manning-corrected de
 - [ ] Extend beyond continuity.js (velocity/depth) to: telemetry (CFS, gage, temp, turbidity), weather (pressure, rain, cloud%), tides, species calendar
 - [ ] Every consumer keeps a provenance trail; full suite still green
 
+### 2.4 Offline Resilience (Closing Audit Gaps)
+- [ ] G1: Water Report Snapshot (IndexedDB)
+- [ ] G2: Socrata Escapement Cache (localStorage)
+- [ ] G3: WDFN Station Search Offline Degradation
+- [ ] G4: CFS Momentum Cache with Freshness Guard (localStorage)
+- [ ] G5: Supabase Feed & Calibration Snapshots (IndexedDB)
+
 ## ✅ Phase 3: Enhanced UI (COMPLETE)
 ### 3.2 Visual water type guide (SVG cross-sections)
 - [x] ⓘ button opens a modal rendering water type cards with descriptions + multiplier values

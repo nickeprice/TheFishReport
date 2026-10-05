@@ -1,9 +1,20 @@
 /**
  * src/shared/format.js - feed-row normalisation, time formatting + text escaping.
- * public: normalizeFeedRow(row), formatCatchTime(value),
+ * public: normalizeFeedRow(row), formatCatchTime(value), provVal(x),
  *         escapeHtml(value), escapeJsString(value), newUuid()
  * Classic script (global scope). Loaded BEFORE src/app.js.
  */
+// Phase 2.3 provenance unwrap: data producers emit { value, source, uncertainty }
+// envelopes; every UI / gear-sim consumer reads the scalar via provVal(). A raw
+// primitive (old cached payload) is tolerated so a stale SW cache or snapshot
+// degrades to the same number instead of silently reading undefined.
+function provVal(x) {
+    if (x === null || x === undefined) return x;
+    if (typeof x === 'object' && Object.prototype.hasOwnProperty.call(x, 'value')) {
+        return x.value;
+    }
+    return x;
+}
 // Client-generated id for a logged catch. Sending it makes the write IDEMPOTENT: a
 // retry after a lost response conflicts on the primary key and is ignored rather than
 // inserting a second copy of the same fish.

@@ -219,9 +219,11 @@ var lastKnownFlow = null;
 
 function getCurrentFlow() {
     var rep = getActiveReport();
-    if (rep && rep.cfs !== null && rep.cfs !== undefined && !rep.api_offline) {
-        lastKnownFlow = rep.cfs;
-        return rep.cfs;
+    if (!rep) return (lastKnownFlow !== null) ? lastKnownFlow : 1040;
+    var cfsV = provVal(rep.cfs);
+    if (cfsV !== null && cfsV !== undefined && !rep.api_offline) {
+        lastKnownFlow = cfsV;
+        return cfsV;
     }
     if (lastKnownFlow !== null) return lastKnownFlow;
     return 1040;

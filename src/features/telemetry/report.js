@@ -75,9 +75,9 @@ async function loadWaterReport(silent) {
         // a CFS the angler typed by hand).
         // Live discharge now feeds the Gear Sim + catch log directly (there is no
         // user-facing flow input any more) — the derived value is still recorded.
-        if(reports.length > 0 && reports[0].cfs !== null && reports[0].cfs !== undefined && !reports[0].api_offline) {
-            lastKnownFlow = reports[0].cfs;
-            logDebug("Live flow recorded for the sim: " + reports[0].cfs + " CFS", "STATE");
+        if(reports.length > 0 && provVal(reports[0].cfs) !== null && provVal(reports[0].cfs) !== undefined && !reports[0].api_offline) {
+            lastKnownFlow = provVal(reports[0].cfs);
+            logDebug("Live flow recorded for the sim: " + provVal(reports[0].cfs) + " CFS", "STATE");
         }
 
         for(var i=0; i<reports.length; i++) {
@@ -107,19 +107,19 @@ async function loadWaterReport(silent) {
             // The pills the angler can tap for the hourly strip (Phase 2b wires the popup).
             var weatherHour = rep.weather_hour || {};
 
-            var cfsVal = (rep.cfs !== null && rep.cfs !== undefined) ? Number(rep.cfs).toLocaleString('en-US') + ' CFS' : '-- CFS';
-            var gageVal = (rep.gage !== null && rep.gage !== undefined) ? rep.gage.toFixed(2) + ' ft Gauge Height' : '-- ft Gauge Height';
+            var cfsVal = (provVal(rep.cfs) !== null && provVal(rep.cfs) !== undefined) ? Number(provVal(rep.cfs)).toLocaleString('en-US') + ' CFS' : '-- CFS';
+            var gageVal = (provVal(rep.gage) !== null && provVal(rep.gage) !== undefined) ? provVal(rep.gage).toFixed(2) + ' ft Gauge Height' : '-- ft Gauge Height';
             // Own-gauge water quality (locked: active station's OWN USGS 00010 /
             // 63680 only — never a proxy). Rendered ONLY when the station reports
             // them; otherwise the whole block is omitted so nothing fake shows.
-            var hasWaterTemp = (rep.water_temp_f !== undefined && rep.water_temp_f !== null && !isNaN(rep.water_temp_f));
-            var hasTurbidity = (rep.turbidity_fnu !== undefined && rep.turbidity_fnu !== null && !isNaN(rep.turbidity_fnu));
+            var hasWaterTemp = (provVal(rep.water_temp_f) !== undefined && provVal(rep.water_temp_f) !== null && !isNaN(provVal(rep.water_temp_f)));
+            var hasTurbidity = (provVal(rep.turbidity_fnu) !== undefined && provVal(rep.turbidity_fnu) !== null && !isNaN(provVal(rep.turbidity_fnu)));
             var waterQualityHtml = '';
             if (hasWaterTemp || hasTurbidity) {
                 waterQualityHtml = '<div class="telemetry-qualities">' +
-                    (hasWaterTemp ? '<span class="telemetry-quality"><span class="water-temp">' + Math.round(Number(rep.water_temp_f)) + '</span>°F H₂O</span>' : '') +
+                    (hasWaterTemp ? '<span class="telemetry-quality"><span class="water-temp">' + Math.round(Number(provVal(rep.water_temp_f))) + '</span>°F H₂O</span>' : '') +
                     (hasWaterTemp && hasTurbidity ? '<span class="telemetry-sep">&bull;</span>' : '') +
-                    (hasTurbidity ? '<span class="telemetry-quality">Turbidity <span class="turbidity-val">' + Number(rep.turbidity_fnu).toFixed(1) + '</span> FNU</span>' : '') +
+                    (hasTurbidity ? '<span class="telemetry-quality">Turbidity <span class="turbidity-val">' + Number(provVal(rep.turbidity_fnu)).toFixed(1) + '</span> FNU</span>' : '') +
                 '</div>';
             }
             // Clarity is folded into the fishing hero (buildFishingHero) — no
@@ -150,14 +150,14 @@ async function loadWaterReport(silent) {
                   '</div>' +
                   '<div class="telemetry-updated">' + (rep.updated_time || '') + '</div>' +
                 '</div>' +
-                formatTideRow(rep.tide_chart, rep.tide_curve, rep.tide_points) +
+                formatTideRow(rep.tide_chart, provVal(rep.tide_curve), provVal(rep.tide_points)) +
                 '<div class="env-weather-solunar">' +
                   '<div class="env-stat-grid">' +
                     // Row 1 (Atmospheric): BAROMETER, PRECIP %, PRECIP VOL - every one of
                     // these reads the day's REFERENCE HOUR (today = now; a later day = the
                     // hour fishing can start), and its sub-line NAMES that hour block.
                     '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pressure\')">' +
-                      '<div class="env-badge-val" style="color:' + pCol + ';">' + rep.pressure.toFixed(2) + ' <span style="font-size:10px; font-weight:600;">inHg</span> ' + pArr + '</div>' +
+                      '<div class="env-badge-val" style="color:' + pCol + ';">' + provVal(rep.pressure).toFixed(2) + ' <span style="font-size:10px; font-weight:600;">inHg</span> ' + pArr + '</div>' +
                       // Reserved sub-line slot on EVERY cell so all 9 pills centre
                       // their value/label pair identically (empty = no hint).
                       '<div class="env-badge-sub">' + hourLabel + '</div>' +
@@ -177,7 +177,7 @@ async function loadWaterReport(silent) {
                     '</div>' +
                     // Row 2: CLOUD%, TEMP (trend arrow), WIND (direction arrow + text)
                     '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'cloud_pct\')">' +
-                      '<div class="env-badge-val">' + rep.cloud_pct + '%</div>' +
+                      '<div class="env-badge-val">' + provVal(rep.cloud_pct) + '%</div>' +
                       '<div class="env-badge-sub">' + hourLabel + '</div>' +
                       '<div class="env-badge-lbl">Cloud Cover</div>' +
                     '</div>' +
@@ -231,7 +231,7 @@ async function loadWaterReport(silent) {
                 // (status/progress/peak visible, counts folded).
                 '<div class="run-timing">' +
                   '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
-                  buildSpeciesCalendarHtml(rep.species_calendar, escStocks) +
+                  buildSpeciesCalendarHtml(provVal(rep.species_calendar), escStocks) +
                 '</div>' + '</div></div>';
         }
         document.getElementById('water-report-cards').innerHTML = cardsHtml;
@@ -241,8 +241,8 @@ async function loadWaterReport(silent) {
         var firstRep = reports[0];
         if (typeof applyOwnGaugeWaterQuality === 'function') {
             applyOwnGaugeWaterQuality(
-                (firstRep && firstRep.water_temp_f !== undefined) ? firstRep.water_temp_f : null,
-                (firstRep && firstRep.turbidity_fnu !== undefined) ? firstRep.turbidity_fnu : null
+                (firstRep && firstRep.water_temp_f !== undefined) ? provVal(firstRep.water_temp_f) : null,
+                (firstRep && firstRep.turbidity_fnu !== undefined) ? provVal(firstRep.turbidity_fnu) : null
             );
         }
         // An empty payload would otherwise leave the tab as a blank black screen.

@@ -129,12 +129,30 @@ MOCK_OFFLINE_REPORT = [{
 
 @pytest.fixture(scope='function')
 def mock_api(page):
-    """Intercept all /api/water_report requests and return the mock payload."""
+    """Intercept all /api/water_report requests and return the mock payload.
+
+    The payload is served with Phase 2.3 provenance envelopes (wrapping any
+    remaining primitive fields), so the UI tests exercise the real contract.
+    """
+    def _wrap_day(day):
+        out = dict(day)
+        for key, source in (('cfs', 'usgs-telemetry'), ('gage', 'usgs-telemetry'),
+                            ('water_temp_f', 'usgs-telemetry'),
+                            ('turbidity_fnu', 'usgs-telemetry'),
+                            ('pressure', 'open-meteo'), ('rain', 'open-meteo'),
+                            ('cloud_pct', 'open-meteo'), ('tide_curve', 'noaa-coops'),
+                            ('tide_points', 'noaa-coops'),
+                            ('species_calendar', 'region-registry+wdfw')):
+            v = day.get(key)
+            if v is not None and not (isinstance(v, dict) and 'value' in v):
+                out[key] = {'value': v, 'source': source, 'uncertainty': None}
+        return out
+
     def handle(route):
         route.fulfill(
             status=200,
             content_type='application/json',
-            body=json.dumps(MOCK_REPORT),
+            body=json.dumps([_wrap_day(d) for d in MOCK_REPORT]),
         )
     page.route('**/api/water_report*', handle)
     yield
@@ -232,6 +250,12 @@ def test_empty_state_renders(page, dev_server, mock_api_offline):
     """When the API returns offline, empty state message appears."""
     _goto_and_wait(page, dev_server + '/')
     cards = page.locator('#water-report-cards')
+    # The report fetch is async after DOMContentLoaded; wait for the renderer to
+    # paint something (offline card / empty state) before asserting.
+    page.wait_for_function(
+        'document.getElementById("water-report-cards") && '
+        '(document.getElementById("water-report-cards").children.length > 0)',
+        timeout=10000)
     html = cards.text_content()
     assert ('Telemetry Offline' in html or 'offline' in html.lower()
             or 'No river data' in html

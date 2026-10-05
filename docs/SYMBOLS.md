@@ -64,8 +64,8 @@ this file**, or the pass fails.
 - **debug.js** — `logDebug(msg, source)` (+ the double-tap header matrix)
 - **ui.js** — `showToast(msg, kind, ms, action)`
 - **nav.js** — `switchTab(tabId)`, `resetToToday()`
-- **format.js** — `normalizeFeedRow(row)`, `formatCatchTime(value)`, `escapeHtml(value)`,
-  `escapeJsString(value)`, `newUuid()`
+- **format.js** — `normalizeFeedRow(row)`, `formatCatchTime(value)`, `provVal(x)`,
+  `escapeHtml(value)`, `escapeJsString(value)`, `newUuid()`
 - **api.js** — `apiGetJson(path, opts)` → `{ ok, status, data, error, serverMessage, note }`:
   one resilient GET for the app's OWN `/api/*` endpoints (one retry on a cold/5xx/HTML
   response, a per-attempt timeout, the real status + a sanitised body slice in the debug

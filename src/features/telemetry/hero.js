@@ -20,16 +20,16 @@ function buildFishingHero(rep) {
     // stage in the cool salt wedge and stop pushing upstream, so "are they even here?".
     // Own-gauge probe only - a missing reading makes NO claim. This is a RUN signal, not
     // the strike zone. 21C = 69.8F, 22C = 71.6F. Ordered first: a blocked run beats a freshet.
-    if (rep.water_temp_f !== null && rep.water_temp_f !== undefined && !isNaN(Number(rep.water_temp_f))) {
-        var wtF = Number(rep.water_temp_f);
+    if (provVal(rep.water_temp_f) !== null && provVal(rep.water_temp_f) !== undefined && !isNaN(Number(provVal(rep.water_temp_f)))) {
+        var wtF = Number(provVal(rep.water_temp_f));
         var wtC = (wtF - 32) * 5 / 9;
         if (wtC >= 22) { any = true; score -= 14; reasons.push('Lethal water (' + Math.round(wtF) + 'F) - the run has stalled'); }
         else if (wtC >= 21) { any = true; score -= 9; reasons.push('Migration-block range (' + Math.round(wtF) + 'F) - fish are holding'); }
     }
 
-    if (rep.rain !== null && rep.rain !== undefined && rep.rain > 0.05) {
+    if (provVal(rep.rain) !== null && provVal(rep.rain) !== undefined && provVal(rep.rain) > 0.05) {
         any = true; score += 12;
-        reasons.push('Rain freshet (' + rep.rain.toFixed(2) + ' in)');
+        reasons.push('Rain freshet (' + provVal(rep.rain).toFixed(2) + ' in)');
     }
     if (rep.press_delta !== null && rep.press_delta !== undefined && rep.press_delta < -0.04) {
         any = true; score += 10;
@@ -38,8 +38,8 @@ function buildFishingHero(rep) {
         any = true; score -= 6;
         reasons.push('High pressure settling in');
     }
-    if (rep.tide_curve && rep.tide_curve.length) {
-        var highs = rep.tide_curve.filter(function (t) { return t.type === 'H'; });
+    if (provVal(rep.tide_curve) && provVal(rep.tide_curve).length) {
+        var highs = provVal(rep.tide_curve).filter(function (t) { return t.type === 'H'; });
         if (highs.length) {
             any = true; score += Math.min(10, highs.length * 5);
             reasons.push(highs.length + ' high tide' + (highs.length > 1 ? 's' : '') + ' today');

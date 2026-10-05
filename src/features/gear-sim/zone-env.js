@@ -219,8 +219,8 @@ var TIDE_FALLING_SHIFT = -1.00;  // ebb: fish drop back to deeper water
 // The tide at the report's reference hour: { heightFt, trend, shift } or null when the day
 // carries no hourly tide curve.
 function tideAt(block, rep) {
-    if (!block || !rep || !rep.tide_points || !rep.tide_points.length) return null;
-    var pts = rep.tide_points;
+    if (!block || !rep || !provVal(rep.tide_points) || !provVal(rep.tide_points).length) return null;
+    var pts = provVal(rep.tide_points);
     var target = Number(block.hour);
     if (!isFinite(target)) return null;
     var best = -1, bestDiff = Infinity;
@@ -274,8 +274,8 @@ function envSignature(rep) {
     var tide = block ? tideAt(block, r) : null;
     return {
         tempF: getWaterTempF(),
-        cloudPct: envNum(r.cloud_pct),
-        rainIn: envNum(r.rain),
+        cloudPct: envNum(provVal(r.cloud_pct)),
+        rainIn: envNum(provVal(r.rain)),
         turbidityFnu: getTurbidityFnu(),
         barometerDelta: envNum(r.press_delta),
         tideStage: tide ? tide.heightFt : null,

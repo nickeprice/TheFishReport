@@ -64,8 +64,8 @@ async function logData() {
         clientId: newUuid(),
         name: AuthState.name || 'Anonymous',
         time: getStr('log-datetime'),
-        gps: (window.userGPSCoords && window.userGPSCoords.lat != null && window.userGPSCoords.lon != null)
-            ? window.userGPSCoords.lat + ',' + window.userGPSCoords.lon
+        gps: (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null)
+            ? State.userGPSCoords.lat + ',' + State.userGPSCoords.lon
             : null,
         river: deriveRiverName(),
         flow: flowValue,
@@ -92,8 +92,8 @@ async function logData() {
         gauge: (activeRep && provVal(activeRep.gage) != null) ? provVal(activeRep.gage) : null,
         barometer: (activeRep && provVal(activeRep.pressure) != null) ? provVal(activeRep.pressure) : null,
         waterTemp: getWaterTempF(),
-        windSpeed: (typeof window.currentWindMph !== 'undefined' && window.currentWindMph != null) ? window.currentWindMph : null,
-        windDir: (typeof window.currentWindDir !== 'undefined' && window.currentWindDir != null) ? window.currentWindDir : null,
+        windSpeed: (typeof State.currentWindMph !== 'undefined' && State.currentWindMph != null) ? State.currentWindMph : null,
+        windDir: (typeof State.currentWindDir !== 'undefined' && State.currentWindDir != null) ? State.currentWindDir : null,
         moon: (activeRep && activeRep.lunar_icon != null) ? activeRep.lunar_icon : null,
         // The shared environment signature (envSignature() in zone.js), stored so the sonar
         // matches this catch's conditions against today's.

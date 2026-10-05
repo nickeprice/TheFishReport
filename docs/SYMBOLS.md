@@ -62,6 +62,9 @@ this file**, or the pass fails.
   `escapementFacilities`
 
 ## src/shared
+- **state.js** — `State.userGPSCoords`, `State.waterTempF`, `State.turbidityFnu`,
+  `State.currentWindMph`, `State.currentWindDir` — cross-feature shared state, replacing
+  `window.*` globals. Loaded first among shared scripts.
 - **debug.js** — `logDebug(msg, source)` (+ the double-tap header matrix)
 - **ui.js** — `showToast(msg, kind, ms, action)`
 - **nav.js** — `switchTab(tabId)`, `resetToToday()`

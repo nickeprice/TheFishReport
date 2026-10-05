@@ -247,7 +247,7 @@ async function loadWaterReport(silent) {
         }
         document.getElementById('water-report-cards').innerHTML = cardsHtml;
         // Paint the own-gauge water temp/turbidity into the telemetry area
-        // (already server-rendered in the card HTML) and sync window.waterTempF
+        // (already server-rendered in the card HTML) and sync State.waterTempF
         // for the Gear Sim.
         var firstRep = reports[0];
         if (typeof applyOwnGaugeWaterQuality === 'function') {

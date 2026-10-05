@@ -86,7 +86,7 @@ function updateActiveDateUI() {
     } catch(e) {}
     var riverId = activeStation ? activeStation.id : "12101500";
     var riverName = (activeStation && activeStation.name) ? activeStation.name : 'Puyallup River';
-    var gpsCoords = (activeStation && activeStation.isGps) ? { lat: activeStation.lat, lon: activeStation.lon } : (window.userGPSCoords || null);
+    var gpsCoords = (activeStation && activeStation.isGps) ? { lat: activeStation.lat, lon: activeStation.lon } : (State.userGPSCoords || null);
 
     // 3. Dynamic Regulations Engine Evaluation
     if (typeof checkRiverStatus === 'function') {

@@ -38,6 +38,7 @@ const SHELL_FILES = [
     '/manifest.json',
     '/src/data/tackle.json',
     '/src/styles.css',
+    '/src/shared/state.js',
     '/src/shared/debug.js',
     '/src/shared/ui.js',
     '/src/shared/nav.js',

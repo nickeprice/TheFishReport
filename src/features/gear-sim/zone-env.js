@@ -37,8 +37,8 @@ function missingRigFields() {
 }
 
 function getWaterTempF() {
-    if (window.waterTempF !== undefined && window.waterTempF !== null && !isNaN(window.waterTempF)) {
-        return Number(window.waterTempF);
+    if (State.waterTempF !== undefined && State.waterTempF !== null && !isNaN(State.waterTempF)) {
+        return Number(State.waterTempF);
     }
     var el = document.querySelector('.water-temp');
     if (el) {
@@ -53,8 +53,8 @@ function getWaterTempF() {
 // gauge or nothing - no proxy, no cross-gauge substitute. null -> the zone model simply
 // has no turbidity term.
 function getTurbidityFnu() {
-    if (window.turbidityFnu !== undefined && window.turbidityFnu !== null && !isNaN(window.turbidityFnu)) {
-        return Number(window.turbidityFnu);
+    if (State.turbidityFnu !== undefined && State.turbidityFnu !== null && !isNaN(State.turbidityFnu)) {
+        return Number(State.turbidityFnu);
     }
     var el = document.querySelector('.turbidity-val');
     if (el) {

@@ -91,8 +91,8 @@ function stationPopupHtml(s) {
 }
 
 function mapCenter() {
-    if (window.userGPSCoords && window.userGPSCoords.lat != null && window.userGPSCoords.lon != null) {
-        return [window.userGPSCoords.lat, window.userGPSCoords.lon];
+    if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
+        return [State.userGPSCoords.lat, State.userGPSCoords.lon];
     }
     try {
         var stored = JSON.parse(localStorage.getItem('active_station') || 'null');

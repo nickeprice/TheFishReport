@@ -121,11 +121,11 @@ function renderCfsTrend(siteId, sorted) {
 // only the fields that carry a value).
 function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
     var hasTemp = (waterTempF !== undefined && waterTempF !== null && !isNaN(waterTempF));
-    window.waterTempF = hasTemp ? Number(waterTempF) : null;   // Gear Sim falls back to the baseline zone when temp is unknown
+    State.waterTempF = hasTemp ? Number(waterTempF) : null;   // Gear Sim falls back to the baseline zone when temp is unknown
     var hasTurb = (turbidityFnu !== undefined && turbidityFnu !== null && !isNaN(turbidityFnu));
     // WS-8a: the Gear Sim's colour term reads the SAME own-gauge reading the card paints,
     // so the zone can never use a turbidity the angler cannot see. null -> no term at all.
-    window.turbidityFnu = hasTurb ? Number(turbidityFnu) : null;
+    State.turbidityFnu = hasTurb ? Number(turbidityFnu) : null;
     document.querySelectorAll('.water-temp').forEach(function (el) {
         el.innerText = hasTemp ? Math.round(Number(waterTempF)) : '--';
     });
@@ -137,7 +137,7 @@ function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
 // Surface "now" conditions painted FROM the water-report payload (since
 // Commit 2.1f the backend's Open-Meteo request includes `current` readings, so
 // the client no longer calls Open-Meteo directly). Also stashes the wind for
-// the catch-log env enrichment (window.currentWindMph / currentWindDir).
+// the catch-log env enrichment (State.currentWindMph / currentWindDir).
 //
 // WS-4: this paints the ACTIVE DAY'S CARD ONLY. It used to querySelectorAll across every
 // day card, which stamped reports[0]'s weather onto all of them - that is exactly why
@@ -156,8 +156,8 @@ function applyReportWeather(rep) {
     if (!scope) return;                       // card not in the DOM (yet) -> nothing to paint
 
     if (wSpeed != null) {
-        window.currentWindMph = wSpeed;
-        window.currentWindDir = wDir;
+        State.currentWindMph = wSpeed;
+        State.currentWindDir = wDir;
     }
 
     if (airT != null) {

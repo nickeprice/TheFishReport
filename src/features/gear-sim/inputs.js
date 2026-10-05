@@ -38,11 +38,11 @@ function getGPS() {
         navigator.geolocation.getCurrentPosition(function(pos){
             // GPS is captured SILENTLY (no visible field on the form) but still
             // stored so logData() can include it in the private catch row.
-            window.userGPSCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+            State.userGPSCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
             logDebug("GPS Lock acquired (coords held privately for the catch row)", "SYS");
             updateActiveDateUI();
         }, function(err){
-            window.userGPSCoords = null;
+            State.userGPSCoords = null;
             logDebug("GPS Error: " + err.message, "ERR");
             updateActiveDateUI();
         });

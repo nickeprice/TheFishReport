@@ -7,7 +7,7 @@
  * hour value renders "--".
  *
  * public: HOURLY_METRICS, openHourlyPopup(metricKey), closeHourlyPopup()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // metric -> display spec. The keys are the SAME keys the pill uses in `weather_hourly`.
 var HOURLY_METRICS = {
@@ -19,13 +19,13 @@ var HOURLY_METRICS = {
     'wind_speed_mph': { label: 'Wind', unit: ' mph', dec: 0, withDir: true }
 };
 
-function closeHourlyPopup() {
+export function closeHourlyPopup() {
     var modal = document.getElementById('hourly-modal');
     if (modal) modal.style.display = 'none';
 }
 
 // Open the strip for one metric on the day the angler is LOOKING AT (activeDateOffset).
-function openHourlyPopup(metricKey) {
+export function openHourlyPopup(metricKey) {
     var spec = HOURLY_METRICS[metricKey];
     var modal = document.getElementById('hourly-modal');
     var strip = document.getElementById('hourly-strip');

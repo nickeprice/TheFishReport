@@ -13,21 +13,23 @@
  * make IndexedDB unavailable) plus a one-time import of the legacy `catch_db` key that
  * is only retired once the durable copy is confirmed written.
  *
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 var OUTBOX = [];
-var OUTBOX_STORE_KIND = 'idb';        // 'idb' | 'ls' — diagnostic
-var LEGACY_CATCH_KEY = 'catch_db';
+export var OUTBOX_STORE_KIND = 'idb';        // 'idb' | 'ls' — diagnostic
+window.OUTBOX_STORE_KIND = OUTBOX_STORE_KIND;
+export var LEGACY_CATCH_KEY = 'catch_db';
+window.LEGACY_CATCH_KEY = LEGACY_CATCH_KEY;
 
-function outboxAll() { return OUTBOX; }
+export function outboxAll() { return OUTBOX; }
 
-function outboxPending() {
+export function outboxPending() {
     return OUTBOX.filter(function (r) { return r && r.pendingSync; });
 }
 
-function outboxStoreKind() { return OUTBOX_STORE_KIND; }
+export function outboxStoreKind() { return OUTBOX_STORE_KIND; }
 
-function outboxReadLegacy() {
+export function outboxReadLegacy() {
     try {
         var j = localStorage.getItem(LEGACY_CATCH_KEY);
         var rows = j ? JSON.parse(j) : [];
@@ -35,13 +37,13 @@ function outboxReadLegacy() {
     } catch (e) { return []; }
 }
 
-function outboxWriteLegacy() {
+export function outboxWriteLegacy() {
     try { localStorage.setItem(LEGACY_CATCH_KEY, JSON.stringify(OUTBOX)); } catch (e) {}
 }
 
 // Merge by clientId, giving legacy rows (which predate clientId) a stable key so a
 // retry can never duplicate them. An already-synced row wins over an unsynced copy.
-function outboxMerge(rows) {
+export function outboxMerge(rows) {
     var byKey = {};
     OUTBOX.forEach(function (r) { if (r && r.clientId) byKey[r.clientId] = r; });
     (rows || []).forEach(function (r) {
@@ -53,7 +55,7 @@ function outboxMerge(rows) {
     OUTBOX = Object.keys(byKey).map(function (k) { return byKey[k]; });
 }
 
-async function outboxLoad() {
+export async function outboxLoad() {
     var db = await idbOpen();
     var usingIdb = !!db;
     if (!usingIdb) OUTBOX_STORE_KIND = 'ls';
@@ -73,12 +75,12 @@ async function outboxLoad() {
     return OUTBOX.length;
 }
 
-function outboxPersist() {
+export function outboxPersist() {
     if (OUTBOX_STORE_KIND === 'ls') { outboxWriteLegacy(); return; }
     idbPutAll('catches', OUTBOX);      // write-through; fire and forget
 }
 
-function outboxAdd(row) {
+export function outboxAdd(row) {
     if (!row.clientId) row.clientId = newUuid();
     OUTBOX.push(row);
     outboxPersist();
@@ -89,7 +91,7 @@ function outboxAdd(row) {
 // read-through snapshots of Supabase reads, stored as ONE IndexedDB row
 // { id: '_snapshot', ts, value } per store so the public board and the Gear Sim
 // community sonar still have real (honestly stale) data offline.
-function snapshotSave(store, value) {
+export function snapshotSave(store, value) {
     var row = { id: '_snapshot', ts: Date.now(), value: value };
     if (typeof idbPutAll === 'function') {
         idbPutAll(store, [row]);   // write-through
@@ -97,7 +99,7 @@ function snapshotSave(store, value) {
     try { localStorage.setItem('snap_' + store, JSON.stringify(row)); } catch (e) {}
 }
 
-async function snapshotLoad(store) {
+export async function snapshotLoad(store) {
     var row = null;
     if (typeof idbGetAll === 'function') {
         try {
@@ -111,11 +113,11 @@ async function snapshotLoad(store) {
     return (row && row.value) ? row.value : null;
 }
 
-function snapshotsAvailable() {
+export function snapshotsAvailable() {
     return (typeof idbPutAll === 'function' && typeof idbGetAll === 'function');
 }
 
-function outboxUpdate(clientId, patch) {
+export function outboxUpdate(clientId, patch) {
     for (var i = 0; i < OUTBOX.length; i++) {
         if (OUTBOX[i] && OUTBOX[i].clientId === clientId) {
             Object.keys(patch || {}).forEach(function (k) { OUTBOX[i][k] = patch[k]; });

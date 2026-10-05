@@ -1,12 +1,12 @@
 /**
  * src/features/catch-log/mycatches.js - the private "Yours" log (list/edit/delete).
  * public: _myCatches, renderMyCatches(), editMyCatch(row), deleteMyCatch(id)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- YOUR CATCHES (private log: list, edit, delete) — the "yours" scope ---
 var _myCatches = [];
 
-async function renderMyCatches() {
+export async function renderMyCatches() {
     var tbody = document.getElementById('catch-log-body');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -82,7 +82,7 @@ async function renderMyCatches() {
 }
 
 // Inline edit: prompt for the most useful private fields and update the row.
-async function editMyCatch(row) {
+export async function editMyCatch(row) {
     var species = prompt('Species', row.species || '');
     if (species == null) return;
     var flow = prompt('River flow (CFS)', row.flow != null ? String(row.flow) : '');
@@ -98,7 +98,7 @@ async function editMyCatch(row) {
     }
 }
 
-async function deleteMyCatch(id) {
+export async function deleteMyCatch(id) {
     if (!window.confirm('Delete this catch? This cannot be undone.')) return;
     var res = null;
     try { res = await Supa.deleteMyCatch(id); } catch (e) { res = null; }

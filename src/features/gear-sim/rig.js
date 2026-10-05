@@ -1,12 +1,13 @@
 /**
  * src/features/gear-sim/rig.js - per-device rig memory (last-used inputs).
  * public: RIG_STORE_KEY, saveRig(), restoreRig()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- RIG PRESET PERSISTENCE ---
-var RIG_STORE_KEY = 'puyallup_last_rig';
+export var RIG_STORE_KEY = 'puyallup_last_rig';
+window.RIG_STORE_KEY = RIG_STORE_KEY;
 
-function saveRig() {
+export function saveRig() {
     try {
         var rig = {
             // The line CASCADE, part by part, saved alongside the resolved id so a
@@ -29,7 +30,7 @@ function saveRig() {
     } catch (e) {}
 }
 
-function restoreRig() {
+export function restoreRig() {
     var raw = null;
     try { raw = localStorage.getItem(RIG_STORE_KEY); } catch (e) { return; }
     if (!raw) return;

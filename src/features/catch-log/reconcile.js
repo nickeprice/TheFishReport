@@ -17,13 +17,13 @@
  * The write itself is idempotent (clientId -> ON CONFLICT DO NOTHING), so even a
  * double-send cannot duplicate a catch — the lock is about wasted requests, not safety.
  *
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 var RECONCILE_MIN_INTERVAL_MS = 15000;
 var _reconcileInFlight = false;
 var _reconcileLastAt = 0;
 
-async function reconcileCatches(force) {
+export async function reconcileCatches(force) {
     if (_reconcileInFlight) return 0;
     if (typeof syncPendingCatches !== 'function') return 0;
     // Nothing to upload without a session: RLS requires user_id = auth.uid().
@@ -44,7 +44,7 @@ async function reconcileCatches(force) {
     }
 }
 
-function initCatchReconcile() {
+export function initCatchReconcile() {
     if (typeof window === 'undefined' || !window.addEventListener) return;
 
     window.addEventListener('online', function () {

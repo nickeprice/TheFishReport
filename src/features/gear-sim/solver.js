@@ -9,16 +9,16 @@
  *         waterTypeMultiplier(typeId)
  *
  * Split out of sim.js in UPDATE 3.0 Phase 1.4 so runSim() is a short orchestrator.
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // The line PICKERS carry a brand-specific id; resolve it to the real measured diameter
 // so the drag term uses the angler's actual line, not just its material+lb class.
-function pickedLineDiameter(pickId) {
+export function pickedLineDiameter(pickId) {
     var line = (typeof tackleLineById === 'function') ? tackleLineById(getStr(pickId)) : null;
     return (line && line.diameter_mm) ? line.diameter_mm : 0;   // 0 -> generic lookup
 }
 
-function readRigFromForm() {
+export function readRigFromForm() {
     var hookRaw = getStr('hook');
     return {
         flow: getCurrentFlow(),
@@ -46,7 +46,7 @@ function readRigFromForm() {
 // logged a catch at this flow and species. Physics stays locked - this data only
 // moves the strike zone toward where fish are actually feeding. Falls back to the
 // local buffer offline.
-async function loadCalibrationData(flow, species) {
+export async function loadCalibrationData(flow, species) {
     var dbArray = [];
     if (typeof Supa !== 'undefined') {
         try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }
@@ -66,7 +66,7 @@ async function loadCalibrationData(flow, species) {
 }
 
 // The private row enrichment written by logData() when the angler logs a catch.
-function buildSimStats(rig, out) {
+export function buildSimStats(rig, out) {
     return {
         flow: rig.flow,
         weight: rig.weightOz,
@@ -98,7 +98,7 @@ function buildSimStats(rig, out) {
     };
 }
 
-function paintSimHud(rig, out, stats) {
+export function paintSimHud(rig, out, stats) {
     var hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
 
     // BANNERS + SUMMARY: the strike-zone banner (gradient colour) and the ONE cohesive

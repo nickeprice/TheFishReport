@@ -6,7 +6,7 @@
  *
  * public: logLawVelocity(), velocityProfile(), turbulenceFluctuation(),
  *         uStarFromMax(), ROUGHNESS_COBBLE, setD50()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
 // von Kármán constant (standard fluid dynamics, no site tuning)
@@ -25,7 +25,7 @@ var ROUGHNESS_COBBLE = 0.033 * 2.5 * MEDIAN_COBBLE_M;  // m — @provenance: der
  *  Updates both MEDIAN_COBBLE_M and the derived ROUGHNESS_COBBLE.
  *  @param meters — new D50 in metres (e.g. 0.15 for coarse gravel)
  *  @provenance: derived */
-function setD50(meters) {
+export function setD50(meters) {
     MEDIAN_COBBLE_M = meters;
     ROUGHNESS_COBBLE = 0.033 * 2.5 * MEDIAN_COBBLE_M;
 }
@@ -43,7 +43,7 @@ function setD50(meters) {
  * @provenance: standard — log-law is the canonical neutral boundary-layer profile.
  * @error: ±0.15 m/s (±10%) — standard deviation on a natural river estimate.
  */
-function logLawVelocity(z, uStar, z0) {
+export function logLawVelocity(z, uStar, z0) {
     if (!z || z <= 0 || !uStar || uStar <= 0 || !z0 || z0 <= 0) return 0;
     if (z <= z0) return 0;                                  // roughness sublayer
     return (uStar / KAPPA) * Math.log(z / z0);
@@ -62,7 +62,7 @@ function logLawVelocity(z, uStar, z0) {
  * @provenance: derived — inverted from standard log-law.
  * @error: ±0.02 m/s (±10%) — propagated from velocity uncertainty.
  */
-function uStarFromMax(uMax, H, z0) {
+export function uStarFromMax(uMax, H, z0) {
     if (!uMax || uMax <= 0 || !H || H <= 0 || !z0 || z0 <= 0) return null;
     var lnArg = H / z0;
     if (lnArg <= 1) return null;                            // H must be > z0
@@ -85,7 +85,7 @@ function uStarFromMax(uMax, H, z0) {
  * or { vMs: 0, uStar: null, z0: z0, H: H } when inputs are out of range.
  * @provenance: derived — composed from uStarFromMax() + logLawVelocity().
  */
-function velocityProfile(z, H, uMax, z0) {
+export function velocityProfile(z, H, uMax, z0) {
     z0 = (z0 && z0 > 0) ? z0 : ROUGHNESS_COBBLE;
     var uStar = uStarFromMax(uMax, H, z0);
     if (uStar === null) {
@@ -114,7 +114,7 @@ function velocityProfile(z, H, uMax, z0) {
  * @provenance: standard — Gaussian white noise via Box-Muller.
  * @error: ±0.10 m/s — bounded by the intensity fraction.
  */
-function turbulenceFluctuation(t, intensity, uMean) {
+export function turbulenceFluctuation(t, intensity, uMean) {
     // t is reserved; silence unused-param warnings by the convention of including it.
     if (!intensity || intensity <= 0 || !uMean || uMean <= 0) return 0;
     // Box-Muller: two uniform(0,1] → one standard normal

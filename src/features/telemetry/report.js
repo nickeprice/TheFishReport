@@ -2,13 +2,13 @@
  * src/features/telemetry/report.js - the water-report pipeline (fetch, paint,
  * silent refresh). Depends on the tide/hero/daynav renderers + water.js.
  * public: loadWaterReport(silent)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  * NOTE: 294 lines, one large function — over the <150-line target.
  */
 // Loads (or silently refreshes) the water report. When `silent` is true this is
 // a background auto-refresh: it must NOT overwrite a Gear Sim CFS the angler
 // typed by hand (the initial load + manual station change still auto-sync).
-async function loadWaterReport(silent) {
+export async function loadWaterReport(silent) {
     var active = localStorage.getItem('active_station');
     var station = null;
     try {

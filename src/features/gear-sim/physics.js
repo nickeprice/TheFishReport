@@ -9,7 +9,7 @@
  *
  * public: lineDragPerFt(), lineNetBuoyancyPerFt(), pointDragGf(), totalDragPerFt(), computeLiftGf(),
  *         presentationHeightInches()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
 // Physical constants (standard fluid properties, never tuned)
@@ -25,7 +25,7 @@ var NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10°C
 // Re ranges ≈ 20-1500.  The classical flat Cd=1.0 is ~35% low at Re=150.
 // @provenance: literature — White's empirical fit for smooth circular cylinders.
 
-function lineCd(reynolds) {
+export function lineCd(reynolds) {
     if (!reynolds || reynolds <= 0) return 1.0;
     var reClamped = Math.max(reynolds, 0.1);          // stagnation safety: floor at 0.1
     return Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
@@ -41,7 +41,7 @@ function lineCd(reynolds) {
  * Returns grams-force per foot of leader.
  * Floored at 0.001 gf/ft to prevent degenerate catenary behaviour.
  */
-function lineDragPerFt(diameterMm, velocityFtS) {
+export function lineDragPerFt(diameterMm, velocityFtS) {
     if (!diameterMm || diameterMm <= 0 || !velocityFtS || velocityFtS <= 0) return 0.001;
     var dM = diameterMm * 0.001;               // mm -> m
     var vMs = velocityFtS * CFS_TO_MS;          // ft/s -> m/s
@@ -62,7 +62,7 @@ function lineDragPerFt(diameterMm, velocityFtS) {
  * Returns grams-force per foot. Negative value means the line sinks.
  * @provenance: derived — Archimedes net buoyancy = displaced water weight - line weight per ft
  */
-function lineNetBuoyancyPerFt(density_g_cm3, diameterMm) {
+export function lineNetBuoyancyPerFt(density_g_cm3, diameterMm) {
     if (!diameterMm || diameterMm <= 0 || !density_g_cm3 || density_g_cm3 <= 0) return 0;
     var dM = diameterMm * 0.001;                 // mm -> m
     var volPerFtM3 = Math.PI * (dM / 2) * (dM / 2) * 0.3048;  // m^3 per foot
@@ -78,7 +78,7 @@ function lineNetBuoyancyPerFt(density_g_cm3, diameterMm) {
  * cd: drag coefficient (from tackle.json or standard value)
  * velocityFtS: water velocity in ft/s
  */
-function pointDragGf(areaCm2, cd, velocityFtS) {
+export function pointDragGf(areaCm2, cd, velocityFtS) {
     if (!areaCm2 || areaCm2 <= 0 || !cd || cd <= 0 || !velocityFtS || velocityFtS <= 0) return 0;
     var areaM2 = areaCm2 * 1e-4;               // cm^2 -> m^2
     var vMs = velocityFtS * CFS_TO_MS;
@@ -96,7 +96,7 @@ function pointDragGf(areaCm2, cd, velocityFtS) {
  * leaderLenFt: leader length in ft
  * Objects: each {areaCm2: number, cd: number} - omit or null/0 to skip
  */
-function totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt,
+export function totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt,
                         weight, corky1, corky2, bead, hook, yarn) {
     if (!leaderLenFt || leaderLenFt <= 0) return 0.001;
     var w = lineDragPerFt(leaderDiaMm, velocityFtS);
@@ -126,7 +126,7 @@ function totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt,
  * @provenance: derived — Archimedes net buoyancy = ρ·V − m per item in tackle.json
  * Floored at 0.01 gf to prevent degenerate catenary behaviour.
  */
-function computeLiftGf(corky1NetG, corky2NetG, hookMassG, beadNetSinkG, yarnBuoyancyG) {
+export function computeLiftGf(corky1NetG, corky2NetG, hookMassG, beadNetSinkG, yarnBuoyancyG) {
     return Math.max(0.01,
         (corky1NetG || 0) + (corky2NetG || 0) + (yarnBuoyancyG || 0)
         - (hookMassG || 0) - (beadNetSinkG || 0));
@@ -150,7 +150,7 @@ function computeLiftGf(corky1NetG, corky2NetG, hookMassG, beadNetSinkG, yarnBuoy
  *
  * Returns height in inches.
  */
-function presentationHeightInches(liftGf, dragGfPerFt, leaderFt) {
+export function presentationHeightInches(liftGf, dragGfPerFt, leaderFt) {
     if (leaderFt <= 0 || dragGfPerFt <= 0) return 0;
     var l = Math.max(0.01, liftGf);   // prevent /0
     var x = (dragGfPerFt * leaderFt) / l;

@@ -6,18 +6,18 @@
  * Source: the modernized WDFN OGC API (waterservices/nwis is decommissioned in
  * Q1 2027). The state filter comes from the region registry (state_name), NOT a
  * hardcoded `stateCd=wa`, so adding a state does not touch this file.
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 var WDFN_LOCATIONS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items';
 var WDFN_LATEST = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/latest-continuous/items';
 
-function searchRegionStateName() {
+export function searchRegionStateName() {
     var r = (typeof window !== 'undefined' && window.REGIONS) ? window.REGIONS.WA : null;
     return (r && r.state_name) || 'Washington';
 }
 
 // WDFN returns GeoJSON: coordinates are [lon, lat] and the id carries a USGS- prefix.
-function wdfnLocationsToStations(feats) {
+export function wdfnLocationsToStations(feats) {
     var out = [];
     (feats || []).forEach(function (f) {
         var p = f.properties || {};
@@ -33,7 +33,7 @@ function wdfnLocationsToStations(feats) {
     return out;
 }
 
-function presetButtonHtml(id, name, lat, lon) {
+export function presetButtonHtml(id, name, lat, lon) {
     // USGS station text is third-party data: escape it for BOTH the HTML body and the
     // JS string literal inside the onclick attribute (never interpolate it raw).
     return '<button class="preset-btn" onclick="selectPreset(\'' + escapeJsString(id) + '\', ' +
@@ -41,13 +41,13 @@ function presetButtonHtml(id, name, lat, lon) {
         '<span>' + escapeHtml(name) + '</span> <span class="preset-id">' + escapeHtml(id) + '</span></button>';
 }
 
-function searchErrorHtml(msg) {
+export function searchErrorHtml(msg) {
     return '<div style="color:var(--accent-red); font-weight:bold; padding:8px;">\u274c ' + msg + '</div>';
 }
 
 // G3 (Phase 2.4): when there is no network, WDFN search cannot work — disable the
 // input and point the angler at the static discovery pool. Re-enabled automatically.
-function updateSearchAvailability() {
+export function updateSearchAvailability() {
     var input = document.getElementById('station-search');
     if (!input) return;
     var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
@@ -67,7 +67,7 @@ if (typeof window !== 'undefined') {
     updateSearchAvailability();
 }
 
-async function searchStation() {
+export async function searchStation() {
     // G3 (Phase 2.4): hard guard even if the input was somehow still enabled.
     var offlineNow = (typeof navigator !== 'undefined' && navigator.onLine === false);
     if (offlineNow) {

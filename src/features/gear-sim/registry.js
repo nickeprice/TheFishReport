@@ -14,14 +14,16 @@
  *
  * Classic script (global scope). Loaded AFTER techniques/*.js, BEFORE sim.js.
  */
-var GEAR_TECHNIQUES = {
+export var GEAR_TECHNIQUES = {
     drift: DRIFT_TECHNIQUE
 };
+window.GEAR_TECHNIQUES = GEAR_TECHNIQUES;
 
-var GEAR_DEFAULT_TECHNIQUE = 'drift';
+export var GEAR_DEFAULT_TECHNIQUE = 'drift';
+window.GEAR_DEFAULT_TECHNIQUE = GEAR_DEFAULT_TECHNIQUE;
 
 // Resolve a technique by id, falling back to the default so the sim can never run
 // without a solver (an unknown id must not blank the Gear Sim).
-function gearTechnique(id) {
+export function gearTechnique(id) {
     return GEAR_TECHNIQUES[id || GEAR_DEFAULT_TECHNIQUE] || GEAR_TECHNIQUES[GEAR_DEFAULT_TECHNIQUE];
 }

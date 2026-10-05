@@ -8,7 +8,7 @@
  *         tackleWeightPhysicsData,
  *         WATER_DENSITY_G_CM3,
  *         THERMAL_BANDS, thermalOptimum(tempF)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- GEAR SIM: DETERMINISTIC FLUID DYNAMICS ENGINE ---
 // Pure boundary-layer physics. Every output is a pure function of the form inputs plus
@@ -16,23 +16,26 @@
 // Physics is pure math:  F = 0.5 * rho * Cd * A * v^2. No tuned constants, no
 // reference flow, no calibration anchors. Community catches never bend
 // the physics - they act as sonar that shifts WHERE the fish are (the zone).
-var currentStats = null;
+export var currentStats = null;
+window.currentStats = currentStats;
 
-var BASE_ZONE_MIN = 4.0;     // inches - baseline strike zone floor
-var BASE_ZONE_MAX = 12.0;    // inches - baseline strike zone ceiling
+export var BASE_ZONE_MIN = 4.0;     // inches - baseline strike zone floor
+window.BASE_ZONE_MIN = BASE_ZONE_MIN;
+export var BASE_ZONE_MAX = 12.0;    // inches - baseline strike zone ceiling
+window.BASE_ZONE_MAX = BASE_ZONE_MAX;
 
-function getNum(id) {
+export function getNum(id) {
     var el = document.getElementById(id);
     if (!el) return 0;
     var val = parseFloat(el.value);
     return isNaN(val) ? 0 : val;
 }
-function getStr(id) {
+export function getStr(id) {
     var el = document.getElementById(id);
     return el ? el.value : '';
 }
 
-function getGPS() {
+export function getGPS() {
     if("geolocation" in navigator) {
         logDebug("Requesting GPS...", "SYS");
         navigator.geolocation.getCurrentPosition(function(pos){
@@ -58,7 +61,8 @@ function getGPS() {
 // the picker and this label agree - while docs/tackle_measurements.csv keeps its own
 // measurement row `cheater-12` with the measured egg dimensions.)
 // Picker value -> tackle.json id mapping for foam types.
-var FOAM_PICKER_MAP = GEAR_OPTIONS.foamMap;
+export var FOAM_PICKER_MAP = GEAR_OPTIONS.foamMap;
+window.FOAM_PICKER_MAP = FOAM_PICKER_MAP;
 
 /**
  * Resolve a foam picker value to its tackle.json data.
@@ -67,7 +71,7 @@ var FOAM_PICKER_MAP = GEAR_OPTIONS.foamMap;
  * Falls back to {key:'0',...} for None/empty input.
  * @provenance: derived — buoyancy_g and mass_g from tackle.json
  */
-function parseFoam(rawValue) {
+export function parseFoam(rawValue) {
     var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
     if (key === '0' || key === '') {
         return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
@@ -93,13 +97,13 @@ function parseFoam(rawValue) {
 }
 
 // Backwards compatible with records that only stored a numeric `corky` value.
-function foamLabelFromRecord(row) {
+export function foamLabelFromRecord(row) {
     if (!row) return '--';
     var raw = (row.foam !== undefined && row.foam !== null) ? row.foam : row.corky;
     return parseFoam(raw).label;
 }
 
-function hookLabel(hook) {
+export function hookLabel(hook) {
     if (!hook) return '--';
     var MAP = GEAR_OPTIONS.hookIdMap;
     var tid = MAP[String(hook)];
@@ -114,7 +118,7 @@ function hookLabel(hook) {
  * Resolve hook picker value to tackle.json row.
  * Returns {mass_g, areaCm2, cd} or null.
  */
-function tackleHookData(hookVal) {
+export function tackleHookData(hookVal) {
     var MAP = GEAR_OPTIONS.hookIdMap;
     var key = String(hookVal);
     var tid = MAP[key];
@@ -135,7 +139,7 @@ function tackleHookData(hookVal) {
  * Returns {mass_g, buoyancy_g, areaCm2, cd, netSinkG} or null.
  * netSinkG = max(0, mass_g - buoyancy_g) - positive means bead sinks.
  */
-function tackleBeadData(bdSz) {
+export function tackleBeadData(bdSz) {
     if (!bdSz) return null;
     var beads = (typeof tackleItems === 'function') ? tackleItems('bead') : [];
     for (var i = 0; i < beads.length; i++) {
@@ -163,7 +167,8 @@ function tackleBeadData(bdSz) {
 // Each type adjusts depth and velocity relative to the gauge/spot measurement.
 // Default (Run) applies 1.0 multipliers — no change from the continuity calculation.
 // ==================================================================================
-var WATER_TYPES = [
+export var WATER_TYPES = [
+window.WATER_TYPES = WATER_TYPES;
     { id: 'pool',   label: 'Pool',   depthMul: 1.2, velMul: 0.7,
       desc: 'Deep, slow water — fish hold deep and near cover.' },
     { id: 'riffle', label: 'Riffle', depthMul: 0.7, velMul: 1.3,
@@ -174,9 +179,10 @@ var WATER_TYPES = [
       desc: 'Smooth, even flow — fish hold in tailouts and edges.' }
 ];
 
-var DEFAULT_WATER_TYPE = 'run';
+export var DEFAULT_WATER_TYPE = 'run';
+window.DEFAULT_WATER_TYPE = DEFAULT_WATER_TYPE;
 
-function tackleYarnBuoyancyG(inches) {
+export function tackleYarnBuoyancyG(inches) {
     if (!inches || inches <= 0) return 0;
     var yb = -0.012;
     if (typeof tackleItems === 'function') {
@@ -196,7 +202,7 @@ function tackleYarnBuoyancyG(inches) {
  * @error: area ±0.5 cm² (±28%), cd ±0.2 (±25%)
  * @measure: caliper tuft diameter at 5 points → mean_d, area_cm² = π × mean_d × length_cm
  */
-function tackleYarnDragData() {
+export function tackleYarnDragData() {
     var dflt = { areaCm2: 1.8, cd: 0.8 };
     if (typeof tackleItems !== 'function') return dflt;
     var yarns = tackleItems('yarn');
@@ -216,8 +222,9 @@ function tackleYarnDragData() {
  * unavailable (e.g. PENDING measurement rows).
  * @provenance: derived — Archimedes F_b = rho_water * g * V
  */
-var WATER_DENSITY_G_CM3 = 1.0; // g/cm³, fresh water — @provenance: standard
-function tackleWeightPhysicsData(shapeLabel, oz) {
+export var WATER_DENSITY_G_CM3 = 1.0; // g/cm³, fresh water — @provenance: standard
+window.WATER_DENSITY_G_CM3 = WATER_DENSITY_G_CM3;
+export function tackleWeightPhysicsData(shapeLabel, oz) {
     if (!shapeLabel || !oz) return null;
     if (typeof tackleWeightRow !== 'function') return null;
     var row = tackleWeightRow(shapeLabel, Number(oz));
@@ -249,10 +256,12 @@ function tackleWeightPhysicsData(shapeLabel, oz) {
 // Only the RESPONSE to discharge changes. Values stay in the model's calibration
 // units (they are NOT raw ft/s), so the reference rig is byte-identical.
 // No measured curve for a station -> the estimate above, exactly as before.
-var SHAPE_MIN = 0.2, SHAPE_MAX = 5.0;   // damp wild extrapolation outside the record
+export var SHAPE_MIN = 0.2, SHAPE_MAX = 5.0;   // damp wild extrapolation outside the record
+window.SHAPE_MIN = SHAPE_MIN;
+window.SHAPE_MAX = SHAPE_MAX;
 
 // The station the sim is currently solving for (set by the station picker).
-function getActiveStationId() {
+export function getActiveStationId() {
     try {
         var raw = localStorage.getItem('active_station');
         if (raw) {
@@ -264,7 +273,7 @@ function getActiveStationId() {
 }
 
 // Published hydraulic-geometry curve for a gauge: {a, b} or null when unmeasured.
-function measuredFit(siteId) {
+export function measuredFit(siteId) {
     if (!siteId || typeof window === 'undefined') return null;
     var all = window.CHANNEL_MEASUREMENTS;
     if (!all || !all.sites) return null;
@@ -277,13 +286,13 @@ function measuredFit(siteId) {
 }
 
 // v = a * Q^b (ft/s) measured at that gauge, or null.
-function measuredVelocity(siteId, flow) {
+export function measuredVelocity(siteId, flow) {
     var fit = measuredFit(siteId);
     if (!fit) return null;
     return fit.a * Math.pow(Math.max(flow, 1), fit.b);
 }
 
-function hydraulicVelocity(flow, siteId) {
+export function hydraulicVelocity(flow, siteId) {
     var meanEstimate = 0.25 * Math.pow(Math.max(flow, 1), 0.4);      // ft/s power-law estimate
     var bottomEstimate = meanEstimate * Math.pow(0.05, 1 / 6);       // ft/s at bed
     var out = { mean: meanEstimate, bottom: bottomEstimate, source: 'estimate' };
@@ -321,7 +330,8 @@ function hydraulicVelocity(flow, siteId) {
 // docs/LITERATURE.md S8). All three top bands share shift -2.00, so the frozen baselines do
 // NOT move - a deeper refuge shift is a deliberate future contract bump, not this change.
 // ==================================================================================
-var THERMAL_BANDS = [
+export var THERMAL_BANDS = [
+window.THERMAL_BANDS = THERMAL_BANDS;
     { band: 'torpid',  range: 'under 45', shift: -1.50, label: 'too cold to be active',
       note: 'fish sit tight to the bottom and rarely move.' },
     { band: 'cool',    range: '45-50',    shift: -0.75, label: 'cool but catchable',
@@ -338,7 +348,7 @@ var THERMAL_BANDS = [
       note: 'at/above 22C - lethal to adults; they sit in the coldest water they can find.' }
 ];
 
-function thermalOptimum(tempF) {
+export function thermalOptimum(tempF) {
     if (tempF === null || tempF === undefined || isNaN(tempF)) return null;
     var t = Number(tempF);
     var b;

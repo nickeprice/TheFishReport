@@ -3,13 +3,13 @@
  * the per-species RUN & TIMING cards. Values come from the real report only
  * (never fabricated); absent data folds to "--".
  * public: buildFishingHero(rep), buildSpeciesCalendarHtml(calendar, escStocks)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // Plain-English "hero" for the water card. Replaces the opaque 0-100 Movement
 // Index + % timeline: a single-line compact strip — verdict · best window · why.
 // Everything is derived from the same real triggers (rain freshet, pressure
 // trend, tide highs, moon phase, transit state, netting) — never fabricated.
-function buildFishingHero(rep) {
+export function buildFishingHero(rep) {
     if (!rep) return '';
     var score = 0;
     var reasons = [];
@@ -100,7 +100,7 @@ function buildFishingHero(rep) {
 // progress bar + peak line ALWAYS visible; the raw counts (WDFW forecast /
 // Return / Trap / 5-Yr Avg) fold behind a <details> per card so "status stays,
 // numbers fold". escStocks is the water.js hatchery registry (may be absent => "--").
-function buildSpeciesCalendarHtml(calendar, escStocks) {
+export function buildSpeciesCalendarHtml(calendar, escStocks) {
     if (!calendar || !calendar.length) return '';
     var html = '<div class="run-timing-cards">';
     for (var i = 0; i < calendar.length; i++) {

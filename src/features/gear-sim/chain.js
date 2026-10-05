@@ -5,7 +5,7 @@
  * Replaces cable.js, terminal.js, sinker.js with one ODE-based shooting solver.
  *
  * public: chainSolve()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
 // ── Physical constants (SI) ──────────────────────────────────────────────────
@@ -31,7 +31,7 @@ var LINE_DENSITY_C = {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Resolve a line's density in kg/m³ from the rig material + tackle library. */
-function _chainLineDensity(mat, lb) {
+export function _chainLineDensity(mat, lb) {
     if (typeof tackleLineByMatLb === 'function') {
         var row = tackleLineByMatLb(mat, lb);
         if (row && row.density_g_cm3) return Number(row.density_g_cm3) * 1000;
@@ -40,7 +40,7 @@ function _chainLineDensity(mat, lb) {
 }
 
 /** Resolve measured line diameter in metres. */
-function _chainLineDiaM(mat, lb, dia) {
+export function _chainLineDiaM(mat, lb, dia) {
     if (dia && dia > 0) return dia * 0.001;
     if (typeof tackleLineByMatLb === 'function') {
         var row = tackleLineByMatLb(mat, lb || 12);
@@ -51,7 +51,7 @@ function _chainLineDiaM(mat, lb, dia) {
 }
 
 /** Log-law velocity at height z above bottom. z in m, returns m/s. */
-function _chainVelAt(z, H, uMax, z0) {
+export function _chainVelAt(z, H, uMax, z0) {
     if (z <= 0 || z <= z0 || !uMax || uMax <= 0) return 0;
     var uStar = uMax * KAPPA_C / Math.log(H / z0);
     if (uStar <= 0) return 0;
@@ -61,7 +61,7 @@ function _chainVelAt(z, H, uMax, z0) {
 // ── Point element data (no closures, just static properties) ────────────────
 
 /** Return plain element descriptor { s, label, areaM2, cd, massKg, buoyancyN }. */
-function _chainElemData(rig) {
+export function _chainElemData(rig) {
     var out = [];
 
     // 1. Hook at s = 0
@@ -146,7 +146,7 @@ function _chainElemData(rig) {
  * state = [Tx(N), Tz(N), x(m), z(m)] — z is height above river bottom.
  * Returns [dTx_ds, dTz_ds, dx_ds, dz_ds].
  */
-function _chainODEs(state, dM, rhoLine, velFn) {
+export function _chainODEs(state, dM, rhoLine, velFn) {
     var Tx = state[0], Tz = state[1];
     var z = state[3];
     var T = Math.sqrt(Tx * Tx + Tz * Tz);
@@ -173,7 +173,7 @@ function _chainODEs(state, dM, rhoLine, velFn) {
 }
 
 /** Single RK4 step of size ds. */
-function _rk4Step(state, ds, dM, rhoLine, velFn) {
+export function _rk4Step(state, ds, dM, rhoLine, velFn) {
     var s0 = state;
     var k1 = _chainODEs(s0, dM, rhoLine, velFn);
     var s2 = [s0[0] + 0.5*ds*k1[0], s0[1] + 0.5*ds*k1[1], s0[2] + 0.5*ds*k1[2], s0[3] + 0.5*ds*k1[3]];
@@ -196,7 +196,7 @@ function _rk4Step(state, ds, dM, rhoLine, velFn) {
  * Returns { state, arcLenUsed, surfaced }.
  * If the surface (z >= H) is crossed, state is interpolated exactly to z=H.
  */
-function _integrateSeg(state0, segLenM, dM, rhoLine, velFn, H) {
+export function _integrateSeg(state0, segLenM, dM, rhoLine, velFn, H) {
     var ds = segLenM / RK4_STEPS;
     var st = state0.slice();
     var used = 0;
@@ -241,7 +241,7 @@ function _integrateSeg(state0, segLenM, dM, rhoLine, velFn, H) {
  * @param {number} L_air — length of air segment to use (m)
  * @returns {{ xTip: number, zTip: number, ok: bool }}
  */
-function _airCatenary(Tx, Tz, x0, H, rodH, dM, rhoLine, L_air) {
+export function _airCatenary(Tx, Tz, x0, H, rodH, dM, rhoLine, L_air) {
     var area = Math.PI * dM * dM / 4;
     var w_z = -rhoLine * G_C * area;   // N/m, negative = downward (weight in air, no buoyancy)
     if (Math.abs(w_z) < 1e-12) {
@@ -269,14 +269,14 @@ function _airCatenary(Tx, Tz, x0, H, rodH, dM, rhoLine, L_air) {
 // ── Element force helper ────────────────────────────────────────────────────
 
 /** Compute drag force (N) on a point element at height z (above bottom). */
-function _elemDrag(el, z, velFn) {
+export function _elemDrag(el, z, velFn) {
     var v = velFn(z);
     if (v <= 0 || el.areaM2 <= 0) return 0;
     return 0.5 * RHO_C * el.cd * el.areaM2 * v * v;
 }
 
 /** Compute net vertical force (N, positive = upward) on a point element. */
-function _elemVert(el) {
+export function _elemVert(el) {
     return el.buoyancyN - el.massKg * G_C;
 }
 
@@ -302,7 +302,7 @@ function _elemVert(el) {
  *   detail: string
  * }
  */
-function chainSolve(rig, env) {
+export function chainSolve(rig, env) {
     // ── 1. Rig geometry ────────────────────────────────────────────
     var ldLenM = (rig.ldLen || 4) * 0.3048;
     var mlLenM = 35;

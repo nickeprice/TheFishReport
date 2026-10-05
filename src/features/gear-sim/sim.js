@@ -6,9 +6,9 @@
  * Adding a fishing technique does NOT touch this file (see gear-sim/registry.js).
  *
  * public: runSim()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
-async function runSim() {
+export async function runSim() {
     var simBtn = document.getElementById('btn-sim');
 
     // No defaults: every gear field must be chosen before the solver can run.

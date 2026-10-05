@@ -14,56 +14,38 @@
  * green = live reading. An "optimal / blown out" colour needs the flow-percentile
  * work (UPDATE 3.0 §8) — until then we do not invent one.
  *
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
-var LEAFLET_JS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-var LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+import L from 'leaflet';
+
 var LEAFLET_TILES_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var MAP_DEFAULT_CENTER = [47.195, -122.302];
 var MAP_START_ZOOM = 10;
 
-var _leafletPromise = null;
 var _stationMap = null;
 var _stationMarkers = null;
 
-// Load Leaflet once. Resolves false when it is unavailable, so every caller can carry
-// on without a map instead of throwing.
-function loadLeaflet() {
-    if (typeof window !== 'undefined' && window.L) return Promise.resolve(true);
-    if (_leafletPromise) return _leafletPromise;
-    _leafletPromise = new Promise(function (resolve) {
-        if (typeof document === 'undefined' || !document.head) return resolve(false);
-        if (!document.getElementById('leaflet-css')) {
-            var link = document.createElement('link');
-            link.id = 'leaflet-css';
-            link.rel = 'stylesheet';
-            link.href = LEAFLET_CSS_URL;
-            document.head.appendChild(link);
-        }
-        var tag = document.createElement('script');
-        tag.src = LEAFLET_JS_URL;
-        tag.async = true;
-        tag.onload = function () { resolve(!!window.L); };
-        tag.onerror = function () { resolve(false); };
-        document.head.appendChild(tag);
-        setTimeout(function () { resolve(!!window.L); }, 8000);
-    });
-    return _leafletPromise;
+// Leaflet is imported statically at build time. The legacy dynamic CDN loader
+// (fetching unpkg.com/leaflet@1.9.4) is deleted — Vite resolves the npm package.
+export function loadLeaflet() {
+    return Promise.resolve(true);
 }
+window.loadLeaflet = loadLeaflet;
+window.L = L;
 
-function mapPinHasReading(station) {
+export function mapPinHasReading(station) {
     if (!station) return false;
     var hasCfs = station.cfs !== undefined && station.cfs !== null;
     var hasGage = station.gage !== undefined && station.gage !== null;
     return hasCfs || hasGage;
 }
 
-function mapPinColor(station) {
+export function mapPinColor(station) {
     return mapPinHasReading(station) ? '#22c55e' : '#94a3b8';
 }
 
-function mapPinIcon(station) {
-    return window.L.divIcon({
+export function mapPinIcon(station) {
+    return L.divIcon({
         className: 'station-pin',
         html: '<span class="station-pin-dot" style="background:' + mapPinColor(station) + '"></span>',
         iconSize: [16, 16],
@@ -73,13 +55,13 @@ function mapPinIcon(station) {
 
 // The nearby-stations payload carries the legal RULE but not that day's clock times,
 // so describe the rule instead of printing empty times.
-function mapLegalText(rule) {
+export function mapLegalText(rule) {
     if (rule === '24hr') return 'Open all day';
     if (rule === 'daylight') return 'Daylight window (1h either side of sunrise/sunset)';
     return 'Hours not verified \u2014 check the regulations';
 }
 
-function stationPopupHtml(s) {
+export function stationPopupHtml(s) {
     var cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
     var gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
     return '<b>' + escapeHtml(s.name || s.id) + '</b><br>' +
@@ -90,7 +72,7 @@ function stationPopupHtml(s) {
         '\');return false;">Fish this gauge</a>';
 }
 
-function mapCenter() {
+export function mapCenter() {
     if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
         return [State.userGPSCoords.lat, State.userGPSCoords.lon];
     }
@@ -105,13 +87,13 @@ function mapCenter() {
 // refresh - including when the gauge feed failed, which is the point: a spot you already
 // saved must not vanish (or fail to appear) because the lookup was unreachable. Private
 // data: these coordinates are never sent anywhere by this plot.
-function plotSavedSpotStars() {
+export function plotSavedSpotStars() {
     if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
     if (typeof savedSpotIcon !== 'function') return 0;
     var plotted = 0;
     spotsState.rows.forEach(function (sp) {
         if (sp.latitude == null || sp.longitude == null) return;
-        window.L.marker([Number(sp.latitude), Number(sp.longitude)], { icon: savedSpotIcon(), title: sp.label })
+        L.marker([Number(sp.latitude), Number(sp.longitude)], { icon: savedSpotIcon(), title: sp.label })
             .bindPopup(savedSpotPopupHtml(sp))
             .addTo(_stationMarkers);
         plotted++;
@@ -122,7 +104,7 @@ function plotSavedSpotStars() {
 // { count, note, error, status, spots } - always an object, so callers can read the fields
 // without guarding. `error` set = we could not reach the lookup; `count` is then 0 and the
 // star layer is still painted.
-async function refreshStationMap(center) {
+export async function refreshStationMap(center) {
     if (!_stationMap || !_stationMarkers || typeof apiGetJson !== 'function') {
         return { count: 0, note: '', error: null, status: 0, spots: 0 };
     }
@@ -132,11 +114,11 @@ async function refreshStationMap(center) {
     if (res.ok) {
         var stations = (res.data && res.data.stations) ? res.data.stations : [];
         _stationMarkers.clearLayers();
-        window.L.circleMarker(center, { radius: 6, color: '#38bdf8', weight: 2, fillOpacity: 0.35 })
+        L.circleMarker(center, { radius: 6, color: '#38bdf8', weight: 2, fillOpacity: 0.35 })
             .addTo(_stationMarkers);
         stations.forEach(function (s) {
             if (s.lat == null || s.lon == null) return;
-            window.L.marker([s.lat, s.lon], { icon: mapPinIcon(s), title: s.name })
+            L.marker([s.lat, s.lon], { icon: mapPinIcon(s), title: s.name })
                 .bindPopup(stationPopupHtml(s))
                 .addTo(_stationMarkers);
         });
@@ -160,7 +142,7 @@ async function refreshStationMap(center) {
 // point keeps its OWN coordinates for the weather (see the resolver note in spots.js).
 var _spotPickOn = false;
 
-function startSpotPick() {
+export function startSpotPick() {
     // A spot belongs to a private account, so starting the pick without a session would be a
     // dead end - say so instead of arming a tap that cannot save.
     if (!spotsSignedIn()) {
@@ -174,12 +156,12 @@ function startSpotPick() {
 }
 
 // Open the map if it is not up yet, then arm the next tap as the spot.
-async function openSpotPickMap() {
-    if (!_stationMap || !window.L) {
+export async function openSpotPickMap() {
+    if (!_stationMap || !L) {
         spotsStatus('Loading the map\u2026');
         try { await showStationMap(); } catch (e) {}
     }
-    if (!_stationMap || !window.L) {
+    if (!_stationMap || !L) {
         spotsStatus('Map unavailable (offline or CDN blocked) \u2014 use the presets or GPS instead.');
         return;
     }
@@ -196,7 +178,7 @@ async function openSpotPickMap() {
     }
 }
 
-async function onSpotPick(e) {
+export async function onSpotPick(e) {
     _spotPickOn = false;
     if (_stationMap && _stationMap.getContainer) _stationMap.getContainer().style.cursor = '';
     if (!e || !e.latlng) return;
@@ -220,7 +202,7 @@ async function onSpotPick(e) {
     spotsStatus('Saved. Tap its star to load the conditions there.');
 }
 
-async function showStationMap() {
+export async function showStationMap() {
     var box = document.getElementById('station-map');
     var note = document.getElementById('station-map-note');
     if (!box) return;
@@ -238,9 +220,9 @@ async function showStationMap() {
     // WS-5: refresh the private spot list first, so the star layer below is current.
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     if (!_stationMap) {
-        _stationMap = window.L.map(box).setView(center, MAP_START_ZOOM);
-        window.L.tileLayer(LEAFLET_TILES_URL, { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(_stationMap);
-        _stationMarkers = window.L.layerGroup().addTo(_stationMap);
+        _stationMap = L.map(box).setView(center, MAP_START_ZOOM);
+        L.tileLayer(LEAFLET_TILES_URL, { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(_stationMap);
+        _stationMarkers = L.layerGroup().addTo(_stationMap);
     } else {
         _stationMap.setView(center, _stationMap.getZoom());
     }

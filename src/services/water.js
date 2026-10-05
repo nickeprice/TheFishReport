@@ -14,7 +14,7 @@
 // is source-agnostic.
 const WDFN_CONTINUOUS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items';
 
-async function fetchCfsReadingsWdfn(siteId) {
+export async function fetchCfsReadingsWdfn(siteId) {
     // Same 4-hour lookback the legacy `period=PT4H` gave, so the delta is comparable.
     const end = new Date();
     const start = new Date(end.getTime() - 4 * 3600 * 1000);
@@ -33,7 +33,7 @@ async function fetchCfsReadingsWdfn(siteId) {
 }
 
 // LEGACY fallback: waterservices.usgs.gov/nwis/iv — decommissioned in Q1 2027.
-async function fetchCfsReadingsLegacy(siteId) {
+export async function fetchCfsReadingsLegacy(siteId) {
     const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${siteId}&parameterCd=00060&period=PT4H&siteStatus=all`;
     const response = await fetch(url);
     const data = await response.json();
@@ -45,7 +45,7 @@ async function fetchCfsReadingsLegacy(siteId) {
     }).filter(function (r) { return isFinite(r.t) && isFinite(r.v) && r.v > -900000; });
 }
 
-async function fetchCFSMomentum(siteId) {
+export async function fetchCFSMomentum(siteId) {
     if (!siteId) return;
     try {
         // G4 (Phase 2.4): cache the last momentum window so a dead zone still shows the
@@ -83,7 +83,7 @@ async function fetchCFSMomentum(siteId) {
 }
 
 // Pure-ish: paints the "Rising / Dropping / Stable" trend badge from a sorted window.
-function renderCfsTrend(siteId, sorted) {
+export function renderCfsTrend(siteId, sorted) {
     if (!sorted || sorted.length < 2) return;
     const oldest = sorted[0].v;
     const latest = sorted[sorted.length - 1].v;
@@ -119,7 +119,7 @@ function renderCfsTrend(siteId, sorted) {
 // API payload — no proxy, no cross-gauge fallback, no guessing. When the
 // station does not report them, both stay hidden entirely (the card renders
 // only the fields that carry a value).
-function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
+export function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
     var hasTemp = (waterTempF !== undefined && waterTempF !== null && !isNaN(waterTempF));
     State.waterTempF = hasTemp ? Number(waterTempF) : null;   // Gear Sim falls back to the baseline zone when temp is unknown
     var hasTurb = (turbidityFnu !== undefined && turbidityFnu !== null && !isNaN(turbidityFnu));
@@ -143,7 +143,7 @@ function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
 // day card, which stamped reports[0]'s weather onto all of them - that is exactly why
 // cycling the days never changed the numbers. Pass the day's own rep (or none, and the card
 // it belongs to is skipped) and it repaints just that card.
-function applyReportWeather(rep) {
+export function applyReportWeather(rep) {
     if (!rep) return;
     var WIND_ARROWS = { 'N':'\u2191','NNE':'\u2197','NE':'\u2197','ENE':'\u2197','E':'\u2192','ESE':'\u2198','SE':'\u2198','SSE':'\u2198','S':'\u2193','SSW':'\u2199','SW':'\u2199','WSW':'\u2199','W':'\u2190','WNW':'\u2196','NW':'\u2196','NNW':'\u2196' };
     var airT = (rep.air_temp_f !== undefined && rep.air_temp_f !== null && !isNaN(rep.air_temp_f)) ? Math.round(Number(rep.air_temp_f)) : null;
@@ -236,7 +236,7 @@ var escapementFacilities = {
 };
 
 // Counts render as "--" until a published figure exists.
-function escNum(v) {
+export function escNum(v) {
     return (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US');
 }
 
@@ -245,7 +245,7 @@ function escNum(v) {
 // (cached before the rename) map to the same bucket so old data never
 // orphans. Jacks are pooled separately from the dataset's dedicated
 // jack_count column.
-function escBucketName(species, run) {
+export function escBucketName(species, run) {
     var sp = String(species || '').trim();
     // Chinook (any run) -> 'Chinook'. Legacy 'Fall Chinook' rows map here too.
     if (sp.toLowerCase().indexOf('chinook') !== -1 || sp.toLowerCase() === 'king') return 'Chinook';
@@ -254,7 +254,7 @@ function escBucketName(species, run) {
 
 // Week-over-Week (WoW) momentum badge: last 7 days of returns vs the prior 7 days.
 // Green = building push, Red = slowing, Muted = flat.
-function escWowBadge(wow) {
+export function escWowBadge(wow) {
     if (!wow || (wow.cur === 0 && wow.prior === 0)) return { text: '\u2014 Stable', color: '#94a3b8' };
     if (wow.delta > 0) {
         return { text: '\u25B2 +' + wow.delta + ((wow.pct !== null) ? ' (+' + wow.pct + '%)' : ''), color: '#22c55e' };
@@ -268,7 +268,7 @@ function escWowBadge(wow) {
 // Freshness line for the hatchery counts fold: "Last updated Sep 18, 2026 · 12:09 AM"
 // in the DEVICE's local time from WDFW's own :updated_at stamp. An absent /
 // unparseable stamp returns the honest fallback wording — never a fabricated date.
-function formatEscapementUpdated(iso) {
+export function formatEscapementUpdated(iso) {
     if (!iso) return ESCAPEMENT_UPDATED_FALLBACK;
     var d = new Date(iso);
     if (isNaN(d.getTime())) return ESCAPEMENT_UPDATED_FALLBACK;
@@ -292,7 +292,7 @@ function formatEscapementUpdated(iso) {
 // Returns { stocks: { bucket -> counts }, lastUpdated } where lastUpdated is the
 // MAX Socrata system column :updated_at across the rows (WDFW's own publish time,
 // never a client guess) — null when the feed does not expose it.
-async function fetchEscapementLive(siteId) {
+export async function fetchEscapementLive(siteId) {
     var facilities = escapementFacilities[siteId ? String(siteId) : ''];
     if (!facilities || !facilities.length) return null;
 
@@ -383,7 +383,7 @@ async function fetchEscapementLive(siteId) {
 // base species, so a 'Chinook' card also picks up legacy 'Fall Chinook' buckets. Never
 // throws - any failure leaves the existing "--" placeholders in place so the UI stays
 // stable. Also stashes rec.lastUpdated (WDFW's max :updated_at) for the counts fold.
-async function loadEscapementData(siteId) {
+export async function loadEscapementData(siteId) {
     var key = siteId ? String(siteId) : '';
     var rec = hatcheryEscapement[key];
     if (!rec) return null;
@@ -438,7 +438,7 @@ async function loadEscapementData(siteId) {
 // Until a real number exists the UI keeps its "--" placeholder.
 // actId = active USGS gauge ID (site_id) — used to filter forecasts to the
 // active waterbody so Green River doesn't show Puyallup's numbers.
-async function refreshWdfwForecast(actId) {
+export async function refreshWdfwForecast(actId) {
     var cell = document.querySelector('[data-count="wdfw"]');
     if (!cell) return;
     if (!actId) return;
@@ -496,7 +496,7 @@ async function refreshWdfwForecast(actId) {
 // return / trap / avg) inside a card carrying data-species, so we fill only the
 // matching cells — never replace the whole section (the species/status/progress
 // geometry stays put). Rivers with no facility mapping keep their "--" placeholders.
-async function refreshEscapement(siteId) {
+export async function refreshEscapement(siteId) {
     var key = siteId ? String(siteId) : '';
     if (!hatcheryEscapement[key]) return;
     await loadEscapementData(key);
@@ -532,7 +532,7 @@ async function refreshEscapement(siteId) {
 // public: fetchStreamStats(lat, lon, siteId) -> { ok, mode, drainage_area_sq_mi,
 //   mean_elevation_ft, mean_precip_in } | null on hard failure.
 
-async function fetchStreamStats(lat, lon, siteId) {
+export async function fetchStreamStats(lat, lon, siteId) {
     var query = '/api/streamstats?lat=' + encodeURIComponent(String(lat)) +
                 '&lon=' + encodeURIComponent(String(lon));
     if (siteId) query += '&site_id=' + encodeURIComponent(String(siteId));

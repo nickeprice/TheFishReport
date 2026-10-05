@@ -6,7 +6,7 @@
  * term moves the zone. Wind and moon are deliberately not part of it.
  * public: envMatchWeight(), envCloseness(), communitySonar(), getActiveReport(),
  *         getCurrentFlow()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- COMMUNITY SONAR ENVIRONMENT MATCH WEIGHTING ---
 // A catch is a better predictor of where fish are RIGHT NOW when the conditions it was logged
@@ -32,7 +32,7 @@ var ENV_MATCH_WEIGHTS = {
 
 // 1.0 when identical, 0.0 once they differ by `span` (or more); null when either side is
 // missing (an absent input is not a match and not a mismatch - it is simply not compared).
-function envCloseness(a, b, span) {
+export function envCloseness(a, b, span) {
     if (a === null || a === undefined || b === null || b === undefined) return null;
     var d = Math.abs(Number(a) - Number(b));
     if (!isFinite(d)) return null;
@@ -40,7 +40,7 @@ function envCloseness(a, b, span) {
     return Math.max(0, 1 - (d / span));
 }
 
-function envMatchWeight(row, rep) {
+export function envMatchWeight(row, rep) {
     var now = (typeof envSignature === 'function') ? envSignature(rep) : null;
     if (!now || !row) return 1;                 // no live signature -> don't penalise legacy rows
 
@@ -81,14 +81,14 @@ function envMatchWeight(row, rep) {
 // A persistent direction here tells us whether to fix the math, add a missing variable, or
 // re-measure - privately, over time.
 // ==================================================================================
-function catchPredictedCenter(row) {
+export function catchPredictedCenter(row) {
     var lo = (row && row.zoneMinIn !== undefined && row.zoneMinIn !== null) ? Number(row.zoneMinIn) : NaN;
     var hi = (row && row.zoneMaxIn !== undefined && row.zoneMaxIn !== null) ? Number(row.zoneMaxIn) : NaN;
     if (!isFinite(lo) || !isFinite(hi)) return null;     // no prediction stored (older client)
     return (lo + hi) / 2;
 }
 
-function catchResidual(row) {
+export function catchResidual(row) {
     var c = catchPredictedCenter(row);
     if (c === null) return null;
     var actual = (row && row.lineHeightIn !== undefined && row.lineHeightIn !== null) ? Number(row.lineHeightIn) : NaN;
@@ -96,7 +96,7 @@ function catchResidual(row) {
     return actual - c;
 }
 
-function communitySonar(dbArray, flow, species, siteId) {
+export function communitySonar(dbArray, flow, species, siteId) {
     // No "not enough data" state: a single eligible catch contributes, and the ZONE-side
     // pull is what keeps one catch from moving the zone far. Empty -> centre null, which
     // simply means the physics zone stands alone.
@@ -203,7 +203,7 @@ var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ?
 // ENVIRONMENT - where the fish are holding today
 // Today's water report shifts the 4"-12" baseline into the zone the fish are using.
 // ==================================================================================
-function getActiveReport() {
+export function getActiveReport() {
     if (typeof reportsData !== 'undefined' && typeof activeDateOffset !== 'undefined' &&
         activeDateOffset >= 0 && activeDateOffset < reportsData.length) {
         return reportsData[activeDateOffset];
@@ -217,7 +217,7 @@ function getActiveReport() {
 // the solver always has a number to work with. It is still RECORDED on a catch.
 var lastKnownFlow = null;
 
-function getCurrentFlow() {
+export function getCurrentFlow() {
     var rep = getActiveReport();
     if (!rep) return (lastKnownFlow !== null) ? lastKnownFlow : 1040;
     var cfsV = provVal(rep.cfs);

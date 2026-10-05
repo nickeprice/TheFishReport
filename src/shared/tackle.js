@@ -38,12 +38,12 @@ var TACKLE_MAT_LABELS = {
     braid: 'Braid', mono: 'Mono', copoly: 'Copoly', fluoro: 'Fluorocarbon'
 };
 
-function tackleItems(type) {
+export function tackleItems(type) {
     if (!TACKLE || !TACKLE.items) return [];
     return TACKLE.items.filter(function (i) { return i.type === type; });
 }
 
-function tackleLineById(id) {
+export function tackleLineById(id) {
     if (!id) return null;
     var lines = tackleItems('line');
     for (var i = 0; i < lines.length; i++) {
@@ -52,7 +52,7 @@ function tackleLineById(id) {
     return null;
 }
 // Generic lookup by id across ALL tackle types (not just lines).
-function tackleById(id) {
+export function tackleById(id) {
     if (!id || !TACKLE || !TACKLE.items) return null;
     for (var i = 0; i < TACKLE.items.length; i++) {
         if (TACKLE.items[i].id === id) return TACKLE.items[i];
@@ -66,11 +66,11 @@ function tackleById(id) {
 // case-insensitively rather than on an exact slug.
 // "Generic average" is the library's averaged fallback row, matched case-insensitively
 // because the brand is a display string, not a slug.
-function isGenericBrand(brand) {
+export function isGenericBrand(brand) {
     return /^generic/i.test(String(brand || ''));
 }
 
-function isGenericLine(it) {
+export function isGenericLine(it) {
     return isGenericBrand(it && it.brand);
 }
 
@@ -78,19 +78,19 @@ function isGenericLine(it) {
 // the CSV calls it "Generic average", the angler should read "Generic". DISPLAY ONLY - the
 // <option> VALUE stays the library string, because that value is what (material, brand, lb)
 // matching, a restored rig and tackleLineFind() all round-trip through.
-function brandLabel(brand) {
+export function brandLabel(brand) {
     return isGenericBrand(brand) ? 'Generic' : String(brand);
 }
 
 // Generic FIRST - it is the averaged row for that size, i.e. the honest default when the
 // angler's own line is not in the library. Everything else stays A-Z.
-function brandOrder(a, b) {
+export function brandOrder(a, b) {
     var ga = isGenericBrand(a), gb = isGenericBrand(b);
     if (ga !== gb) return ga ? -1 : 1;
     return String(a).localeCompare(String(b));
 }
 
-function tackleLineByMatLb(mat, lb) {
+export function tackleLineByMatLb(mat, lb) {
     var lines = tackleItems('line');
     var first = null;
     for (var i = 0; i < lines.length; i++) {
@@ -107,7 +107,7 @@ function tackleLineByMatLb(mat, lb) {
 // angler's actual line — and material + lb is the fallback for a row logged before the
 // pickers existed or written by an older installed client. Returns null when neither
 // resolves (library not loaded, or the row predates both fields).
-function tackleRowLine(row, role) {
+export function tackleRowLine(row, role) {
     if (!row) return null;
     var isLeader = (role === 'leader');
     var byId = tackleLineById(isLeader ? (row.ldLine || row.leader_line_id)
@@ -130,7 +130,7 @@ function tackleRowLine(row, role) {
 // The line identity (material, brand, lb test) is exactly one measured row, which is
 // what lets the cascade resolve a real diameter. A PARTIAL pick resolves to nothing
 // rather than to a guessed brand; missingRigFields() is what blocks the sim/log then.
-function tackleLineFind(mat, brand, lb) {
+export function tackleLineFind(mat, brand, lb) {
     if (!mat || !brand || !lb) return null;
     var lines = tackleItems('line');
     for (var i = 0; i < lines.length; i++) {
@@ -142,7 +142,7 @@ function tackleLineFind(mat, brand, lb) {
 }
 
 // Brands on offer for a material (blank material -> every brand the role allows).
-function tackleLineBrands(mat, role) {
+export function tackleLineBrands(mat, role) {
     var ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
     var seen = {}, out = [];
     tackleItems('line').forEach(function (it) {
@@ -154,7 +154,7 @@ function tackleLineBrands(mat, role) {
 }
 
 // LB tests on offer for a (material, brand) pair (blank parent -> the union).
-function tackleLineLbs(mat, brand, role) {
+export function tackleLineLbs(mat, brand, role) {
     var ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
     var seen = {}, out = [];
     tackleItems('line').forEach(function (it) {
@@ -169,7 +169,7 @@ function tackleLineLbs(mat, brand, role) {
 }
 
 // The visible line fields, by role: ml-mat / ld-mat etc.
-function lineField(role, part) {
+export function lineField(role, part) {
     return (role === 'leader' ? 'ld-' : 'ml-') + part;
 }
 
@@ -177,7 +177,7 @@ function lineField(role, part) {
 // This is the ONLY way an option list is written, which is what keeps the two tabs in
 // lockstep; a stale value that fell out of its parent's list is cleared by the same
 // browser rule on both sides (assigning an absent value leaves the select empty).
-function fillBothSelects(baseId, entries) {
+export function fillBothSelects(baseId, entries) {
     var base = document.getElementById(baseId);
     var twin = document.getElementById(baseId + '-log');
     if (base) fillSelect(base, entries);
@@ -185,14 +185,14 @@ function fillBothSelects(baseId, entries) {
     if (base && twin) twin.value = base.value;
 }
 
-function mirrorValue(baseId) {
+export function mirrorValue(baseId) {
     var base = document.getElementById(baseId);
     var twin = document.getElementById(baseId + '-log');
     if (base && twin) twin.value = base.value;
 }
 
 // Rebuild BRAND + LB from the material/brand picks, then refresh the hidden id.
-function cascadeLine(role) {
+export function cascadeLine(role) {
     var mat = getStr(lineField(role, 'mat'));
     fillBothSelects(lineField(role, 'brand'),
         tackleLineBrands(mat, role).map(function (b) { return { value: b, text: brandLabel(b) }; }));
@@ -203,7 +203,7 @@ function cascadeLine(role) {
 }
 
 // Resolve the HIDDEN line id from the three visible picks (incomplete pick -> no id).
-function resolveLineId(role) {
+export function resolveLineId(role) {
     var line = tackleLineFind(getStr(lineField(role, 'mat')),
                               getStr(lineField(role, 'brand')),
                               getStr(lineField(role, 'lb')));
@@ -214,7 +214,7 @@ function resolveLineId(role) {
 // Any of the six line controls changed. Copy the twin's value in first when the change
 // came from the Catch Log, then re-cascade: a brand the new material does not offer is
 // dropped here, so a stale pick can never resolve a wrong diameter or a wrong id.
-function onLinePartChange(fieldId, fromLog) {
+export function onLinePartChange(fieldId, fromLog) {
     var base = String(fieldId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(fieldId));
     var role = (base.indexOf('ld-') === 0) ? 'leader' : 'mainline';
@@ -225,7 +225,7 @@ function onLinePartChange(fieldId, fromLog) {
 
 // The weight TYPE is its own control; mirror it and rebuild the amount list from the
 // rows that carry that type.
-function onWeightShapeChange(baseId, fromLog) {
+export function onWeightShapeChange(baseId, fromLog) {
     var base = String(baseId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(baseId));
     fillBothSelects('weight', tackleWeightOz(getStr(base)));
@@ -234,7 +234,7 @@ function onWeightShapeChange(baseId, fromLog) {
 }
 
 // Foam 3 (bead) change — populates size list.
-function onFoam3Change(fieldId, fromLog) {
+export function onFoam3Change(fieldId, fromLog) {
     var base = String(fieldId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(fieldId));
     mirrorValue(base);
@@ -247,7 +247,7 @@ function onFoam3Change(fieldId, fromLog) {
 // source of this list. Blank type -> the union of every type.
 var OZ_LABEL_RE = /(\d+)(?:\/(\d+))?\s*oz\s*$/i;
 
-function tackleWeightOz(shape) {
+export function tackleWeightOz(shape) {
     var seen = {}, out = [];
     tackleItems('weight').forEach(function (it) {
         if (shape && it.shape_label !== shape) return;
@@ -271,7 +271,7 @@ function tackleWeightOz(shape) {
 // pick the wrong sibling. Returns null when the pair names no row (library not loaded,
 // no shape picked, or a legacy rig) - callers must treat null as "no information", not
 // as a zero.
-function tackleWeightRow(shapeLabel, oz) {
+export function tackleWeightRow(shapeLabel, oz) {
     if (!shapeLabel || !oz) return null;
     var found = null;
     tackleItems('weight').forEach(function (it) {
@@ -286,7 +286,7 @@ function tackleWeightRow(shapeLabel, oz) {
 
 // Projected (broadside) area in cm2 of the picked weight, or null. Kept separate from
 // tackleWeightRow() so the physics module never has to know the library's field names.
-function tackleWeightArea(shapeLabel, oz) {
+export function tackleWeightArea(shapeLabel, oz) {
     var row = tackleWeightRow(shapeLabel, oz);
     var area = row ? Number(row.area_cm2) : 0;
     return area > 0 ? area : null;
@@ -295,7 +295,7 @@ function tackleWeightArea(shapeLabel, oz) {
 // Bead size: the bead rows the material owns. "None" is the ABSENCE of a bead, so its 0
 // is supplied here rather than invented from the library; a blank material lists every
 // size the library has.
-function tackleBeadSizes() {
+export function tackleBeadSizes() {
     var out = [{ value: '0', text: 'None' }];
     tackleItems('bead').forEach(function (it) {
         var mm = Number(it.diameter_mm);
@@ -306,7 +306,7 @@ function tackleBeadSizes() {
     return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
 }
 
-function fillSelect(sel, entries) {
+export function fillSelect(sel, entries) {
     var previous = sel.value;
     var frag = document.createDocumentFragment();
     var blank = document.createElement('option');
@@ -328,7 +328,7 @@ function fillSelect(sel, entries) {
 // holds the library's OWN materials for that role; every child list is built for a blank
 // parent (= the union), so the form is usable top-down and the static index.html options
 // are provably the same union. A missing library leaves the static lists in place.
-function populateTacklePickers() {
+export function populateTacklePickers() {
     if (!TACKLE) return;
     [['ml', 'mainline'], ['ld', 'leader']].forEach(function (pair) {
         var mats = TACKLE_LINE_ROLES[pair[1]].filter(function (mat) {
@@ -356,7 +356,7 @@ function populateTacklePickers() {
 
 // Load once at boot. A failure (offline first run, or a deploy without the file)
 // leaves the bare pickers in place; restoreRig() then simply finds nothing to pick.
-function tackleLoad() {
+export function tackleLoad() {
     if (typeof fetch !== 'function') return Promise.resolve(null);
     return fetch('/src/data/tackle.json', { cache: 'no-cache' })
         .then(function (r) { return r.ok ? r.json() : null; })

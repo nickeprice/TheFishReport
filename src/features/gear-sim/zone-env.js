@@ -4,7 +4,7 @@
  * zone.js (906 lines) in the 2026-10-02 cleanup split.
  * public: RIG_REQUIRED, missingRigFields(), getWaterTempF(), getTurbidityFnu(),
  *         refHourBlock(), lightTerm(), turbidityTerm(), tideAt(), tideTerm(), envSignature()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // Required gear fields — no defaults, so anything the angler has never entered
 // stays blank and blocks the sim/log with a precise "fill in X" message.
@@ -28,7 +28,7 @@ var RIG_REQUIRED = [
     { id: 'foam3',    label: 'Bead' }
 ];
 
-function missingRigFields() {
+export function missingRigFields() {
     var missing = [];
     for (var i = 0; i < RIG_REQUIRED.length; i++) {
         if (getStr(RIG_REQUIRED[i].id) === '') missing.push(RIG_REQUIRED[i].label);
@@ -36,7 +36,7 @@ function missingRigFields() {
     return missing;
 }
 
-function getWaterTempF() {
+export function getWaterTempF() {
     if (State.waterTempF !== undefined && State.waterTempF !== null && !isNaN(State.waterTempF)) {
         return Number(State.waterTempF);
     }
@@ -52,7 +52,7 @@ function getWaterTempF() {
 // payload's 63680 reading. Same contract as getWaterTempF(): the ACTIVE station's own
 // gauge or nothing - no proxy, no cross-gauge substitute. null -> the zone model simply
 // has no turbidity term.
-function getTurbidityFnu() {
+export function getTurbidityFnu() {
     if (State.turbidityFnu !== undefined && State.turbidityFnu !== null && !isNaN(State.turbidityFnu)) {
         return Number(State.turbidityFnu);
     }
@@ -68,7 +68,7 @@ function getTurbidityFnu() {
 // Deliberately NOT the local clock: a clock fallback would make computeStrikeZone()
 // depend on when it was called, which breaks the sim's determinism contract and would
 // make the frozen baselines flap between 7 AM and 7 PM. null -> no light term.
-function refHourBlock() {
+export function refHourBlock() {
     var rep = getActiveReport();
     var wh = rep && rep.weather_hour;
     if (!wh) return null;
@@ -96,7 +96,7 @@ var TURBIDITY_BANDS = [
     { max: Infinity, shift:  1.25, label: 'dirty' }
 ];
 
-function turbidityTerm() {
+export function turbidityTerm() {
     var fnu = getTurbidityFnu();
     if (fnu === null) return null;
     for (var i = 0; i < TURBIDITY_BANDS.length; i++) {
@@ -135,7 +135,7 @@ var LIGHT_DEFAULT_LAT = 47.195;  // default station latitude (same as map defaul
 var LIGHT_EDGE_MINUTES = 90;
 var LIGHT_CORE_MINUTES = 180;
 // '6:30 AM' -> 390 (minutes past midnight). null when unparseable.
-function parseClockMinutes(text) {
+export function parseClockMinutes(text) {
     if (!text) return null;
     var m = /(\d{1,2}):(\d{2})\s*([AP]M)/i.exec(String(text));
     if (!m) return null;
@@ -145,19 +145,19 @@ function parseClockMinutes(text) {
 }
 
 // Solar declination for a DATE (NOAA approximation). Date only - no clock, no timezone.
-function solarDeclinationDeg(year, month, day) {
+export function solarDeclinationDeg(year, month, day) {
     if (!year || !month || !day) return null;
     var n = (Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 1)) / 86400000;
     return 23.44 * Math.sin((360 / 365) * (n - 81) * Math.PI / 180);
 }
 
-function activeStationLat() {
+export function activeStationLat() {
     var el = document.querySelector('.station-gauge');
     return el ? Number(el.getAttribute('data-lat')) || null : null;
 }
 
 // Solar elevation for the reference HOUR, using the payload's OWN sunrise/sunset.
-function solarElevationDeg(block, rep) {
+export function solarElevationDeg(block, rep) {
     if (!block || !rep) return null;
     var lat = activeStationLat();
     if (!lat || !isFinite(lat)) lat = LIGHT_DEFAULT_LAT;
@@ -174,7 +174,7 @@ function solarElevationDeg(block, rep) {
 }
 
 // `block` = {hour, label, year, month, day} from refHourBlock(); `rep` = that day's report.
-function lightTerm(block, rep) {
+export function lightTerm(block, rep) {
     if (!block) return null;
     var elev = solarElevationDeg(block, rep);
 
@@ -218,7 +218,7 @@ var TIDE_RISING_SHIFT = 1.00;    // flood: fish move up with the push
 var TIDE_FALLING_SHIFT = -1.00;  // ebb: fish drop back to deeper water
 // The tide at the report's reference hour: { heightFt, trend, shift } or null when the day
 // carries no hourly tide curve.
-function tideAt(block, rep) {
+export function tideAt(block, rep) {
     if (!block || !rep || !provVal(rep.tide_points) || !provVal(rep.tide_points).length) return null;
     var pts = provVal(rep.tide_points);
     var target = Number(block.hour);
@@ -246,7 +246,7 @@ function tideAt(block, rep) {
     return { heightFt: Math.round(h * 100) / 100, trend: trend, shift: Math.round(shift * 20) / 20 };
 }
 
-function tideTerm(block, rep) {
+export function tideTerm(block, rep) {
     var t = tideAt(block, rep);
     if (!t || t.shift === 0) return null;
     return {
@@ -260,13 +260,13 @@ function tideTerm(block, rep) {
 // ==================================================================================
 // THE ENVIRONMENT SIGNATURE
 // ==================================================================================
-function envNum(v) {
+export function envNum(v) {
     if (v === null || v === undefined || v === '') return null;
     var n = Number(v);
     return isFinite(n) ? n : null;
 }
 
-function envSignature(rep) {
+export function envSignature(rep) {
     var r = rep || getActiveReport();
     if (!r) return null;
     var block = refHourBlock();

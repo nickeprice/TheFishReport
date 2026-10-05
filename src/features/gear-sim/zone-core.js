@@ -4,9 +4,9 @@
  * public: computeStrikeZone(), gradeColor(), zoneColor(), zoneTrend(),
  *         depthBandText(), positionParts(), whereToFish(), plainDepthText(),
  *         fishOutlook(), paintZoneHud(), refreshZonePreview()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
-function computeStrikeZone(sonar) {
+export function computeStrikeZone(sonar) {
     var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
     var rep = getActiveReport();
     if (!rep) {
@@ -61,14 +61,14 @@ function computeStrikeZone(sonar) {
 
 // NOTE: `zone.notes` is the audit trail paintSimHud() writes to logDebug.
 // THE shared colour grade: d=0 (on target) -> 1 (furthest from target).
-function gradeColor(d) {
+export function gradeColor(d) {
     if (!(d > 0)) d = 0; if (d > 1) d = 1;
     var t = d * 2;
     var hue = (t <= 1) ? (140 - 88 * t) : (52 - 52 * (t - 1));
     return 'hsl(' + Math.round(hue) + ', 72%, 46%)';
 }
 
-function zoneColor(hgt, zone) {
+export function zoneColor(hgt, zone) {
     var center = (zone.min + zone.max) / 2;
     var half = Math.max(0.5, (zone.max - zone.min) / 2);
     var q = Math.round(hgt * 10) / 10;
@@ -80,7 +80,7 @@ var SONAR_PULL_MAX = 0.40;
 var SONAR_PULL_FLOOR = 0.10;
 var SONAR_PULL_STEP = 0.0375;
 
-function zoneTrend(zone) {
+export function zoneTrend(zone) {
     var baseMid = (BASE_ZONE_MIN + BASE_ZONE_MAX) / 2;
     var offset = Math.round((((zone.min + zone.max) / 2) - baseMid) * 10) / 10;
     var ratio = Math.abs(offset) / ZONE_TREND_FULL_SCALE;
@@ -91,7 +91,7 @@ var LIE_SOFT_FTS = 1.5;
 var LIE_FAST_FTS = 3.0;
 var DEPTH_BAND_MIN_FT = 0.2;
 
-function depthBandText(spot) {
+export function depthBandText(spot) {
     if (!spot || !(spot.value > 0)) return null;
     var low = Number(spot.bandLow), high = Number(spot.bandHigh);
     if (isFinite(low) && isFinite(high) && (high - low) >= DEPTH_BAND_MIN_FT && low > 0) {
@@ -100,7 +100,7 @@ function depthBandText(spot) {
     return spot.value.toFixed(1) + ' ft';
 }
 
-function positionParts(zone, hgt) {
+export function positionParts(zone, hgt) {
     var flow = (typeof getCurrentFlow === 'function') ? getCurrentFlow() : null;
     var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
     var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
@@ -126,7 +126,7 @@ function positionParts(zone, hgt) {
     return out;
 }
 
-function whereToFish(zone, hgt) {
+export function whereToFish(zone, hgt) {
     var p = positionParts(zone, hgt);
     var parts = [p.depth];
     if (p.lie) parts.push(p.lie);
@@ -148,7 +148,7 @@ var OUTLOOK_BANDS = [
     { min: -Infinity, tag: 'Fish are holding deep and not very active' }
 ];
 
-function plainDepthText(p) {
+export function plainDepthText(p) {
     if (!p || !p.depthParts) return null;
     var low = Number(p.depthParts.bandLow), high = Number(p.depthParts.bandHigh);
     var lo = (isFinite(low) && low > 0) ? Math.floor(low) : Math.floor(Number(p.depthParts.ft));
@@ -158,7 +158,7 @@ function plainDepthText(p) {
     return lo + '-' + hi + ' feet deep';
 }
 
-function fishOutlook(zone, hgt) {
+export function fishOutlook(zone, hgt) {
     var z = zone || { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, report: null };
     var shift = Number(z.shift) || 0;
     var p = positionParts(z, hgt);
@@ -176,7 +176,7 @@ function fishOutlook(zone, hgt) {
     return sentences.join(' ');
 }
 
-function paintZoneHud(zone, outlook) {
+export function paintZoneHud(zone, outlook) {
     var trend = zoneTrend(zone);
     var range = document.getElementById('hud-zone');
     if (range) { range.innerText = zone.min.toFixed(1) + '" - ' + zone.max.toFixed(1) + '"'; range.style.color = trend.color; }
@@ -184,7 +184,7 @@ function paintZoneHud(zone, outlook) {
     if (where) { var text = outlook || ((typeof fishOutlook === 'function') ? fishOutlook(zone) : ''); where.textContent = text; }
 }
 
-function refreshZonePreview() {
+export function refreshZonePreview() {
     paintZoneHud(computeStrikeZone());
 
 }

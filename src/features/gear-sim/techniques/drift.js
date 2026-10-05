@@ -14,7 +14,7 @@
  *
  * Classic script (global scope). Loaded BEFORE src/features/gear-sim/registry.js.
  */
-var DRIFT_TECHNIQUE = {
+export var DRIFT_TECHNIQUE = {
     id: 'drift',
     label: 'Drift',
     kind: 'river-moving-water',

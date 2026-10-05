@@ -2,10 +2,10 @@
  * src/features/station/picker.js - station modal, GPS pick and presets.
  * public: openStationModal(), closeStationModal(), selectPreset(),
  *         calcDistance(), useGPS()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
-function openStationModal() {
+export function openStationModal() {
     document.getElementById('station-modal').style.display = 'block';
     document.getElementById('gps-status').innerText = '';
     document.getElementById('search-results').style.display = 'none';
@@ -14,11 +14,11 @@ function openStationModal() {
     if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
 }
 
-function closeStationModal() {
+export function closeStationModal() {
     document.getElementById('station-modal').style.display = 'none';
 }
 
-function selectPreset(id, lat, lon, name, isGps) {
+export function selectPreset(id, lat, lon, name, isGps) {
     activeDateOffset = 0;
     var station = { id: id, lat: lat, lon: lon, name: name, isGps: !!isGps };
     localStorage.setItem('active_station', JSON.stringify(station));
@@ -28,7 +28,7 @@ function selectPreset(id, lat, lon, name, isGps) {
 }
 
 // Haversine distance in miles
-function calcDistance(lat1, lon1, lat2, lon2) {
+export function calcDistance(lat1, lon1, lat2, lon2) {
     var R = 3958.8; // Radius of Earth in miles
     var dLat = (lat2 - lat1) * Math.PI / 180;
     var dLon = (lon2 - lon1) * Math.PI / 180;
@@ -44,7 +44,7 @@ function calcDistance(lat1, lon1, lat2, lon2) {
 // default (selectPreset -> closeStationModal) is what made "nearest river" look like
 // it "failed and closed out of the menu". Retry = tap the same button again (useGPS
 // stays bound to it).
-function useGPS() {
+export function useGPS() {
     var status = document.getElementById('gps-status');
     status.innerText = "Waiting for GPS (grant the location prompt)...";
     if (!navigator.geolocation) {

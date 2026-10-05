@@ -2,7 +2,7 @@
  * src/features/gear-sim/zone-best.js - deterministic gear solver for the
  * best-rig search. Extracted from original zone.js (906 lines).
  * public: bestZoneRig()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 var LEADER_LENGTH_OPTIONS = GEAR_OPTIONS.leaderLen;
 var FOAM_KEYS = GEAR_OPTIONS.foam.map(function(o) { return String(o.val); });
@@ -11,7 +11,7 @@ var WEIGHT_OPTIONS = GEAR_OPTIONS.weight.map(function(o) { return o.val; });
 var YARN_OPTIONS = GEAR_OPTIONS.yarn.map(function(o) { return o.val; });
 var HOOK_OPTIONS = GEAR_OPTIONS.hook.map(function(o) { return o.val; });
 
-function beadSizeOptions(bdSz) {
+export function beadSizeOptions(bdSz) {
     var opts = [0];
     if (typeof tackleBeadSizes === 'function') {
         tackleBeadSizes().forEach(function (o) {
@@ -23,12 +23,12 @@ function beadSizeOptions(bdSz) {
     return opts.sort(function (a, b) { return a - b; });
 }
 
-function foamShort(foam) {
+export function foamShort(foam) {
     var short = String(foam.label || '').replace(' - Size ', ' ').replace(/\s*\(\d+mm\)/, '').replace(' - ', ' ');
     return /cheater/i.test(short) ? short + ' float' : short;
 }
 
-function rigChangeList(best, rig) {
+export function rigChangeList(best, rig) {
     var out = [];
     if (best.foam.key !== rig.foam.key) out.push(foamShort(best.foam));
     if (best.foam2.key !== rig.foam2.key) {
@@ -42,7 +42,7 @@ function rigChangeList(best, rig) {
     return out;
 }
 
-function rigChangePlain(best, rig) {
+export function rigChangePlain(best, rig) {
     var up = [];
     if (best.foam.key !== rig.foam.key) up.push(best.foam.lift > rig.foam.lift ? 'a bigger corky' : 'a smaller corky');
     if (best.foam2.key !== rig.foam2.key) {
@@ -70,13 +70,13 @@ function rigChangePlain(best, rig) {
     return up;
 }
 
-function joinPlain(items) {
+export function joinPlain(items) {
     if (!items || !items.length) return '';
     if (items.length === 1) return items[0];
     return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
 }
 
-function bestZoneRig(zone, rig, vel) {
+export function bestZoneRig(zone, rig, vel) {
     var target = (zone.min + zone.max) / 2;
     var bed = vel.bottom;
     var beads = beadSizeOptions(rig.bdSz);

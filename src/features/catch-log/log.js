@@ -2,12 +2,12 @@
  * src/features/catch-log/log.js - logData(): buffer a catch locally, then push it
  * to Supabase. deriveRiverName() supplies the coarse (coordinate-free) river name.
  * public: deriveRiverName(), logData()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // Derive a coarse river name from the active station (e.g. "Puyallup River",
 // "Carbon River", "Green River", "Nisqually River", "White River"). Falls back
 // to '--'. Never exposes exact coordinates on the public board.
-function deriveRiverName() {
+export function deriveRiverName() {
     try {
         var active = JSON.parse(localStorage.getItem('active_station') || 'null');
         var nm = (active && active.name) ? String(active.name) : '';
@@ -27,7 +27,7 @@ function deriveRiverName() {
 
     // Offline-first write: buffer the catch locally, then push the full private profile
 // (complete tackle + GPS) to Supabase. The public view only ever exposes 4 columns.
-async function logData() {
+export async function logData() {
     if (!AuthState.signedIn) {
         switchTab('tab-catch-log');
         var nameField = document.getElementById('auth-name');

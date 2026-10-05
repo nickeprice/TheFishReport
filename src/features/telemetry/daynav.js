@@ -2,12 +2,14 @@
  * src/features/telemetry/daynav.js - forecast-day navigation + empty state.
  * public: activeDateOffset, reportsData, stepDate(), updateActiveDateUI(),
  *         renderWaterReportEmptyState(), legalHoursLabel()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
-var activeDateOffset = 0;
-var reportsData = [];
+export var activeDateOffset = 0;
+window.activeDateOffset = activeDateOffset;
+export var reportsData = [];
+window.reportsData = reportsData;
 
-function stepDate(delta) {
+export function stepDate(delta) {
     var newOffset = activeDateOffset + delta;
     if (newOffset < 0) return;
     var maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
@@ -28,14 +30,14 @@ function stepDate(delta) {
  *   '24hr'             -> "Legal Hours: Open all day"
  *   'custom'/'unknown' -> "Legal Hours: not verified - check the regulations"
  */
-function legalHoursLabel(rule, legalIn, legalOut) {
+export function legalHoursLabel(rule, legalIn, legalOut) {
     if (rule === '24hr') return 'Legal Hours: Open all day';
     if (rule !== 'daylight') return 'Legal Hours: not verified \u2014 check the regulations';
     return 'Legal Hours: ' + legalIn + ' \u2013 ' + legalOut;
 }
 
 
-function updateActiveDateUI() {
+export function updateActiveDateUI() {
     var d = new Date();
     d.setDate(d.getDate() + activeDateOffset);
 
@@ -167,7 +169,7 @@ function updateActiveDateUI() {
  * @param {string} hint     what the angler can do about it
  * @param {boolean} offline whether the failure was a network failure
  */
-function renderWaterReportEmptyState(title, hint, offline) {
+export function renderWaterReportEmptyState(title, hint, offline) {
     var box = document.getElementById('water-report-cards');
     if (!box) return;
     box.innerHTML = '<div class="empty-state empty-state-panel">' +

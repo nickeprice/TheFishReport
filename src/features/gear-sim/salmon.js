@@ -7,7 +7,7 @@
  * public: salmonState(), salmonMouthCone(), salmonPositionZ(),
  *         SALMON_DEFAULTS, setSalmonSpecies(), getSalmonSpecies(),
  *         SALMON_SPECIES
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
 /** Species morphological registry. SALMON_DEFAULTS points to the active entry. */
@@ -55,7 +55,7 @@ var ACTIVE_SALMON_SPECIES = 'chinook';
  * @param {string} name — 'chinook', 'steelhead', or 'coho'
  * Returns true if recognised, false if unknown (defaults to chinook).
  */
-function setSalmonSpecies(name) {
+export function setSalmonSpecies(name) {
     name = (name || '').toLowerCase();
     if (SALMON_SPECIES[name]) {
         ACTIVE_SALMON_SPECIES = name;
@@ -69,7 +69,7 @@ function setSalmonSpecies(name) {
 }
 
 /** Return the current species key. */
-function getSalmonSpecies() {
+export function getSalmonSpecies() {
     return ACTIVE_SALMON_SPECIES;
 }
 
@@ -91,7 +91,7 @@ function getSalmonSpecies() {
  *   sinusoid clipped to [0, 1].
  * @provenance: literature — sinusoidal respiration model.
  */
-function salmonState(t, freqHz, dutyCycle, phase) {
+export function salmonState(t, freqHz, dutyCycle, phase) {
     var f = freqHz || SALMON_DEFAULTS.freqHz;
     var d = dutyCycle || SALMON_DEFAULTS.dutyCycle;
     var p = phase || 0;
@@ -115,7 +115,7 @@ function salmonState(t, freqHz, dutyCycle, phase) {
  * If mouthFraction = 0, areaM2 = 0 (mouth closed).
  * @provenance: derived from SALMON_DEFAULTS mouth dimensions.
  */
-function salmonMouthCone(mouthFraction) {
+export function salmonMouthCone(mouthFraction) {
     var w = SALMON_DEFAULTS.mouthWidthMm * 0.001;
     var h = SALMON_DEFAULTS.mouthHeightMm * 0.001;
     var frac = mouthFraction || 0;
@@ -133,7 +133,7 @@ function salmonMouthCone(mouthFraction) {
  * Returns z (m) from uniform distribution over [depthMinM, depthMaxM].
  * @provenance: literature — adult Chinook hold 0.15-0.60 m off bottom.
  */
-function salmonPositionZ(depthMinM, depthMaxM) {
+export function salmonPositionZ(depthMinM, depthMaxM) {
     var lo = depthMinM || SALMON_DEFAULTS.depthMinM;
     var hi = depthMaxM || SALMON_DEFAULTS.depthMaxM;
     return lo + Math.random() * (hi - lo);

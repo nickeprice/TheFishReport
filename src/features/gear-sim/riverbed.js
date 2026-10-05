@@ -6,7 +6,7 @@
  *
  * public: bedElevation(x, y), contactForce(z, z_bed, v_z),
  *         frictionForce(v_xy, F_n), isSnagged(z, z_bed, pullVec, muS)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
 // Friction coefficients: lead-on-wet-cobble
@@ -73,7 +73,7 @@ var BED_RGH = [];
  * Returns elevation (m). Negative = below datum.
  * @provenance: literature — sum-of-sines roughness, Robert 2003, Aberle & Nikora 2006.
  */
-function bedElevation(x, y) {
+export function bedElevation(x, y) {
     if (isNaN(x) || isNaN(y)) return 0;
     var z = 0;
     for (var i = 0; i < BED_RGH.length; i++) {
@@ -103,7 +103,7 @@ function bedElevation(x, y) {
  * @provenance: literature — Hertz contact theory, Marshall 2012.
  * @error: ±30% — E* is approximate and damping is linearised.
  */
-function contactForce(z, z_bed, v_z) {
+export function contactForce(z, z_bed, v_z) {
     var delta = z_bed - z;                           // penetration depth (m)
     if (delta <= 0) {
         return { forceN: 0, dampedN: 0, penetration: delta, inContact: false };
@@ -137,7 +137,7 @@ function contactForce(z, z_bed, v_z) {
  * @provenance: standard — Coulomb friction model.
  * @error: ±20% — μ varies with surface wetness and wear.
  */
-function frictionForce(v_xy, F_n) {
+export function frictionForce(v_xy, F_n) {
     if (!F_n || F_n <= 0 || isNaN(v_xy)) {
         return { magnitudeN: 0, direction: 0, isSticking: true };
     }
@@ -166,7 +166,7 @@ function frictionForce(v_xy, F_n) {
  * Returns { snagged: bool, reason: string }.
  * @provenance: standard — geometry + friction-based snag model.
  */
-function isSnagged(z, z_bed, pullVec, muS) {
+export function isSnagged(z, z_bed, pullVec, muS) {
     if (z > z_bed) {
         return { snagged: false, reason: 'above_bed' };
     }

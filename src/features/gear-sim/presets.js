@@ -8,22 +8,23 @@
  * saveRig()/restoreRig(). The auto-save slot stays untouched — presets
  * are explicit save/load only.
  *
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
-var PRESET_STORE_KEY = 'puyallup_rig_presets';
+export var PRESET_STORE_KEY = 'puyallup_rig_presets';
+window.PRESET_STORE_KEY = PRESET_STORE_KEY;
 
-function readPresets() {
+export function readPresets() {
     try {
         var raw = localStorage.getItem(PRESET_STORE_KEY);
         var arr = raw ? JSON.parse(raw) : [];
         return Array.isArray(arr) ? arr : [];
     } catch (e) { return []; }
 }
-function writePresets(arr) {
+export function writePresets(arr) {
     try { localStorage.setItem(PRESET_STORE_KEY, JSON.stringify(arr)); } catch (e) {}
 }
 
-function captureCurrentPreset() {
+export function captureCurrentPreset() {
     return {
         waterType: getStr('water-type'), species: getStr('species'),
         technique: 'drift',
@@ -38,7 +39,7 @@ function captureCurrentPreset() {
 }
 
 // Apply a preset to the form, reusing the cascade restore pattern from rig.js.
-function applyPreset(name) {
+export function applyPreset(name) {
     if (!name) return;
     var presets = readPresets(), p = null;
     for (var i = 0; i < presets.length; i++) {
@@ -68,7 +69,7 @@ function applyPreset(name) {
     showToast('Loaded preset: ' + name, 'success', 2500);
 }
 
-function savePreset(name) {
+export function savePreset(name) {
     if (!name || !String(name).trim()) { showToast('Enter a name for this preset.', 'warn', 4000); return; }
     name = String(name).trim().slice(0, 48);
     var presets = readPresets();
@@ -83,7 +84,7 @@ function savePreset(name) {
     showToast('Preset saved: ' + name, 'success', 2500);
 }
 
-function deletePreset(name) {
+export function deletePreset(name) {
     if (!name || !confirm('Delete preset "' + name + '"?')) return;
     var presets = readPresets();
     for (var i = 0; i < presets.length; i++) {
@@ -93,7 +94,7 @@ function deletePreset(name) {
     showToast('Preset deleted: ' + name, 'success', 2500);
 }
 
-function saveCurrentPreset() {
+export function saveCurrentPreset() {
     var sel = document.getElementById('preset-select');
     var hint = (sel && sel.value) ? sel.value : 'My Rig';
     var name = prompt('Name this rig preset:', hint);
@@ -101,7 +102,7 @@ function saveCurrentPreset() {
     savePreset(name.trim());
 }
 
-function deleteCurrentPreset() {
+export function deleteCurrentPreset() {
     var sel = document.getElementById('preset-select');
     if (!sel || !sel.value) return;
     deletePreset(sel.value);
@@ -110,7 +111,7 @@ function deleteCurrentPreset() {
     if (delBtn) delBtn.style.display = 'none';
 }
 
-function populatePresetDropdown() {
+export function populatePresetDropdown() {
     var sel = document.getElementById('preset-select');
     if (!sel) return;
     var current = sel.value;
@@ -126,7 +127,7 @@ function populatePresetDropdown() {
     if (delBtn) delBtn.style.display = sel.value ? 'inline-block' : 'none';
 }
 
-function onPresetSelect() {
+export function onPresetSelect() {
     var sel = document.getElementById('preset-select');
     if (!sel) return;
     var delBtn = document.getElementById('btn-delete-preset');
@@ -134,4 +135,4 @@ function onPresetSelect() {
     if (sel.value) applyPreset(sel.value);
 }
 
-function loadPresets() { populatePresetDropdown(); }
+export function loadPresets() { populatePresetDropdown(); }

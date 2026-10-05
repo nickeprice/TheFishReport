@@ -5,7 +5,7 @@
  * Randomises salmon position + breathing phase per run.
  *
  * public: interceptionRun(), interceptionProbability(), HOOK_SET_FORCE_N
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 
 var HOOK_SET_FORCE_N = 8.0;    // N — @provenance: informed_estimate (salmon jaw cartilage)
@@ -42,7 +42,7 @@ var HOOK_PEN_FORCE_N = 2.0;    // N
  * }.
  * @provenance: standard — geometric state machine + force threshold.
  */
-function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs, gearMassKg) {
+export function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs, gearMassKg) {
     if (gearMassKg === undefined) gearMassKg = 0.030;
     var phases = [];
     var hooked = false;
@@ -112,7 +112,7 @@ function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs, gearMassKg) {
  * }.
  * @provenance: standard — Monte-Carlo sampling.
  */
-function interceptionProbability(hookDepthM, flowMs, gearMassKg) {
+export function interceptionProbability(hookDepthM, flowMs, gearMassKg) {
     if (gearMassKg === undefined) gearMassKg = 0.030;
     var sweeps = 0, collisions = 0, hooked = 0;
     var qualitySum = 0;

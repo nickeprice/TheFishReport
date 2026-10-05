@@ -2,13 +2,14 @@
  * src/features/auth/auth.js - anonymous (guest) session + pending-catch flush.
  * public: AuthState, applyAuthState(), initAuth(), startFishing(),
  *         stopFishing(), syncPendingCatches()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  * syncPendingCatches() drains the durable IndexedDB outbox (see catch-log/outbox.js).
  */
 // --- AUTH (anonymous guest session) ---
-var AuthState = { signedIn: false, name: '', offline: false };
+export var AuthState = { signedIn: false, name: '', offline: false };
+window.AuthState = AuthState;
 
-function applyAuthState(signedIn, name) {
+export function applyAuthState(signedIn, name) {
     AuthState.signedIn = !!signedIn;
     AuthState.name = name || '';
     var out = document.getElementById('auth-logged-out');
@@ -35,7 +36,7 @@ function applyAuthState(signedIn, name) {
     if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
 }
 
-async function initAuth() {
+export async function initAuth() {
     if (typeof Supa === 'undefined') { applyAuthState(false, ''); return; }
     try { await Supa.ensureSdk(); } catch (e) {}
     var sess = null;
@@ -46,7 +47,7 @@ async function initAuth() {
     if (AuthState.signedIn) syncPendingCatches();
 }
 
-async function startFishing() {
+export async function startFishing() {
     var name = (getStr('auth-name') || '').trim();
     if (!name) { showToast('Enter a name to start fishing.', 'warn'); return; }
     var btn = document.getElementById('btn-auth-start');
@@ -69,7 +70,7 @@ async function startFishing() {
     switchTab('tab-gear-sim');
 }
 
-async function stopFishing() {
+export async function stopFishing() {
     try { if (typeof Supa !== 'undefined') await Supa.signOut(); } catch (e) {}
     setFieldValue('auth-name', '');
     currentStats = null;
@@ -81,7 +82,7 @@ async function stopFishing() {
 // Rows that failed to reach Supabase stay in the durable outbox flagged pendingSync and
 // are retried whenever a session becomes available. The write is idempotent (clientId ->
 // ON CONFLICT DO NOTHING), so a retry can never double-log a catch.
-async function syncPendingCatches() {
+export async function syncPendingCatches() {
     if (typeof Supa === 'undefined' || typeof outboxPending !== 'function') return 0;
     var pending = outboxPending();
     if (!pending.length) return 0;

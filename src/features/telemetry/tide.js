@@ -1,10 +1,10 @@
 /**
  * src/features/telemetry/tide.js - tide row + tide curve rendering.
  * public: getFMIColor(), tideHourOf(), formatTideRow(), tideCurveSvg()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 // --- WATER REPORT LOGIC ---
-function getFMIColor(score) {
+export function getFMIColor(score) {
     var s = Math.max(0, Math.min(100, parseFloat(score)));
     if (s <= 50) {
         var pct = s / 50.0;
@@ -17,7 +17,7 @@ function getFMIColor(score) {
 
 // Parse a 12-hour display time ("4:15 AM") back into decimal hours for chart
 // x-placement. Falls back to parsing "HH:MM" for defensive compatibility.
-function tideHourOf(label) {
+export function tideHourOf(label) {
     var m = String(label || '').trim().match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
     if (!m) return 0;
     var h = parseInt(m[1], 10) % 12;
@@ -25,7 +25,7 @@ function tideHourOf(label) {
     return h + parseInt(m[2], 10) / 60;
 }
 
-function formatTideRow(tideStr, tideCurve, tidePoints) {
+export function formatTideRow(tideStr, tideCurve, tidePoints) {
     if (!tideStr || tideStr.indexOf('Syncing') !== -1) {
         // Keep the curve beside the pills so there is never an orphaned
         // "TIDE CURVE" section anywhere else on the card.
@@ -65,7 +65,7 @@ function formatTideRow(tideStr, tideCurve, tidePoints) {
 // subtle gradient, and labels ONLY the high/low extremes (tideCurve) with dots +
 // compact 12-hour times. Falls back to the old 4-point zigzag if no hourly
 // data arrived (e.g. offline cached payload).
-function tideCurveSvg(points, extremes) {
+export function tideCurveSvg(points, extremes) {
     var smooth = points && points.length > 1;
     var src = smooth ? points : (extremes || []);
     if (!src || !src.length) return '';

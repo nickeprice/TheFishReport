@@ -1,16 +1,17 @@
 /**
  * src/features/catch-log/board.js - merged catch list + "yours / everyone" scope.
  * public: CATCH_SCOPE, setCatchScope(scope), loadDatabase()
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  * Privacy: the public board renders 4 columns only (name/time/river/fish).
  */
     // Catch Log renderer — merged single list with a "yours / everyone" toggle.
 // The ONE list shows either the signed-in angler's private rows (with Edit/Delete)
 // or the public board (Name / Time / Flow / Fish). The active scope is tracked in
 // CATCH_SCOPE so sign-in/sign-out and new logs re-render the right side.
-var CATCH_SCOPE = 'everyone';   // 'yours' | 'everyone' (default = the public board)
+export var CATCH_SCOPE = 'everyone';   // 'yours' | 'everyone' (default = the public board)
+window.CATCH_SCOPE = CATCH_SCOPE;
 
-function setCatchScope(scope) {
+export function setCatchScope(scope) {
     CATCH_SCOPE = (scope === 'everyone') ? 'everyone' : 'yours';
     var yoursBtn = document.getElementById('scope-yours');
     var everyoneBtn = document.getElementById('scope-everyone');
@@ -39,7 +40,7 @@ function setCatchScope(scope) {
 // Public board renderer (the "everyone" scope of the merged list): only
 // Name / Time / Flow / Fish. Reads the Supabase view first and falls back to
 // the local buffer when offline or unconfigured.
-async function loadDatabase() {
+export async function loadDatabase() {
     var tbody = document.getElementById('catch-log-body');
     if (!tbody) return;
     tbody.innerHTML = '';

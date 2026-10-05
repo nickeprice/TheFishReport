@@ -24,7 +24,7 @@
  * public: gaugeWidthFt(siteId), spotWidthRatio(siteId), velocityAtSpot(flow, siteId),
  *         depthAtGauge(flow, siteId), spotDepthFt(flow, siteId),
  *         spotNearestWidth(siteId)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 var SAME_REACH_UNCERTAINTY = 0.20;        // +/- this much without a spot measurement
 var SAME_REACH_MEASURED_UNCERTAINTY = 0.10; // +/- 10% when spot width IS measured
@@ -38,7 +38,7 @@ var SPOT_WIDTHS_SITE_MAP = {
     "12089500": "nisqually"
 };
 
-function gaugeWidthFt(siteId) {
+export function gaugeWidthFt(siteId) {
     var all = (typeof window !== 'undefined') ? window.RIVER_WIDTHS : null;
     if (!all || !siteId || !all[String(siteId)]) return null;
     var w = Number(all[String(siteId)].width_ft);
@@ -46,7 +46,7 @@ function gaugeWidthFt(siteId) {
 }
 
 // Haversine distance in metres (used for nearest-neighbour SPOT_WIDTHS lookup).
-function haversineM(lat1, lon1, lat2, lon2) {
+export function haversineM(lat1, lon1, lat2, lon2) {
     var R = 6371000;
     var dLat = (lat2 - lat1) * Math.PI / 180;
     var dLon = (lon2 - lon1) * Math.PI / 180;
@@ -59,7 +59,7 @@ function haversineM(lat1, lon1, lat2, lon2) {
 
 // Nearest SPOT_WIDTHS DEM cross-section to the active station's GPS coordinates.
 // Returns { point, distance_m } or null when unavailable.
-function spotNearestWidth(siteId) {
+export function spotNearestWidth(siteId) {
     if (!siteId) return null;
     var key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
     if (!key) return null;
@@ -99,7 +99,7 @@ function spotNearestWidth(siteId) {
 // quietly present an unmeasured ratio as if it were measured.
 // When SPOT_WIDTHS data exists for the active station's river, uses the nearest
 // DEM cross-section. Otherwise falls back to 1.0 (same-reach estimate).
-function spotWidthRatio(siteId) {
+export function spotWidthRatio(siteId) {
     var gaugeFt = gaugeWidthFt(siteId);
     var near = spotNearestWidth(siteId);
     if (near && near.point && near.point.wetted_ft > 0 && gaugeFt && gaugeFt > 0) {
@@ -119,7 +119,7 @@ function spotWidthRatio(siteId) {
 // When the spot width is measured (SPOT_WIDTHS), uses the Manning-based adjustment:
 //     v_spot = v_gauge * (w_spot / w_gauge)^(2/5)
 // Otherwise falls back to the simple continuity ratio (w_gauge / w_spot).
-function velocityAtSpot(flow, siteId) {
+export function velocityAtSpot(flow, siteId) {
     var v = hydraulicVelocity(flow, siteId);
     var r = spotWidthRatio(siteId);
     var has = v && v.mean && v.mean > 0;
@@ -163,7 +163,7 @@ var DEPTH_MIN_ROWS = 1;
 
 // The site's usable rows, or null. `points[].a` / `points[].w` are the measured
 // area/width the depth comes from - nothing here invents a value.
-function siteDepthRows(siteId) {
+export function siteDepthRows(siteId) {
     var all = (typeof window !== 'undefined') ? window.CHANNEL_MEASUREMENTS : null;
     if (!all || !all.sites || !siteId) return null;
     var site = all.sites[String(siteId)];
@@ -180,7 +180,7 @@ function siteDepthRows(siteId) {
 
 // Measured mean depth (ft) at the gauge for this discharge, with its provenance.
 // null when the gauge has no measured cross-section.
-function depthAtGauge(flow, siteId) {
+export function depthAtGauge(flow, siteId) {
     var s = siteDepthRows(siteId);
     if (!s) return null;
     var q = (Number(flow) > 0) ? Number(flow) : 0;
@@ -228,7 +228,7 @@ function depthAtGauge(flow, siteId) {
 //     d_spot = d_gauge * (w_gauge / w_spot)^(3/5)
 // Otherwise returns the gauge depth as-is.
 // value === null means "unmeasured", never a placeholder number.
-function spotDepthFt(flow, siteId) {
+export function spotDepthFt(flow, siteId) {
     var d = depthAtGauge(flow, siteId);
     var r = spotWidthRatio(siteId);
     // Manning depth exponent: (w_gauge/w_spot)^(3/5) = r.ratio^0.6

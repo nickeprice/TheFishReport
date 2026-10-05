@@ -24,18 +24,20 @@
  *
  * Classic script (global scope). Loaded BEFORE src/features/map/map.js + src/app.js.
  */
-var SPOTS_CACHE_KEY = 'favorite_spots_cache';
-var SPOT_LABEL_MAX = 60;
+export var SPOTS_CACHE_KEY = 'favorite_spots_cache';
+window.SPOTS_CACHE_KEY = SPOTS_CACHE_KEY;
+export var SPOT_LABEL_MAX = 60;
+window.SPOT_LABEL_MAX = SPOT_LABEL_MAX;
 
 var spotsState = { rows: [], loaded: false, offline: false, gauge: {} };
 
-function spotsSignedIn() {
+export function spotsSignedIn() {
     return (typeof AuthState !== 'undefined') && !!(AuthState && AuthState.signedIn);
 }
 
 // The active station RECORD (id + name + coords) — the anchor a spot is saved against,
 // because /api/water_report needs a USGS site id to answer for a spot.
-function activeStationRecord() {
+export function activeStationRecord() {
     try {
         var st = JSON.parse(localStorage.getItem('active_station') || 'null');
         if (st && st.id) return st;
@@ -43,7 +45,7 @@ function activeStationRecord() {
     return null;
 }
 
-function readSpotCache() {
+export function readSpotCache() {
     try {
         var raw = localStorage.getItem(SPOTS_CACHE_KEY);
         var rows = raw ? JSON.parse(raw) : [];
@@ -53,11 +55,11 @@ function readSpotCache() {
     }
 }
 
-function writeSpotCache(rows) {
+export function writeSpotCache(rows) {
     try { localStorage.setItem(SPOTS_CACHE_KEY, JSON.stringify(rows || [])); } catch (e) {}
 }
 
-function spotsStatus(text) {
+export function spotsStatus(text) {
     var el = document.getElementById('spot-status');
     if (!el) return;
     el.hidden = !text;
@@ -66,7 +68,7 @@ function spotsStatus(text) {
 
 // Load MY spots: local mirror first (so a spot stays usable offline), then the server
 // when a session exists. `offline` = the server was unreachable, so keep the cache.
-async function loadFavoriteSpots() {
+export async function loadFavoriteSpots() {
     if (!spotsState.loaded) spotsState.rows = readSpotCache();
     if (spotsSignedIn() && typeof Supa !== 'undefined') {
         var rows = null;
@@ -85,7 +87,7 @@ async function loadFavoriteSpots() {
 }
 
 // One row: the label block opens the spot, the small button deletes it.
-function spotRowEl(spot) {
+export function spotRowEl(spot) {
     var row = document.createElement('div');
     row.className = 'spot-row';
 
@@ -112,7 +114,7 @@ function spotRowEl(spot) {
 
 // Paint the list + its one-line status. Text only (textContent), never innerHTML for the
 // label, which is user text.
-function renderFavoriteSpots() {
+export function renderFavoriteSpots() {
     var box = document.getElementById('favorite-spots');
     // The save/pick controls stay VISIBLE even without a session: hiding them made "Place a
     // spot on the map" invisible, which read as a broken feature. The status line explains
@@ -161,7 +163,7 @@ var SPOT_NEAREST_GAUGE_N = 1;      // how many gauges the resolver keeps (the cl
 // the Puyallup at Orting (483 CFS) the same distance out, so "nearest" can hand a spot the
 // flow of a creek beside the river being fished. If the selected gauge is in range it wins;
 // otherwise the closest one does.
-function pickNearestStation(list, preferId) {
+export function pickNearestStation(list, preferId) {
     if (!list || !list.length) return null;
     var prefer = (preferId != null) ? String(preferId) : null;
     var nearest = null;
@@ -182,7 +184,7 @@ function pickNearestStation(list, preferId) {
 // { ok: true, station: {id,name,distance}|null } | { ok: false, status, error, serverMessage }
 // ok:false means "we could not ask" (offline / server error / USGS unreachable) - NOT "there is
 // no gauge". The two need different words: only the second one is a fact about the place.
-async function resolveSpotStation(lat, lon, preferId) {
+export async function resolveSpotStation(lat, lon, preferId) {
     if (typeof fetch !== 'function' || lat == null || lon == null) {
         return { ok: false, status: 0, error: 'no position', serverMessage: null };
     }
@@ -203,7 +205,7 @@ async function resolveSpotStation(lat, lon, preferId) {
 }
 
 // The gauge NAME for a spot row (and the distance when this session resolved it).
-function spotGaugeText(spot) {
+export function spotGaugeText(spot) {
     if (!spot) return '';
     var known = spotsState.gauge[spot.id];
     var name = (known && known.name) ? known.name : (spot.river_name || null);
@@ -214,7 +216,7 @@ function spotGaugeText(spot) {
 
 // Save a spot at a LAT/LON the angler chose on the map. The nearest gauge is resolved
 // first and stored on the row so the row (and the report) say where the flow comes from.
-async function saveSpotAt(lat, lon, label) {
+export async function saveSpotAt(lat, lon, label) {
     if (lat == null || lon == null || isNaN(Number(lat)) || isNaN(Number(lon))) {
         showToast('No position for that spot.', 'warn', 4000);
         return null;
@@ -251,7 +253,7 @@ async function saveSpotAt(lat, lon, label) {
 
 // Save the CURRENT position (the GPS fix when we have one, else the active station's
 // gauge) - the "I am standing here" path. Private: label + coords go to the owner's rows.
-async function saveCurrentSpot() {
+export async function saveCurrentSpot() {
     if (!spotsSignedIn()) {
         showToast('Start a session on the Catch Log tab first \u2014 spots save to your private account.', 'warn', 6000);
         return;
@@ -275,7 +277,7 @@ async function saveCurrentSpot() {
 // a gauge), then go through the SAME selectPreset() path a preset / map pin uses. The SPOT's
 // coordinates ride along, so the report's weather is for the saved point while the flow comes
 // from the resolved gauge - and the row names that gauge, so the provenance is visible.
-async function selectSavedSpot(id) {
+export async function selectSavedSpot(id) {
     var spot = null;
     for (var i = 0; i < spotsState.rows.length; i++) {
         if (spotsState.rows[i].id === id) { spot = spotsState.rows[i]; break; }
@@ -316,7 +318,7 @@ async function selectSavedSpot(id) {
     selectPreset(gaugeId, Number(spot.latitude), Number(spot.longitude), spot.label || 'Saved spot', false);
 }
 
-async function deleteSavedSpot(id) {
+export async function deleteSavedSpot(id) {
     if (!window.confirm('Delete this saved spot? Your other spots are untouched.')) return;
     var res = null;
     try { res = await Supa.deleteFavoriteSpot(id); } catch (e) { res = null; }

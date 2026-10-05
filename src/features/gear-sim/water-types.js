@@ -16,7 +16,7 @@
 // WATER TYPE GUIDE (Phase 1.6)
 // ==================================================================================
 
-function waterTypeMultiplier(typeId) {
+export function waterTypeMultiplier(typeId) {
     var types = (typeof WATER_TYPES !== 'undefined') ? WATER_TYPES : null;
     var def = types ? types[2] : { id: 'run', label: 'Run', depthMul: 1.0, velMul: 1.0, desc: '' };
     if (!types || !typeId) return def;
@@ -26,7 +26,7 @@ function waterTypeMultiplier(typeId) {
     return def;
 }
 
-function openWaterTypeGuide() {
+export function openWaterTypeGuide() {
     var list = document.getElementById('water-type-guide-list');
     if (!list) return;
     var types = (typeof WATER_TYPES !== 'undefined') ? WATER_TYPES : [];
@@ -51,7 +51,7 @@ function openWaterTypeGuide() {
     if (modal) modal.style.display = 'block';
 }
 
-function closeWaterTypeGuide() {
+export function closeWaterTypeGuide() {
     var modal = document.getElementById('water-type-modal');
     if (modal) modal.style.display = 'none';
 }

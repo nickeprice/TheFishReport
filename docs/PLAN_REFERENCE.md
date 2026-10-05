@@ -39,34 +39,6 @@
 
 ---
 
-<a id="build-state"></a>
-## Phase V1: Shared State Extraction
-
-**Goal:** Remove `window.*` globals for cross-feature shared state. Replace with a proper module.
-
-**New file:** `src/shared/state.js`
-```js
-export var userGPSCoords = null;
-export var waterTempF = null;
-export var turbidityFnu = null;
-export var currentWindMph = null;
-export var currentWindDir = null;
-```
-
-**Files to update (replace `window.X =` with `import { X } from '../shared/state.js'`):**
-| File | What changes |
-|---|---|
-| `inputs.js` | `window.userGPSCoords =` → state import + direct assign |
-| `picker.js` | `window.userGPSCoords =` — same |
-| `log.js` | `window.currentWindMph` reads → import |
-| `zone-env.js` | `window.waterTempF`, `window.turbidityFnu` → import |
-| `map.js` | `window.userGPSCoords` reads → import |
-| `daynav.js` | `window.userGPSCoords` reads → import |
-
-**Risk:** Low. Pure variable extraction. No logic changes.
-
----
-
 <a id="build-modules"></a>
 ## Phase V2: ES Module Conversion + Code Deletions
 

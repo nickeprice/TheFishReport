@@ -2,14 +2,6 @@
 
 ## ⚡ Vite Migration — Foundation (DO FIRST)
 
-- [ ] Phase V0: Setup & Scaffold
-      → package.json, vite.config.js, npm install, move 6 files to public/
-      [Detail → docs/PLAN_REFERENCE.md#build-setup]
-
-- [ ] Phase V1: Shared State Extraction
-      → state.js (NEW), inputs.js, picker.js, log.js, zone-env.js, map.js, daynav.js
-      [Detail → docs/PLAN_REFERENCE.md#build-state]
-
 - [ ] Phase V2: ES Module Conversion + Code Deletions
       → 35 JS files convert to import/export; delete tackleLoad, ensureSdk, 15 typeof guards, Leaflet loader
       [Detail → docs/PLAN_REFERENCE.md#build-modules]

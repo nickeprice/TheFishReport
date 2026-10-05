@@ -1,11 +1,13 @@
 # SYMBOLS — file → public API index
 
-Locate a global **without opening the file**. Every module is a classic (non-module) script
-sharing one global scope, loaded in the order below; `src/app.js` is last and bootstrap-only.
+Locate any public symbol **without opening the file**. Every module is an
+ES module (`import`/`export`); `window.*` shims provide backward compatibility
+for Node.js tests and the legacy classic-script load order.
 
-`node sanity_pass.js` asserts that every name listed here still exists, and that no module's
-`public:` header declares a name missing from this index. **Rename a public symbol → update
-this file**, or the pass fails.
+`node sanity_pass.cjs --quiet` asserts that every name listed here still exists
+as a `window.*` property, and that no module's `public:` header declares a name
+missing from this index. **Rename a public symbol → update this file**, or the
+pass fails.
 
 ## Load order (`index.html`)
 

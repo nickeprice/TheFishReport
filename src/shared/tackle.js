@@ -1,6 +1,8 @@
+import TACKLE_DATA from '../data/tackle.json' with { type: 'json' };
+
 /**
- * src/shared/tackle.js - measured tackle library loader (docs/CONTRACT_TACKLE.md ->
- * src/data/tackle.json) plus the CASCADING pickers that read it.
+ * src/shared/tackle.js - measured tackle library (loaded statically at build time
+ * from src/data/tackle.json) plus the CASCADING pickers that read it.
  *
  * The cascade (WS-3): Material -> Brand -> LB Test (mainline + leader), Weight Type ->
  * Amount, Bead Material -> Size. A pick only CHOOSES: the three visible line parts
@@ -8,7 +10,7 @@
  * diameter), log.js (the catch row) and the DB read, so nothing downstream of the form
  * changed.
  *
- * public: TACKLE, tackleLoad(), tackleItems(), tackleLineById(), tackleLineByMatLb(),
+ * public: TACKLE, tackleItems(), tackleLineById(), tackleLineByMatLb(),
  *         tackleRowLine(), isGenericBrand(), brandLabel(), brandOrder(),
  *         populateTacklePickers(), cascadeLine(role), resolveLineId(role),
  *         onLinePartChange(fieldId, fromLog), onWeightShapeChange(baseId, fromLog),
@@ -16,9 +18,15 @@
  *         tackleLineLbs(mat, brand, role), tackleLineFind(mat, brand, lb),
  *         tackleWeightOz(shape), tackleWeightRow(shapeLabel, oz),
  *         tackleWeightArea(shapeLabel, oz), tackleBeadSizes(mat)
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
-var TACKLE = null;
+var TACKLE = (TACKLE_DATA && TACKLE_DATA.items && TACKLE_DATA.items.length) ? TACKLE_DATA : null;
+window.TACKLE = TACKLE;
+
+// populate the pickers now that TACKLE is loaded
+if (typeof document !== 'undefined' && document.getElementById && TACKLE) {
+  populateTacklePickers();
+}
 
 // Which line materials each picker offers: braid is mainline-only, fluoro is
 // leader-only, mono and copoly are fished as either.

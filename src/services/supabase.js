@@ -232,7 +232,7 @@ export async function fetchMyCatches() {
 }
 
 /** Private update: edit allowed columns on one of the user's own rows. */
-async function updateMyCatch(id, patch) {
+export async function updateMyCatch(id, patch) {
     var client = getClient();
     if (!client) return { ok: false, error: 'Supabase not configured or offline' };
     try {
@@ -245,7 +245,7 @@ async function updateMyCatch(id, patch) {
 }
 
 /** Private delete: remove one of the user's own rows. */
-async function deleteMyCatch(id) {
+export async function deleteMyCatch(id) {
     var client = getClient();
     if (!client) return { ok: false, error: 'Supabase not configured or offline' };
     try {
@@ -266,7 +266,7 @@ async function deleteMyCatch(id) {
 // `supabase/migrations/20260929190000_favorite_spots.sql`. Nothing here is public.
 
 /** payload -> favorite_spots columns. NEVER sets user_id (the DB default owns it). */
-function toSpotRow(payload) {
+export function toSpotRow(payload) {
     var lat = parseFloat(payload.latitude);
     var lon = parseFloat(payload.longitude);
     return {
@@ -288,7 +288,7 @@ function toSpotRow(payload) {
  * updates the same row instead of planting a second spot. An unnamed spot or a
  * non-numeric coordinate is rejected BEFORE the network — a bad row cannot land.
  */
-async function saveFavoriteSpot(payload) {
+export async function saveFavoriteSpot(payload) {
     var client = getClient();
     if (!client) return { ok: false, offline: true, error: 'Supabase not configured or offline' };
     var row = toSpotRow(payload);
@@ -306,7 +306,7 @@ async function saveFavoriteSpot(payload) {
 }
 
 /** Private read: MY spots only (RLS guarantees ownership; no view, no RPC). */
-async function fetchFavoriteSpots() {
+export async function fetchFavoriteSpots() {
     var client = getClient();
     if (!client) return null;   // null = unreachable, [] = reachable and empty
     try {
@@ -321,7 +321,7 @@ async function fetchFavoriteSpots() {
 }
 
 /** Private delete: remove one of MY spots. */
-async function deleteFavoriteSpot(id) {
+export async function deleteFavoriteSpot(id) {
     var client = getClient();
     if (!client) return { ok: false, error: 'Supabase not configured or offline' };
     try {
@@ -335,7 +335,7 @@ async function deleteFavoriteSpot(id) {
 
 /** Public read: the rebuilt view exposes name / time / river / fish.
  * Falls back gracefully when run against an older view (name,time[,river]). */
-async function fetchPublicFeed(limit) {
+export async function fetchPublicFeed(limit) {
     var client = getClient();
     if (!client) return [];
     try {
@@ -388,16 +388,14 @@ async function fetchPublicFeed(limit) {
  *
  * The mapper stays shape-tolerant so a slightly different RPC shape still maps cleanly.
  */
-async function fetchGlobalCalibration(flow, species) {
+export async function fetchGlobalCalibration(flow, species) {
     var client = getClient();
     if (!client) return [];
     try {
         var res = await client.rpc('get_global_calibration', { p_flow: flow, p_species: species });
         if (res.error || !res.data) return [];
         // G5: snapshot the successful read so community sonar works offline.
-        if (typeof snapshotSave === 'function') {
-            try { snapshotSave('calibration_snapshot', res.data); } catch (e) {}
-        }
+        try { snapshotSave('calibration_snapshot', res.data); } catch (e) {}
         return res.data.map(function (r) {
             var num = function (v) {
                 if (v === null || v === undefined || v === '') return null;
@@ -462,9 +460,7 @@ if (typeof window !== 'undefined') {
         deleteFavoriteSpot: deleteFavoriteSpot,
         // support
         isConfigured: isConfigured,
-        ensureSdk: ensureSdk,
         toCatchRow: toCatchRow,
-        toSpotRow: toSpotRow,
-        SUPABASE_CDN: SUPABASE_CDN
+        toSpotRow: toSpotRow
     };
 }

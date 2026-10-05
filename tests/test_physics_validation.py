@@ -327,16 +327,19 @@ _CHAIN_EVALUATE_JS = """(args) => {
 
 
 def _load_chain_solver_page(page, url):
-    """Navigate and wait for chainSolve/parseFoam, retrying once on a hung load.
+    """Navigate and wait for chainSolve/parseFoam, retrying up to 2x on a hung
+    load.
 
     The classic scripts load synchronously, so chainSolve is available right
-    after DOMContentLoaded; a retry covers a stalled intermediate navigation
-    under sequential test load.
+    after DOMContentLoaded; retries + a small settle delay cover a stalled
+    intermediate navigation under sequential parametrized test load where the
+    browser accumulates state across 10 fuzz-case page navigations.
     """
     errors = []
     page.on('pageerror', lambda exc: errors.append(str(exc)))
-    for attempt in range(2):
+    for attempt in range(3):
         page.goto(url, wait_until='domcontentloaded')
+        page.wait_for_timeout(200)  # settle between sequential navigations
         try:
             page.wait_for_function(
                 'typeof window.chainSolve === "function" && '
@@ -345,7 +348,7 @@ def _load_chain_solver_page(page, url):
             )
             return errors
         except Exception:
-            if attempt == 0:
+            if attempt < 2:
                 continue
             raise
     return errors

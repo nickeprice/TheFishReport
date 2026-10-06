@@ -69,4 +69,9 @@ export function tackleLoad() {
         .catch(function () { return null; });
 }
 
+// Populate pickers at module load time (TACKLE is already available via static JSON import)
+if (typeof document !== 'undefined' && document.getElementById && TACKLE) {
+  populateTacklePickers();
+}
+
 

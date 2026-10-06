@@ -26,6 +26,7 @@
  *         spotNearestWidth(siteId)
  * ES module.
  */
+import { hydraulicVelocity } from './inputs.js';
 var SAME_REACH_UNCERTAINTY = 0.20;        // +/- this much without a spot measurement
 var SAME_REACH_MEASURED_UNCERTAINTY = 0.10; // +/- 10% when spot width IS measured
 

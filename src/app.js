@@ -17,6 +17,7 @@ import { initCatchReconcile } from './features/catch-log/reconcile.js';
 import { setCatchScope, CATCH_SCOPE } from './features/catch-log/board.js';
 import { loadWaterReport } from './features/telemetry/report.js';
 import { openWaterTypeGuide } from './features/gear-sim/water-types.js';
+import { updateActiveDateUI } from './features/telemetry/daynav.js';
 // Side-effect imports — load modules to trigger window-shim init
 import './shared/tackle.js';
 import './features/gear-sim/sim.js';
@@ -59,7 +60,7 @@ window.onload = async function() {
     // gear-sim calibration fallback and the pending-sync flush all read it synchronously.
     try { await outboxLoad(); } catch (e) { logDebug('Outbox load failed: ' + e.message, 'DB'); }
 
-    getGPS();
+    getGPS(function () { updateActiveDateUI(); });
     initAuth();
     // Flush the outbox when the network returns / the app is resumed (Phase 3.3).
     initCatchReconcile();

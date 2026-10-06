@@ -10,7 +10,6 @@ import { Supa } from '../../services/supabase.js';
 import { outboxAll, snapshotLoad } from './outbox.js';
 import { pendingRows, pendingBadge } from './pending.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
-import { renderMyCatches } from './mycatches.js';
 // Catch Log renderer — merged single list with a "yours / everyone" toggle.
 // The ONE list shows either the signed-in angler's private rows (with Edit/Delete)
 // or the public board (Name / Time / Flow / Fish). The active scope is tracked in
@@ -38,7 +37,7 @@ export function setCatchScope(scope) {
             : '<tr><th>Name</th><th>Time</th><th>River</th><th>Fish</th></tr>';
     }
     if (CATCH_SCOPE === 'yours') {
-        renderMyCatches();
+        if (typeof renderMyCatches === 'function') renderMyCatches();
     } else {
         loadDatabase();
     }
@@ -47,6 +46,7 @@ export function setCatchScope(scope) {
 // Public board renderer (the "everyone" scope of the merged list): only
 // Name / Time / Flow / Fish. Reads the Supabase view first and falls back to
 // the local buffer when offline or unconfigured.
+window.loadDatabase = loadDatabase;
 export async function loadDatabase() {
     var tbody = document.getElementById('catch-log-body');
     if (!tbody) return;

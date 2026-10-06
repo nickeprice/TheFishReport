@@ -6,7 +6,7 @@
  *         fishOutlook(), paintZoneHud(), refreshZonePreview()
  * ES module.
  */
-import { getActiveReport, getCurrentFlow } from './sonar.js';
+import { getActiveReport, getCurrentFlow } from './report-state.js';
 import { provVal } from '../../shared/format.js';
 import { getWaterTempF, lightTerm, tideTerm, turbidityTerm, refHourBlock } from './zone-env.js';
 import { BASE_ZONE_MIN, BASE_ZONE_MAX, thermalOptimum, getActiveStationId } from './inputs.js';

@@ -4,7 +4,6 @@
  */
 import { logDebug } from "../../shared/debug.js";
 import { State } from "../../shared/state.js";
-import { updateActiveDateUI } from "../telemetry/daynav.js";
 import { GEAR_OPTIONS } from "../../shared/gear-options.js";
 // Physics is pure math:  F = 0.5 * rho * Cd * A * v^2. No tuned constants, no
 // reference flow, no calibration anchors. Community catches never bend
@@ -30,7 +29,7 @@ export function getStr(id) {
 }
 window.getStr = getStr;
 
-export function getGPS() {
+export function getGPS(onFinish) {
     if("geolocation" in navigator) {
         logDebug("Requesting GPS...", "SYS");
         navigator.geolocation.getCurrentPosition(function(pos){
@@ -38,11 +37,11 @@ export function getGPS() {
             // stored so logData() can include it in the private catch row.
             State.userGPSCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
             logDebug("GPS Lock acquired (coords held privately for the catch row)", "SYS");
-            updateActiveDateUI();
+            if (typeof onFinish === 'function') onFinish();
         }, function(err){
             State.userGPSCoords = null;
             logDebug("GPS Error: " + err.message, "ERR");
-            updateActiveDateUI();
+            if (typeof onFinish === 'function') onFinish();
         });
     }
 }

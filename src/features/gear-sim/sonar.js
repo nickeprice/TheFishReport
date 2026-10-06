@@ -9,7 +9,7 @@
  * ES module.
  */
 import { envSignature } from './zone-env.js';
-import { provVal } from '../../shared/format.js';
+import { getActiveReport, getCurrentFlow } from './report-state.js';
 import { hydraulicVelocity, tackleWeightPhysicsData, tackleYarnDragData } from './inputs.js';
 import { totalDragPerFt, lineDragPerFt, presentationHeightInches } from './physics.js';
 // --- COMMUNITY SONAR ENVIRONMENT MATCH WEIGHTING ---
@@ -202,28 +202,4 @@ var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ?
 // ENVIRONMENT - where the fish are holding today
 // Today's water report shifts the 4"-12" baseline into the zone the fish are using.
 // ==================================================================================
-export function getActiveReport() {
-    if (typeof reportsData !== 'undefined' && typeof activeDateOffset !== 'undefined' &&
-        activeDateOffset >= 0 && activeDateOffset < reportsData.length) {
-        return reportsData[activeDateOffset];
-    }
-    return null;
-}
-
-// Live discharge for the Gear Sim + Catch Log. There is NO user-facing flow
-// input any more: the value comes from the current water report, falls back to
-// the last reading we saw this session, and finally to the 1040 CFS reference so
-// the solver always has a number to work with. It is still RECORDED on a catch.
-var lastKnownFlow = null;
-
-export function getCurrentFlow() {
-    var rep = getActiveReport();
-    if (!rep) return (lastKnownFlow !== null) ? lastKnownFlow : 1040;
-    var cfsV = provVal(rep.cfs);
-    if (cfsV !== null && cfsV !== undefined && !rep.api_offline) {
-        lastKnownFlow = cfsV;
-        return cfsV;
-    }
-    if (lastKnownFlow !== null) return lastKnownFlow;
-    return 1040;
-}
+// ==================================================================================

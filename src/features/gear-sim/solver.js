@@ -49,7 +49,7 @@ export function readRigFromForm() {
 import { logDebug } from '../../shared/debug.js';
 import { Supa } from '../../services/supabase.js';
 import { getStr, getNum, parseFoam } from './inputs.js';
-import { getCurrentFlow } from './sonar.js';
+import { getCurrentFlow } from './report-state.js';
 import { tackleLineById } from '../../shared/tackle.js';
 import { snapshotLoad, outboxAll } from '../catch-log/outbox.js';
 import { velocityAtSpot, spotDepthFt } from './continuity.js';

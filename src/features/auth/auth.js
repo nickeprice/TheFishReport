@@ -9,7 +9,6 @@ import { logDebug } from '../../shared/debug.js';
 import { showToast } from '../../shared/ui.js';
 import { getStr } from '../gear-sim/inputs.js';
 import { setFieldValue } from '../../shared/forms.js';
-import { setCatchScope, CATCH_SCOPE } from '../catch-log/board.js';
 import { switchTab } from '../../shared/nav.js';
 import { loadFavoriteSpots } from '../map/spots.js';
 import { Supa } from '../../services/supabase.js';

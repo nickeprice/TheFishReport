@@ -48,7 +48,7 @@ var BED_RGH = [];
     // Normalise so RMS roughness ≈ D50 / 4 = 0.025 m
     var targetRMS = D50 / 4;
     var norm = Math.sqrt(2 * targetRMS * targetRMS / sumA2);
-    for (var i = 0; i < N; i++) {
+    for (i = 0; i < N; i++) {
         BED_RGH.push({
             k: Math.exp(Math.log(kMin) + i * (Math.log(kMax) - Math.log(kMin)) / (N - 1)),
             amp: amps[i] * norm,

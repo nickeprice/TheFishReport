@@ -6,19 +6,18 @@
 import { showToast } from '../../shared/ui.js';
 import { formatCatchTime } from '../../shared/format.js';
 import { Supa } from '../../services/supabase.js';
-import { AuthState } from '../auth/auth.js';
 import { pendingNotIn, asMyCatchRow, pendingBadge } from './pending.js';
-import { loadDatabase } from './board.js';
 // --- YOUR CATCHES (private log: list, edit, delete) — the "yours" scope ---
 var _myCatches = [];
 
+window.renderMyCatches = renderMyCatches;
 export async function renderMyCatches() {
     var tbody = document.getElementById('catch-log-body');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     // Show an empty/disabled state until a session exists.
-    var signedIn = AuthState && AuthState.signedIn;
+    var signedIn = typeof AuthState !== 'undefined' && AuthState && AuthState.signedIn;
     if (!signedIn) {
         var signInEmpty = document.createElement('tr');
         signInEmpty.innerHTML = '<td colspan="5" class="empty-state">' +
@@ -111,7 +110,7 @@ export async function deleteMyCatch(id) {
     if (res && res.ok) {
         showToast('Catch deleted', 'success', 2500);
         renderMyCatches();
-        loadDatabase();   // the public board may have shrunk
+        if (typeof loadDatabase === 'function') loadDatabase();   // the public board may have shrunk
     } else {
         showToast('Could not delete: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
     }

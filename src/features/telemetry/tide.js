@@ -10,7 +10,7 @@ export function getFMIColor(score) {
         var pct = s / 50.0;
         return "rgb(255, " + Math.round(69 + pct*(214-69)) + ", " + Math.round(58 + pct*(10-58)) + ")";
     } else {
-        var pct = (s - 50) / 50.0;
+        pct = (s - 50) / 50.0;
         return "rgb(" + Math.round(255 + pct*(48-255)) + ", " + Math.round(214 + pct*(209-214)) + ", " + Math.round(10 + pct*(88-10)) + ")";
     }
 }
@@ -85,8 +85,8 @@ export function tideCurveSvg(points, extremes) {
         // Catmull-Rom -> cubic bezier path through every hourly point.
         var P = src.map(function (p, i) { return { x: X(hrs[i]), y: Y(Number(p.h)) }; });
         lineD = 'M' + P[0].x.toFixed(1) + ',' + P[0].y.toFixed(1);
-        for (var i = 0; i < P.length - 1; i++) {
-            var p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+        for (var j = 0; j < P.length - 1; j++) {
+            var p0 = P[j - 1] || P[j], p1 = P[j], p2 = P[j + 1], p3 = P[j + 2] || p2;
             lineD += ' C' + (p1.x + (p2.x - p0.x) / 6).toFixed(1) + ',' + (p1.y + (p2.y - p0.y) / 6).toFixed(1) +
                 ' ' + (p2.x - (p3.x - p1.x) / 6).toFixed(1) + ',' + (p2.y - (p3.y - p1.y) / 6).toFixed(1) +
                 ' ' + p2.x.toFixed(1) + ',' + p2.y.toFixed(1);
@@ -102,8 +102,8 @@ export function tideCurveSvg(points, extremes) {
     // never collide into the dense 9px mess the old version had.
     var labels = '';
     if (extremes && extremes.length) {
-        for (var j = 0; j < extremes.length; j++) {
-            var e = extremes[j];
+        for (var k = 0; k < extremes.length; k++) {
+            var e = extremes[k];
             var cx = X(tideHourOf(e.t)), cy = Y(Number(e.h));
             var up = (e.type === 'H');
             labels += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="3.2" class="tide-ext-dot" />' +

@@ -26,7 +26,6 @@
  * Classic script (global scope). Loaded BEFORE src/app.js, AFTER outbox.js.
  */
 import { outboxPending } from './outbox.js';
-import { setCatchScope, CATCH_SCOPE } from './board.js';
 // Newest first, so an optimistic row lands where it belongs at the top of the list.
 window.pendingRows = pendingRows;
 export function pendingRows() {
@@ -68,5 +67,7 @@ export function asMyCatchRow(r) {
 // badge and comes back from the server instead of the outbox.
 window.refreshCatchLists = refreshCatchLists;
 export function refreshCatchLists() {
-    setCatchScope(CATCH_SCOPE);
+    if (typeof setCatchScope === 'function' && typeof CATCH_SCOPE !== 'undefined') {
+        setCatchScope(CATCH_SCOPE);
+    }
 }

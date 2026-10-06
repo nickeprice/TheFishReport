@@ -13,7 +13,7 @@ import { AuthState } from '../auth/auth.js';
 import { Supa } from '../../services/supabase.js';
 import { outboxAdd, outboxUpdate } from './outbox.js';
 import { missingRigFields, getWaterTempF, envSignature } from '../gear-sim/zone-env.js';
-import { getActiveReport, getCurrentFlow } from '../gear-sim/sonar.js';
+import { getActiveReport, getCurrentFlow } from '../gear-sim/report-state.js';
 import { computeStrikeZone } from '../gear-sim/zone-core.js';
 import { setCatchScope, CATCH_SCOPE } from './board.js';
 import { State } from '../../shared/state.js';

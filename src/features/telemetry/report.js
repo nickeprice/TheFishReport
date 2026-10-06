@@ -110,7 +110,7 @@ export async function loadWaterReport(silent) {
                     '<div class="empty-state-hint">Last updated ' + hoursAgo + ' ago. Reconnect to refresh.</div>' +
                     '</div>';
             } else if (cards) {
-                var badge = document.createElement('div');
+                badge = document.createElement('div');
                 badge.className = 'seasonal-warning';
                 badge.style.cssText = 'background:var(--card-bg);border:1px solid var(--accent-yellow);color:var(--accent-yellow);';
                 badge.textContent = 'Offline: Last updated ' + hoursAgo + ' ago';

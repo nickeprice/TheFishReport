@@ -8,23 +8,17 @@ import { logDebug } from '../../shared/debug.js';
 import { calculateSolarHours } from '../../utils/regulations.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
 import { applyReportWeather } from '../../services/water.js';
-export var activeDateOffset = 0;
-window.activeDateOffset = activeDateOffset;
-export var reportsData = [];
-window.reportsData = reportsData;
-
-// Mutable exports: imported bindings are read-only, so callers use these
-// setters instead of direct assignment. Each also updates the window shim.
-export function setReportsData(val) { reportsData = val; window.reportsData = val; }
-export function setActiveDateOffset(val) { activeDateOffset = val; window.activeDateOffset = val; }
+// Re-export the master report state from report-state.js (breaks the
+// gear-sim/telemetry dependency cycle). The setters are the ONLY way to
+// mutate; the imported bindings are live (updated by report-state.js).
+export { activeDateOffset, reportsData, setReportsData, setActiveDateOffset } from '../gear-sim/report-state.js';
 
 export function stepDate(delta) {
     var newOffset = activeDateOffset + delta;
     if (newOffset < 0) return;
     var maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
     if (newOffset > maxOffset) return;
-    activeDateOffset = newOffset;
-    window.activeDateOffset = activeDateOffset;
+    setActiveDateOffset(newOffset);
     updateActiveDateUI();
 }
 

@@ -19,6 +19,7 @@ Usage::
     python3 scripts/dev_server.py 8000
 """
 
+import argparse
 import importlib
 import importlib.util
 import mimetypes
@@ -27,12 +28,13 @@ import sys
 from http.server import ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, 'api'))
+SRC_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.environ.get('TFR_SERVE_ROOT') or os.path.join(SRC_ROOT, 'dist')
+sys.path.insert(0, os.path.join(SRC_ROOT, 'api'))
 
 import water_report  # noqa: E402  (path set up above)
 
-_API_DIR = os.path.join(ROOT, 'api')
+_API_DIR = os.path.join(SRC_ROOT, 'api')
 
 
 def _api_module(name):
@@ -118,13 +120,23 @@ class Handler(water_report.handler):
 
 
 def main():
-    host = '127.0.0.1'   # loopback default keeps local dev + CI hermetic
-    port = 8000
-    args = sys.argv[1:]
-    if args and args[0].startswith('--host='):
-        host = args.pop(0).split('=', 1)[1] or '127.0.0.1'
-    if args:
-        port = int(args[0])
+    parser = argparse.ArgumentParser(description='The Fish Report dev server')
+    parser.add_argument('port', nargs='?', type=int, default=8000,
+                        help='Port to bind')
+    parser.add_argument('--host', default='127.0.0.1',
+                        help='Host to bind (default: 127.0.0.1)')
+    parser.add_argument('--root', default=None,
+                        help='Static file root (default: dist/ or TFR_SERVE_ROOT env var)')
+    args = parser.parse_args()
+
+    host = args.host
+    port = args.port
+    if args.root:
+        os.environ['TFR_SERVE_ROOT'] = os.path.abspath(args.root)
+
+    # Reload ROOT if the env var was just set by --root
+    global ROOT
+    ROOT = os.environ.get('TFR_SERVE_ROOT') or os.path.join(SRC_ROOT, 'dist')
 
     httpd = ThreadingHTTPServer((host, port), Handler)
     display = '0.0.0.0' if host in ('0.0.0.0', '::') else host

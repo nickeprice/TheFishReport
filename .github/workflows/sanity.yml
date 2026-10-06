@@ -23,11 +23,23 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements-dev.txt'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
 
       - name: Install Playwright browsers (chromium)
         run: python -m playwright install --with-deps chromium
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
 
       # Full test suite: schema/API contract (offline-mocked upstreams),
       # Playwright behavioural UI (mocked /api/water_report), physics validation

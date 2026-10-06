@@ -19,6 +19,7 @@ from threading import Thread
 import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DIST_ROOT = os.path.join(ROOT, 'dist')
 API_DIR = os.path.join(ROOT, 'api')
 
 
@@ -41,9 +42,12 @@ def dev_server():
     you need to mock upstream API calls.
     """
     port = _find_free_port()
+    env = os.environ.copy()
+    env['TFR_SERVE_ROOT'] = DIST_ROOT
     proc = subprocess.Popen(
         [sys.executable, os.path.join(ROOT, 'scripts', 'dev_server.py'), str(port)],
         cwd=ROOT,
+        env=env,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -92,6 +96,7 @@ def inprocess_server():
     # Delay-import so water_report is not loaded until the test asks for it
     sys.path.insert(0, API_DIR)
 
+    os.environ['TFR_SERVE_ROOT'] = DIST_ROOT
     from scripts.dev_server import Handler
 
     port = _find_free_port()

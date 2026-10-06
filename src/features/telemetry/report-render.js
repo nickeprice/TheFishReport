@@ -44,8 +44,8 @@ export function renderReportDays(reports, station, rulesLoaded) {
         var dStyle = (i === activeDateOffset) ? "block" : "none";
 
         // CFS + gage
-        var cfsVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' cfs' : '-- cfs';
-        var gageVal = (provVal(rep.gage_ft) !== null) ? provVal(rep.gage_ft) + ' ft' : '--';
+        var cfsVal = (provVal(rep.cfs) !== null) ? provVal(rep.cfs) + ' cfs' : '-- cfs';
+        var gageVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' ft' : '--';
 
         // Water quality
         var waterQualityHtml = '';
@@ -74,8 +74,12 @@ export function renderReportDays(reports, station, rulesLoaded) {
             (typeof formatTideRow === 'function' ? formatTideRow(rep.tide_chart, provVal(rep.tide_curve), provVal(rep.tide_points)) : '') +
             '<div class="env-weather-solunar">' +
               '<div class="env-stat-grid">' +
-                // Weather pills rendered by hourly.js openHourlyPopup
-              '</div>' +
+                '<div class="weather-pill"><span class="pill-label">Air</span><span class="air-temp pill-val">--</span><span class="pill-unit">°F</span></div>' +
+                '<div class="weather-pill" onclick="openHourlyPopup(\'wind_speed_mph\')"><span class="pill-label">Wind</span><span class="wind-val pill-val">--</span></div>' +
+                '<div class="weather-pill" onclick="openHourlyPopup(\'pop_pct\')"><span class="pill-label">Rain</span><span class="precip-pop pill-val">--</span><span class="pill-unit">%</span></div>' +
+                '<div class="weather-pill" onclick="openHourlyPopup(\'precip_in\')"><span class="pill-label">Precip</span><span class="precip-vol pill-val">--</span><span class="pill-unit">"</span></div>' +
+                '<div class="weather-pill" onclick="openHourlyPopup(\'cloud_pct\')"><span class="pill-label">Cloud</span><span class="pill-val">--</span><span class="pill-unit">%</span></div>' +
+                '<div class="weather-pill" onclick="openHourlyPopup(\'pressure\')"><span class="pill-label">Baro</span><span class="pressure-val pill-val">--</span><span class="pill-unit">inHg</span></div>' +
             '</div>' +
             '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
             buildSpeciesCalendarHtml(provVal(rep.species_calendar), provVal(rep.esc_stocks)) +

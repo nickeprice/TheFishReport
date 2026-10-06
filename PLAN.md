@@ -22,20 +22,6 @@
       → npm run build, full test suite, PWA offline, Vercel deploy
       [Detail → docs/PLAN_REFERENCE.md#build-deploy]
 
-## 🛠 UI Polish & Data Pipeline (after Vite migration)
-
-- [ ] Phase A3: Add PyMuPDF to forecast scraper
-      → refresh_wdfw_forecast.py
-      [Detail → docs/PLAN_REFERENCE.md#data-forecast-pymupdf]
-
-- [ ] Phase B: Hatchery escapement — map WDFW facilities for all 15 rivers
-      → water.js
-      [Detail → docs/PLAN_REFERENCE.md#data-hatchery]
-
-- [ ] Phase C: Debug pipeline → Supabase + button styling
-      → api/report-issue.py, migration, debug.js, index.html, styles.css
-      [Detail → docs/PLAN_REFERENCE.md#ui-debug]
-
 ## 🔬 Validation Suite
 
 - [ ] T1: Playwright full-integration (gear sim)
@@ -61,6 +47,20 @@
 - [ ] T6: HTML onclick handler audit
       → index.html, search for onclick= — verify each fn has window shim
       [Detail → docs/PLAN_REFERENCE.md#test-onclick]
+
+## 🛠 UI Polish & Data Pipeline (after Vite migration)
+
+- [ ] Phase A3: Add PyMuPDF to forecast scraper
+      → refresh_wdfw_forecast.py
+      [Detail → docs/PLAN_REFERENCE.md#data-forecast-pymupdf]
+
+- [ ] Phase B: Hatchery escapement — map WDFW facilities for all 15 rivers
+      → water.js
+      [Detail → docs/PLAN_REFERENCE.md#data-hatchery]
+
+- [ ] Phase C: Debug pipeline → Supabase + button styling
+      → api/report-issue.py, migration, debug.js, index.html, styles.css
+      [Detail → docs/PLAN_REFERENCE.md#ui-debug]
 
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 

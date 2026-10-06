@@ -24,12 +24,22 @@
  *
  * Classic script (global scope). Loaded BEFORE src/features/map/map.js + src/app.js.
  */
+import { AuthState } from '../auth/auth.js';
+import { Supa } from '../../services/supabase.js';
+import { apiGetJson } from '../../shared/api.js';
+import { showToast } from '../../shared/ui.js';
+import { newUuid } from '../../shared/format.js';
+import { getStr } from '../gear-sim/inputs.js';
+import { logDebug } from '../../shared/debug.js';
+import { mapCenter } from './map.js';
+import { setFieldValue } from '../../shared/forms.js';
+import { selectPreset } from '../station/picker.js';
 export var SPOTS_CACHE_KEY = 'favorite_spots_cache';
 window.SPOTS_CACHE_KEY = SPOTS_CACHE_KEY;
 export var SPOT_LABEL_MAX = 60;
 window.SPOT_LABEL_MAX = SPOT_LABEL_MAX;
 
-var spotsState = { rows: [], loaded: false, offline: false, gauge: {} };
+export var spotsState = { rows: [], loaded: false, offline: false, gauge: {} };
 
 export function spotsSignedIn() {
     return (typeof AuthState !== 'undefined') && !!(AuthState && AuthState.signedIn);

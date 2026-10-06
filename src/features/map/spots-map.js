@@ -11,6 +11,7 @@
  *
  * Classic script (global scope). Loaded AFTER src/features/map/spots.js.
  */
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
 // A star pin, visually distinct from the gauge dot the map already plots.
 export function savedSpotIcon() {
     return window.L.divIcon({

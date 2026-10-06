@@ -3,6 +3,7 @@
  * Splintered from water.js. ES module.
  */
 import { logDebug } from '../shared/debug.js';
+import { State } from '../shared/state.js';
 
 // is source-agnostic.
 const WDFN_CONTINUOUS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items';

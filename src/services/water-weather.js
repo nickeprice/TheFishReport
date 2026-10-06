@@ -3,6 +3,7 @@
  * Splintered from water.js. ES module.
  */
 import { logDebug } from '../shared/debug.js';
+import { State } from '../shared/state.js';
 
 window.applyReportWeather = applyReportWeather;
 export function applyReportWeather(rep) {

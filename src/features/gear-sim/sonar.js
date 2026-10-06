@@ -10,8 +10,9 @@
  */
 import { envSignature } from './zone-env.js';
 import { getActiveReport, getCurrentFlow } from './report-state.js';
-import { hydraulicVelocity, tackleWeightPhysicsData, tackleYarnDragData } from './inputs.js';
-import { totalDragPerFt, lineDragPerFt, presentationHeightInches } from './physics.js';
+import { hydraulicVelocity, tackleWeightPhysicsData, tackleYarnDragData, parseFoam, tackleHookData, tackleBeadData, tackleYarnBuoyancyG } from './inputs.js';
+import { tackleRowLine } from '../../shared/tackle.js';
+import { totalDragPerFt, lineDragPerFt, presentationHeightInches, computeLiftGf } from './physics.js';
 // --- COMMUNITY SONAR ENVIRONMENT MATCH WEIGHTING ---
 // A catch is a better predictor of where fish are RIGHT NOW when the conditions it was logged
 // in resemble today's. The variables are EXACTLY the ones the sim itself uses to place the zone
@@ -164,7 +165,7 @@ var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ?
         var mlDia = (mlLine && mlLine.diameter_mm) ? mlLine.diameter_mm : 0;
         // New drag: use the pure-math model
         var wData = (typeof tackleWeightPhysicsData === 'function')
-            ? tackleWeightPhysicsData(wtShape, wt) : null;
+            ? tackleWeightPhysicsData(wtShape, row.weight || 0) : null;
         var wObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
         var ck1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
         var ck2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };

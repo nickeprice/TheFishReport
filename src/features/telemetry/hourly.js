@@ -10,6 +10,8 @@
  * ES module.
  */
 import { logDebug } from '../../shared/debug.js';
+import { activeDateOffset, reportsData } from '../gear-sim/report-state.js';
+import { provVal } from '../../shared/format.js';
 // metric -> display spec. The keys are the SAME keys the pill uses in `weather_hourly`.
 var HOURLY_METRICS = {
     'pressure':       { label: 'Barometer', unit: ' inHg', dec: 2 },

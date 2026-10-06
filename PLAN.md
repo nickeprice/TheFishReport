@@ -22,6 +22,27 @@
       → npm run build, full test suite, PWA offline, Vercel deploy
       [Detail → docs/PLAN_REFERENCE.md#build-deploy]
 
+## 🛡 Pre-Validation: ESM Strict Mode & Tooling Stabilization
+
+- [x] PRE-1: Prevent Playwright HTTP 429 Rate Limit Timeouts
+      → src/app.js, src/mocks/
+      [Detail → docs/PLAN_REFERENCE.md#test-429-timeout]
+
+- [x] PRE-2: Enforce ESM Build-Time Safety (Flat Config)
+      → eslint.config.js, vite.config.js
+      [Detail → docs/PLAN_REFERENCE.md#test-esm-safety]
+
+- [x] PRE-3: Resolve Circular Dependencies (Batch 1: Catch Log)
+      → src/features/auth/auth.js, src/features/catch-log/*
+      [Detail → docs/PLAN_REFERENCE.md#test-catch-cycle]
+
+- [x] PRE-4: Resolve Circular Dependencies (Batch 2: Gear Sim)
+      → src/features/gear-sim/*
+      [Detail → docs/PLAN_REFERENCE.md#test-sim-cycle]
+
+- [x] PRE-5: Complete Global `no-undef` Sweep
+      → Remaining files in src/
+      [Detail → docs/PLAN_REFERENCE.md#test-undef-sweep]
 ## 🔬 Validation Suite
 
 - [x] T1: Playwright full-integration (gear sim)

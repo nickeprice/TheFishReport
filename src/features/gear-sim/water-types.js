@@ -11,6 +11,7 @@
  * Future: extend each card with inline <svg> cross-section diagrams (Phase 3.2)
  * or a width-slider supplement (Phase 3.3).
  */
+import { WATER_TYPES } from './inputs-readers.js';
 
 // ==================================================================================
 // WATER TYPE GUIDE (Phase 1.6)

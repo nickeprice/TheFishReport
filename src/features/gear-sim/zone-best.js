@@ -4,6 +4,11 @@
  * public: bestZoneRig()
  * ES module.
  */
+import { GEAR_OPTIONS } from '../../shared/gear-options.js';
+import { tackleBeadSizes } from '../../shared/tackle.js';
+import { hookLabel, tackleHookData, tackleBeadData, parseFoam, tackleYarnBuoyancyG } from './inputs.js';
+import { tackleWeightPhysicsData, tackleYarnDragData } from './inputs-readers.js';
+import { totalDragPerFt, lineDragPerFt, presentationHeightInches, computeLiftGf } from './physics.js';
 var LEADER_LENGTH_OPTIONS = GEAR_OPTIONS.leaderLen;
 var FOAM_KEYS = GEAR_OPTIONS.foam.map(function(o) { return String(o.val); });
 var CHANGE_PENALTY = { foam: 0.05, foam2: 0.06, hook: 0.08, yarn: 0.10, bead: 0.12, leader: 0.30, weight: 0.35 };

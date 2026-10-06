@@ -1,11 +1,11 @@
 import { logDebug } from '../../../shared/debug.js';
-import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG } from '../inputs.js';
+import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG, tackleWeightPhysicsData, tackleYarnDragData } from '../inputs.js';
 import { velocityAtSpot, spotDepthFt } from '../continuity.js';
 import { waterTypeMultiplier } from '../water-types.js';
 import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches, CFS_TO_MS } from '../physics.js';
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
-import { bestZoneRig, rigChangeList } from '../zone-best.js';
+import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
 import { chainSolve } from '../chain.js';
 import { ROUGHNESS_COBBLE } from '../hydro.js';
 import { interceptionProbability } from '../interception.js';

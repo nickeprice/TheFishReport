@@ -9,6 +9,7 @@
 import { getActiveReport } from './report-state.js';
 import { getStr } from './inputs.js';
 import { provVal } from '../../shared/format.js';
+import { State } from '../../shared/state.js';
 // Required gear fields — no defaults, so anything the angler has never entered
 // stays blank and blocks the sim/log with a precise "fill in X" message.
 // The LINE is a 3-part cascade (material → brand → lb test) and every part is

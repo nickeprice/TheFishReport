@@ -8,10 +8,13 @@ import { logDebug } from '../../shared/debug.js';
 import { calculateSolarHours } from '../../utils/regulations.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
 import { applyReportWeather } from '../../services/water.js';
+import { activeDateOffset, reportsData, setReportsData, setActiveDateOffset } from '../gear-sim/report-state.js';
+import { State } from '../../shared/state.js';
+import { checkRiverStatus } from '../../utils/regulations.js';
 // Re-export the master report state from report-state.js (breaks the
 // gear-sim/telemetry dependency cycle). The setters are the ONLY way to
 // mutate; the imported bindings are live (updated by report-state.js).
-export { activeDateOffset, reportsData, setReportsData, setActiveDateOffset } from '../gear-sim/report-state.js';
+export { activeDateOffset, reportsData, setReportsData, setActiveDateOffset };
 
 export function stepDate(delta) {
     var newOffset = activeDateOffset + delta;

@@ -7,6 +7,8 @@
 import { logDebug } from '../../shared/debug.js';
 import { loadWaterReport } from '../telemetry/report.js';
 import { setActiveDateOffset } from '../telemetry/daynav.js';
+import { loadFavoriteSpots } from '../map/spots.js';
+import { State } from '../../shared/state.js';
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
 export function openStationModal() {
     document.getElementById('station-modal').style.display = 'block';

@@ -11,6 +11,7 @@ import { renderWaterReportEmptyState, updateActiveDateUI, setReportsData, active
 import { loadRules as loadRegulationsRules } from '../../utils/regulations.js';
 import { applyReportWeather } from '../../services/water.js';
 import { renderReportDays } from './report-render.js';
+import { refreshZonePreview } from '../gear-sim/zone-core.js';
 // Loads (or silently refreshes) the water report. When `silent` is true this is
 // a background auto-refresh: it must NOT overwrite a Gear Sim CFS the angler
 // typed by hand (the initial load + manual station change still auto-sync).

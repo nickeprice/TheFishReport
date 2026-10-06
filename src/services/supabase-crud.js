@@ -4,6 +4,7 @@
  */
 import { getClient, isConfigured, ensureSdk } from './supabase-client.js';
 import { signInGuest, signOut, getSession } from './supabase-auth.js';
+import { snapshotSave } from '../features/catch-log/outbox.js';
 // ------------------------------------------------------------ DATABASE ---
 
 // Local payload -> LIVE public.catches columns. Only live columns are sent:

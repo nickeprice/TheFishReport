@@ -10,7 +10,7 @@ import { getActiveReport, getCurrentFlow } from './report-state.js';
 import { provVal } from '../../shared/format.js';
 import { getWaterTempF, lightTerm, tideTerm, turbidityTerm, refHourBlock } from './zone-env.js';
 import { BASE_ZONE_MIN, BASE_ZONE_MAX, thermalOptimum, getActiveStationId } from './inputs.js';
-import { velocityAtSpot, spotDepthFt } from './continuity.js';
+import { velocityAtSpot, spotDepthFt, SAME_REACH_UNCERTAINTY } from './continuity.js';
 export function computeStrikeZone(sonar) {
     var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
     var rep = getActiveReport();

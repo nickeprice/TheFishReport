@@ -19,6 +19,13 @@
 import { logDebug } from '../../shared/debug.js';
 import { apiGetJson } from '../../shared/api.js';
 import { State } from '../../shared/state.js';
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
+import { showToast } from '../../shared/ui.js';
+import { getStr } from '../gear-sim/inputs.js';
+import { setFieldValue } from '../../shared/forms.js';
+import { spotsState, SPOTS_CACHE_KEY, SPOT_LABEL_MAX, spotsSignedIn, spotsStatus, loadFavoriteSpots, saveSpotAt, selectSavedSpot } from './spots.js';
+import { savedSpotIcon, savedSpotPopupHtml } from './spots-map.js';
+import { selectPreset } from '../station/picker.js';
 import L from 'leaflet';
 
 var LEAFLET_TILES_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';

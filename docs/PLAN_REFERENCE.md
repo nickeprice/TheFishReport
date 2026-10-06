@@ -60,34 +60,6 @@
 
 ---
 
-<a id="test-playwright"></a>
-## T1: Playwright Full-Integration (Gear Sim)
-
-**Goal:** Load the full app in Playwright, fill the gear-sim form with known values,
-click RUN SIMULATION, and verify the HUD paints results (hook depth, velocity, zone
-color, interception probability). Catches ANY remaining bootstrap/init/runtime error
-in the complete `app.js` → form → chain solver → HUD pipeline.
-
-**Test pattern** (new file: `tests/test_gear_sim_integration.py`):
-1. Start dev server + Vite in background (same conftest.py fixture used by `test_physics_validation.py`)
-2. Navigate to `http://localhost:8080/`
-3. Wait for `window.onload` to finish (wait for `#btn-sim` to appear)
-4. Fill form fields (weight=0.5, leader=9, hook='2', yarn='8', foam='Yellow 12', ...)
-5. Click "RUN SIMULATION"
-6. Wait for button text to revert to "RUN SIMULATION" (not "CALCULATING...")
-7. Assert `#hud-hgt` is not empty and contains a number
-8. Assert no console errors (using `page.on('console')` capture)
-
-**Key edge cases:**
-- No GPS / offline fallback
-- Water API fails (429)
-- No species selected
-- Chain solver non-convergence
-
-**Files:** `tests/test_gear_sim_integration.py` (NEW), `tests/conftest.py` (+0 if reusing)
-
----
-
 <a id="test-water"></a>
 ## T2: Playwright Water-Report Render Test
 

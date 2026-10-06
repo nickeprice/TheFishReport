@@ -24,7 +24,7 @@
 
 ## 🔬 Validation Suite
 
-- [ ] T1: Playwright full-integration (gear sim)
+- [x] T1: Playwright full-integration (gear sim)
       → chain-shooting.js, sim.js, solver.js, conftest.py, NEW test file
       [Detail → docs/PLAN_REFERENCE.md#test-playwright]
 

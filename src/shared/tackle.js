@@ -26,11 +26,6 @@ import { setFieldValue } from './forms.js';
 var TACKLE = (TACKLE_DATA && TACKLE_DATA.items && TACKLE_DATA.items.length) ? TACKLE_DATA : null;
 window.TACKLE = TACKLE;
 
-// populate the pickers now that TACKLE is loaded
-if (typeof document !== 'undefined' && document.getElementById && TACKLE) {
-  populateTacklePickers();
-}
-
 // Which line materials each picker offers: braid is mainline-only, fluoro is
 // leader-only, mono and copoly are fished as either.
 var TACKLE_LINE_ROLES = {
@@ -40,6 +35,11 @@ var TACKLE_LINE_ROLES = {
 var TACKLE_MAT_LABELS = {
     braid: 'Braid', mono: 'Mono', copoly: 'Copoly', fluoro: 'Fluorocarbon'
 };
+
+// populate the pickers now that TACKLE is loaded
+if (typeof document !== 'undefined' && document.getElementById && TACKLE) {
+  populateTacklePickers();
+}
 
 export function tackleItems(type) {
     if (!TACKLE || !TACKLE.items) return [];

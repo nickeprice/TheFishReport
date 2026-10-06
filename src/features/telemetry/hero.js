@@ -10,6 +10,7 @@
 // Everything is derived from the same real triggers (rain freshet, pressure
 // trend, tide highs, moon phase, transit state, netting) — never fabricated.
 import { provVal } from '../../shared/format.js';
+import { getFMIColor } from './tide.js';
 export function buildFishingHero(rep) {
     if (!rep) return '';
     var score = 0;

@@ -4,6 +4,7 @@
  * ES module.
  */
 // --- NAVIGATION ---
+import { logDebug } from './debug.js';
 export function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('tab-active'); });
     document.getElementById(tabId).classList.add('tab-active');

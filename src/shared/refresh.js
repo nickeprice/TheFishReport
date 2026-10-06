@@ -4,6 +4,9 @@
  * public: AUTO_REFRESH_MS, silenceableRefresh(), startAutoRefresh(), refreshNow()
  * ES module.
  */
+import { loadWaterReport } from '../features/telemetry/report.js';
+import { showToast } from './ui.js';
+import { logDebug } from './debug.js';
 // --- AUTO-REFRESH ---
 // A homescreen PWA has no pull-to-refresh, so the live telemetry is re-fetched
 // on its own: every 5 minutes while visible+online, the moment the app comes

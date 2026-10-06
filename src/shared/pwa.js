@@ -12,6 +12,9 @@
 // NOTE: this must NOT wrap registration in another 'load' listener. window.onload
 // runs *during* the load event's dispatch, and the DOM copies the listener list
 // before invoking it, so a listener added here would never fire.
+import { logDebug } from './debug.js';
+import { showToast } from './ui.js';
+import { silenceableRefresh } from './refresh.js';
 export function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) {
         logDebug('Service worker unsupported - PWA caching disabled', 'PWA');

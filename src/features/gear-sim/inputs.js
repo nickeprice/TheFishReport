@@ -10,6 +10,9 @@
  *         THERMAL_BANDS, thermalOptimum(tempF)
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { State } from '../../shared/state.js';
+import { updateActiveDateUI } from '../telemetry/daynav.js';
 // --- GEAR SIM: DETERMINISTIC FLUID DYNAMICS ENGINE ---
 // Pure boundary-layer physics. Every output is a pure function of the form inputs plus
 // the stored catch log, so identical inputs always return identical numbers.
@@ -168,7 +171,6 @@ export function tackleBeadData(bdSz) {
 // Default (Run) applies 1.0 multipliers — no change from the continuity calculation.
 // ==================================================================================
 export var WATER_TYPES = [
-window.WATER_TYPES = WATER_TYPES;
     { id: 'pool',   label: 'Pool',   depthMul: 1.2, velMul: 0.7,
       desc: 'Deep, slow water — fish hold deep and near cover.' },
     { id: 'riffle', label: 'Riffle', depthMul: 0.7, velMul: 1.3,
@@ -178,6 +180,7 @@ window.WATER_TYPES = WATER_TYPES;
     { id: 'glide',  label: 'Glide',  depthMul: 0.9, velMul: 0.9,
       desc: 'Smooth, even flow — fish hold in tailouts and edges.' }
 ];
+window.WATER_TYPES = WATER_TYPES;
 
 export var DEFAULT_WATER_TYPE = 'run';
 window.DEFAULT_WATER_TYPE = DEFAULT_WATER_TYPE;
@@ -331,7 +334,6 @@ export function hydraulicVelocity(flow, siteId) {
 // NOT move - a deeper refuge shift is a deliberate future contract bump, not this change.
 // ==================================================================================
 export var THERMAL_BANDS = [
-window.THERMAL_BANDS = THERMAL_BANDS;
     { band: 'torpid',  range: 'under 45', shift: -1.50, label: 'too cold to be active',
       note: 'fish sit tight to the bottom and rarely move.' },
     { band: 'cool',    range: '45-50',    shift: -0.75, label: 'cool but catchable',
@@ -347,6 +349,7 @@ window.THERMAL_BANDS = THERMAL_BANDS;
     { band: 'lethal',  range: 'over 71.6', shift: -2.00, label: 'lethal range',
       note: 'at/above 22C - lethal to adults; they sit in the coldest water they can find.' }
 ];
+window.THERMAL_BANDS = THERMAL_BANDS;
 
 export function thermalOptimum(tempF) {
     if (tempF === null || tempF === undefined || isNaN(tempF)) return null;

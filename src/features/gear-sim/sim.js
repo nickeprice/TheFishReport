@@ -8,6 +8,12 @@
  * public: runSim()
  * ES module.
  */
+import { showToast } from '../../shared/ui.js';
+import { missingRigFields } from './zone-env.js';
+import { getActiveStationId } from './inputs.js';
+import { readRigFromForm, loadCalibrationData, buildSimStats, paintSimHud } from './solver.js';
+import { gearTechnique } from './registry.js';
+import { saveRig } from './rig.js';
 export async function runSim() {
     var simBtn = document.getElementById('btn-sim');
 
@@ -29,11 +35,13 @@ export async function runSim() {
     // 3-4. Solve + score through the registered technique. Only `drift` ships today;
     // its compute() owns the locked-Cd physics, the strike zone and the suggestions.
     // The active station's own USGS-measured velocity curve shapes the response.
-    var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
+    var siteId = getActiveStationId();
     var out = gearTechnique().compute(rig, { flow: rig.flow, species: rig.species, dbArray: dbArray, siteId: siteId });
 
     // 5. Persist the rig + paint the HUD.
-    currentStats = buildSimStats(rig, out);
+    var stats = buildSimStats(rig, out);
+    window.currentStats = stats;
     saveRig();
-    paintSimHud(rig, out, currentStats);
+    paintSimHud(rig, out, stats);
 }
+window.runSim = runSim;

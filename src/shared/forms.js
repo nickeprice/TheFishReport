@@ -4,6 +4,7 @@
  * public: syncSelect(), setFieldValue()
  * ES module.
  */
+import { logDebug } from './debug.js';
 export function syncSelect(baseId, fromLog) {
     var a = document.getElementById(baseId);
     var b = document.getElementById(baseId + '-log');

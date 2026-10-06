@@ -3,6 +3,8 @@
  * public: RIG_STORE_KEY, saveRig(), restoreRig()
  * ES module.
  */
+import { getStr } from './inputs.js';
+import { tackleLineById, tackleLineByMatLb, cascadeLine, resolveLineId, onWeightShapeChange } from '../../shared/tackle.js';
 // --- RIG PRESET PERSISTENCE ---
 export var RIG_STORE_KEY = 'puyallup_last_rig';
 window.RIG_STORE_KEY = RIG_STORE_KEY;

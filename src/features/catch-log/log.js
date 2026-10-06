@@ -4,6 +4,19 @@
  * public: deriveRiverName(), logData()
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { showToast } from '../../shared/ui.js';
+import { newUuid, provVal } from '../../shared/format.js';
+import { getStr, getNum, currentStats } from '../gear-sim/inputs.js';
+import { switchTab } from '../../shared/nav.js';
+import { AuthState } from '../auth/auth.js';
+import { Supa } from '../../services/supabase.js';
+import { outboxAdd, outboxUpdate } from './outbox.js';
+import { missingRigFields, getWaterTempF, envSignature } from '../gear-sim/zone-env.js';
+import { getActiveReport, getCurrentFlow } from '../gear-sim/sonar.js';
+import { computeStrikeZone } from '../gear-sim/zone-core.js';
+import { setCatchScope, CATCH_SCOPE } from './board.js';
+import { State } from '../../shared/state.js';
 // Derive a coarse river name from the active station (e.g. "Puyallup River",
 // "Carbon River", "Green River", "Nisqually River", "White River"). Falls back
 // to '--'. Never exposes exact coordinates on the public board.
@@ -47,10 +60,10 @@ export async function logData() {
     var activeRep = getActiveReport();
     // The environment signature at catch time, over the SAME variable set the sim uses, so a
     // later sim can match this catch's conditions against today's.
-    var envSig = (typeof envSignature === 'function') ? envSignature(activeRep) : null;
+    var envSig = envSignature(activeRep);
     // The notebook: record the model's PREDICTED zone on every catch, even when the sim was
     // not run - the residual (actual catch height vs this centre) needs both sides stored.
-    var priorZone = (!currentStats && typeof computeStrikeZone === 'function') ? computeStrikeZone() : null;
+    var priorZone = (!currentStats) ? computeStrikeZone() : null;
     // Decoupled from the Gear Sim: logging works straight from the form. When a
     // sim HAS been run we still carry its solved geometry (hook/height/zone) so
     // logs keep the rich private columns, but nothing here requires runSim().
@@ -119,9 +132,7 @@ export async function logData() {
 
     // 2. Async push of the private record to Supabase (idempotent on clientId).
     var res = null;
-    if (typeof Supa !== 'undefined') {
-        try { res = await Supa.insertCatch(payload); } catch (e) { res = null; }
-    }
+    try { res = await Supa.insertCatch(payload); } catch (e) { res = null; }
     if (res && res.ok) {
         outboxUpdate(payload.clientId, { syncedAt: new Date().toISOString(), pendingSync: false });
         logDebug('Catch synced to Supabase' + (res.deduped ? ' (already stored)' : ''), 'SYNC');
@@ -132,7 +143,7 @@ export async function logData() {
 
     document.getElementById('btn-log').innerText = 'LOG CATCH DATA';
     document.getElementById('btn-log').className = 'btn-main';
-    currentStats = null;
-    if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);
+    window.currentStats = null;
+    setCatchScope(CATCH_SCOPE);
     switchTab('tab-catch-log');
 }

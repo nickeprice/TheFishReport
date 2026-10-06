@@ -16,6 +16,9 @@
  *
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { apiGetJson } from '../../shared/api.js';
+import { State } from '../../shared/state.js';
 import L from 'leaflet';
 
 var LEAFLET_TILES_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -250,3 +253,5 @@ export async function showStationMap() {
         if (note) note.textContent = 'Could not load nearby gauges \u2014 use the presets, search or GPS above.';
     }
 }
+window.showStationMap = showStationMap;
+window.startSpotPick = startSpotPick;

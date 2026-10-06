@@ -5,6 +5,15 @@
  * ES module.
  * NOTE: 294 lines, one large function — over the <150-line target.
  */
+import { logDebug } from '../../shared/debug.js';
+import { provVal } from '../../shared/format.js';
+import { idbPutAll, idbGetAll } from '../../shared/idb.js';
+import { Supa } from '../../services/supabase.js';
+import { renderWaterReportEmptyState, updateActiveDateUI, setReportsData, activeDateOffset } from './daynav.js';
+import { buildFishingHero, buildSpeciesCalendarHtml } from './hero.js';
+import { loadRules as loadRegulationsRules } from '../../utils/regulations.js';
+import { applyReportWeather } from '../../services/water.js';
+import { refreshZonePreview } from '../gear-sim/zone-core.js';
 // Loads (or silently refreshes) the water report. When `silent` is true this is
 // a background auto-refresh: it must NOT overwrite a Gear Sim CFS the angler
 // typed by hand (the initial load + manual station change still auto-sync).
@@ -47,7 +56,7 @@ export async function loadWaterReport(silent) {
             cache: 'no-store'
         });
         var reports = await res.json();
-        reportsData = reports;
+        setReportsData(reports);
         logDebug("Water API success. Processing " + reports.length + " days.", "NET");
 
         // G1 (Phase 2.4): persist a durable offline snapshot of the report day-rows.
@@ -302,7 +311,7 @@ export async function loadWaterReport(silent) {
             try { snap = await idbGetAll('telemetry_snapshots'); } catch (e2) { snap = null; }
         }
         if (snap && snap.length) {
-            reportsData = snap;
+            setReportsData(snap);
             updateActiveDateUI();
             var hoursAgo = 'a while';
             try {

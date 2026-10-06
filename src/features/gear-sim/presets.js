@@ -39,6 +39,7 @@ export function captureCurrentPreset() {
 }
 
 // Apply a preset to the form, reusing the cascade restore pattern from rig.js.
+import { showToast } from '../../shared/ui.js';
 export function applyPreset(name) {
     if (!name) return;
     var presets = readPresets(), p = null;

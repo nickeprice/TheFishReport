@@ -19,13 +19,16 @@
  *
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { showToast } from '../../shared/ui.js';
+import { syncPendingCatches } from '../auth/auth.js';
 var RECONCILE_MIN_INTERVAL_MS = 15000;
 var _reconcileInFlight = false;
 var _reconcileLastAt = 0;
 
 export async function reconcileCatches(force) {
     if (_reconcileInFlight) return 0;
-    if (typeof syncPendingCatches !== 'function') return 0;
+    // syncPendingCatches is imported — always available
     // Nothing to upload without a session: RLS requires user_id = auth.uid().
     if (typeof AuthState !== 'undefined' && !AuthState.signedIn) return 0;
     if (!force && (Date.now() - _reconcileLastAt) < RECONCILE_MIN_INTERVAL_MS) return 0;

@@ -46,11 +46,11 @@ export function readRigFromForm() {
 // logged a catch at this flow and species. Physics stays locked - this data only
 // moves the strike zone toward where fish are actually feeding. Falls back to the
 // local buffer offline.
+import { logDebug } from '../../shared/debug.js';
+import { Supa } from '../../services/supabase.js';
 export async function loadCalibrationData(flow, species) {
     var dbArray = [];
-    if (typeof Supa !== 'undefined') {
-        try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }
-    }
+    try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }
     if (!dbArray.length) {
         // Offline fallback: the durable calibration snapshot first (exact match
         // to the same flow/species is not guaranteed here — the snapshot is a

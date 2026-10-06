@@ -4,7 +4,14 @@
  * ES module.
  * Privacy: the public board renders 4 columns only (name/time/river/fish).
  */
-    // Catch Log renderer — merged single list with a "yours / everyone" toggle.
+import { logDebug } from '../../shared/debug.js';
+import { normalizeFeedRow, formatCatchTime } from '../../shared/format.js';
+import { Supa } from '../../services/supabase.js';
+import { outboxAll, snapshotLoad } from './outbox.js';
+import { pendingRows, pendingBadge } from './pending.js';
+import { refreshZonePreview } from '../gear-sim/zone-core.js';
+import { renderMyCatches } from './mycatches.js';
+// Catch Log renderer — merged single list with a "yours / everyone" toggle.
 // The ONE list shows either the signed-in angler's private rows (with Edit/Delete)
 // or the public board (Name / Time / Flow / Fish). The active scope is tracked in
 // CATCH_SCOPE so sign-in/sign-out and new logs re-render the right side.
@@ -31,7 +38,7 @@ export function setCatchScope(scope) {
             : '<tr><th>Name</th><th>Time</th><th>River</th><th>Fish</th></tr>';
     }
     if (CATCH_SCOPE === 'yours') {
-        if (typeof renderMyCatches === 'function') renderMyCatches();
+        renderMyCatches();
     } else {
         loadDatabase();
     }
@@ -47,12 +54,10 @@ export async function loadDatabase() {
 
     var rows = [];
     var fromCloud = false;
-    if (typeof Supa !== 'undefined') {
-        try {
-            rows = await Supa.fetchPublicFeed(100);
-            fromCloud = rows.length > 0;
-        } catch (e) { rows = []; }
-    }
+    try {
+        rows = await Supa.fetchPublicFeed(100);
+        fromCloud = rows.length > 0;
+    } catch (e) { rows = []; }
 
     if (!fromCloud) {
         // Offline fallback: first the durable read-through snapshot (last-known

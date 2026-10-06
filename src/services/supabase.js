@@ -43,6 +43,18 @@ export function getClient() {
     return _client;
 }
 
+// Ensure the Supabase SDK module is loaded. With Vite, the static import at the top of
+// this file resolves it at build time, so this just confirms the import landed.
+// Kept as an async function so callers that await it do not need to change.
+export async function ensureSdk() {
+    try {
+        var mod = await import('@supabase/supabase-js');
+        return mod && typeof mod.createClient === 'function' ? mod : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 export function rememberName(name) {
     try { localStorage.setItem(GUEST_NAME_KEY, name); } catch (e) {}
 }
@@ -441,26 +453,29 @@ export async function fetchGlobalCalibration(flow, species) {
     }
 }
 
+// Export Supa so feature modules can import it directly instead of typeof guards.
+export var Supa = {
+    // auth
+    signInGuest: signInGuest,
+    signOut: signOut,
+    getSession: getSession,
+    // data
+    insertCatch: insertCatch,
+    fetchPublicFeed: fetchPublicFeed,
+    fetchGlobalCalibration: fetchGlobalCalibration,
+    fetchMyCatches: fetchMyCatches,
+    updateMyCatch: updateMyCatch,
+    deleteMyCatch: deleteMyCatch,
+    // private favourite spots (WS-5)
+    saveFavoriteSpot: saveFavoriteSpot,
+    fetchFavoriteSpots: fetchFavoriteSpots,
+    deleteFavoriteSpot: deleteFavoriteSpot,
+    // support
+    isConfigured: isConfigured,
+    toCatchRow: toCatchRow,
+    toSpotRow: toSpotRow
+};
+
 if (typeof window !== 'undefined') {
-    window.Supa = {
-        // auth
-        signInGuest: signInGuest,
-        signOut: signOut,
-        getSession: getSession,
-        // data
-        insertCatch: insertCatch,
-        fetchPublicFeed: fetchPublicFeed,
-        fetchGlobalCalibration: fetchGlobalCalibration,
-        fetchMyCatches: fetchMyCatches,
-        updateMyCatch: updateMyCatch,
-        deleteMyCatch: deleteMyCatch,
-        // private favourite spots (WS-5)
-        saveFavoriteSpot: saveFavoriteSpot,
-        fetchFavoriteSpots: fetchFavoriteSpots,
-        deleteFavoriteSpot: deleteFavoriteSpot,
-        // support
-        isConfigured: isConfigured,
-        toCatchRow: toCatchRow,
-        toSpotRow: toSpotRow
-    };
+    window.Supa = Supa;
 }

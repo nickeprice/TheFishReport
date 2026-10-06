@@ -4,6 +4,9 @@
  *         calcDistance(), useGPS()
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { loadWaterReport } from '../telemetry/report.js';
+import { setActiveDateOffset } from '../telemetry/daynav.js';
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
 export function openStationModal() {
     document.getElementById('station-modal').style.display = 'block';
@@ -13,13 +16,15 @@ export function openStationModal() {
     // WS-5: paint the private saved-spot list (cache first, then the server if signed in).
     if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
 }
+window.openStationModal = openStationModal;
 
 export function closeStationModal() {
     document.getElementById('station-modal').style.display = 'none';
 }
+window.closeStationModal = closeStationModal;
 
 export function selectPreset(id, lat, lon, name, isGps) {
-    activeDateOffset = 0;
+    setActiveDateOffset(0);
     var station = { id: id, lat: lat, lon: lon, name: name, isGps: !!isGps };
     localStorage.setItem('active_station', JSON.stringify(station));
     logDebug("Selected Station: " + name + " (" + id + ")", "STATE");
@@ -140,3 +145,5 @@ export function useGPS() {
         logDebug("Geolocation error: " + (err ? err.message : "unknown"), "ERR");
     }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
 }
+window.useGPS = useGPS;
+window.selectPreset = selectPreset;

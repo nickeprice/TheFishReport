@@ -15,6 +15,9 @@
  *
  * ES module.
  */
+import { newUuid } from '../../shared/format.js';
+import { idbOpen, idbGetAll, idbPutAll } from '../../shared/idb.js';
+import { logDebug } from '../../shared/debug.js';
 var OUTBOX = [];
 export var OUTBOX_STORE_KIND = 'idb';        // 'idb' | 'ls' — diagnostic
 window.OUTBOX_STORE_KIND = OUTBOX_STORE_KIND;

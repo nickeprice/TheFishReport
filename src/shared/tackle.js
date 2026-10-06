@@ -1,4 +1,7 @@
 import TACKLE_DATA from '../data/tackle.json' with { type: 'json' };
+import { logDebug } from './debug.js';
+import { getStr } from '../features/gear-sim/inputs.js';
+import { setFieldValue } from './forms.js';
 
 /**
  * src/shared/tackle.js - measured tackle library (loaded statically at build time

@@ -3,6 +3,12 @@
  * public: _myCatches, renderMyCatches(), editMyCatch(row), deleteMyCatch(id)
  * ES module.
  */
+import { showToast } from '../../shared/ui.js';
+import { formatCatchTime } from '../../shared/format.js';
+import { Supa } from '../../services/supabase.js';
+import { AuthState } from '../auth/auth.js';
+import { pendingNotIn, asMyCatchRow, pendingBadge } from './pending.js';
+import { loadDatabase } from './board.js';
 // --- YOUR CATCHES (private log: list, edit, delete) — the "yours" scope ---
 var _myCatches = [];
 
@@ -13,7 +19,7 @@ export async function renderMyCatches() {
 
     // Show an empty/disabled state until a session exists.
     var signedIn = AuthState && AuthState.signedIn;
-    if (!signedIn || typeof Supa === 'undefined') {
+    if (!signedIn) {
         var signInEmpty = document.createElement('tr');
         signInEmpty.innerHTML = '<td colspan="5" class="empty-state">' +
             '<div class="empty-state-title">Join the board to see your catches</div>' +

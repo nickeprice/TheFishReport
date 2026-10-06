@@ -1,3 +1,4 @@
+import { logDebug } from '../../../shared/debug.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *
@@ -190,7 +191,6 @@ export var DRIFT_TECHNIQUE = {
                     salmonDepthM = salmonPositionZ();
             }
         } catch (e) {
-            if (typeof logDebug === 'function')
                 logDebug('Chain solver: ' + String(e.message).split('\n')[0], 'SIM');
         }
         // Override presentation height with chain solver result when converged

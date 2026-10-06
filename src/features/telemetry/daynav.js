@@ -4,10 +4,19 @@
  *         renderWaterReportEmptyState(), legalHoursLabel()
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { calculateSolarHours } from '../../utils/regulations.js';
+import { refreshZonePreview } from '../gear-sim/zone-core.js';
+import { applyReportWeather } from '../../services/water.js';
 export var activeDateOffset = 0;
 window.activeDateOffset = activeDateOffset;
 export var reportsData = [];
 window.reportsData = reportsData;
+
+// Mutable exports: imported bindings are read-only, so callers use these
+// setters instead of direct assignment. Each also updates the window shim.
+export function setReportsData(val) { reportsData = val; window.reportsData = val; }
+export function setActiveDateOffset(val) { activeDateOffset = val; window.activeDateOffset = val; }
 
 export function stepDate(delta) {
     var newOffset = activeDateOffset + delta;

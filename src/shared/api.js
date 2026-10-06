@@ -22,6 +22,8 @@
  * Classic script (global scope). Loaded AFTER src/shared/format.js (uses escapeHtml).
  * ES module.
  */
+import { escapeHtml } from './format.js';
+import { logDebug } from './debug.js';
 var API_RETRY_DELAY_MS = 700;
 var API_TIMEOUT_MS = 12000;
 

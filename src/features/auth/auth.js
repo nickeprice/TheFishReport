@@ -5,6 +5,16 @@
  * ES module.
  * syncPendingCatches() drains the durable IndexedDB outbox (see catch-log/outbox.js).
  */
+import { logDebug } from '../../shared/debug.js';
+import { showToast } from '../../shared/ui.js';
+import { getStr } from '../gear-sim/inputs.js';
+import { setFieldValue } from '../../shared/forms.js';
+import { setCatchScope, CATCH_SCOPE } from '../catch-log/board.js';
+import { switchTab } from '../../shared/nav.js';
+import { loadFavoriteSpots } from '../map/spots.js';
+import { Supa } from '../../services/supabase.js';
+import { outboxPending, outboxUpdate } from '../catch-log/outbox.js';
+import { refreshCatchLists } from '../catch-log/pending.js';
 // --- AUTH (anonymous guest session) ---
 export var AuthState = { signedIn: false, name: '', offline: false };
 window.AuthState = AuthState;
@@ -37,7 +47,11 @@ export function applyAuthState(signedIn, name) {
 }
 
 export async function initAuth() {
-    if (typeof Supa === 'undefined') { applyAuthState(false, ''); return; }
+    if (typeof Supa.isConfigured !== 'function' || !Supa.isConfigured()) {
+        applyAuthState(false, '');
+        logDebug('Supabase not configured — offline-only mode', 'AUTH');
+        return;
+    }
     try { await Supa.ensureSdk(); } catch (e) {}
     var sess = null;
     try { sess = await Supa.getSession(); } catch (e) { sess = null; }
@@ -54,7 +68,7 @@ export async function startFishing() {
     if (btn) { btn.innerText = 'CONNECTING...'; btn.disabled = true; }
     var res = null;
     try {
-        res = (typeof Supa !== 'undefined') ? await Supa.signInGuest(name) : { ok: true, offline: true, name: name };
+        res = await Supa.signInGuest(name);
     } catch (e) {
         res = { ok: false, error: e.message };
     }
@@ -71,9 +85,9 @@ export async function startFishing() {
 }
 
 export async function stopFishing() {
-    try { if (typeof Supa !== 'undefined') await Supa.signOut(); } catch (e) {}
+    try { await Supa.signOut(); } catch (e) {}
     setFieldValue('auth-name', '');
-    currentStats = null;
+    window.currentStats = null;
     applyAuthState(false, '');
     if (typeof setCatchScope === 'function') setCatchScope(CATCH_SCOPE);
     switchTab('tab-catch-log');
@@ -83,7 +97,7 @@ export async function stopFishing() {
 // are retried whenever a session becomes available. The write is idempotent (clientId ->
 // ON CONFLICT DO NOTHING), so a retry can never double-log a catch.
 export async function syncPendingCatches() {
-    if (typeof Supa === 'undefined' || typeof outboxPending !== 'function') return 0;
+    if (typeof outboxPending !== 'function') return 0;
     var pending = outboxPending();
     if (!pending.length) return 0;
 

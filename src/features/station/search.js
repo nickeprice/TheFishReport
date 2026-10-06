@@ -8,6 +8,8 @@
  * hardcoded `stateCd=wa`, so adding a state does not touch this file.
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
 var WDFN_LOCATIONS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items';
 var WDFN_LATEST = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/latest-continuous/items';
 
@@ -140,3 +142,4 @@ export async function searchStation() {
         logDebug('USGS search error: ' + e.message, 'ERR');
     }
 }
+window.searchStation = searchStation;

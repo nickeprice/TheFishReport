@@ -8,6 +8,7 @@
  *
  * Loaded as a classic script before src/app.js; all names are global.
  */
+import { logDebug } from '../shared/debug.js';
 // USGS CFS readings for the momentum calc. WDFN (the modern source — waterservices
 // /nwis is decommissioned in Q1 2027) returns GeoJSON; the legacy reader is kept as a
 // fallback. Both return a plain [{t: epochMs, v: cfs}] list so the trend logic below

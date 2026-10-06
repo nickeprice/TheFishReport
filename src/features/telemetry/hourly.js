@@ -9,6 +9,7 @@
  * public: HOURLY_METRICS, openHourlyPopup(metricKey), closeHourlyPopup()
  * ES module.
  */
+import { logDebug } from '../../shared/debug.js';
 // metric -> display spec. The keys are the SAME keys the pill uses in `weather_hourly`.
 var HOURLY_METRICS = {
     'pressure':       { label: 'Barometer', unit: ' inHg', dec: 2 },
@@ -23,6 +24,7 @@ export function closeHourlyPopup() {
     var modal = document.getElementById('hourly-modal');
     if (modal) modal.style.display = 'none';
 }
+window.closeHourlyPopup = closeHourlyPopup;
 
 // Open the strip for one metric on the day the angler is LOOKING AT (activeDateOffset).
 export function openHourlyPopup(metricKey) {

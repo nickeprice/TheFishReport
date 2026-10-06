@@ -10,7 +10,7 @@
       → test_gear_sim_run.js, conftest.py, dev_server.py, ci-physics.yml, sanity.yml
       [Detail → docs/PLAN_REFERENCE.md#build-tests]
 
-- [ ] Phase V5: Tooling (sanity_pass, sw.js, docs, rules)
+- [x] Phase V5: Tooling (sanity_pass, sw.js, docs, rules)
       → sanity_pass.js, sw.js, vite.config.js (+plugin), SYMBOLS.md, .clinerules
       [Detail → docs/PLAN_REFERENCE.md#build-tooling]
 

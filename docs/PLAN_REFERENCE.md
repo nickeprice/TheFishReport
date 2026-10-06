@@ -39,30 +39,6 @@
 
 ---
 
-<a id="build-tooling"></a>
-## Phase V5: Tooling (sanity_pass, sw.js, docs, rules)
-
-**Goal:** Update all tooling and documentation to match the new architecture.
-
-**sanity_pass.js:**
-- DELETE: "Script load order ends with app.js" (vite build covers it)
-- DELETE: "SHELL_FILES matches script list" (PWA plugin generates manifest)
-- UPDATE: path to washington.js — add `public/` prefix
-- KEEP: label/ARIA resolution, dead CSS, Python syntax checks
-
-**sw.js:** Replace with `vite-plugin-pwa` config:
-```js
-VitePWA({ registerType: 'autoUpdate', manifest: false,
-  workbox: { globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'] } })
-```
-Delete manual `sw.js` — plugin generates it in `dist/`.
-
-**SYMBOLS.md:** "classic (non-module) script" → "ES modules". Remove load order table.
-
-**.clinerules:** "No build step" → "Vite build step". "classic JS" → "ES modules". "app.js is LAST" → "app.js is entry point".
-
----
-
 <a id="build-split"></a>
 ## Phase V6: Split Oversized Files (<150 lines)
 

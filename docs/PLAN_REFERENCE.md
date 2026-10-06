@@ -209,6 +209,10 @@ done
 the module that defines `X`.
 
 **Files:** `index.html`, `src/app.js`, plus defining module per missing shim.
+
+---
+
+<a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 
 **Change:** Add real PDF table extraction to `refresh_wdfw_forecast.py` via 

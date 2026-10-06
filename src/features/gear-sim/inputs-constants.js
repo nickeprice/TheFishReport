@@ -67,6 +67,7 @@ window.FOAM_PICKER_MAP = FOAM_PICKER_MAP;
  * @provenance: derived — buoyancy_g and mass_g from tackle.json
  */
 export function parseFoam(rawValue) {
+window.parseFoam = parseFoam;
     var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
     if (key === '0' || key === '') {
         return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };

@@ -37,6 +37,7 @@ export function _elemVert(el) {
  * }
  */
 export function chainSolve(rig, env) {
+window.chainSolve = chainSolve;
     // ── 1. Rig geometry ────────────────────────────────────────────
     var ldLenM = (rig.ldLen || 4) * 0.3048;
     var mlLenM = 35;

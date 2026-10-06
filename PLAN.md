@@ -2,7 +2,7 @@
 
 ## ⚡ Vite Migration — Foundation (DO FIRST)
 
-- [ ] Phase V3: Entry Points (index.html + app.js)
+- [x] Phase V3: Entry Points (index.html + app.js)
       → index.html, app.js
       [Detail → docs/PLAN_REFERENCE.md#build-html]
 

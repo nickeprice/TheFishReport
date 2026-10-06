@@ -39,29 +39,6 @@
 
 ---
 
-<a id="build-html"></a>
-## Phase V3: Entry Points (index.html + app.js)
-
-**Goal:** Replace ~40 classic `<script>` tags with 4 data scripts + 1 module entry point. Rewrite `app.js` with explicit imports.
-
-**index.html after:**
-```html
-<!-- Data globals (loaded as classic scripts from public/) -->
-<script src="/src/data/regions/washington.js"></script>
-<script src="/src/data/channel_measurements.js"></script>
-<script src="/src/data/river_widths.js"></script>
-<script src="/src/data/spot_widths.js"></script>
-
-<!-- ES module entry point (Vite resolves all imports) -->
-<script type="module" src="/src/app.js"></script>
-```
-
-**Removed:** Supabase CDN script, all 35+ classic JS `<script>` tags.
-
-**app.js after:** imports tackleLoad, restoreRig, loadPresets, applyTabDeepLink, registerServiceWorker, startAutoRefresh, outboxLoad, getGPS, initAuth, initCatchReconcile, setCatchScope, CATCH_SCOPE, loadWaterReport, openWaterTypeGuide, logDebug from their respective modules. No `typeof` guards. No `try/catch` on tackleLoad. Window.onload body is identical logic — just explicit imports at the top.
-
----
-
 <a id="build-tests"></a>
 ## Phase V4: Test & CI Migration
 

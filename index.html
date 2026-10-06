@@ -13,6 +13,11 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>The Fish Report</title>
 <link rel="stylesheet" href="src/styles.css">
+<!-- Data globals (classic scripts, loaded before module entry point) -->
+<script src="/src/data/regions/washington.js"></script>
+<script src="/src/data/channel_measurements.js"></script>
+<script src="/src/data/river_widths.js"></script>
+<script src="/src/data/spot_widths.js"></script>
 </head>
 <body>
 
@@ -473,11 +478,7 @@
 
 <!-- WATER TYPE ⓘ button handler already inline in the gear-row button above -->
 
-<!-- SCRIPTS: 4 data globals (classic) + 1 ES module entry point (Vite resolves imports) -->
-<script src="/src/data/regions/washington.js"></script>
-<script src="/src/data/channel_measurements.js"></script>
-<script src="/src/data/river_widths.js"></script>
-<script src="/src/data/spot_widths.js"></script>
+<!-- SCRIPTS: ES module entry point (Vite resolves imports) -->
 <script type="module" src="/src/app.js"></script>
 </body>
 </html>

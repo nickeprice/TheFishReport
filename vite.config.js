@@ -16,6 +16,21 @@ export default defineConfig({
     },
   },
   plugins: [
+    // Preserve classic data scripts in built HTML (Vite strips non-module <script> tags)
+    {
+      name: 'data-scripts',
+      transformIndexHtml(html, ctx) {
+        if (ctx.bundle) {
+          const tag = '<script src="/src/data/regions/washington.js"></script>\n' +
+            '<script src="/src/data/channel_measurements.js"></script>\n' +
+            '<script src="/src/data/river_widths.js"></script>\n' +
+            '<script src="/src/data/spot_widths.js"></script>';
+          // Insert data scripts before the module script
+          return html.replace('<script type="module"', tag + '\n<script type="module"');
+        }
+        return html;
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

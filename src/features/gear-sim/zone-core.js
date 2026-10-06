@@ -6,6 +6,10 @@
  *         fishOutlook(), paintZoneHud(), refreshZonePreview()
  * ES module.
  */
+import { getActiveReport, getCurrentFlow } from './sonar.js';
+import { provVal } from '../../shared/format.js';
+import { getWaterTempF, lightTerm, tideTerm } from './zone-env.js';
+import { BASE_ZONE_MIN, BASE_ZONE_MAX, thermalOptimum } from './inputs.js';
 export function computeStrikeZone(sonar) {
     var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
     var rep = getActiveReport();
@@ -26,7 +30,7 @@ export function computeStrikeZone(sonar) {
         var rain = Number(provVal(rep.rain));
         if (!isNaN(rain) && rain > 0.25) { zone.shift += 1.0; zone.notes.push('Rain freshet (' + rain.toFixed(2) + '"): coloured water, run a bigger profile.'); }
         var temp = getWaterTempF();
-        var th = (typeof thermalOptimum === 'function') ? thermalOptimum(temp) : null;
+        var th = thermalOptimum(temp);
         if (th) { zone.shift += th.shift; zone.notes.push('Water ' + th.tempF.toFixed(0) + 'F (' + th.range + 'F band): ' + th.note); }
         var turb = turbidityTerm();
         if (turb) { zone.shift += turb.shift; zone.notes.push(turb.label.charAt(0).toUpperCase() + turb.label.slice(1) + ' water (' + turb.fnu.toFixed(1) + ' FNU): ' + turb.note); }
@@ -101,7 +105,7 @@ export function depthBandText(spot) {
 }
 
 export function positionParts(zone, hgt) {
-    var flow = (typeof getCurrentFlow === 'function') ? getCurrentFlow() : null;
+    var flow = getCurrentFlow();
     var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
     var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
     var near = (typeof velocityAtSpot === 'function') ? velocityAtSpot(flow, siteId) : null;

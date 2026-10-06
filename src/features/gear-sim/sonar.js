@@ -8,6 +8,8 @@
  *         getCurrentFlow()
  * ES module.
  */
+import { envSignature } from './zone-env.js';
+import { provVal } from '../../shared/format.js';
 // --- COMMUNITY SONAR ENVIRONMENT MATCH WEIGHTING ---
 // A catch is a better predictor of where fish are RIGHT NOW when the conditions it was logged
 // in resemble today's. The variables are EXACTLY the ones the sim itself uses to place the zone
@@ -41,7 +43,7 @@ export function envCloseness(a, b, span) {
 }
 
 export function envMatchWeight(row, rep) {
-    var now = (typeof envSignature === 'function') ? envSignature(rep) : null;
+    var now = envSignature(rep);
     if (!now || !row) return 1;                 // no live signature -> don't penalise legacy rows
 
     var sum = 0, wsum = 0;

@@ -6,6 +6,8 @@
  *         refHourBlock(), lightTerm(), turbidityTerm(), tideAt(), tideTerm(), envSignature()
  * ES module.
  */
+import { getStr } from './inputs.js';
+import { provVal } from '../../shared/format.js';
 // Required gear fields — no defaults, so anything the angler has never entered
 // stays blank and blocks the sim/log with a precise "fill in X" message.
 // The LINE is a 3-part cascade (material → brand → lb test) and every part is

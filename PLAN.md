@@ -14,7 +14,7 @@
       → sanity_pass.js, sw.js, vite.config.js (+plugin), SYMBOLS.md, .clinerules
       [Detail → docs/PLAN_REFERENCE.md#build-tooling]
 
-- [x] Phase V6: Split Oversized Files (3/6 done — water.js, supabase.js, tackle.js)
+- [x] Phase V6: Split Oversized Files (5/6 done — water, supabase, tackle, chain, inputs; report.js deferred — single-function entanglement)
       → water.js(→3), supabase.js(→3), chain.js(→3), tackle.js(→2), inputs.js(→2), report.js(→2)
       [Detail → docs/PLAN_REFERENCE.md#build-split]
 

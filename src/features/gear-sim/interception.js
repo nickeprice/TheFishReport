@@ -7,6 +7,7 @@
  * public: interceptionRun(), interceptionProbability(), HOOK_SET_FORCE_N
  * ES module.
  */
+import { salmonPositionZ, salmonState } from './salmon.js';
 
 var SEAT_DISTANCE_M = 0.008;   // m — hook gap geometry @provenance: informed_estimate
 var MC_RUNS = 100;             // Monte-Carlo sample count

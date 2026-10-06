@@ -5,6 +5,9 @@
 import { logDebug } from "../../shared/debug.js";
 import { State } from "../../shared/state.js";
 import { GEAR_OPTIONS } from "../../shared/gear-options.js";
+// tackle.js imports from inputs.js (circular) — deferred lazy import
+var _tackleMod = null;
+import('../../shared/tackle.js').then(function(m) { _tackleMod = m; });
 // Physics is pure math:  F = 0.5 * rho * Cd * A * v^2. No tuned constants, no
 // reference flow, no calibration anchors. Community catches never bend
 // the physics - they act as sonar that shifts WHERE the fish are (the zone).
@@ -72,7 +75,7 @@ export function parseFoam(rawValue) {
         return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
     }
     var tid = FOAM_PICKER_MAP[key];
-    var item = tid ? (typeof tackleById === 'function' ? tackleById(tid) : null) : null;
+    var item = tid ? (_tackleMod && typeof _tackleMod.tackleById === 'function' ? _tackleMod.tackleById(tid) : null) : null;
     if (item) {
         var size = parseFloat(key);
         if (isNaN(size)) size = 0;
@@ -103,7 +106,7 @@ export function hookLabel(hook) {
     var MAP = GEAR_OPTIONS.hookIdMap;
     var tid = MAP[String(hook)];
     if (!tid) return '--';
-    var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
+    var item = (_tackleMod && typeof _tackleMod.tackleById === 'function') ? _tackleMod.tackleById(tid) : null;
     return item ? item.label : '--';
 }
 
@@ -123,7 +126,7 @@ export function tackleHookData(hookVal) {
         tid = MAP[LEGACY[key]];
     }
     if (!tid) return null;
-    var item = (typeof tackleById === 'function') ? tackleById(tid) : null;
+    var item = (_tackleMod && typeof _tackleMod.tackleById === 'function') ? _tackleMod.tackleById(tid) : null;
     if (!item) return null;
     var massG = item.mass_g || 0;
     var buoyG = item.buoyancy_g || (massG / 7.85);
@@ -138,7 +141,7 @@ export function tackleHookData(hookVal) {
 window.tackleBeadData = tackleBeadData;
 export function tackleBeadData(bdSz) {
     if (!bdSz) return null;
-    var beads = (typeof tackleItems === 'function') ? tackleItems('bead') : [];
+    var beads = (_tackleMod && typeof _tackleMod.tackleItems === 'function') ? _tackleMod.tackleItems('bead') : [];
     for (var i = 0; i < beads.length; i++) {
         if (Math.abs(Number(beads[i].diameter_mm) - Number(bdSz)) < 0.01) {
             var b = beads[i];

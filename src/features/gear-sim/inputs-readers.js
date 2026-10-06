@@ -6,6 +6,9 @@ import { parseFoam, currentStats, BASE_ZONE_MIN, BASE_ZONE_MAX, getNum, getStr }
 import { logDebug } from "../../shared/debug.js";
 import { State } from "../../shared/state.js";
 import { GEAR_OPTIONS } from "../../shared/gear-options.js";
+// tackle.js imports from inputs.js (circular) — deferred lazy import
+var _tackleMod = null;
+import('../../shared/tackle.js').then(function(m) { _tackleMod = m; });
 // Default (Run) applies 1.0 multipliers — no change from the continuity calculation.
 // ==================================================================================
 export var WATER_TYPES = [
@@ -27,8 +30,8 @@ export function tackleYarnBuoyancyG(inches) {
 window.tackleYarnBuoyancyG = tackleYarnBuoyancyG;
     if (!inches || inches <= 0) return 0;
     var yb = -0.012;
-    if (typeof tackleItems === 'function') {
-        var yarns = tackleItems('yarn');
+    if (_tackleMod && typeof _tackleMod.tackleItems === 'function') {
+        var yarns = _tackleMod.tackleItems('yarn');
         if (yarns && yarns.length > 0 && yarns[0].buoyancy_per_inch_g !== undefined) {
             yb = Number(yarns[0].buoyancy_per_inch_g);
         }
@@ -47,8 +50,8 @@ window.tackleYarnBuoyancyG = tackleYarnBuoyancyG;
 export function tackleYarnDragData() {
 window.tackleYarnDragData = tackleYarnDragData;
     var dflt = { areaCm2: 1.8, cd: 0.8 };
-    if (typeof tackleItems !== 'function') return dflt;
-    var yarns = tackleItems('yarn');
+    if (!_tackleMod || typeof _tackleMod.tackleItems !== 'function') return dflt;
+    var yarns = _tackleMod.tackleItems('yarn');
     if (!yarns || yarns.length === 0) return dflt;
     var y = yarns[0];
     if (y.area_cm2 && y.cd) {
@@ -70,8 +73,8 @@ window.WATER_DENSITY_G_CM3 = WATER_DENSITY_G_CM3;
 export function tackleWeightPhysicsData(shapeLabel, oz) {
 window.tackleWeightPhysicsData = tackleWeightPhysicsData;
     if (!shapeLabel || !oz) return null;
-    if (typeof tackleWeightRow !== 'function') return null;
-    var row = tackleWeightRow(shapeLabel, Number(oz));
+    if (!_tackleMod || typeof _tackleMod.tackleWeightRow !== 'function') return null;
+    var row = _tackleMod.tackleWeightRow(shapeLabel, Number(oz));
     if (!row) return null;
     var mass_g = Number(row.mass_g) || 0;
     var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 11.34;

@@ -11,6 +11,9 @@
  * public: chainSolve()
  * ES module.
  */
+import { tackleLineByMatLb } from '../../shared/tackle.js';
+import { tackleHookData, tackleBeadData } from './inputs-constants.js';
+import { tackleYarnBuoyancyG, tackleYarnDragData, tackleWeightPhysicsData } from './inputs-readers.js';
 
 // ── Physical constants (SI) ──────────────────────────────────────────────────
 export var RHO_C = 1000;          // kg/m³  — water density @ 20°C

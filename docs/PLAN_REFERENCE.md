@@ -60,6 +60,20 @@
 
 ---
 
+<a id="test-undef-sweep"></a>
+## PRE-5: Complete Global no-undef Sweep
+
+**Goal:** Clear remaining `no-undef` errors from `npx eslint "src/**/*.js"`.
+
+**Execution rules:**
+1. NO `/* global */` comments for internal source code — all app functions must be reachable via ES module imports.
+2. Use standard static `import { ... } from ...` where safe (no circular dependency).
+3. If a static import creates a circular dependency that breaks Vite, use scoped dynamic `await import()` or deferred module caching (same pattern as PRE-3 and PRE-4).
+4. Ensure zero `no-undef` errors exist before executing T2.
+
+**Files:** `src/**/*.js` (remaining files not yet swept in PRE-3/PRE-4)
+
+---
 <a id="test-water"></a>
 ## T2: Playwright Water-Report Render Test
 

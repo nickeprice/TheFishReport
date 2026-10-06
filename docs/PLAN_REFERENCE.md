@@ -60,7 +60,155 @@
 
 ---
 
-<a id="data-forecast-pymupdf"></a>
+<a id="test-playwright"></a>
+## T1: Playwright Full-Integration (Gear Sim)
+
+**Goal:** Load the full app in Playwright, fill the gear-sim form with known values,
+click RUN SIMULATION, and verify the HUD paints results (hook depth, velocity, zone
+color, interception probability). Catches ANY remaining bootstrap/init/runtime error
+in the complete `app.js` → form → chain solver → HUD pipeline.
+
+**Test pattern** (new file: `tests/test_gear_sim_integration.py`):
+1. Start dev server + Vite in background (same conftest.py fixture used by `test_physics_validation.py`)
+2. Navigate to `http://localhost:8080/`
+3. Wait for `window.onload` to finish (wait for `#btn-sim` to appear)
+4. Fill form fields (weight=0.5, leader=9, hook='2', yarn='8', foam='Yellow 12', ...)
+5. Click "RUN SIMULATION"
+6. Wait for button text to revert to "RUN SIMULATION" (not "CALCULATING...")
+7. Assert `#hud-hgt` is not empty and contains a number
+8. Assert no console errors (using `page.on('console')` capture)
+
+**Key edge cases:**
+- No GPS / offline fallback
+- Water API fails (429)
+- No species selected
+- Chain solver non-convergence
+
+**Files:** `tests/test_gear_sim_integration.py` (NEW), `tests/conftest.py` (+0 if reusing)
+
+---
+
+<a id="test-water"></a>
+## T2: Playwright Water-Report Render Test
+
+**Goal:** Load the app and verify the water-report tab renders with gauge data,
+weather badges, legal hours, and species calendar. Catches bootstrap failures in
+daynav.js, report.js, hero.js, and supabase.js.
+
+**Test pattern** (add to T1's file or separate):
+1. Navigate to `http://localhost:8080/?station=12101500`
+2. Wait for `#water-report-cards` to have content
+3. Assert CFS badge is not `--`
+4. Assert legal hours label is populated
+5. Assert the first day-card exists
+6. Assert no page errors
+
+**HTTP edge cases to test:**
+- `/api/water_report` returns 429 (rate limit) — verify cached/snapshot fallback
+- `/api/water_report` returns 200 but sparse data
+- Completely offline (no server) → empty state renders
+
+**Files:** `tests/test_water_report.py` (NEW), `tests/conftest.py` (+0)
+
+---
+
+<a id="test-sanity"></a>
+## T3: Fix 8 Sanity Pass Failures
+
+**Current failures (all pre-existing, not from migration):**
+
+| # | Failure | Root cause hint | File(s) likely involved |
+|---|---------|----------------|-------------------------|
+| 1 | bead labels — Cheater float reads "Cheater 10" | Label logic in `tackle.js` or gear-options.js | `gear-options.js`, `tackle.js` |
+| 2 | escapement — missing `:updated_at` wiring | `water-escapement.js` formatting | `water-escapement.js` |
+| 3 | escapement — no `:updated_at` fallback wording | Same, fallback text | `water-escapement.js` |
+| 4 | water type guide — `loaded=false inWaterTypes=true` | `water-types.js` init | `water-types.js` |
+| 5 | hero — stale `hero-lbl` / fold label | `hero.js` section header | `hero.js` |
+| 6 | catch writes — missing `clientId` / `ignoreDuplicates` | `log.js` submission | `log.js` |
+| 7 | pending catches — badge, flush reset, or load order | `pending.js` | `pending.js` |
+| 8 | PLAN.md anchor → PLAN_REFERENCE.md | Orphaned anchors | `PLAN.md`, `PLAN_REFERENCE.md` |
+
+**Approach:** Fix each one in order, running `node sanity_pass.cjs --quiet` after each.
+
+**Files:** `sanity_pass.cjs`, plus the source files listed above.
+
+---
+
+<a id="test-typeof"></a>
+## T4: Audit Remaining typeof Guards
+
+**Goal:** Find every `typeof X === 'function'` that is NOT preceded by a corresponding
+`import` statement (i.e., a guard relying on the window shim alone). These are spots
+where a missing import could silently skip logic.
+
+**Method:**
+```bash
+# List every typeof-fn guard together with the file's imports, flag any without
+# a matching import line.
+grep -rn "typeof.*=== 'function'" src/ --include='*.js' | \
+  while IFS=: read file line text; do
+    fn=$(echo "$text" | sed -n 's/.*typeof \([a-zA-Z0-9_]*\).*/\1/p')
+    if ! head -"$line" "$file" | grep -q "import.*\b$fn\b"; then
+      echo "MISSING IMPORT: $file:$line ($fn)"
+    fi
+  done
+```
+
+**Expected result:** 0 lines flagged (all remaining typeof guards have matching imports).
+If any are found, they need a window shim in the defining module.
+
+**Files:** grep only, no new code.
+
+---
+
+<a id="test-const"></a>
+## T5: ESLint `prefer-const` Sweep
+
+**Goal:** Identify every `let`/`var` that is never reassigned and should be `const`.
+In ES modules, `const` eliminates accidental reassignment and makes the module
+dependency graph clearer.
+
+**Run:**
+```bash
+cd /path/to/project
+npx eslint@8 src/ --rule 'prefer-const: error' --env browser --env es2021 \
+  --parser-options sourceType:module 2>&1 | grep -v 'Parsing error'
+```
+
+**Fix threshold:** Auto-fix with `--fix` is available for `prefer-const` in ESLint.
+Run with `--fix` to convert all safe candidates at once.
+
+**Risk:** Low — `const` vs `let`/`var` changes no runtime behavior. The only risk is
+if a `const` variable is used in a `typeof` guard before its module initializes, but
+`const` in ES modules is hoisted to the TDZ (temporal dead zone) and accessing it
+before init throws — `typeof` would NOT be safe on a TDZ `const`. So `var` or `let`
+must be kept for any variable accessed via `typeof` from another module before init.
+**Check for this edge case before auto-fixing.**
+
+**Files:** All `.js` under `src/`.
+
+---
+
+<a id="test-onclick"></a>
+## T6: HTML onclick Handler Audit
+
+**Goal:** Every `onclick="fn()"` in `index.html` (and `dist/index.html`) must have a
+corresponding `window.fn = fn` shim, or the click handler silently fails.
+
+**Method:**
+```bash
+# Extract all onclick function names from HTML
+grep -oP 'onclick="([^("]+)' index.html | sort -u | while read fn; do
+  if ! grep -q "window.$fn = " src/ -r; then
+    echo "MISSING SHIM: $fn"
+  fi
+done
+```
+
+**Expected result:** 0 missing shims. Any missing one needs `window.X = X` added to
+the module that defines `X`.
+
+**Files:** `index.html`, `src/app.js`, plus defining module per missing shim.
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 
 **Change:** Add real PDF table extraction to `refresh_wdfw_forecast.py` via 

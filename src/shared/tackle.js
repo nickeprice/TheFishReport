@@ -378,4 +378,9 @@ window.onWeightShapeChange = onWeightShapeChange;
 window.onFoam3Change = onFoam3Change;
 window.cascadeLine = cascadeLine;
 window.resolveLineId = resolveLineId;
+window.tackleItems = tackleItems;
+window.tackleById = tackleById;
+window.tackleRowLine = tackleRowLine;
+window.tackleLineByMatLb = tackleLineByMatLb;
+window.tackleWeightRow = tackleWeightRow;
 

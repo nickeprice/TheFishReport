@@ -72,6 +72,7 @@ function apiTimeout(ms) {
 }
 
 export async function apiGetJson(path, opts) {
+window.apiGetJson = apiGetJson;
     opts = opts || {};
     var attempts = opts.attempts || 2;
     var status = 0;

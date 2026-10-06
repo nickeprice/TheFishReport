@@ -66,8 +66,8 @@ window.FOAM_PICKER_MAP = FOAM_PICKER_MAP;
  * Falls back to {key:'0',...} for None/empty input.
  * @provenance: derived — buoyancy_g and mass_g from tackle.json
  */
-export function parseFoam(rawValue) {
 window.parseFoam = parseFoam;
+export function parseFoam(rawValue) {
     var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
     if (key === '0' || key === '') {
         return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
@@ -114,6 +114,7 @@ export function hookLabel(hook) {
  * Resolve hook picker value to tackle.json row.
  * Returns {mass_g, areaCm2, cd} or null.
  */
+window.tackleHookData = tackleHookData;
 export function tackleHookData(hookVal) {
     var MAP = GEAR_OPTIONS.hookIdMap;
     var key = String(hookVal);
@@ -135,6 +136,7 @@ export function tackleHookData(hookVal) {
  * Returns {mass_g, buoyancy_g, areaCm2, cd, netSinkG} or null.
  * netSinkG = max(0, mass_g - buoyancy_g) - positive means bead sinks.
  */
+window.tackleBeadData = tackleBeadData;
 export function tackleBeadData(bdSz) {
     if (!bdSz) return null;
     var beads = (typeof tackleItems === 'function') ? tackleItems('bead') : [];

@@ -121,3 +121,12 @@ def inprocess_server():
     yield url
 
     server.shutdown()
+
+
+@pytest.fixture(autouse=True)
+def capture_browser_logs(page):
+    page.on("console", lambda msg: print(f'🌐 [BROWSER CONSOLE] {msg.type}: {msg.text}'))
+    page.on("pageerror", lambda err: print(f'❌ [BROWSER ERROR] {err}'))
+    page.on("requestfailed", lambda req: print(f'⚠️ [REQUEST FAILED] {req.url} - {req.failure}'))
+    page.on("response", lambda res: print(f'🔴 [HTTP {res.status}] {res.url}') if res.status == 429 else None)
+    yield

@@ -20,6 +20,7 @@ window.provVal = provVal;
 // retry after a lost response conflicts on the primary key and is ignored rather than
 // inserting a second copy of the same fish.
 export function newUuid() {
+window.newUuid = newUuid;
     try {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
     } catch (e) {}

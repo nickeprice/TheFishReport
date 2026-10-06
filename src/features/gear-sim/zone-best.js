@@ -43,6 +43,7 @@ export function rigChangeList(best, rig) {
 }
 
 export function rigChangePlain(best, rig) {
+window.rigChangePlain = rigChangePlain;
     var up = [];
     if (best.foam.key !== rig.foam.key) up.push(best.foam.lift > rig.foam.lift ? 'a bigger corky' : 'a smaller corky');
     if (best.foam2.key !== rig.foam2.key) {
@@ -71,6 +72,7 @@ export function rigChangePlain(best, rig) {
 }
 
 export function joinPlain(items) {
+window.joinPlain = joinPlain;
     if (!items || !items.length) return '';
     if (items.length === 1) return items[0];
     return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];

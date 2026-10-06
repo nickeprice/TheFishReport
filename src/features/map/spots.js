@@ -60,6 +60,7 @@ export function writeSpotCache(rows) {
 }
 
 export function spotsStatus(text) {
+window.spotsStatus = spotsStatus;
     var el = document.getElementById('spot-status');
     if (!el) return;
     el.hidden = !text;
@@ -69,6 +70,7 @@ export function spotsStatus(text) {
 // Load MY spots: local mirror first (so a spot stays usable offline), then the server
 // when a session exists. `offline` = the server was unreachable, so keep the cache.
 export async function loadFavoriteSpots() {
+window.loadFavoriteSpots = loadFavoriteSpots;
     if (!spotsState.loaded) spotsState.rows = readSpotCache();
     if (spotsSignedIn() && typeof Supa !== 'undefined') {
         var rows = null;

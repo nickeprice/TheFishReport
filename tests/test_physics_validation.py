@@ -337,6 +337,7 @@ def _load_chain_solver_page(page, url):
     """
     errors = []
     page.on('pageerror', lambda exc: errors.append(str(exc)))
+    page.on('console', lambda msg: print(f'BROWSER [{msg.type.upper()}]: {msg.text}') if msg.type == 'error' else None)
     for attempt in range(3):
         page.goto(url, wait_until='domcontentloaded')
         page.wait_for_timeout(200)  # settle between sequential navigations
@@ -348,6 +349,7 @@ def _load_chain_solver_page(page, url):
             )
             return errors
         except Exception:
+            print(f'BROWSER ERRORS collected: {errors}')
             if attempt < 2:
                 continue
             raise

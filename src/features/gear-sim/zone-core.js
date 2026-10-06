@@ -193,3 +193,5 @@ export function refreshZonePreview() {
     paintZoneHud(computeStrikeZone());
 
 }
+window.paintZoneHud = paintZoneHud;
+window.refreshZonePreview = refreshZonePreview;

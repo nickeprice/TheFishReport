@@ -24,6 +24,7 @@ export var DEFAULT_WATER_TYPE = 'run';
 window.DEFAULT_WATER_TYPE = DEFAULT_WATER_TYPE;
 
 export function tackleYarnBuoyancyG(inches) {
+window.tackleYarnBuoyancyG = tackleYarnBuoyancyG;
     if (!inches || inches <= 0) return 0;
     var yb = -0.012;
     if (typeof tackleItems === 'function') {
@@ -44,6 +45,7 @@ export function tackleYarnBuoyancyG(inches) {
  * @measure: caliper tuft diameter at 5 points → mean_d, area_cm² = π × mean_d × length_cm
  */
 export function tackleYarnDragData() {
+window.tackleYarnDragData = tackleYarnDragData;
     var dflt = { areaCm2: 1.8, cd: 0.8 };
     if (typeof tackleItems !== 'function') return dflt;
     var yarns = tackleItems('yarn');
@@ -66,6 +68,7 @@ export function tackleYarnDragData() {
 export var WATER_DENSITY_G_CM3 = 1.0; // g/cm³, fresh water — @provenance: standard
 window.WATER_DENSITY_G_CM3 = WATER_DENSITY_G_CM3;
 export function tackleWeightPhysicsData(shapeLabel, oz) {
+window.tackleWeightPhysicsData = tackleWeightPhysicsData;
     if (!shapeLabel || !oz) return null;
     if (typeof tackleWeightRow !== 'function') return null;
     var row = tackleWeightRow(shapeLabel, Number(oz));

@@ -160,3 +160,4 @@ export function presentationHeightInches(liftGf, dragGfPerFt, leaderFt) {
     if (!isFinite(riseFt) || riseFt < 0) return 0;
     return Math.min(riseFt * 12, leaderFt * 12);
 }
+window.computeLiftGf = computeLiftGf;

@@ -95,6 +95,7 @@ export function outboxAdd(row) {
 // { id: '_snapshot', ts, value } per store so the public board and the Gear Sim
 // community sonar still have real (honestly stale) data offline.
 export function snapshotSave(store, value) {
+window.snapshotSave = snapshotSave;
     var row = { id: '_snapshot', ts: Date.now(), value: value };
     if (typeof idbPutAll === 'function') {
         idbPutAll(store, [row]);   // write-through

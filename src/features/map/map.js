@@ -76,6 +76,7 @@ export function stationPopupHtml(s) {
 }
 
 export function mapCenter() {
+window.mapCenter = mapCenter;
     if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
         return [State.userGPSCoords.lat, State.userGPSCoords.lon];
     }

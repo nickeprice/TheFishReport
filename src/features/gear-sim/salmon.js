@@ -92,6 +92,7 @@ export function getSalmonSpecies() {
  * @provenance: literature — sinusoidal respiration model.
  */
 export function salmonState(t, freqHz, dutyCycle, phase) {
+window.salmonState = salmonState;
     var f = freqHz || SALMON_DEFAULTS.freqHz;
     var d = dutyCycle || SALMON_DEFAULTS.dutyCycle;
     var p = phase || 0;
@@ -134,6 +135,7 @@ export function salmonMouthCone(mouthFraction) {
  * @provenance: literature — adult Chinook hold 0.15-0.60 m off bottom.
  */
 export function salmonPositionZ(depthMinM, depthMaxM) {
+window.salmonPositionZ = salmonPositionZ;
     var lo = depthMinM || SALMON_DEFAULTS.depthMinM;
     var hi = depthMaxM || SALMON_DEFAULTS.depthMaxM;
     return lo + Math.random() * (hi - lo);

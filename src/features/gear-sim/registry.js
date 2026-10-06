@@ -12,8 +12,9 @@
  * tunings of the SAME drift physics) and GEAR_SPECIES. Both land together with the
  * Technique/Species picker, so the repo never carries data without a consumer.
  *
- * Classic script (global scope). Loaded AFTER techniques/*.js, BEFORE sim.js.
+ * ES module.
  */
+import { DRIFT_TECHNIQUE } from './techniques/drift.js';
 export var GEAR_TECHNIQUES = {
     drift: DRIFT_TECHNIQUE
 };

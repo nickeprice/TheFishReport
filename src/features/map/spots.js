@@ -329,3 +329,4 @@ export async function deleteSavedSpot(id) {
         showToast('Could not delete: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
     }
 }
+window.saveCurrentSpot = saveCurrentSpot;

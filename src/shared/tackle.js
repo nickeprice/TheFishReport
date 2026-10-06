@@ -1,4 +1,4 @@
-import TACKLE_DATA from '../data/tackle.json' with { type: 'json' };
+import TACKLE_DATA from '../data/tackle.json';
 import { logDebug } from './debug.js';
 import { getStr } from '../features/gear-sim/inputs.js';
 import { setFieldValue } from './forms.js';
@@ -371,4 +371,11 @@ export function tackleLoad() {
         })
         .catch(function () { return null; });
 }
+
+// Window shims for HTML onclick/onchange handlers
+window.onLinePartChange = onLinePartChange;
+window.onWeightShapeChange = onWeightShapeChange;
+window.onFoam3Change = onFoam3Change;
+window.cascadeLine = cascadeLine;
+window.resolveLineId = resolveLineId;
 

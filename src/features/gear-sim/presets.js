@@ -137,3 +137,6 @@ export function onPresetSelect() {
 }
 
 export function loadPresets() { populatePresetDropdown(); }
+window.onPresetSelect = onPresetSelect;
+window.saveCurrentPreset = saveCurrentPreset;
+window.deleteCurrentPreset = deleteCurrentPreset;

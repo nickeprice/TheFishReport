@@ -189,3 +189,4 @@ export function renderWaterReportEmptyState(title, hint, offline) {
         '</div>';
     logDebug('Water report empty state: ' + title, 'UI');
 }
+window.stepDate = stepDate;

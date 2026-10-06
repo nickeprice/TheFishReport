@@ -133,3 +133,4 @@ export async function loadDatabase() {
     if (typeof refreshZonePreview === 'function') refreshZonePreview();
     logDebug('Catch log (everyone): ' + rendered + ' row(s) ' + (fromCloud ? 'from Supabase' : 'from local buffer'), 'DB');
 }
+window.setCatchScope = setCatchScope;

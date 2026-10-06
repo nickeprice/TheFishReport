@@ -55,3 +55,4 @@ export function closeWaterTypeGuide() {
     var modal = document.getElementById('water-type-modal');
     if (modal) modal.style.display = 'none';
 }
+window.closeWaterTypeGuide = closeWaterTypeGuide;

@@ -120,3 +120,5 @@ export async function syncPendingCatches() {
     }
     return synced;
 }
+window.startFishing = startFishing;
+window.stopFishing = stopFishing;

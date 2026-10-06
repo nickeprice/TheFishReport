@@ -147,3 +147,4 @@ export async function logData() {
     setCatchScope(CATCH_SCOPE);
     switchTab('tab-catch-log');
 }
+window.logData = logData;

@@ -2,28 +2,14 @@
 
 Locate any public symbol **without opening the file**. Every module is an
 ES module (`import`/`export`); `window.*` shims provide backward compatibility
-for Node.js tests and the legacy classic-script load order.
+for Node.js tests.
 
 `node sanity_pass.cjs --quiet` asserts that every name listed here still exists
 as a `window.*` property, and that no module's `public:` header declares a name
 missing from this index. **Rename a public symbol → update this file**, or the
 pass fails.
 
-## Load order (`index.html`)
-
-| # | file | owns |
-| --- | --- | --- |
-| 0 | `@supabase/supabase-js` (CDN) | the SDK, lazily awaited by `services/supabase.js` |
-| 1 | `src/data/regions/washington.js` | `window.REGIONS.WA` (strict JSON; schema `CONTRACT_REGIONS.md`) |
-| 2 | `src/data/channel_measurements.js` | `window.CHANNEL_MEASUREMENTS` — USGS field-measurement velocity fits (generated) |
-| 3 | `src/data/river_widths.js` | `window.RIVER_WIDTHS` — routed channel widths (generated) |
-| 4 | `src/data/spot_widths.js` | `window.SPOT_WIDTHS` — 3DEP-DEM channel widths at ~500m intervals (generated) |
-| 5 | `src/utils/regulations.js` | WDFW rules engine + local solar calc |
-| 5 | `src/services/supabase.js` | auth, catch writes, public feed, calibration RPC |
-| 6 | `src/services/water.js` | USGS WDFN / Open-Meteo / WDFW Socrata data layer |
-| 7 | `src/shared/*` | debug, ui, nav, format, api, forms, idb, gear-options, refresh, pwa |
-| 8 | `src/features/*` | auth, telemetry, gear-sim, catch-log, station, map |
-| 9 | `src/app.js` | **bootstrap only** — `window.onload` |
+## Modules (ES module import chain — no classic scripts)
 
 ## src/data — measured gauge velocity & width
 

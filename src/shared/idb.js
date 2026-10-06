@@ -8,7 +8,7 @@
  * and can throw on open, so every call resolves to a falsy value instead of throwing —
  * the outbox then degrades to localStorage rather than losing the angler's catch.
  *
- * Classic script (global scope). Loaded BEFORE src/app.js.
+ * ES module.
  */
 var IDB_NAME = 'puyallup_companion';
 var IDB_VERSION = 2;

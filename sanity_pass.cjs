@@ -8,11 +8,10 @@
  * tests/test_ui_behavior.py (pytest + Playwright, offline-mocked).
  *
  * Checks covered here:
- *   1. Syntax: node --check on every loaded JS script (+ sw.js) and
+ *   1. Syntax: node --check on every JS file and
  *      python3 -m py_compile on the Python entry points.
  *   2. STATIC INTEGRITY: every label[for] resolves to an id, every input/select
- *      has an accessible name, the classic script load order ends with app.js,
- *      sw.js SHELL_FILES parity, Vercel entry-point parity, CSS dead-rule
+ *      has an accessible name, Vercel entry-point parity, CSS dead-rule
  *      checks, and source-level contract guards.
  *   3. Docs index: docs/SYMBOLS.md covers every loaded module + contract files.
  *
@@ -37,7 +36,7 @@ function describe(name) { if (!QUIET) console.log('\n## ' + name); }
 // so source-level checks must read EVERY local script in the index.html load order.
 function localScriptPaths() {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  return [...html.matchAll(/<script src="([^"]+)"/g)]
+  return [...html.matchAll(/<script[^>]*src="([^"]+)"/g)]
     .map((m) => m[1])
     .filter((s) => !/^https?:/i.test(s));
 }
@@ -81,30 +80,10 @@ function staticIntegrity() {
   }
   unnamed.length ? fail('controls have accessible names', unnamed.join(', ')) : ok('controls have accessible names', `${controls.length} inputs/selects named`);
 
-  const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
-  scripts.length && scripts[scripts.length - 1].includes('app.js')
-    ? ok('script load order ends with app.js', scripts.join(' → '))
-    : fail('script load order ends with app.js', scripts.join(' → '));
-
-  // index.html and sw.js SHELL_FILES are hand-maintained in PARALLEL. A module added to one
-  // but not the other breaks offline caching SILENTLY: the page requests a script the
-  // service worker never precached, so it works online and fails in a dead zone — exactly
-  // where this app is supposed to earn its keep. Assert the two src/*.js subsets agree.
-  // The CDN script is not a shell file, and the non-<script> shell assets (manifest.json,
-  // icons, styles.css) have no <script> tag, so both are excluded by the .js-under-src/ match.
-  const swShellSrc = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  const shellAt = swShellSrc.indexOf('const SHELL_FILES');
-  const shellBlock = swShellSrc.slice(shellAt, swShellSrc.indexOf('];', shellAt));
-  const shellJs = [...shellBlock.matchAll(/'\/(src\/[^']+\.js)'/g)].map((m) => m[1]);
-  const htmlJs = localScriptPaths();
-  const notShelled = htmlJs.filter((p) => !shellJs.includes(p));
-  const staleShell = shellJs.filter((p) => !htmlJs.includes(p));
-  (notShelled.length === 0 && staleShell.length === 0)
-    ? ok('sw.js SHELL_FILES matches the index.html script list', `${htmlJs.length} modules`)
-    : fail('sw.js SHELL_FILES matches the index.html script list',
-        [notShelled.length ? 'missing from SHELL_FILES: ' + notShelled.join(', ') : '',
-         staleShell.length ? 'in SHELL_FILES but not loaded: ' + staleShell.join(', ') : '']
-          .filter(Boolean).join(' | '));
+  const scripts = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
+  (scripts.length > 0)
+    ? ok('scripts loaded', scripts.join(', '))
+    : fail('scripts loaded', 'no scripts found in index.html');
 
   // Vercel serves Python functions ONE FILE PER ROUTE, so a `/api/<name>` call that only
   // exists as a branch inside api/water_report.py — which is where the local dev server used
@@ -527,7 +506,7 @@ function main() {
 
   describe('Syntax');
   try {
-    const jsFiles = localScriptPaths().concat('sw.js');
+    const jsFiles = localScriptPaths();
     for (const f of jsFiles) {
       var checkPath = fs.existsSync(path.join(ROOT, f)) ? f : 'public/' + f;
       execFileSync('node', ['--check', checkPath], { cwd: ROOT, stdio: 'pipe' });

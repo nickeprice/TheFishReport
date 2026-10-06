@@ -63,8 +63,9 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 - Pipe verification through `tail -n 40`; full logs on failure only.
 
 # Frontend module layout
-- No build step. Plain HTML/CSS + classic JS scripts, one global scope.
-- `src/app.js` is LAST and owns ONLY `window.onload` bootstrap.
+- Vite build step (`npm run dev` for dev, `npm run build` for production).
+- ES modules, one entry point (`src/app.js`).
+- `src/app.js` is the entry point and owns ONLY `window.onload` bootstrap.
 - Features in `src/features/{telemetry,gear-sim,catch-log,station,auth,map}/`.
 - Shared primitives in `src/shared/`.
 - Target <150 lines per feature file (data/type/contract files exempt).

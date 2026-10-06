@@ -18,7 +18,7 @@
       → water.js(→3), supabase.js(→3), chain.js(→3), tackle.js(→2), inputs.js(→2), report.js(→2)
       [Detail → docs/PLAN_REFERENCE.md#build-split]
 
-- [ ] Phase V7: Ship & Validate
+- [x] Phase V7: Ship & Validate
       → npm run build, full test suite, PWA offline, Vercel deploy
       [Detail → docs/PLAN_REFERENCE.md#build-deploy]
 

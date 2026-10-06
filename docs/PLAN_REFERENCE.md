@@ -60,28 +60,6 @@
 
 ---
 
-<a id="build-deploy"></a>
-## Phase V7: Ship & Validate
-
-**Goal:** Build, test, PWA, deploy — everything works.
-
-**Checklist:**
-- [ ] `npm run build` exits 0, outputs to `dist/`
-- [ ] `npm run preview` serves app — all tabs work
-- [ ] Physics: `python -m pytest tests/test_physics_validation.py -q --tb=line`
-- [ ] UI: `python -m pytest tests/test_ui_behavior.py -q --tb=line`
-- [ ] API: `python -m pytest tests/test_api_contract.py -q --tb=line`
-- [ ] `node sanity_pass.js --quiet` exits 0
-- [ ] PWA offline: install → disconnect → app loads
-- [ ] Vercel auto-deploys (detects Vite, runs build, serves dist/)
-- [ ] Dev workflow: `python3 scripts/dev_server.py 8000` + `npm run dev`
-
-**dev_server.py update:** `SERVE_ROOT = os.environ.get('TFR_SERVE_ROOT', os.path.join(ROOT, 'dist'))`
-
-**Rollback:** Every phase is a separate git commit. Revert any independently.
-
----
-
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

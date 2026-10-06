@@ -7,6 +7,7 @@ import { showToast } from '../../shared/ui.js';
 import { formatCatchTime } from '../../shared/format.js';
 import { Supa } from '../../services/supabase.js';
 import { pendingNotIn, asMyCatchRow, pendingBadge } from './pending.js';
+import { AuthState } from '../auth/auth.js';
 // --- YOUR CATCHES (private log: list, edit, delete) — the "yours" scope ---
 var _myCatches = [];
 
@@ -110,7 +111,9 @@ export async function deleteMyCatch(id) {
     if (res && res.ok) {
         showToast('Catch deleted', 'success', 2500);
         renderMyCatches();
-        if (typeof loadDatabase === 'function') loadDatabase();   // the public board may have shrunk
+        // Dynamic import to avoid circular dep with board.js
+        var board = await import('./board.js');
+        if (typeof board.loadDatabase === 'function') board.loadDatabase();
     } else {
         showToast('Could not delete: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
     }

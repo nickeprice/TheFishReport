@@ -21,7 +21,7 @@
  */
 import { logDebug } from '../../shared/debug.js';
 import { showToast } from '../../shared/ui.js';
-import { syncPendingCatches } from '../auth/auth.js';
+import { syncPendingCatches, AuthState } from '../auth/auth.js';
 var RECONCILE_MIN_INTERVAL_MS = 15000;
 var _reconcileInFlight = false;
 var _reconcileLastAt = 0;

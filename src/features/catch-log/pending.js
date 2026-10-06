@@ -66,8 +66,10 @@ export function asMyCatchRow(r) {
 // Re-render whichever scope is on screen, so a row that is no longer pending loses its
 // badge and comes back from the server instead of the outbox.
 window.refreshCatchLists = refreshCatchLists;
-export function refreshCatchLists() {
-    if (typeof setCatchScope === 'function' && typeof CATCH_SCOPE !== 'undefined') {
-        setCatchScope(CATCH_SCOPE);
+export async function refreshCatchLists() {
+    // Dynamic import avoids circular dep with board.js
+    var board = await import('./board.js');
+    if (typeof board.setCatchScope === 'function' && typeof board.CATCH_SCOPE !== 'undefined') {
+        board.setCatchScope(board.CATCH_SCOPE);
     }
 }

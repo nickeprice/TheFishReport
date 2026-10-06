@@ -14,6 +14,7 @@ import { loadFavoriteSpots } from '../map/spots.js';
 import { Supa } from '../../services/supabase.js';
 import { outboxPending, outboxUpdate } from '../catch-log/outbox.js';
 import { refreshCatchLists } from '../catch-log/pending.js';
+import { setCatchScope, CATCH_SCOPE } from '../catch-log/board.js';
 // --- AUTH (anonymous guest session) ---
 export var AuthState = { signedIn: false, name: '', offline: false };
 window.AuthState = AuthState;

@@ -11,6 +11,8 @@ export default [
         navigator: 'readonly',
         fetch: 'readonly',
         console: 'readonly',
+        prompt: 'readonly',
+        confirm: 'readonly',
       },
     },
     rules: {

@@ -10,6 +10,7 @@ import { Supa } from '../../services/supabase.js';
 import { outboxAll, snapshotLoad } from './outbox.js';
 import { pendingRows, pendingBadge } from './pending.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
+import { renderMyCatches } from './mycatches.js';
 // Catch Log renderer — merged single list with a "yours / everyone" toggle.
 // The ONE list shows either the signed-in angler's private rows (with Edit/Delete)
 // or the public board (Name / Time / Flow / Fish). The active scope is tracked in

@@ -38,6 +38,7 @@ export async function fetchCfsReadingsLegacy(siteId) {
     }).filter(function (r) { return isFinite(r.t) && isFinite(r.v) && r.v > -900000; });
 }
 
+window.fetchCFSMomentum = fetchCFSMomentum;
 export async function fetchCFSMomentum(siteId) {
     if (!siteId) return;
     try {
@@ -76,6 +77,7 @@ export async function fetchCFSMomentum(siteId) {
 }
 
 // Pure-ish: paints the "Rising / Dropping / Stable" trend badge from a sorted window.
+window.renderCfsTrend = renderCfsTrend;
 export function renderCfsTrend(siteId, sorted) {
     if (!sorted || sorted.length < 2) return;
     const oldest = sorted[0].v;

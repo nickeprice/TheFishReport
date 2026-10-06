@@ -208,6 +208,7 @@ export async function loadEscapementData(siteId) {
 // Until a real number exists the UI keeps its "--" placeholder.
 // actId = active USGS gauge ID (site_id) — used to filter forecasts to the
 // active waterbody so Green River doesn't show Puyallup's numbers.
+window.refreshWdfwForecast = refreshWdfwForecast;
 export async function refreshWdfwForecast(actId) {
     var cell = document.querySelector('[data-count="wdfw"]');
     if (!cell) return;
@@ -266,6 +267,7 @@ export async function refreshWdfwForecast(actId) {
 // return / trap / avg) inside a card carrying data-species, so we fill only the
 // matching cells — never replace the whole section (the species/status/progress
 // geometry stays put). Rivers with no facility mapping keep their "--" placeholders.
+window.refreshEscapement = refreshEscapement;
 export async function refreshEscapement(siteId) {
     var key = siteId ? String(siteId) : '';
     if (!hatcheryEscapement[key]) return;

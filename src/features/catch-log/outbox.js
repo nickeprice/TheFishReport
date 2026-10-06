@@ -24,6 +24,7 @@ window.OUTBOX_STORE_KIND = OUTBOX_STORE_KIND;
 export var LEGACY_CATCH_KEY = 'catch_db';
 window.LEGACY_CATCH_KEY = LEGACY_CATCH_KEY;
 
+window.outboxAll = outboxAll;
 export function outboxAll() { return OUTBOX; }
 
 export function outboxPending() {
@@ -103,6 +104,7 @@ window.snapshotSave = snapshotSave;
     try { localStorage.setItem('snap_' + store, JSON.stringify(row)); } catch (e) {}
 }
 
+window.snapshotLoad = snapshotLoad;
 export async function snapshotLoad(store) {
     var row = null;
     if (typeof idbGetAll === 'function') {

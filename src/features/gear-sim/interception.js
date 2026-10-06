@@ -112,6 +112,7 @@ export function interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs, gearMass
  * }.
  * @provenance: standard — Monte-Carlo sampling.
  */
+window.interceptionProbability = interceptionProbability;
 export function interceptionProbability(hookDepthM, flowMs, gearMassKg) {
     if (gearMassKg === undefined) gearMassKg = 0.030;
     var sweeps = 0, collisions = 0, hooked = 0;

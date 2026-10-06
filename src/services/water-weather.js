@@ -4,6 +4,7 @@
  */
 import { logDebug } from '../shared/debug.js';
 
+window.applyReportWeather = applyReportWeather;
 export function applyReportWeather(rep) {
     if (!rep) return;
     var WIND_ARROWS = { 'N':'\u2191','NNE':'\u2197','NE':'\u2197','ENE':'\u2197','E':'\u2192','ESE':'\u2198','SE':'\u2198','SSE':'\u2198','S':'\u2193','SSW':'\u2199','SW':'\u2199','WSW':'\u2199','W':'\u2190','WNW':'\u2196','NW':'\u2196','NNW':'\u2196' };

@@ -28,6 +28,7 @@
 import { outboxPending } from './outbox.js';
 import { setCatchScope, CATCH_SCOPE } from './board.js';
 // Newest first, so an optimistic row lands where it belongs at the top of the list.
+window.pendingRows = pendingRows;
 export function pendingRows() {
     return outboxPending().slice().sort(function (a, b) {
         return new Date(b.time || 0) - new Date(a.time || 0);
@@ -35,12 +36,14 @@ export function pendingRows() {
 }
 
 // Pending rows the server list does not already contain (id === clientId).
+window.pendingNotIn = pendingNotIn;
 export function pendingNotIn(serverRows) {
     var seen = {};
     (serverRows || []).forEach(function (r) { if (r && r.id != null) seen[String(r.id)] = true; });
     return pendingRows().filter(function (r) { return !seen[String(r.clientId)]; });
 }
 
+window.pendingBadge = pendingBadge;
 export function pendingBadge() {
     var span = document.createElement('span');
     span.className = 'sync-badge';
@@ -63,6 +66,7 @@ export function asMyCatchRow(r) {
 
 // Re-render whichever scope is on screen, so a row that is no longer pending loses its
 // badge and comes back from the server instead of the outbox.
+window.refreshCatchLists = refreshCatchLists;
 export function refreshCatchLists() {
     setCatchScope(CATCH_SCOPE);
 }

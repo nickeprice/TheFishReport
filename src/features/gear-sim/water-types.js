@@ -16,6 +16,7 @@
 // WATER TYPE GUIDE (Phase 1.6)
 // ==================================================================================
 
+window.waterTypeMultiplier = waterTypeMultiplier;
 export function waterTypeMultiplier(typeId) {
     var types = (typeof WATER_TYPES !== 'undefined') ? WATER_TYPES : null;
     var def = types ? types[2] : { id: 'run', label: 'Run', depthMul: 1.0, velMul: 1.0, desc: '' };

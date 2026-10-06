@@ -46,6 +46,7 @@ export function tackleItems(type) {
     return TACKLE.items.filter(function (i) { return i.type === type; });
 }
 
+window.tackleLineById = tackleLineById;
 export function tackleLineById(id) {
     if (!id) return null;
     var lines = tackleItems('line');
@@ -298,6 +299,7 @@ export function tackleWeightArea(shapeLabel, oz) {
 // Bead size: the bead rows the material owns. "None" is the ABSENCE of a bead, so its 0
 // is supplied here rather than invented from the library; a blank material lists every
 // size the library has.
+window.tackleBeadSizes = tackleBeadSizes;
 export function tackleBeadSizes() {
     var out = [{ value: '0', text: 'None' }];
     tackleItems('bead').forEach(function (it) {

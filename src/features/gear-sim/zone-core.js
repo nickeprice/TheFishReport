@@ -131,6 +131,7 @@ export function positionParts(zone, hgt) {
     return out;
 }
 
+window.whereToFish = whereToFish;
 export function whereToFish(zone, hgt) {
     var p = positionParts(zone, hgt);
     var parts = [p.depth];
@@ -163,6 +164,7 @@ export function plainDepthText(p) {
     return lo + '-' + hi + ' feet deep';
 }
 
+window.fishOutlook = fishOutlook;
 export function fishOutlook(zone, hgt) {
     var z = zone || { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, report: null };
     var shift = Number(z.shift) || 0;

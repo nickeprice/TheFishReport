@@ -120,6 +120,7 @@ export function spotWidthRatio(siteId) {
 // When the spot width is measured (SPOT_WIDTHS), uses the Manning-based adjustment:
 //     v_spot = v_gauge * (w_spot / w_gauge)^(2/5)
 // Otherwise falls back to the simple continuity ratio (w_gauge / w_spot).
+window.velocityAtSpot = velocityAtSpot;
 export function velocityAtSpot(flow, siteId) {
     var v = hydraulicVelocity(flow, siteId);
     var r = spotWidthRatio(siteId);
@@ -229,6 +230,7 @@ export function depthAtGauge(flow, siteId) {
 //     d_spot = d_gauge * (w_gauge / w_spot)^(3/5)
 // Otherwise returns the gauge depth as-is.
 // value === null means "unmeasured", never a placeholder number.
+window.spotDepthFt = spotDepthFt;
 export function spotDepthFt(flow, siteId) {
     var d = depthAtGauge(flow, siteId);
     var r = spotWidthRatio(siteId);

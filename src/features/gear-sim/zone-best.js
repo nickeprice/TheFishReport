@@ -28,6 +28,7 @@ export function foamShort(foam) {
     return /cheater/i.test(short) ? short + ' float' : short;
 }
 
+window.rigChangeList = rigChangeList;
 export function rigChangeList(best, rig) {
     var out = [];
     if (best.foam.key !== rig.foam.key) out.push(foamShort(best.foam));

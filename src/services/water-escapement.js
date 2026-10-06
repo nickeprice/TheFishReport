@@ -4,6 +4,7 @@
  */
 import { logDebug } from '../shared/debug.js';
 import { apiGetJson } from '../shared/api.js';
+import { ESCAPEMENT_UPDATED_FALLBACK } from './water-weather.js';
 
 export function escNum(v) {
     return (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US');

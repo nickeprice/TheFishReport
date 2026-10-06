@@ -77,7 +77,7 @@ const ESCAPEMENT_EVENT = 'Trap Estimate';
 // Shown under the counts fold whenever WDFW exposes no usable :updated_at stamp.
 // Shared by app.js (first paint) and refreshEscapement (after the live fetch) so
 // the UI never invents a date.
-const ESCAPEMENT_UPDATED_FALLBACK = 'Hatchery data may lag WDFW reporting.';
+export const ESCAPEMENT_UPDATED_FALLBACK = 'Hatchery data may lag WDFW reporting.';
 // Active USGS river gauge ID -> WDFW `facility` string(s) exactly as spelled in the
 // dataset. The whole Puyallup / White River basin is pooled into one query per gauge:
 // today only VOIGHTS CR HATCHERY actively reports Trap Estimates (PUYALLUP HATCHERY's

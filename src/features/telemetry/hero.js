@@ -11,6 +11,7 @@
 // trend, tide highs, moon phase, transit state, netting) — never fabricated.
 import { provVal } from '../../shared/format.js';
 import { getFMIColor } from './tide.js';
+import { ESCAPEMENT_UPDATED_FALLBACK } from '../../services/water-weather.js';
 export function buildFishingHero(rep) {
     if (!rep) return '';
     var score = 0;

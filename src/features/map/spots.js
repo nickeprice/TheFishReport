@@ -153,7 +153,6 @@ export function renderFavoriteSpots() {
 // What the spot DOES own is the weather: the report takes lat/lon and Open-Meteo is
 // queried at those coordinates, so the forecast is for the exact point that was saved.
 // ==================================================================================
-var SPOT_NEAREST_GAUGE_N = 1;      // how many gauges the resolver keeps (the closest)
 
 // The closest USABLE entry from a nearby-stations payload. Pure (the fetch lives in
 // resolveSpotStation), so the picking rule can be tested on its own: an entry without

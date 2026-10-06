@@ -131,12 +131,8 @@ var LIGHT_BRIGHT_SHIFT = -0.75;  // sun genuinely high
 var LIGHT_SUN_DARK_DEG = 3;      // <= this elevation: full low-light lift
 var LIGHT_SUN_NEUTRAL_DEG = 30;  // ramps to neutral here
 var LIGHT_SUN_FULL_DEG = 50;     // and to the full high-sun penalty here
-var LIGHT_SHIFT_STEP = 0.05;     // quantised: the zone model cannot resolve finer
 var LIGHT_DEFAULT_LAT = 47.195;  // default station latitude (same as map default centre)
 
-// Fixed-bracket FALLBACK only (used when a day's payload carries no solar times at all).
-var LIGHT_EDGE_MINUTES = 90;
-var LIGHT_CORE_MINUTES = 180;
 // '6:30 AM' -> 390 (minutes past midnight). null when unparseable.
 export function parseClockMinutes(text) {
     if (!text) return null;

@@ -6,11 +6,8 @@
  * NOTE: 294 lines, one large function — over the <150-line target.
  */
 import { logDebug } from '../../shared/debug.js';
-import { provVal } from '../../shared/format.js';
 import { idbPutAll, idbGetAll } from '../../shared/idb.js';
-import { Supa } from '../../services/supabase.js';
 import { renderWaterReportEmptyState, updateActiveDateUI, setReportsData, activeDateOffset, reportsData } from './daynav.js';
-import { buildFishingHero, buildSpeciesCalendarHtml } from './hero.js';
 import { loadRules as loadRegulationsRules } from '../../utils/regulations.js';
 import { applyReportWeather } from '../../services/water.js';
 import { renderReportDays } from './report-render.js';

@@ -11,10 +11,6 @@
 
 // von Kármán constant (standard fluid dynamics, no site tuning)
 var KAPPA = 0.41;            // dimensionless — @provenance: standard
-// Water density, kg/m³ (fresh water, 20 °C)
-var RHO = 1000;              // kg/m³ — @provenance: standard
-// Kinematic viscosity, m²/s (fresh water, 10 °C — conservative for cold rivers)
-var NU = 1.0e-6;             // m²/s — @provenance: standard
 // Median cobble diameter, metres (D₅₀ = 10 cm default for gravel-cobble bed)
 var MEDIAN_COBBLE_M = 0.10;  // m — @provenance: literature (Nick Thorne 2025, PNW gravel-cobble)
 // Roughness length z₀ = 0.033 · (2.5 · D₅₀) per Nikora 1992 / Raudkivi 1998

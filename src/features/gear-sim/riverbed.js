@@ -20,11 +20,6 @@ var MU_KINETIC = 0.35;         // dimensionless — kinetic friction, sliding on
 // engineering handbooks)
 var E_STAR_GPA = 12;           // GPa — @provenance: informed_estimate (conservative rounding)
 
-// Coefficient of restitution for wet rock impacts
-// Marshall 2012 (Journal of Hydraulic Engineering 138:211) — wet cobble impacts at Re≈10⁴
-// @provenance: literature
-var RESTITUTION = 0.15;        // dimensionless
-
 // Nominal cobble radius for Hertz contact, metres
 // D₅₀ = 0.10m → R_cobble = 0.05m
 var R_COBBLE_M = 0.05;         // m — @provenance: derived (from MEDIAN_COBBLE_M in hydro.js)

@@ -75,8 +75,8 @@ export function stationPopupHtml(s) {
         '\');return false;">Fish this gauge</a>';
 }
 
-export function mapCenter() {
 window.mapCenter = mapCenter;
+export function mapCenter() {
     if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
         return [State.userGPSCoords.lat, State.userGPSCoords.lon];
     }
@@ -144,7 +144,6 @@ export async function refreshStationMap(center) {
 // Drop a point ANYWHERE on the map and save it as a private fishing spot by its lat/lon.
 // The point is not a gauge, so spots.js resolves the nearest gauge for the FLOW while the
 // point keeps its OWN coordinates for the weather (see the resolver note in spots.js).
-var _spotPickOn = false;
 
 export function startSpotPick() {
     // A spot belongs to a private account, so starting the pick without a session would be a
@@ -169,7 +168,6 @@ export async function openSpotPickMap() {
         spotsStatus('Map unavailable (offline or CDN blocked) \u2014 use the presets or GPS instead.');
         return;
     }
-    _spotPickOn = true;
     spotsStatus('Now tap the map where your spot is.');
     if (_stationMap.getContainer) _stationMap.getContainer().style.cursor = 'crosshair';
     _stationMap.once('click', onSpotPick);
@@ -183,7 +181,6 @@ export async function openSpotPickMap() {
 }
 
 export async function onSpotPick(e) {
-    _spotPickOn = false;
     if (_stationMap && _stationMap.getContainer) _stationMap.getContainer().style.cursor = '';
     if (!e || !e.latlng) return;
     if (!spotsSignedIn()) { spotsStatus('Start a session on the Catch Log tab first.'); return; }

@@ -152,9 +152,6 @@ var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ?
         // returns null when neither resolves, which keeps the old defaults below.
         var ldLine = (typeof tackleRowLine === 'function') ? tackleRowLine(row, 'leader') : null;
         var mlLine = (typeof tackleRowLine === 'function') ? tackleRowLine(row, 'mainline') : null;
-        var lb = (ldLine && ldLine.lb_test) ? ldLine.lb_test : (row.ldLb || row.leader_lb || 12);
-        var ldMat = (ldLine && ldLine.material) ? ldLine.material : (row.ldMat || row.leader_material || 'copoly');
-        var wt = (row.weight !== undefined && row.weight !== null) ? row.weight : 0.5;
         // The weight TYPE (shape_label). A cloud calibration row does not carry one yet -
         // get_global_calibration has no weight-shape column - so an absent value degrades
         // the anchor term to exactly the old mass-only formula, i.e. the pre-P3 behaviour
@@ -162,8 +159,6 @@ var hookNum = (row.hook !== undefined && row.hook !== null && row.hook !== '') ?
         // offline catch keeps its real shape.
         var wtShape = (row.weightShape !== undefined && row.weightShape !== null && row.weightShape !== '')
             ? String(row.weightShape) : null;
-        var mlLb = (mlLine && mlLine.lb_test) ? mlLine.lb_test : (row.mlLb || row.mainline_lb || 0);
-        var mlMat = (mlLine && mlLine.material) ? mlLine.material : (row.mlMat || row.mainline_mat || 'braid');
         // 0 means "no explicit diameter" -> lineDiameterScale() falls back to generic/by-lb.
         var ldDia = (ldLine && ldLine.diameter_mm) ? ldLine.diameter_mm : 0;
         var mlDia = (mlLine && mlLine.diameter_mm) ? mlLine.diameter_mm : 0;

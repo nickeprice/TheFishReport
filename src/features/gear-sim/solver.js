@@ -48,7 +48,7 @@ export function readRigFromForm() {
 // local buffer offline.
 import { logDebug } from '../../shared/debug.js';
 import { Supa } from '../../services/supabase.js';
-import { getStr, getNum, parseFoam, getActiveStationId } from './inputs.js';
+import { getStr, getNum, parseFoam } from './inputs.js';
 import { getCurrentFlow } from './sonar.js';
 import { tackleLineById } from '../../shared/tackle.js';
 import { snapshotLoad, outboxAll } from '../catch-log/outbox.js';

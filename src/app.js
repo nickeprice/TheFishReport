@@ -8,7 +8,6 @@
 import { logDebug } from './shared/debug.js';
 import { restoreRig } from './features/gear-sim/rig.js';
 import { loadPresets } from './features/gear-sim/presets.js';
-import { tackleLoad } from './shared/tackle.js';
 import { registerServiceWorker, applyTabDeepLink } from './shared/pwa.js';
 import { startAutoRefresh } from './shared/refresh.js';
 import { outboxLoad } from './features/catch-log/outbox.js';
@@ -18,13 +17,15 @@ import { initCatchReconcile } from './features/catch-log/reconcile.js';
 import { setCatchScope, CATCH_SCOPE } from './features/catch-log/board.js';
 import { loadWaterReport } from './features/telemetry/report.js';
 import { openWaterTypeGuide } from './features/gear-sim/water-types.js';
-import { runSim } from './features/gear-sim/sim.js';
-import { openStationModal, closeStationModal, useGPS, selectPreset } from './features/station/picker.js';
-import { searchStation } from './features/station/search.js';
-import { closeHourlyPopup } from './features/telemetry/hourly.js';
-import { apiGetJson } from './shared/api.js';
-import { populateStaticGear } from './shared/gear-options.js';
-import { showStationMap, startSpotPick, mapCenter } from './features/map/map.js';
+// Side-effect imports — load modules to trigger window-shim init
+import './shared/tackle.js';
+import './features/gear-sim/sim.js';
+import './features/station/picker.js';
+import './features/station/search.js';
+import './features/telemetry/hourly.js';
+import './shared/api.js';
+import './shared/gear-options.js';
+import './features/map/map.js';
 // --- BOOTSTRAP ---
 window.onload = async function() {
     // URL param override: ?station=12101500 or ?lat=47.2&lon=-122.3

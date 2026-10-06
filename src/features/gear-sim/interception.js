@@ -8,7 +8,6 @@
  * ES module.
  */
 
-var HOOK_SET_FORCE_N = 8.0;    // N — @provenance: informed_estimate (salmon jaw cartilage)
 var SEAT_DISTANCE_M = 0.008;   // m — hook gap geometry @provenance: informed_estimate
 var MC_RUNS = 100;             // Monte-Carlo sample count
 // Hook penetration force threshold: F_pen = σ_ult·A_point ≈ 2-5 MPa · 1.3e-7 m² ≈ 0.26-0.65 N.

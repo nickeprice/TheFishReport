@@ -7,7 +7,7 @@ import { provVal } from '../../shared/format.js';
 import { buildFishingHero, buildSpeciesCalendarHtml } from './hero.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
 import { activeDateOffset } from './daynav.js';
-import { renderCfsTrend, formatEscapementUpdated, refreshEscapement, refreshWdfwForecast, fetchCFSMomentum } from '../../services/water.js';
+import { renderCfsTrend, refreshEscapement, refreshWdfwForecast, fetchCFSMomentum } from '../../services/water.js';
 import { formatTideRow } from './tide.js';
 
 /**

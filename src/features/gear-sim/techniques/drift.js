@@ -4,8 +4,8 @@ import { velocityAtSpot, spotDepthFt } from '../continuity.js';
 import { waterTypeMultiplier } from '../water-types.js';
 import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches, CFS_TO_MS } from '../physics.js';
 import { communitySonar } from '../sonar.js';
-import { computeStrikeZone, positionParts, gradeColor, zoneColor, whereToFish, fishOutlook } from '../zone-core.js';
-import { bestZoneRig, rigChangeList, foamShort } from '../zone-best.js';
+import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
+import { bestZoneRig, rigChangeList } from '../zone-best.js';
 import { chainSolve } from '../chain.js';
 import { ROUGHNESS_COBBLE } from '../hydro.js';
 import { interceptionProbability } from '../interception.js';
@@ -36,9 +36,9 @@ export var DRIFT_TECHNIQUE = {
         var flow = env.flow;
         var dbArray = env.dbArray || [];
         var species = env.species;
-        var weightOz = rig.weightOz, ldLen = rig.ldLen, ldMat = rig.ldMat, ldLb = rig.ldLb;
+        var weightOz = rig.weightOz, ldLen = rig.ldLen;
         var weightShape = rig.weightShape;
-        var mlMat = rig.mlMat, mlLb = rig.mlLb, hook = rig.hook, yarn = rig.yarn;
+        var hook = rig.hook, yarn = rig.yarn;
         var foam = rig.foam, foam2 = rig.foam2, bdSz = rig.bdSz;
         var ldDia = rig.ldDia || 0, mlDia = rig.mlDia || 0;
 

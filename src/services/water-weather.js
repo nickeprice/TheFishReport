@@ -39,7 +39,7 @@ export function applyReportWeather(rep) {
 // Run-return registry keyed by the active USGS river gauge ID. Metrics WDFW has not
 // published are left null so the UI renders "--" instead of inventing a number.
 // Rivers absent from this map degrade to a clean "not tracked" state.
-var hatcheryEscapement = {
+export var hatcheryEscapement = {
     '12101500': { system: 'Puyallup / White River', source: 'WDFW Puyallup Basin Facilities', stocks: [
         { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
         { name: 'Coho',         totalReturn: null, trapCount: null, fiveYrAvg: null },
@@ -69,11 +69,11 @@ var hatcheryEscapement = {
 
 // Live feed: Socrata (data.wa.gov) "WDFW-Hatchery Adult Salmon Returns". This endpoint
 // is CORS-enabled, so the browser can query it directly with no proxy.
-const ESCAPEMENT_SOCRATA = 'https://data.wa.gov/resource/9q4e-xhag.json';
+export const ESCAPEMENT_SOCRATA = 'https://data.wa.gov/resource/9q4e-xhag.json';
 // Only the event that represents adults physically RETURNING to the facility. The other
 // events (Adult Plant / Mortality / Surplus / Parent Spawn / EggTake) re-count those very
 // same fish, so summing every event would inflate the total several times over.
-const ESCAPEMENT_EVENT = 'Trap Estimate';
+export const ESCAPEMENT_EVENT = 'Trap Estimate';
 // Shown under the counts fold whenever WDFW exposes no usable :updated_at stamp.
 // Shared by app.js (first paint) and refreshEscapement (after the live fetch) so
 // the UI never invents a date.
@@ -84,11 +84,11 @@ export const ESCAPEMENT_UPDATED_FALLBACK = 'Hatchery data may lag WDFW reporting
 // stopped in 2000, and CLARKS CR / WHITE RIVER / BUCKLEY TRAP / DIRU CREEK have no rows
 // yet), so they ride along in the IN clause and light up automatically if WDFW adds them.
 // Anything unmapped (e.g. Nisqually 12089500) renders the "no tracking" state.
-var PUYALLUP_BASIN_FACILITIES = [
+export var PUYALLUP_BASIN_FACILITIES = [
     'VOIGHTS CR HATCHERY', 'PUYALLUP HATCHERY', 'CLARKS CR HATCHERY',
     'WHITE RIVER HATCHERY', 'BUCKLEY TRAP', 'DIRU CREEK'
 ];
-var escapementFacilities = {
+export var escapementFacilities = {
     '12101500': PUYALLUP_BASIN_FACILITIES, // Puyallup River at Puyallup
     '12093500': PUYALLUP_BASIN_FACILITIES, // Puyallup River near Orting
     '12094000': PUYALLUP_BASIN_FACILITIES, // Carbon River (Puyallup system)

@@ -2,7 +2,7 @@
  * src/shared/tackle-pickers.js - cascade pickers + tackleLoad.
  * Splintered from tackle.js. ES module.
  */
-import { TACKLE, tackleItems, cascadeLine, resolveLineId, onLinePartChange, onWeightShapeChange, tackleWeightOz, tackleBeadSizes, fillBothSelects, mirrorValue } from "./tackle-data.js";
+import { TACKLE, TACKLE_LINE_ROLES, TACKLE_MAT_LABELS, tackleItems, cascadeLine, resolveLineId, onLinePartChange, onWeightShapeChange, tackleWeightOz, tackleBeadSizes, fillBothSelects, mirrorValue } from "./tackle-data.js";
 import { getStr } from "../features/gear-sim/inputs.js";
 import { setFieldValue } from "./forms.js";
 import { logDebug } from "./debug.js";

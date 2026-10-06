@@ -32,11 +32,11 @@ window.TACKLE = TACKLE;
 
 // Which line materials each picker offers: braid is mainline-only, fluoro is
 // leader-only, mono and copoly are fished as either.
-var TACKLE_LINE_ROLES = {
+export var TACKLE_LINE_ROLES = {
     mainline: ['braid', 'mono', 'copoly'],
     leader: ['mono', 'copoly', 'fluoro']
 };
-var TACKLE_MAT_LABELS = {
+export var TACKLE_MAT_LABELS = {
     braid: 'Braid', mono: 'Mono', copoly: 'Copoly', fluoro: 'Fluorocarbon'
 };
 

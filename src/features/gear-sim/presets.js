@@ -10,6 +10,7 @@
  *
  * ES module.
  */
+import { getStr } from './inputs-constants.js';
 export var PRESET_STORE_KEY = 'puyallup_rig_presets';
 window.PRESET_STORE_KEY = PRESET_STORE_KEY;
 

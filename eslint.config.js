@@ -17,6 +17,7 @@ export default [
       'prefer-const': 'error',
       'no-var': 'warn',
       'no-unused-vars': ['warn', { args: 'none' }],
+      'no-undef': 'error',
     },
   },
 ];

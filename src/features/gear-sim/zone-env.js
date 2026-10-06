@@ -6,6 +6,7 @@
  *         refHourBlock(), lightTerm(), turbidityTerm(), tideAt(), tideTerm(), envSignature()
  * ES module.
  */
+import { getActiveReport } from './sonar.js';
 import { getStr } from './inputs.js';
 import { provVal } from '../../shared/format.js';
 // Required gear fields — no defaults, so anything the angler has never entered

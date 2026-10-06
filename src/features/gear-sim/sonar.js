@@ -10,6 +10,8 @@
  */
 import { envSignature } from './zone-env.js';
 import { provVal } from '../../shared/format.js';
+import { hydraulicVelocity, tackleWeightPhysicsData, tackleYarnDragData } from './inputs.js';
+import { totalDragPerFt, lineDragPerFt, presentationHeightInches } from './physics.js';
 // --- COMMUNITY SONAR ENVIRONMENT MATCH WEIGHTING ---
 // A catch is a better predictor of where fish are RIGHT NOW when the conditions it was logged
 // in resemble today's. The variables are EXACTLY the ones the sim itself uses to place the zone

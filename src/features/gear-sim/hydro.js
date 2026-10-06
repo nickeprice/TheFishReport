@@ -21,6 +21,8 @@ var MEDIAN_COBBLE_M = 0.10;  // m — @provenance: literature (Nick Thorne 2025,
 // 0.033 · 0.25 = 0.00825 m ≈ 8 mm
 var ROUGHNESS_COBBLE = 0.033 * 2.5 * MEDIAN_COBBLE_M;  // m — @provenance: derived
 
+export { ROUGHNESS_COBBLE };
+
 /** D50 setter — overrides the median cobble diameter at runtime.
  *  Updates both MEDIAN_COBBLE_M and the derived ROUGHNESS_COBBLE.
  *  @param meters — new D50 in metres (e.g. 0.15 for coarse gravel)

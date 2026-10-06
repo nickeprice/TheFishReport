@@ -48,6 +48,12 @@ export function readRigFromForm() {
 // local buffer offline.
 import { logDebug } from '../../shared/debug.js';
 import { Supa } from '../../services/supabase.js';
+import { getStr, getNum, parseFoam, getActiveStationId } from './inputs.js';
+import { getCurrentFlow } from './sonar.js';
+import { tackleLineById } from '../../shared/tackle.js';
+import { snapshotLoad, outboxAll } from '../catch-log/outbox.js';
+import { velocityAtSpot, spotDepthFt } from './continuity.js';
+import { zoneColor } from './zone-core.js';
 export async function loadCalibrationData(flow, species) {
     var dbArray = [];
     try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }

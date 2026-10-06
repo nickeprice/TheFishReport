@@ -28,6 +28,7 @@ window.switchTab = switchTab;
 export function resetToToday() {
     if (activeDateOffset === 0) return;
     activeDateOffset = 0;
+    window.activeDateOffset = activeDateOffset;
     updateActiveDateUI();
 }
 window.resetToToday = resetToToday;

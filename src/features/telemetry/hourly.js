@@ -25,6 +25,7 @@ export function closeHourlyPopup() {
     if (modal) modal.style.display = 'none';
 }
 window.closeHourlyPopup = closeHourlyPopup;
+window.openHourlyPopup = openHourlyPopup;
 
 // Open the strip for one metric on the day the angler is LOOKING AT (activeDateOffset).
 export function openHourlyPopup(metricKey) {

@@ -1,4 +1,15 @@
 import { logDebug } from '../../../shared/debug.js';
+import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG } from '../inputs.js';
+import { velocityAtSpot, spotDepthFt } from '../continuity.js';
+import { waterTypeMultiplier } from '../water-types.js';
+import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches, CFS_TO_MS } from '../physics.js';
+import { communitySonar } from '../sonar.js';
+import { computeStrikeZone, positionParts, gradeColor, zoneColor, whereToFish, fishOutlook } from '../zone-core.js';
+import { bestZoneRig, rigChangeList, foamShort } from '../zone-best.js';
+import { chainSolve } from '../chain.js';
+import { ROUGHNESS_COBBLE } from '../hydro.js';
+import { interceptionProbability } from '../interception.js';
+import { salmonPositionZ } from '../salmon.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *

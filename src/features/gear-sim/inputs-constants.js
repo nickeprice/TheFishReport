@@ -23,10 +23,12 @@ export function getNum(id) {
     var val = parseFloat(el.value);
     return isNaN(val) ? 0 : val;
 }
+window.getNum = getNum;
 export function getStr(id) {
     var el = document.getElementById(id);
     return el ? el.value : '';
 }
+window.getStr = getStr;
 
 export function getGPS() {
     if("geolocation" in navigator) {

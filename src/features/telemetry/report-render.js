@@ -44,8 +44,8 @@ export function renderReportDays(reports, station, rulesLoaded) {
         var dStyle = (i === activeDateOffset) ? "block" : "none";
 
         // CFS + gage
-        var cfsVal = (provVal(rep.cfs) !== null) ? provVal(rep.cfs) + ' cfs' : '-- cfs';
-        var gageVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' ft' : '--';
+        var cfsVal = (provVal(rep.cfs) !== null) ? provVal(rep.cfs) + ' CFS' : '-- CFS';
+        var gageVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' ft Gauge Height' : '-- ft Gauge Height';
 
         // Water quality
         var waterQualityHtml = '';
@@ -58,7 +58,13 @@ export function renderReportDays(reports, station, rulesLoaded) {
             waterQualityHtml = ' <span class="telemetry-sep">•</span> <span class="telemetry-water-quality">' + parts.join(' • ') + '</span>';
         }
 
-        cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dStyle + ';">' +
+                // Pressure trend for barometer and temp badges
+        var pressDelta = rep.press_delta;
+        var pressTrend = '\u2014';
+        var pressColor = '#ffffff';
+        if (pressDelta !== null && pressDelta !== undefined && pressDelta < -0.04) { pressTrend = '\u2193'; pressColor = 'var(--accent-red)'; }
+        else if (pressDelta !== null && pressDelta !== undefined && pressDelta > 0.04) { pressTrend = '\u2191'; pressColor = 'var(--accent-green)'; }
+cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dStyle + ';">' +
             '<div class="card">' +
             '<div class="sec-hdr">[ FISHING OUTLOOK ]</div>' +
             buildFishingHero(rep) +
@@ -74,13 +80,16 @@ export function renderReportDays(reports, station, rulesLoaded) {
             (typeof formatTideRow === 'function' ? formatTideRow(rep.tide_chart, provVal(rep.tide_curve), provVal(rep.tide_points)) : '') +
             '<div class="env-weather-solunar">' +
               '<div class="env-stat-grid">' +
-                '<div class="weather-pill"><span class="pill-label">Air</span><span class="air-temp pill-val">--</span><span class="pill-unit">°F</span></div>' +
-                '<div class="weather-pill" onclick="openHourlyPopup(\'wind_speed_mph\')"><span class="pill-label">Wind</span><span class="wind-val pill-val">--</span></div>' +
-                '<div class="weather-pill" onclick="openHourlyPopup(\'pop_pct\')"><span class="pill-label">Rain</span><span class="precip-pop pill-val">--</span><span class="pill-unit">%</span></div>' +
-                '<div class="weather-pill" onclick="openHourlyPopup(\'precip_in\')"><span class="pill-label">Precip</span><span class="precip-vol pill-val">--</span><span class="pill-unit">"</span></div>' +
-                '<div class="weather-pill" onclick="openHourlyPopup(\'cloud_pct\')"><span class="pill-label">Cloud</span><span class="pill-val">--</span><span class="pill-unit">%</span></div>' +
-                '<div class="weather-pill" onclick="openHourlyPopup(\'pressure\')"><span class="pill-label">Baro</span><span class="pressure-val pill-val">--</span><span class="pill-unit">inHg</span></div>' +
-            '</div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'cloud_pct\')"><div class="env-badge-val">' + ((provVal(rep.weather_hour) && rep.weather_hour.cloud_pct != null) ? rep.weather_hour.cloud_pct : '--') + '%</div><div class="env-badge-sub">' + (provVal(rep.weather_hour) && rep.weather_hour.label ? provVal(rep.weather_hour).label : '') + '</div><div class="env-badge-lbl">Cloud Cover</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pop_pct\')"><div class="env-badge-val"><span class="precip-pop">--</span>%</div><div class="env-badge-sub">' + (provVal(rep.weather_hour) && rep.weather_hour.label ? provVal(rep.weather_hour).label : '') + '</div><div class="env-badge-lbl">Precip %</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'precip_in\')"><div class="env-badge-val"><span class="precip-vol">--</span>"</div><div class="env-badge-sub">' + (provVal(rep.weather_hour) && rep.weather_hour.label ? provVal(rep.weather_hour).label : '') + '</div><div class="env-badge-lbl">Precip Vol</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pressure\')"><div class="env-badge-val" style="color:' + pressColor + ';">' + ((provVal(rep.weather_hour) && rep.weather_hour.pressure != null) ? rep.weather_hour.pressure : '--') + ' <span style="font-size:10px; font-weight:600;">inHg</span> ' + pressTrend + '</div><div class="env-badge-sub">' + (provVal(rep.weather_hour) && rep.weather_hour.label ? provVal(rep.weather_hour).label : '') + '</div><div class="env-badge-lbl">Barometer</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'air_temp_f\')"><div class="env-badge-val" style="color:' + pressColor + ';"><span class="air-temp">--</span>° ' + pressTrend + '</div><div class="env-badge-sub">' + (provVal(rep.weather_hour) && rep.weather_hour.label ? provVal(rep.weather_hour).label : '') + '</div><div class="env-badge-lbl">Temp</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'wind_speed_mph\')"><div class="env-badge-val"><span class="wind-val">--</span></div><div class="env-badge-sub">' + (provVal(rep.weather_hour) && rep.weather_hour.label ? provVal(rep.weather_hour).label : '') + '</div><div class="env-badge-lbl">Wind</div></div>' +
+                '<div class="env-badge"><div class="env-badge-val solunar-split"><div class="solunar-half"><span class="solunar-val" style="color:#fbbf24;">' + (rep.sunrise || '--') + '</span><span class="solunar-sublbl">Sunrise</span></div><div class="solunar-half"><span class="solunar-val" style="color:#64d2ff;">' + (rep.sunset || '--') + '</span><span class="solunar-sublbl">Sunset</span></div></div><div class="env-badge-lbl">Sun / Set</div></div>' +
+                '<div class="env-badge"><div class="env-badge-val moon-pill">' + (rep.lunar_icon || '--') + '</div><div class="env-badge-lbl">Moon Phase</div></div>' +
+                '<div class="env-badge"><div class="env-badge-val solunar-split"><div class="solunar-half"><span class="solunar-val" style="color:#ffd60a;">' + (rep.solunar_overhead || '--') + '</span><span class="solunar-sublbl">Overhead</span></div><div class="solunar-half"><span class="solunar-val" style="color:#64d2ff;">' + (rep.solunar_underfoot || '--') + '</span><span class="solunar-sublbl">Underfoot</span></div></div><div class="env-badge-lbl">Solunar</div></div>' +
+'</div>' +
             '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
             buildSpeciesCalendarHtml(provVal(rep.species_calendar), provVal(rep.esc_stocks)) +
             '</div></div>';

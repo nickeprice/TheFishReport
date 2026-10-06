@@ -19,6 +19,8 @@ var N_TO_GF = 101.97;      // 1 N = 101.97 grams-force
 var CFS_TO_MS = 0.3048;    // ft/s -> m/s
 var NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10°C
 
+export { CFS_TO_MS };
+
 // ── Re-dependent line drag coefficient ───────────────────────────────────────
 // Smooth cylinder in crossflow: Cd(Re) = 1 + 10·Re⁻²⁄³  (White 1991).
 // For leader diameters 0.2-0.5 mm in river flows 0.2-3 ft/s,

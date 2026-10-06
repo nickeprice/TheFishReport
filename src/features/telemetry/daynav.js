@@ -24,6 +24,7 @@ export function stepDate(delta) {
     var maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
     if (newOffset > maxOffset) return;
     activeDateOffset = newOffset;
+    window.activeDateOffset = activeDateOffset;
     updateActiveDateUI();
 }
 

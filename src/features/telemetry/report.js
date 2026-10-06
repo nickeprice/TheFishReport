@@ -138,6 +138,7 @@ export async function loadWaterReport(silent) {
         }
     }
 }
+window.loadWaterReport = loadWaterReport;
 
 
 

@@ -8,8 +8,9 @@
  */
 import { getActiveReport, getCurrentFlow } from './sonar.js';
 import { provVal } from '../../shared/format.js';
-import { getWaterTempF, lightTerm, tideTerm } from './zone-env.js';
-import { BASE_ZONE_MIN, BASE_ZONE_MAX, thermalOptimum } from './inputs.js';
+import { getWaterTempF, lightTerm, tideTerm, turbidityTerm, refHourBlock } from './zone-env.js';
+import { BASE_ZONE_MIN, BASE_ZONE_MAX, thermalOptimum, getActiveStationId } from './inputs.js';
+import { velocityAtSpot, spotDepthFt } from './continuity.js';
 export function computeStrikeZone(sonar) {
     var zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
     var rep = getActiveReport();
@@ -106,9 +107,9 @@ export function depthBandText(spot) {
 
 export function positionParts(zone, hgt) {
     var flow = getCurrentFlow();
-    var siteId = (typeof getActiveStationId === 'function') ? getActiveStationId() : null;
-    var spot = (typeof spotDepthFt === 'function') ? spotDepthFt(flow, siteId) : null;
-    var near = (typeof velocityAtSpot === 'function') ? velocityAtSpot(flow, siteId) : null;
+    var siteId = getActiveStationId();
+    var spot = spotDepthFt(flow, siteId);
+    var near = velocityAtSpot(flow, siteId);
     var mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
     var out = { depth: null, lie: null, liePlain: null, line: null, linePlain: null, depthParts: null, bed: null, unc: null };
     if (spot && spot.value > 0 && mid !== null) {

@@ -39,29 +39,6 @@
 
 ---
 
-<a id="build-tests"></a>
-## Phase V4: Test & CI Migration
-
-**Goal:** Update all tests and CI pipelines for the new module structure.
-
-**test_gear_sim_run.js — rewrite:** Current concat + eval dies with ES modules. **Option A (recommended):** Rewrite as Playwright test — opens built app, runs compute via `page.evaluate()`, consistent with existing tests. **Option B:** Node dynamic import against Vite library-mode output. Effort: medium.
-
-**conftest.py:** Update `ROOT` to point at `dist/` instead of repo root.
-
-**dev_server.py:** Add `--root` CLI flag or `TFR_SERVE_ROOT` env var. Default to `dist/`.
-
-**CI workflows — additions to both `ci-physics.yml` and `sanity.yml`:**
-```yaml
-- uses: actions/setup-node@v4
-  with: { node-version: '20', cache: 'npm' }
-- run: npm ci
-- run: npm run build
-```
-
-**Files:** `test_gear_sim_run.js` (rewrite), `conftest.py` (ROOT update), `dev_server.py` (--root flag), `.github/workflows/ci-physics.yml` (+Node steps), `.github/workflows/sanity.yml` (+Node steps).
-
----
-
 <a id="build-tooling"></a>
 ## Phase V5: Tooling (sanity_pass, sw.js, docs, rules)
 

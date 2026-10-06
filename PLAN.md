@@ -6,7 +6,7 @@
       → index.html, app.js
       [Detail → docs/PLAN_REFERENCE.md#build-html]
 
-- [ ] Phase V4: Test & CI Migration
+- [x] Phase V4: Test & CI Migration
       → test_gear_sim_run.js, conftest.py, dev_server.py, ci-physics.yml, sanity.yml
       [Detail → docs/PLAN_REFERENCE.md#build-tests]
 

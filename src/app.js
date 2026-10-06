@@ -18,6 +18,7 @@ import { setCatchScope, CATCH_SCOPE } from './features/catch-log/board.js';
 import { loadWaterReport } from './features/telemetry/report.js';
 import { openWaterTypeGuide } from './features/gear-sim/water-types.js';
 import { updateActiveDateUI } from './features/telemetry/daynav.js';
+
 // Side-effect imports — load modules to trigger window-shim init
 import './shared/tackle.js';
 import './features/gear-sim/sim.js';
@@ -27,8 +28,15 @@ import './features/telemetry/hourly.js';
 import './shared/api.js';
 import './shared/gear-options.js';
 import './features/map/map.js';
+
 // --- BOOTSTRAP ---
 window.onload = async function() {
+    // Start MSW to intercept USGS API calls and prevent 429 rate limits
+    if (import.meta.env.DEV) {
+        const { worker } = await import('./mocks/browser.js');
+        await worker.start({ onUnhandledRequest: 'bypass' });
+    }
+
     // URL param override: ?station=12101500 or ?lat=47.2&lon=-122.3
     var qs = window.location.search;
     function qp(name) {
@@ -38,6 +46,7 @@ window.onload = async function() {
     var qpStation = qp('station');
     var qpLat = qp('lat');
     var qpLon = qp('lon');
+
     if (qpStation) {
         localStorage.setItem('active_station', JSON.stringify({ id: qpStation, name: 'URL override', lat: 0, lon: 0, isGps: false }));
         logDebug('Station override from URL: ' + qpStation, 'SYS');
@@ -45,8 +54,10 @@ window.onload = async function() {
         localStorage.setItem('active_station', JSON.stringify({ id: qpLat + ',' + qpLon, name: 'GPS override', lat: parseFloat(qpLat), lon: parseFloat(qpLon), isGps: true }));
         logDebug('GPS override from URL: ' + qpLat + ', ' + qpLon, 'SYS');
     }
+
     var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('log-datetime').value = d.toISOString().slice(0,16);
+
     // Load the tackle library BEFORE restoring the rig: the line + weight-shape
     // pickers only have options once it lands, and restoreRig() selects into them.
     // (tackle is now loaded statically at build time — no async fetch needed.)
@@ -62,14 +73,17 @@ window.onload = async function() {
 
     getGPS(function () { updateActiveDateUI(); });
     initAuth();
+    
     // Flush the outbox when the network returns / the app is resumed (Phase 3.3).
     initCatchReconcile();
     setCatchScope(CATCH_SCOPE);
+
     // Wire water type guide button (must wait for full DOM + scripts)
     var guideBtn = document.getElementById('wt-guide-btn');
     if (guideBtn) {
         guideBtn.addEventListener('click', openWaterTypeGuide);
         guideBtn.addEventListener('touchend', function (e) { e.preventDefault(); openWaterTypeGuide(); });
     }
+    
     loadWaterReport();
 };

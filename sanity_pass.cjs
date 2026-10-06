@@ -42,13 +42,13 @@ function localScriptPaths() {
 }
 /** Concatenated source of every loaded classic script — for static pattern scans. */
 function readAllScripts() {
-  return localScriptPaths().map((s) => {
+  return localScriptPaths().map((p) => {
     // Data files migrated to public/ — check both locations
-    var f = path.join(ROOT, s);
+    var f = path.join(ROOT, p.replace(/^\//, ''));
     if (fs.existsSync(f)) return fs.readFileSync(f, 'utf8');
-    var pf = path.join(ROOT, 'public', s);
+    var pf = path.join(ROOT, 'public', p.replace(/^\//, ''));
     if (fs.existsSync(pf)) return fs.readFileSync(pf, 'utf8');
-    throw new Error('cannot find ' + s);
+    throw new Error('cannot find ' + p);
   }).join('\n');
 }
 
@@ -506,7 +506,7 @@ function main() {
 
   describe('Syntax');
   try {
-    const jsFiles = localScriptPaths();
+    const jsFiles = localScriptPaths().map((p) => p.replace(/^\//, '').replace(/^public\//, ''));
     for (const f of jsFiles) {
       var checkPath = fs.existsSync(path.join(ROOT, f)) ? f : 'public/' + f;
       execFileSync('node', ['--check', checkPath], { cwd: ROOT, stdio: 'pipe' });

@@ -11,6 +11,10 @@ pass fails.
 
 ## Modules (ES module import chain — no classic scripts)
 
+### src/data — measured gauge velocity & width (classic data globals)
+
+`washington.js` (REGIONS), `channel_measurements.js` (CHANNEL_MEASUREMENTS), `river_widths.js` (RIVER_WIDTHS), `spot_widths.js` (SPOT_WIDTHS) — classic data globals.
+
 ## src/data — measured gauge velocity & width
 
 `channel_measurements.js`, `river_widths.js` and `spot_widths.js` are GENERATED; never hand-edit.

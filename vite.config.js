@@ -1,5 +1,6 @@
-import { defineConfig } from 'vite';
+import eslint from 'vite-plugin-eslint2';
 import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: '.',
@@ -16,6 +17,13 @@ export default defineConfig({
     },
   },
   plugins: [
+    eslint({
+      cache: false,
+      lintOnStart: true,
+      lintDirtyOnly: false,
+      include: ['src/**/*.js'],
+      exclude: ['node_modules', 'virtual:', 'src/data/tackle.json'],
+    }),
     // Preserve classic data scripts in built HTML (Vite strips non-module <script> tags)
     {
       name: 'data-scripts',

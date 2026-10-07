@@ -273,6 +273,10 @@ export async function openMapScreen() {
                 e.stopPropagation();
                 try {
                     var coords = await getGPS();  // returns [lng, lat] with 5s timeout + fallback
+                    var label = (coords[0] === -122.2943 && coords[1] === 47.1917)
+                        ? '📍 Puyallup (GPS fallback — offline mode)'
+                        : '📍 Your GPS location';
+                    if (typeof showToast === 'function') showToast(label, 'info', 3000);
                     _stationMap.jumpTo({ center: coords, zoom: MAP_START_ZOOM });
                 } catch (err) {
                     alert('Could not determine your location.\n' + err.message);

@@ -2,8 +2,6 @@
 
 ## 🛠 Immediate Map Hotfixes & Polish
 
-- [x] H1: Geolocate — trackUserLocation + showUserLocation
-
 - [ ] H2: Saved spots localStorage + star rendering on map
       → spots.js, map.js
       [Detail → docs/PLAN_REFERENCE.md#hotfix-spots]

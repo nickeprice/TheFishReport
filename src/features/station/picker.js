@@ -13,8 +13,6 @@ import { escapeHtml, escapeJsString } from '../../shared/format.js';
 export function openStationModal() {
     document.getElementById('station-modal').style.display = 'block';
     document.getElementById('gps-status').innerText = '';
-    document.getElementById('search-results').style.display = 'none';
-    document.getElementById('station-search').value = '';
     // WS-5: paint the private saved-spot list (cache first, then the server if signed in).
     if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
     // WS-6: render all 15 regional preset buttons from the registry.

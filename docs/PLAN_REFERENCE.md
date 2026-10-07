@@ -5,17 +5,7 @@
 <a id="ui-dynamic-presets"></a>
 <!-- Phase A2 complete — detail deleted per protocol -->
 
-<a id="ui-remove-search"></a>
-## Phase A4: Remove Station Search / ID Lookup
-
-**Change:** Delete the Station Search / ID Lookup section from the station modal.
-Clean unused search-results/station-search DOM references from picker.js.
-
-**Files:**
-- `index.html` — remove search heading, input, button, results div
-- `src/features/station/picker.js` — remove search-results display reset and station-search value clear in openStationModal()
-
----
+<!-- Phase A4 complete — detail deleted per protocol -->
 
 <a id="ui-spots-no-auth"></a>
 ## Phase A5: Saved Spots — No Sign-In Required

@@ -10,7 +10,7 @@
       → index.html, picker.js
       [Detail → docs/PLAN_REFERENCE.md#ui-dynamic-presets]
 
-- [ ] Phase A4: Remove Station Search / ID Lookup
+- [x] Phase A4: Remove Station Search / ID Lookup
       → index.html, picker.js
       [Detail → docs/PLAN_REFERENCE.md#ui-remove-search]
 

@@ -49,14 +49,6 @@
       → chain-shooting.js, sim.js, solver.js, conftest.py, NEW test file
       [Detail → docs/PLAN_REFERENCE.md#test-playwright]
 
-- [x] T2: Playwright water-report render test
-      → daynav.js, report.js, report-render.js, conftest.py, NEW test file
-      [Detail → docs/PLAN_REFERENCE.md#test-water]
-
-- [x] T3: Fix 8 sanity_check failures
-      → sanity_pass.cjs, various source files per failure
-      [Detail → docs/PLAN_REFERENCE.md#test-sanity]
-
 - [ ] T4: Audit remaining typeof guards
       → quick grep across src/ — 0 new code, pure verification
       [Detail → docs/PLAN_REFERENCE.md#test-typeof]

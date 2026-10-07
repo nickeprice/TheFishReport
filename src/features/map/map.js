@@ -285,7 +285,7 @@ export function recenterMap() {
     if (!_stationMap) return;
     const center = mapCenter();  // returns [lat, lng]
     const lngLat = [center[1], center[0]];  // MapLibre expects [lng, lat]
-    _stationMap.easeTo({ center: lngLat, zoom: MAP_START_ZOOM, duration: 1000 });
+    _stationMap.jumpTo({ center: lngLat, zoom: MAP_START_ZOOM });
 }
 window.recenterMap = recenterMap;
 

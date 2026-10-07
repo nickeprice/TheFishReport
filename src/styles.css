@@ -744,6 +744,26 @@ td.empty-state { padding: 30px 10px; }
 }
 .map-close-btn:active { background-color: #333; }
 
+/* GPS recenter button for map screen — sits opposite the close button */
+.map-gps-btn {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: 12px;
+    z-index: 10000;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.map-gps-btn:active { background-color: #333; }
+
 /* Bottom-sheet drawer — slides up from behind the handle */
 .map-drawer {
     position: absolute;

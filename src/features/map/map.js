@@ -245,15 +245,28 @@ export async function openMapScreen() {
         _stationMap.on('click', function (e) {
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
-        _stationMap.addControl(new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 },
-            trackUserLocation: true,
-            showUserLocation: true
-        }));
+        // Custom GPS recenter — uses app's known position (GPS fix, active station,
+        // or fallback default) instead of the browser Geolocation API which hangs
+        // on desktop/localhost.
+        const gpsBtn = document.createElement('button');
+        gpsBtn.className = 'map-gps-btn';
+        gpsBtn.textContent = '📍';
+        gpsBtn.title = 'Recenter map on your location';
+        gpsBtn.addEventListener('click', recenterMap);
+        screen.appendChild(gpsBtn);
     }
     if (loading) loading.style.display = 'none';
 }
 window.openMapScreen = openMapScreen;
+
+// ── GPS recenter ──────────────────────────────────────────────────────────────
+export function recenterMap() {
+    if (!_stationMap) return;
+    const center = mapCenter();  // returns [lat, lng]
+    const lngLat = [center[1], center[0]];  // MapLibre expects [lng, lat]
+    _stationMap.easeTo({ center: lngLat, zoom: MAP_START_ZOOM, duration: 1000 });
+}
+window.recenterMap = recenterMap;
 
 export function closeMapScreen() {
     const screen = document.getElementById('map-screen');

@@ -272,23 +272,7 @@ export async function openMapScreen() {
                 e.preventDefault();
                 e.stopPropagation();
                 try {
-                    var coords = await getGPS();  // returns [lng, lat] with 5s timeout + fallback
-                    var label = (coords[0] === -122.2943 && coords[1] === 47.1917)
-                        ? '📍 Puyallup (GPS fallback — offline mode)'
-                        : '📍 Your GPS location';
-                    // Show feedback on the map screen itself (toast is behind z-index 9999)
-                    var feedback = document.getElementById('map-gps-feedback');
-                    if (!feedback) {
-                        feedback = document.createElement('div');
-                        feedback.id = 'map-gps-feedback';
-                        feedback.style.cssText = 'position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:10001;background:rgba(0,0,0,0.75);color:#fff;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;pointer-events:none;transition:opacity 0.3s;';
-                        const screen = document.getElementById('map-screen');
-                        if (screen) screen.appendChild(feedback);
-                    }
-                    feedback.textContent = label;
-                    feedback.style.opacity = '1';
-                    clearTimeout(feedback._timer);
-                    feedback._timer = setTimeout(function () { feedback.style.opacity = '0'; }, 2500);
+                    var coords = await getGPS();
                     _stationMap.jumpTo({ center: coords, zoom: MAP_START_ZOOM });
                 } catch (err) {
                     alert('Could not determine your location.\n' + err.message);

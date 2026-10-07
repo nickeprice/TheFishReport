@@ -80,7 +80,7 @@ export async function loadWaterReport(silent) {
         // WS-4: each day's card already carries ITS OWN reference-hour weather (rendered
         // above from that day's payload), so this only re-paints the ACTIVE day (and it is
         // what makes the day switch repaint in updateActiveDateUI).
-        const activeRep = reports[Math.min(Math.max(activeDateOffset, 0), reports.length - 1)];
+        const activeRep = reports[Math.min(Math.max(window.activeDateOffset || 0, 0), reports.length - 1)];
         if (activeRep && typeof applyReportWeather === 'function') {
             applyReportWeather(activeRep);
         }

@@ -1,3 +1,66 @@
+<a id="data-river-techniques"></a>
+<!-- Phase A1 complete — detail deleted per protocol -->
+
+
+<a id="ui-dynamic-presets"></a>
+<!-- Phase A2 complete — detail deleted per protocol -->
+
+<a id="ui-remove-search"></a>
+## Phase A4: Remove Station Search / ID Lookup
+
+**Change:** Delete the Station Search / ID Lookup section from the station modal.
+Clean unused search-results/station-search DOM references from picker.js.
+
+**Files:**
+- `index.html` — remove search heading, input, button, results div
+- `src/features/station/picker.js` — remove search-results display reset and station-search value clear in openStationModal()
+
+---
+
+<a id="ui-spots-no-auth"></a>
+## Phase A5: Saved Spots — No Sign-In Required
+
+**Change:** Remove the `spotsSignedIn()` gate from save/load spot functions.
+Spots always save to localStorage cache; server sync is a bonus when signed in.
+Render the spots list without the "start a session" auth blocker.
+
+**Files:**
+- `src/features/map/spots.js` — remove auth gates from saveCurrentSpot(), saveSpotAt(), startSpotPick()
+- `index.html` — compact save row layout (Name + Save + 📍 Map on one line)
+
+---
+
+<a id="ui-grouped-presets"></a>
+## Phase A7: Grouped Collapsible River Presets + Favorites
+
+**Change:** Group the flat discovery_pool preset list under parent waterbody names.
+Single-gauge rivers tap to select directly. Multi-gauge rivers (e.g. Puyallup)
+tap to expand/collapse their sub-gauge options. Favorites (star) stored in
+localStorage, float to top of list. Sort: starred (alpha) → rest (alpha).
+
+**Files:**
+- `src/features/station/picker.js` — rewrite renderPresets() for grouped + collapsible + star/favorites
+- `index.html` — section label/heading tweaks
+
+---
+
+<a id="ui-maplibre"></a>
+## Phase A6: MapLibre GL JS Upgrade (Satellite + Vector + Geolocate)
+
+**Change:** Replace Leaflet with MapLibre GL JS for smooth WebGL map rendering.
+Add tile layer toggle: vector street style + Esri satellite imagery.
+Add built-in GeolocateControl for the "you are here" marker.
+
+**Tiles (free, no API key):**
+- Street: OpenFreeMap Liberty (or VersaTiles)
+- Satellite: Esri World Imagery
+
+**Files:**
+- `src/features/map/map.js` — rewrite map init, marker/popup layer, station remapping for MapLibre
+- `package.json` — add `maplibre-gl` dependency
+
+---
+
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

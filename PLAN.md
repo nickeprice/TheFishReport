@@ -1,6 +1,32 @@
 # Fish Report — Active Plan
 
-## 🛠 UI Polish & Data Pipeline (after Vite migration)
+## 🛠 Station Modal & Map
+
+- [x] Phase A1: Import issue #4 river technique/season JSON
+      → washington_rivers.json (NEW), ROADMAP.md
+      [Detail → docs/PLAN_REFERENCE.md#data-river-techniques]
+
+- [x] Phase A2: Dynamic Quick Regional Presets from discovery_pool
+      → index.html, picker.js
+      [Detail → docs/PLAN_REFERENCE.md#ui-dynamic-presets]
+
+- [ ] Phase A4: Remove Station Search / ID Lookup
+      → index.html, picker.js
+      [Detail → docs/PLAN_REFERENCE.md#ui-remove-search]
+
+- [ ] Phase A5: Saved spots — no sign-in required
+      → spots.js, index.html
+      [Detail → docs/PLAN_REFERENCE.md#ui-spots-no-auth]
+
+- [ ] Phase A7: Grouped collapsible river presets + favorites
+      → picker.js
+      [Detail → docs/PLAN_REFERENCE.md#ui-grouped-presets]
+
+- [ ] Phase A6: MapLibre GL JS upgrade (satellite + vector + geolocate)
+      → map.js, package.json
+      [Detail → docs/PLAN_REFERENCE.md#ui-maplibre]
+
+## 🛠 Data Pipeline & Infrastructure
 
 - [ ] Phase A3: Add PyMuPDF to forecast scraper
       → refresh_wdfw_forecast.py

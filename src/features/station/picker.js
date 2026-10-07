@@ -8,6 +8,7 @@ import { logDebug } from '../../shared/debug.js';
 import { loadWaterReport } from '../telemetry/report.js';
 import { loadFavoriteSpots } from '../map/spots.js';
 import { State } from '../../shared/state.js';
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
 export function openStationModal() {
     document.getElementById('station-modal').style.display = 'block';
@@ -16,7 +17,35 @@ export function openStationModal() {
     document.getElementById('station-search').value = '';
     // WS-5: paint the private saved-spot list (cache first, then the server if signed in).
     if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
+    // WS-6: render all 15 regional preset buttons from the registry.
+    renderPresets();
 }
+
+// Build Quick Regional Presets from the registry discovery_pool.
+// This replaces the old 5-button hardcode — all 15 waterbodies now appear,
+// and new rivers added to the registry show up automatically.
+export function renderPresets() {
+    const list = document.getElementById('preset-list');
+    if (!list) return;
+    const pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    if (!pool || !pool.length) {
+        list.innerHTML = ''; // clean slate when offline/unavailable
+        return;
+    }
+    let html = '';
+    for (let i = 0; i < pool.length; i++) {
+        const s = pool[i];
+        if (!s || !s.site_id || !s.coords) continue;
+        html += '<button class="preset-btn" onclick="selectPreset(\'' +
+            escapeJsString(s.site_id) + '\', ' +
+            Number(s.coords.lat) + ', ' + Number(s.coords.lon) + ', \'' +
+            escapeJsString(s.name) + ')\">' +
+            '<span>' + escapeHtml(s.name) + '</span> <span class="preset-id">' +
+            escapeHtml(s.site_id) + '</span></button>';
+    }
+    if (html) list.innerHTML = html;
+}
+window.renderPresets = renderPresets;
 window.openStationModal = openStationModal;
 
 export function closeStationModal() {

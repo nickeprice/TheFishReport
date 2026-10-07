@@ -1,0 +1,662 @@
+[
+  {
+    "river_name": "Puyallup River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Pink Salmon",
+      "Chum",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Flossing / Sweeping (baitcaster, heavy copolymer, long leader, corky and yarn)",
+    "best_species_overall": "Pink Salmon (odd years) and Fall Coho",
+    "time_frame_overall": "Mid-August through October",
+    "by_species": {
+      "Pink Salmon": {
+        "best_technique": "Flossing with small pink corkies and yarn",
+        "best_time_frame": "Mid-August through September (Odd Years Only)"
+      },
+      "Coho": {
+        "best_technique": "Flossing main channels or twitching jigs in slow water",
+        "best_time_frame": "September through October"
+      },
+      "Chinook": {
+        "best_technique": "Heavy flossing with large corkies",
+        "best_time_frame": "Late August through September"
+      },
+      "Chum": {
+        "best_technique": "Float fishing with purple or cerise jigs",
+        "best_time_frame": "November"
+      },
+      "Steelhead": {
+        "best_technique": "Traditional drift fishing",
+        "best_time_frame": "Late December through February"
+      }
+    }
+  },
+  {
+    "river_name": "Carbon River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Pink Salmon",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Short-line flossing in narrow, walking-speed slots",
+    "best_species_overall": "Fall Coho and Pink Salmon (odd years)",
+    "time_frame_overall": "September and October",
+    "by_species": {
+      "Pink Salmon": {
+        "best_technique": "Short-line flossing with pink corkies",
+        "best_time_frame": "September (Odd Years Only)"
+      },
+      "Coho": {
+        "best_technique": "Flossing or twitching jigs in deep cutbanks",
+        "best_time_frame": "September through October"
+      },
+      "Chinook": {
+        "best_technique": "Flossing deep slots",
+        "best_time_frame": "September"
+      },
+      "Steelhead": {
+        "best_technique": "Traditional drift fishing",
+        "best_time_frame": "December through February"
+      }
+    }
+  },
+  {
+    "river_name": "Nisqually River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Chum",
+      "Pink Salmon",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Flossing in the lower tidal zones",
+    "best_species_overall": "Fall Chinook and Chum",
+    "time_frame_overall": "September through December",
+    "by_species": {
+      "Chinook": {
+        "best_technique": "Flossing in the lower river pushing tides",
+        "best_time_frame": "September"
+      },
+      "Coho": {
+        "best_technique": "Flossing or casting spinners",
+        "best_time_frame": "Late September through October"
+      },
+      "Chum": {
+        "best_technique": "Float fishing chartreuse or purple jigs under a bobber",
+        "best_time_frame": "November through December"
+      },
+      "Pink Salmon": {
+        "best_technique": "Flossing with pink gear",
+        "best_time_frame": "August through September (Odd Years Only)"
+      }
+    }
+  },
+  {
+    "river_name": "Skokomish River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Chum",
+      "Pink Salmon"
+    ],
+    "best_technique_overall": "Heavy Flossing / Sweeping in high-density combat zones",
+    "best_species_overall": "Hatchery Fall Chinook",
+    "time_frame_overall": "August through September",
+    "by_species": {
+      "Chinook": {
+        "best_technique": "Heavy flossing with long leaders and heavy lead",
+        "best_time_frame": "August through early September"
+      },
+      "Coho": {
+        "best_technique": "Flossing or twitching jigs",
+        "best_time_frame": "September through early October"
+      },
+      "Chum": {
+        "best_technique": "Float fishing with bright jigs",
+        "best_time_frame": "November"
+      }
+    }
+  },
+  {
+    "river_name": "Samish River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho"
+    ],
+    "best_technique_overall": "Combat flossing / Heavy drift gear",
+    "best_species_overall": "Fall Chinook",
+    "time_frame_overall": "Late August through September",
+    "by_species": {
+      "Chinook": {
+        "best_technique": "Heavy flossing in muddy, high-density tidal sections",
+        "best_time_frame": "Late August through September"
+      },
+      "Coho": {
+        "best_technique": "Casting spinners or float fishing",
+        "best_time_frame": "October"
+      }
+    }
+  },
+  {
+    "river_name": "Cowlitz River",
+    "legal_target_species": [
+      "Spring Chinook",
+      "Fall Chinook",
+      "Coho",
+      "Summer Steelhead",
+      "Winter Steelhead",
+      "Cutthroat Trout"
+    ],
+    "best_technique_overall": "Traditional Drift Fishing (bouncing cured roe, sand shrimp, or corky/yarn)",
+    "best_species_overall": "Winter Steelhead and Spring Chinook",
+    "time_frame_overall": "Year-round (Peaks: March-May, December-February)",
+    "by_species": {
+      "Spring Chinook": {
+        "best_technique": "Drift fishing roe or backtrolling Kwikfish",
+        "best_time_frame": "April and May"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Drift fishing corky/yarn or float fishing jigs",
+        "best_time_frame": "December through February"
+      },
+      "Summer Steelhead": {
+        "best_technique": "Casting spinners or drift fishing small baits",
+        "best_time_frame": "July and August"
+      },
+      "Fall Chinook": {
+        "best_technique": "Drift fishing large roe clusters",
+        "best_time_frame": "September and October"
+      },
+      "Coho": {
+        "best_technique": "Twitching jigs or drift fishing",
+        "best_time_frame": "September through November"
+      }
+    }
+  },
+  {
+    "river_name": "Snohomish River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Pink Salmon",
+      "Chum",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Flossing (Pinks) and casting hardware/plunking",
+    "best_species_overall": "Pink Salmon (odd years) and Coho",
+    "time_frame_overall": "August through October",
+    "by_species": {
+      "Pink Salmon": {
+        "best_technique": "Sweeping long leaders with pink corkies on sandbars",
+        "best_time_frame": "August through September (Odd Years Only)"
+      },
+      "Coho": {
+        "best_technique": "Casting spinners or twitching jigs",
+        "best_time_frame": "September and October"
+      },
+      "Chum": {
+        "best_technique": "Float fishing jigs",
+        "best_time_frame": "November"
+      }
+    }
+  },
+  {
+    "river_name": "Skykomish River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Pink Salmon",
+      "Chum",
+      "Summer Steelhead",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Traditional Drift Fishing",
+    "best_species_overall": "Summer Steelhead",
+    "time_frame_overall": "June through October",
+    "by_species": {
+      "Summer Steelhead": {
+        "best_technique": "Drift fishing small presentations, casting spoons, or fly fishing",
+        "best_time_frame": "June through August"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Float fishing jigs or drift fishing",
+        "best_time_frame": "December through February"
+      },
+      "Coho": {
+        "best_technique": "Twitching jigs in deep pools or casting spinners",
+        "best_time_frame": "September and October"
+      },
+      "Pink Salmon": {
+        "best_technique": "Drift fishing pink corkies or casting pink spoons",
+        "best_time_frame": "August (Odd Years Only)"
+      }
+    }
+  },
+  {
+    "river_name": "Snoqualmie River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Pink Salmon",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Float and Bobber Fishing",
+    "best_species_overall": "Winter Steelhead",
+    "time_frame_overall": "December through February",
+    "by_species": {
+      "Winter Steelhead": {
+        "best_technique": "Float fishing small jigs or beads in tight pocket water",
+        "best_time_frame": "December through February"
+      },
+      "Coho": {
+        "best_technique": "Twitching jigs or float fishing roe",
+        "best_time_frame": "October"
+      }
+    }
+  },
+  {
+    "river_name": "Green River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Chum",
+      "Pink Salmon",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Traditional Drift Fishing and Plunking",
+    "best_species_overall": "Coho and Winter Steelhead",
+    "time_frame_overall": "September through January",
+    "by_species": {
+      "Coho": {
+        "best_technique": "Drifting bait/small corkies or twitching jigs",
+        "best_time_frame": "September and October"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Float fishing or traditional drifting",
+        "best_time_frame": "December and January"
+      },
+      "Chum": {
+        "best_technique": "Float fishing jigs",
+        "best_time_frame": "November"
+      }
+    }
+  },
+  {
+    "river_name": "Skagit River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Pink Salmon",
+      "Chum",
+      "Sockeye",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Traditional Drift Fishing and Spey casting",
+    "best_species_overall": "Pink Salmon (odd years) and Winter Steelhead",
+    "time_frame_overall": "August-September and February-March",
+    "by_species": {
+      "Pink Salmon": {
+        "best_technique": "Sweeping small pink drift setups over wide gravel bars",
+        "best_time_frame": "August and September (Odd Years Only)"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Spey casting intruder flies or drift fishing",
+        "best_time_frame": "February and March"
+      },
+      "Coho": {
+        "best_technique": "Casting spinners or twitching jigs in slow sloughs",
+        "best_time_frame": "October"
+      }
+    }
+  },
+  {
+    "river_name": "Cascade River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Flossing and heavy bouncing in rocky slots",
+    "best_species_overall": "Hatchery Chinook and Coho",
+    "time_frame_overall": "September through November",
+    "by_species": {
+      "Chinook": {
+        "best_technique": "Bouncing heavy lead and long leaders in turbulent slots",
+        "best_time_frame": "September"
+      },
+      "Coho": {
+        "best_technique": "Float fishing roe or twitching jigs",
+        "best_time_frame": "October"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Drift fishing",
+        "best_time_frame": "December through February"
+      }
+    }
+  },
+  {
+    "river_name": "Bogachiel River",
+    "legal_target_species": [
+      "Fall Chinook",
+      "Coho",
+      "Winter Steelhead",
+      "Summer Steelhead"
+    ],
+    "best_technique_overall": "Traditional side-drifting from a boat or bank drift fishing",
+    "best_species_overall": "Winter Steelhead",
+    "time_frame_overall": "Late November through March",
+    "by_species": {
+      "Winter Steelhead": {
+        "best_technique": "Side-drifting cured roe and yarn, or float fishing 8-10mm beads",
+        "best_time_frame": "January through March"
+      },
+      "Fall Chinook": {
+        "best_technique": "Drift fishing large clusters of roe",
+        "best_time_frame": "October"
+      },
+      "Coho": {
+        "best_technique": "Twitching jigs or float fishing roe",
+        "best_time_frame": "October and November"
+      }
+    }
+  },
+  {
+    "river_name": "Calawah River",
+    "legal_target_species": [
+      "Fall Chinook",
+      "Coho",
+      "Winter Steelhead",
+      "Summer Steelhead"
+    ],
+    "best_technique_overall": "Traditional Drift Fishing or Float Fishing",
+    "best_species_overall": "Winter Steelhead",
+    "time_frame_overall": "December through March",
+    "by_species": {
+      "Winter Steelhead": {
+        "best_technique": "Float fishing beads or drifting bait",
+        "best_time_frame": "January through March"
+      },
+      "Fall Chinook": {
+        "best_technique": "Drift fishing roe",
+        "best_time_frame": "October"
+      },
+      "Coho": {
+        "best_technique": "Twitching jigs or float fishing roe",
+        "best_time_frame": "October and November"
+      }
+    }
+  },
+  {
+    "river_name": "Sol Duc River",
+    "legal_target_species": [
+      "Fall Chinook",
+      "Coho",
+      "Winter Steelhead",
+      "Summer Steelhead"
+    ],
+    "best_technique_overall": "Traditional Drift Fishing in pocket water",
+    "best_species_overall": "Winter Steelhead",
+    "time_frame_overall": "December through April",
+    "by_species": {
+      "Winter Steelhead": {
+        "best_technique": "Drift fishing or bobber dogging",
+        "best_time_frame": "February through April"
+      },
+      "Fall Chinook": {
+        "best_technique": "Drift fishing",
+        "best_time_frame": "September and October"
+      },
+      "Coho": {
+        "best_technique": "Float fishing roe",
+        "best_time_frame": "October"
+      }
+    }
+  },
+  {
+    "river_name": "Hoh River",
+    "legal_target_species": [
+      "Fall Chinook",
+      "Coho",
+      "Winter Steelhead",
+      "Summer Steelhead"
+    ],
+    "best_technique_overall": "Spey casting and traditional drift fishing",
+    "best_species_overall": "Wild Winter Steelhead",
+    "time_frame_overall": "February through April",
+    "by_species": {
+      "Winter Steelhead": {
+        "best_technique": "Spey casting intruder flies on sink tips or drifting bait",
+        "best_time_frame": "February through April"
+      },
+      "Fall Chinook": {
+        "best_technique": "Drift fishing large baits",
+        "best_time_frame": "October"
+      },
+      "Coho": {
+        "best_technique": "Casting spinners or twitching jigs",
+        "best_time_frame": "October and November"
+      }
+    }
+  },
+  {
+    "river_name": "Chehalis River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Chum",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Casting hardware, twitching jigs, and plunking",
+    "best_species_overall": "Coho and Chum",
+    "time_frame_overall": "October and November",
+    "by_species": {
+      "Coho": {
+        "best_technique": "Twitching jigs or casting heavy spoons in frog-water",
+        "best_time_frame": "October and November"
+      },
+      "Chum": {
+        "best_technique": "Float fishing jigs",
+        "best_time_frame": "November"
+      },
+      "Chinook": {
+        "best_technique": "Trolling or plunking",
+        "best_time_frame": "September and October"
+      }
+    }
+  },
+  {
+    "river_name": "Wynoochee River",
+    "legal_target_species": [
+      "Coho",
+      "Chinook",
+      "Chum",
+      "Winter Steelhead",
+      "Summer Steelhead"
+    ],
+    "best_technique_overall": "Float and Bobber Fishing",
+    "best_species_overall": "Late Fall Coho and Winter Steelhead",
+    "time_frame_overall": "October through March",
+    "by_species": {
+      "Coho": {
+        "best_technique": "Float fishing with small egg clusters or twitching marabou jigs",
+        "best_time_frame": "October through December"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Float fishing beads or small jigs in clear water",
+        "best_time_frame": "January through March"
+      },
+      "Chum": {
+        "best_technique": "Float fishing bright jigs",
+        "best_time_frame": "November"
+      }
+    }
+  },
+  {
+    "river_name": "Satsop River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Chum",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Float and Bobber Fishing",
+    "best_species_overall": "Chum and Late Coho",
+    "time_frame_overall": "October through December",
+    "by_species": {
+      "Chum": {
+        "best_technique": "Float fishing chartreuse/purple jigs under a bobber",
+        "best_time_frame": "November through early December"
+      },
+      "Coho": {
+        "best_technique": "Float fishing cured roe or twitching jigs in slow holding pools",
+        "best_time_frame": "November and December"
+      },
+      "Chinook": {
+        "best_technique": "Float fishing large roe clusters",
+        "best_time_frame": "October"
+      }
+    }
+  },
+  {
+    "river_name": "Skookumchuck River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Float and Bobber Fishing (to avoid wood debris)",
+    "best_species_overall": "Hatchery Coho and Winter Steelhead",
+    "time_frame_overall": "October through March",
+    "by_species": {
+      "Coho": {
+        "best_technique": "Bobber and eggs or float and jig fishing",
+        "best_time_frame": "October and November"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Float fishing beads or jigs near woody structure",
+        "best_time_frame": "January through March"
+      }
+    }
+  },
+  {
+    "river_name": "Humptulips River",
+    "legal_target_species": [
+      "Chinook",
+      "Coho",
+      "Chum",
+      "Steelhead"
+    ],
+    "best_technique_overall": "Twitching Jigs and Float Fishing",
+    "best_species_overall": "Fall Chinook and Coho",
+    "time_frame_overall": "October and November",
+    "by_species": {
+      "Coho": {
+        "best_technique": "Twitching 3/8oz to 1/2oz marabou/hoochie jigs in deep woody pools",
+        "best_time_frame": "October and November"
+      },
+      "Chinook": {
+        "best_technique": "Float fishing large bait clusters or drift fishing",
+        "best_time_frame": "September and October"
+      },
+      "Steelhead": {
+        "best_technique": "Float fishing or traditional drift fishing",
+        "best_time_frame": "December through February"
+      }
+    }
+  },
+  {
+    "river_name": "Kalama River",
+    "legal_target_species": [
+      "Spring Chinook",
+      "Fall Chinook",
+      "Coho",
+      "Summer Steelhead",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Casting Hardware (Spinners and Spoons)",
+    "best_species_overall": "Summer Steelhead",
+    "time_frame_overall": "July through October",
+    "by_species": {
+      "Summer Steelhead": {
+        "best_technique": "Casting Blue Fox spinners across the current or swinging flies",
+        "best_time_frame": "July through September"
+      },
+      "Winter Steelhead": {
+        "best_technique": "Drift fishing or float fishing beads",
+        "best_time_frame": "December through February"
+      },
+      "Spring Chinook": {
+        "best_technique": "Backtrolling plugs or drift fishing heavy roe",
+        "best_time_frame": "April and May"
+      },
+      "Coho": {
+        "best_technique": "Casting spinners or twitching jigs",
+        "best_time_frame": "September and October"
+      }
+    }
+  },
+  {
+    "river_name": "North Fork Lewis River",
+    "legal_target_species": [
+      "Spring Chinook",
+      "Fall Chinook",
+      "Coho",
+      "Summer Steelhead",
+      "Winter Steelhead"
+    ],
+    "best_technique_overall": "Backtrolling plugs and Casting Hardware",
+    "best_species_overall": "Spring Chinook and Coho",
+    "time_frame_overall": "April-May and September-October",
+    "by_species": {
+      "Spring Chinook": {
+        "best_technique": "Backtrolling Kwikfish or Mag Lip plugs from a boat",
+        "best_time_frame": "April and May"
+      },
+      "Coho": {
+        "best_technique": "Casting heavy spinners from the bank or twitching jigs",
+        "best_time_frame": "September and October"
+      },
+      "Summer Steelhead": {
+        "best_technique": "Casting spinners or drift fishing",
+        "best_time_frame": "June through August"
+      }
+    }
+  },
+  {
+    "river_name": "Grande Ronde River",
+    "legal_target_species": [
+      "Summer Steelhead",
+      "Chinook"
+    ],
+    "best_technique_overall": "Spey and Fly Fishing",
+    "best_species_overall": "Summer Steelhead",
+    "time_frame_overall": "September and October",
+    "by_species": {
+      "Summer Steelhead": {
+        "best_technique": "Swinging traditional wet flies or skating dry flies",
+        "best_time_frame": "September and October"
+      }
+    }
+  },
+  {
+    "river_name": "Methow River",
+    "legal_target_species": [
+      "Summer Steelhead",
+      "Chinook",
+      "Coho"
+    ],
+    "best_technique_overall": "Fly Fishing",
+    "best_species_overall": "Summer Steelhead",
+    "time_frame_overall": "October through December",
+    "by_species": {
+      "Summer Steelhead": {
+        "best_technique": "Indicator nymph setups or swinging streamers",
+        "best_time_frame": "October through December"
+      }
+    }
+  }
+]

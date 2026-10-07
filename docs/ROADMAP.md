@@ -331,6 +331,13 @@ Puget-specific relationship that would need a trained model + real sample size â
 gate as the rest of the notebook, not just a missing number. Method: `/tmp/dart_flow.py` style
 spec, public CSVs, no invented inputs.
 
+### River technique/season advice (from `washington_rivers.json`)
+
+Imported from issue #4 â€” per-river JSON with legal target species, best technique,
+best species, best time frame, and by-species technique breakdown for 19 Washington
+salmon/steelhead rivers. Usage is undetermined (e.g., display on water report cards,
+recommendation engine input, gear-sim advice panel). Decide and implement when scoped.
+
 ## 3.14 Data infrastructure & new data pipelines (horizon 2)
 
 Items discovered during the drift-fishing sim rebuild (2026-10-04). Gated behind

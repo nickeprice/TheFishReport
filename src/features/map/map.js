@@ -17,8 +17,9 @@ import { apiGetJson } from '../../shared/api.js';
 import { State } from '../../shared/state.js';
 import { escapeHtml, escapeJsString } from '../../shared/format.js';
 import { showToast } from '../../shared/ui.js';
-import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt } from './spots.js';
+import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt, renderDrawerSpots } from './spots.js';
 import { savedSpotPopupHtml } from './spots-map.js';
+import { selectPreset } from '../station/picker.js';
 import { Map as MaplibreMap, Marker, GeolocateControl, setWorkerUrl } from 'maplibre-gl';
 // Disable off-thread rendering worker — Vite can't resolve MapLibre's worker URL
 setWorkerUrl('');
@@ -27,15 +28,14 @@ setWorkerUrl('');
 var MAP_DEFAULT_CENTER = [-122.302, 47.195];  // [lng, lat]
 var MAP_START_ZOOM = 10;
 var MAP_STYLE = { version: 8, sources: {
-    osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '\u00a9 OpenStreetMap' }
+    satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg'], tileSize: 256, attribution: '\u00a9 Esri' }
 }, layers: [
-    { id: 'osm-base', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }
+    { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 19 }
 ] };
 
 var _stationMap = null;
 var _mapMarkers = [];
 var _spotsPlotted = 0;
-var _stationWasOpen = false;
 
 export function loadLeaflet() { return Promise.resolve(true); }
 window.loadLeaflet = loadLeaflet;
@@ -115,18 +115,13 @@ function removeAllMarkers() {
 
 // ── Popup overlay ─────────────────────────────────────────────────────────────────
 function showPopup(html) {
-    var popup = document.getElementById('station-popup');
-    if (!popup) {
-        popup = document.createElement('div');
-        popup.id = 'station-popup';
-        popup.className = 'map-popup';
-        var box = document.getElementById('map-modal-container');
-        if (box) box.appendChild(popup);
+    var popup = document.getElementById('pin-popup');
+    if (popup) {
+        var body = document.getElementById('pin-popup-body');
+        if (body) body.innerHTML = html;
+        popup.hidden = false;
+        popup.style.display = 'block';
     }
-    if (!popup) return;
-    popup.innerHTML = html;
-    popup.style.display = 'block';
-    popup.hidden = false;
 }
 
 // ── Saved spot stars ──────────────────────────────────────────────────────────────
@@ -177,25 +172,26 @@ export async function refreshStationMap(center) {
 }
 
 // ── Open / close map modal ─────────────────────────────────────────────────────────
-export var mapModalOpen = false;
-window.mapModalOpen = mapModalOpen;
+export var mapScreenOpen = false;
+window.mapScreenOpen = mapScreenOpen;
 
-export async function openMapModal() {
-    var modal = document.getElementById('map-modal');
-    if (!modal) return;
-    // Close the station modal so it doesn't overlap the map (z-index 4000 > 1000)
-    var stationModal = document.getElementById('station-modal');
-    if (stationModal && stationModal.style.display !== 'none') {
-        stationModal.style.display = 'none';
-        _stationWasOpen = true;
-    } else {
-        _stationWasOpen = false;
+export async function openMapScreen() {
+    var screen = document.getElementById('map-screen');
+    if (!screen) return;
+    // Hide the old UI top nav so the map is truly edge-to-edge
+    var topNav = document.getElementById('top-nav');
+    if (topNav) topNav.style.display = 'none';
+    screen.classList.remove('map-screen-hidden');
+    var loading = document.getElementById('map-loading');
+    if (loading) loading.style.display = 'block';
+    var handleStation = document.getElementById('map-handle-station');
+    if (handleStation) {
+        var activeName = document.getElementById('active-station-name');
+        handleStation.textContent = activeName ? activeName.textContent : 'Select a river';
     }
-    modal.classList.remove('map-modal-hidden');
-    var box = document.getElementById('map-modal-container');
+    mapScreenOpen = true;
+    var box = document.getElementById('map-container');
     if (!box) return;
-    box.innerHTML = '<div class="map-loading">Loading the map\u2026</div>';
-    mapModalOpen = true;
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     var center = mapCenter();
     if (!_stationMap) {
@@ -214,28 +210,45 @@ export async function openMapModal() {
         _stationMap.setCenter([center[1], center[0]]);
     }
     try {
-        var out = await refreshStationMap(center);
+        if (loading) loading.style.display = 'none';
+        await refreshStationMap(center);
     } catch (e) {
+        if (loading) loading.textContent = 'Could not load nearby gauges.';
         logDebug('Station map feed failed: ' + e.message, 'MAP');
     }
 }
-window.openMapModal = openMapModal;
+window.openMapScreen = openMapScreen;
 
-export function closeMapModal() {
-    var modal = document.getElementById('map-modal');
-    if (modal) modal.classList.add('map-modal-hidden');
-    // Reopen the station modal if it was open before the map
-    if (_stationWasOpen) {
-        _stationWasOpen = false;
-        var stationModal = document.getElementById('station-modal');
-        // Must set 'block' — '' leaves CSS display:none in effect
-        if (stationModal) stationModal.style.display = 'block';
-        var gpsStatus = document.getElementById('gps-status');
-        if (gpsStatus) gpsStatus.innerText = '';
-    }
-    mapModalOpen = false;
+export function closeMapScreen() {
+    var screen = document.getElementById('map-screen');
+    if (screen) screen.classList.add('map-screen-hidden');
+    // Restore the old UI top nav
+    var topNav = document.getElementById('top-nav');
+    if (topNav) topNav.style.display = '';
+    mapScreenOpen = false;
 }
-window.closeMapModal = closeMapModal;
+window.closeMapScreen = closeMapScreen;
+
+// ── Drawer toggle ──────────────────────────────────────────────────────────────────
+var _drawerOpen = false;
+
+export function toggleDrawer() {
+    _drawerOpen = !_drawerOpen;
+    var drawer = document.getElementById('map-drawer');
+    var arrow = document.getElementById('map-handle-arrow');
+    if (drawer) {
+        if (_drawerOpen) {
+            drawer.classList.add('map-drawer-open');
+            if (arrow) arrow.textContent = '\u25bc';
+            // Populate spots + results on first open
+            renderDrawerContent();
+        } else {
+            drawer.classList.remove('map-drawer-open');
+            if (arrow) arrow.textContent = '\u25b2';
+        }
+    }
+}
+window.toggleDrawer = toggleDrawer;
 
 // ── Temporary pin for spot-drop —─────────────────────────────────────────────────
 var _tempPin = null;  // { el, lat, lng }
@@ -326,21 +339,150 @@ export function onMapClick(e) {
     }
     var lat = e.lat != null ? e.lat : e.latlng.lat;
     var lng = e.lng != null ? e.lng : e.latlng.lng;
+    // If FAB pin-drop mode is active, drop a pin
+    if (_fabPinning) {
+        dropTempPin(lat, lng);
+        showNamePill(lat, lng);
+        // Reset FAB to + state
+        _fabPinning = false;
+        var fab = document.getElementById('map-fab');
+        if (fab) { fab.textContent = '+'; fab.style.background = '#23402a'; fab.style.border = '2px solid #2d5a3a'; }
+        return;
+    }
     // Dismiss existing pill if present
     if (_pendingPin) {
         var pill = document.getElementById('pin-name-pill');
         if (pill) { pill.style.display = 'none'; pill.hidden = true; }
         _pendingPin = null;
     }
-    dropTempPin(lat, lng);
-    showNamePill(lat, lng);
 }
 
+// ── Drawer content: spots + river results ──────────────────────────────────────
+function renderDrawerContent() {
+    // Populate saved spots row
+    var spotsRow = document.getElementById('drawer-spots');
+    if (spotsRow && typeof renderDrawerSpots === 'function') renderDrawerSpots(spotsRow);
+    // Populate river results
+    renderDrawerResults();
+}
+
+export function onDrawerFilter() {
+    renderDrawerResults();
+}
+window.onDrawerFilter = onDrawerFilter;
+
+function renderDrawerResults() {
+    var results = document.getElementById('drawer-results');
+    var filterEl = document.getElementById('drawer-search');
+    if (!results) return;
+    var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!pool || !pool.length) { results.innerHTML = ''; return; }
+    var filter = filterEl ? filterEl.value.trim().toLowerCase() : '';
+    // Build site_id → waterbody name lookup
+    var siteToWb = {};
+    if (wbs) {
+        for (var i = 0; i < wbs.length; i++) {
+            var wb = wbs[i];
+            if (wb.gauge && wb.gauge.site_id) siteToWb[wb.gauge.site_id] = wb.name;
+            if (wb.related_gauges) {
+                for (var j = 0; j < wb.related_gauges.length; j++)
+                    siteToWb[wb.related_gauges[j].site_id] = wb.name;
+            }
+        }
+    }
+    // Group pool by waterbody name
+    var groups = {};
+    for (var k = 0; k < pool.length; k++) {
+        var s = pool[k];
+        if (!s || !s.site_id || !s.coords) continue;
+        var wbName = siteToWb[s.site_id] || s.name.replace(/ at .*$/, '').replace(/ near .*$/, '');
+        if (!groups[wbName]) groups[wbName] = [];
+        groups[wbName].push(s);
+    }
+    var names = Object.keys(groups);
+    // Filter
+    if (filter) {
+        names = names.filter(function(n) {
+            if (n.toLowerCase().indexOf(filter) >= 0) return true;
+            for (var fi = 0; fi < groups[n].length; fi++) {
+                if (groups[n][fi].name.toLowerCase().indexOf(filter) >= 0 ||
+                    groups[n][fi].site_id.indexOf(filter) >= 0) return true;
+            }
+            return false;
+        });
+    }
+    names.sort(function(a, b) { return a.localeCompare(b); });
+    if (!names.length) { results.innerHTML = ''; return; }
+    var html = '';
+    for (var gi = 0; gi < names.length; gi++) {
+        var name = names[gi];
+        var items = groups[name];
+        html += '<div class="result-card" onclick="mapResultSelect(\'' +
+            escapeJsString(items[0].site_id) + '\', ' +
+            Number(items[0].coords.lat) + ', ' +
+            Number(items[0].coords.lon) + ', \'' +
+            escapeJsString(name) + '\')">' +
+            '<div class="result-card-header">' + escapeHtml(name) + '</div>';
+        for (var si = 0; si < items.length; si++) {
+            var s = items[si];
+            html += '<div class="result-card-row">' +
+                escapeHtml(s.name) + ' <span style="font-size:9px;color:#888;font-family:monospace;margin-left:auto">' +
+                escapeHtml(s.site_id) + '</span></div>';
+        }
+        html += '</div>';
+    }
+    results.innerHTML = html;
+}
+
+// When a river card is tapped — select it and close the map
+export function mapResultSelect(siteId, lat, lon, name) {
+    if (typeof selectPreset === 'function') selectPreset(siteId, lat, lon, name);
+    closeMapScreen();
+}
+window.mapResultSelect = mapResultSelect;
+
+// ── FAB toggle: + / X state ─────────────────────────────────────────────────────
+var _fabPinning = false;
+
+export function toggleFabSpotDrop() {
+    _fabPinning = !_fabPinning;
+    var fab = document.getElementById('map-fab');
+    if (fab) {
+        if (_fabPinning) {
+            fab.textContent = '\u2715';
+            fab.style.background = '#5a3030';
+            fab.style.border = '2px solid #8a5050';
+            var handle = document.getElementById('map-handle-station');
+            if (handle) handle.textContent = 'Tap the map to drop a pin';
+        } else {
+            fab.textContent = '+';
+            fab.style.background = '#23402a';
+            fab.style.border = '2px solid #2d5a3a';
+            var handle = document.getElementById('map-handle-station');
+            if (handle) {
+                var activeName = document.getElementById('active-station-name');
+                handle.textContent = activeName ? activeName.textContent : 'Select a river';
+            }
+            cancelPinSpot();
+        }
+    }
+}
+window.toggleFabSpotDrop = toggleFabSpotDrop;
+
 // ── Shims for backward compatibility ─────────────────────────────────────────────
-export async function showStationMap() { await openMapModal(); }
+export async function showStationMap() { await openMapScreen(); }
 window.showStationMap = showStationMap;
 
-export function startSpotPick() { openMapModal(); }
+export function startSpotPick() { openMapScreen(); }
 window.startSpotPick = startSpotPick;
 
 export async function onSpotPick(e) { onMapClick(e); }
+
+// Legacy aliases (removed old modal names)
+export var mapModalOpen = mapScreenOpen;
+window.mapModalOpen = mapModalOpen;
+export async function openMapModal() { return openMapScreen(); }
+window.openMapModal = openMapModal;
+export function closeMapModal() { return closeMapScreen(); }
+window.closeMapModal = closeMapModal;

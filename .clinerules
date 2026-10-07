@@ -91,6 +91,7 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 # Verification
 - After frontend changes: `node sanity_pass.js --quiet`. Never run without `--quiet`.
 - Run tests compactly: `python -m pytest tests/ -q --tb=line`.
+- **UI VERIFICATION (ANTI-HALLUCINATION PROTOCOL):** When modifying CSS, layout, positioning (`absolute`/`fixed`), or `z-index` (especially over WebGL canvases), NEVER assume success just because the HTML DOM tree is correct. You MUST write and execute a temporary Playwright script to print the `getBoundingClientRect()` of the modified elements. You must mathematically prove the element has a height > 0, a width > 0, and `y` coordinates that place it physically on the visible screen.
 
 # Safety
 - Never run the same failing command more than twice; STOP and summarize.

@@ -41,7 +41,7 @@
         <div id="gps-status" style="font-size: 11px; color: var(--accent-yellow); margin-top: 8px; text-align: center; font-weight: bold; min-height: 14px;"></div>
 
         <!-- Open the full-screen map modal (satellite + street labels) -->
-        <button class="btn-main" onclick="openMapModal()"
+        <button class="btn-main" onclick="openMapScreen()"
                 style="background-color: #23402a; color: #fff; margin-top: 12px; min-height: 44px;">
             🗺️ Open Map
         </button>
@@ -65,13 +65,44 @@
     </div>
 </div>
 
-<!-- FULL-SCREEN MAP MODAL (Phase Y1): satellite imagery + street labels + pin drops -->
-<div id="map-modal" class="map-modal map-modal-hidden">
-    <div class="map-top-bar">
-        <button class="map-back-btn" onclick="closeMapModal()">&larr; Back to stations</button>
+<!-- STEP 2: FULL-SCREEN MAP with Bottom-Sheet Drawer -->
+<div id="map-screen" class="map-screen map-screen-hidden">
+    <!-- MapLibre mounts here -->
+    <div id="map-container" class="map-container"></div>
+
+    <!-- Loading message -->
+    <div id="map-loading" class="map-loading">Loading the map&hellip;</div>
+
+    <!-- Bottom-sheet drawer (slides up from behind the handle) -->
+    <div id="map-drawer" class="map-drawer">
+        <!-- Saved spots — horizontal pill row -->
+        <div class="drawer-section">
+            <div id="drawer-spots" class="drawer-spots"></div>
+        </div>
+        <!-- River search -->
+        <div class="drawer-section">
+            <input type="text" id="drawer-search" class="drawer-search" aria-label="Find a river" placeholder="Find a river..." oninput="onDrawerFilter()">
+        </div>
+        <!-- Filtered results -->
+        <div class="drawer-section drawer-results-scroll">
+            <div id="drawer-results" class="drawer-results"></div>
+        </div>
     </div>
-    <div id="map-modal-container" class="map-modal-container"></div>
-    <div id="map-modal-note" class="station-map-note" hidden></div>
+
+    <!-- Bottom thumb-zone handle — tap toggles drawer -->
+    <div id="map-bottom-handle" class="map-bottom-handle" onclick="toggleDrawer()">
+        <div class="map-handle-grabber"></div>
+        <span class="map-handle-station" id="map-handle-station">Select a river</span>
+        <span class="map-handle-arrow" id="map-handle-arrow">&#9650;</span>
+    </div>
+
+    <!-- Pin popup card -->
+    <div id="pin-popup" class="pin-popup" hidden>
+        <div id="pin-popup-body" class="pin-popup-body"></div>
+    </div>
+
+    <!-- Floating action button — toggles between add (+) and cancel (X) -->
+    <button id="map-fab" class="map-fab" onclick="toggleFabSpotDrop()">+</button>
 </div>
 
 <!-- HOURLY POPUP (WS-4): tap any of the six weather pills on a day card for that day's own

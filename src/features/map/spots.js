@@ -119,8 +119,19 @@ export function renderFavoriteSpots() {
     addChip.className = 'spot-chip spot-chip-add';
     addChip.textContent = '+';
     addChip.title = 'Add a new spot from the map';
-    addChip.onclick = function () { if (typeof window.openMapModal === 'function') window.openMapModal(); };
+    addChip.onclick = function () { if (typeof window.openMapScreen === 'function') window.openMapScreen(); };
     chips.appendChild(addChip);
+}
+
+// Render saved spots into the map drawer's horizontal pill row
+export function renderDrawerSpots(container) {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!spotsState.rows.length) {
+        container.innerHTML = '<span style="color:#888;font-size:11px;font-style:italic;padding:8px 0">No saved spots yet</span>';
+        return;
+    }
+    spotsState.rows.forEach(function (s) { container.appendChild(spotChipEl(s)); });
 }
 
 // ==================================================================================

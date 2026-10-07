@@ -1,11 +1,5 @@
 # Fish Report — Active Plan
 
-## 🔬 Validation Suite
-
-- [ ] T6: HTML onclick handler audit
-      → index.html, search for onclick= — verify each fn has window shim
-      [Detail → docs/PLAN_REFERENCE.md#test-onclick]
-
 ## 🛠 UI Polish & Data Pipeline (after Vite migration)
 
 - [ ] Phase A3: Add PyMuPDF to forecast scraper

@@ -1,26 +1,3 @@
-<a id="test-onclick"></a>
-## T6: HTML onclick Handler Audit
-
-**Goal:** Every `onclick="fn()"` in `index.html` (and `dist/index.html`) must have a
-corresponding `window.fn = fn` shim, or the click handler silently fails.
-
-**Method:**
-```bash
-# Extract all onclick function names from HTML
-grep -oP 'onclick="([^("]+)' index.html | sort -u | while read fn; do
-  if ! grep -q "window.$fn = " src/ -r; then
-    echo "MISSING SHIM: $fn"
-  fi
-done
-```
-
-**Expected result:** 0 missing shims. Any missing one needs `window.X = X` added to
-the module that defines `X`.
-
-**Files:** `index.html`, `src/app.js`, plus defining module per missing shim.
-
----
-
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

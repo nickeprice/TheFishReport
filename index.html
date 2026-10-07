@@ -40,37 +40,38 @@
         <button class="btn-main" onclick="useGPS()" style="background-color: var(--accent-blue); color: #fff; margin-top: 0; min-height: 44px;">📍 Use My GPS (Nearest River)</button>
         <div id="gps-status" style="font-size: 11px; color: var(--accent-yellow); margin-top: 8px; text-align: center; font-weight: bold; min-height: 14px;"></div>
 
-        <!-- Interactive map (UPDATE 3.0 Phase 2.5). An ENHANCEMENT: if Leaflet cannot
-             load, the presets / search / GPS below still work exactly as before. -->
-        <button class="btn-main" onclick="showStationMap()"
+        <!-- Open the full-screen map modal (satellite + street labels) -->
+        <button class="btn-main" onclick="openMapModal()"
                 style="background-color: #23402a; color: #fff; margin-top: 12px; min-height: 44px;">
-            🗺️ Show Nearest Rivers on a Map
+            🗺️ Open Map
         </button>
-        <div id="station-map" class="station-map" hidden></div>
         <div id="station-map-note" class="station-map-note" hidden></div>
 
-        <!-- PRIVATE SAVED SPOTS (WS-5, issue #3b). Private by design: RLS on
-             public.favorite_spots keeps every spot visible only to the session that saved
-             it, and nothing here ever reaches the public feed or a telemetry payload. -->
-        <h3 class="modal-subtitle" style="margin-top: 25px;">My Saved Spots (private)</h3>
-        <!-- Saved spots use localStorage cache first; server sync is a bonus when signed in. -->
-        <div id="spot-save-row">
-            <div class="search-row" style="gap: 6px;">
-                <input type="text" id="spot-label" aria-label="Name this fishing spot" maxlength="60" placeholder="Name this spot (e.g. Blue Creek run)" style="min-height: 44px;">
-                <button onclick="saveCurrentSpot()" style="min-height: 44px; padding: 10px 15px;">Save</button>
-                <button onclick="startSpotPick()" style="min-height: 44px; padding: 10px 15px; background-color: #23402a; color: #fff;">📍 Map</button>
-            </div>
-        </div>
+        <!-- PRIVATE SAVED SPOTS — chips that tap to open; "+" chip opens the map to add -->
+        <h3 class="modal-subtitle" style="margin-top: 25px;">My Spots</h3>
+        <div id="spot-chips" class="spot-chips"></div>
         <div id="spot-status" class="spot-status" hidden></div>
-        <div id="favorite-spots" class="favorite-spots"></div>
+        <div id="favorite-spots" class="favorite-spots" hidden></div>
         
-        <h3 class="modal-subtitle" style="margin-top: 25px;">Quick Regional Presets</h3>
+        <h3 class="modal-subtitle" style="margin-top: 25px;">Find a River</h3>
+        <div class="preset-filter-row">
+            <input type="text" id="preset-filter" class="preset-filter" aria-label="Filter river by name" placeholder="Search by name..." oninput="onPresetFilter()">
+        </div>
         <div id="preset-list" class="preset-list"></div>
         
         
         
         <button class="btn-main" onclick="closeStationModal()" style="background-color: #333; color: #fff; margin-top: 10px; min-height: 44px;">CANCEL</button>
     </div>
+</div>
+
+<!-- FULL-SCREEN MAP MODAL (Phase Y1): satellite imagery + street labels + pin drops -->
+<div id="map-modal" class="map-modal" hidden>
+    <div class="map-modal-header">
+        <button class="map-close-btn" onclick="closeMapModal()">&times;</button>
+    </div>
+    <div id="map-modal-container" class="map-modal-container"></div>
+    <div id="map-modal-note" class="station-map-note" hidden></div>
 </div>
 
 <!-- HOURLY POPUP (WS-4): tap any of the six weather pills on a day card for that day's own

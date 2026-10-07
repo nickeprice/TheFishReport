@@ -40,16 +40,25 @@ export function togglePresetFav(siteId) {
 }
 window.togglePresetFav = togglePresetFav;
 
-// Build Quick Regional Presets from the registry discovery_pool.
-// Groups under parent waterbody names. Single-gauge → direct select button.
-// Multi-gauge (e.g. Puyallup) → collapsible <details>.
-// Starred waterbodies float to top.
+// ── Filter handler ──────────────────────────────────────────────────────────────
+export function onPresetFilter() {
+    renderPresets();
+}
+window.onPresetFilter = onPresetFilter;
+
+// ── Card-based river presets with search-as-you-type filter ─────────────────────
+// Renders a 2-column grid of cards. Each card has a river name header and inline
+// gauge rows. Multi-gauge rivers (Puyallup) show all options inline — no collapse.
+// Starred cards float to top.
 export function renderPresets() {
     var list = document.getElementById('preset-list');
+    var filterEl = document.getElementById('preset-filter');
     if (!list) return;
     var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
     var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
     if (!pool || !pool.length) { list.innerHTML = ''; return; }
+
+    var filter = filterEl ? filterEl.value.trim().toLowerCase() : '';
 
     // site_id → waterbody name
     var siteToWb = {};
@@ -76,8 +85,24 @@ export function renderPresets() {
         groups[wbName].push(s);
     }
 
-    // Sort: waterbodies with a starred gauge first (alpha), then rest (alpha)
-    var names = Object.keys(groups).sort(function (a, b) {
+    // Filter groups by search query
+    var names = Object.keys(groups);
+    if (filter) {
+        names = names.filter(function (n) {
+            var match = n.toLowerCase().indexOf(filter) >= 0;
+            if (!match) {
+                // Also match gauge names within
+                for (var fi = 0; fi < groups[n].length; fi++) {
+                    if (groups[n][fi].name.toLowerCase().indexOf(filter) >= 0 ||
+                        groups[n][fi].site_id.indexOf(filter) >= 0) { match = true; break; }
+                }
+            }
+            return match;
+        });
+    }
+
+    // Sort: starred → rest, alphabetical within each
+    names.sort(function (a, b) {
         var aFav = groups[a].some(function (s) { return favs.indexOf(s.site_id) >= 0; });
         var bFav = groups[b].some(function (s) { return favs.indexOf(s.site_id) >= 0; });
         if (aFav && !bFav) return -1;
@@ -85,41 +110,35 @@ export function renderPresets() {
         return a.localeCompare(b);
     });
 
+    if (!names.length) { list.innerHTML = '<div class="preset-empty">No rivers match &quot;' + escapeHtml(filterEl ? filterEl.value : '') + '&quot;</div>'; return; }
+
     var html = '';
     for (var gi = 0; gi < names.length; gi++) {
         var name = names[gi];
         var items = groups[name];
-        if (items.length === 1) {
-            // Single-gauge river → direct-select button
-            var s = items[0];
-            var star = favs.indexOf(s.site_id) >= 0 ? '\u2605' : '\u2606';
-            html += '<div class="preset-row"><button class="preset-star" onclick="togglePresetFav(\'' +
-                escapeJsString(s.site_id) + '\')">' + star + '</button>' +
-                '<button class="preset-btn" onclick="selectPreset(\'' +
+        var anyFav = items.some(function (s) { return favs.indexOf(s.site_id) >= 0; });
+        var starClass = anyFav ? '' : '';
+
+        html += '<div class="preset-card">' +
+            '<div class="preset-card-header">' +
+            '<span class="preset-card-star" onclick="togglePresetFav(\'' +
+            escapeJsString(items[0].site_id) + '\')">' + (anyFav ? '\u2605' : '\u2606') + '</span> ' +
+            escapeHtml(name) + '</div>';
+
+        for (var si = 0; si < items.length; si++) {
+            var s = items[si];
+            var sfav = favs.indexOf(s.site_id) >= 0;
+            html += '<button class="preset-card-row" onclick="selectPreset(\'' +
                 escapeJsString(s.site_id) + '\', ' + Number(s.coords.lat) + ', ' +
                 Number(s.coords.lon) + ', \'' + escapeJsString(s.name) + '\')">' +
-                '<span>' + escapeHtml(name) + '</span> <span class="preset-id">' +
-                escapeHtml(s.site_id) + '</span></button></div>';
-        } else {
-            // Multi-gauge river → collapsible section
-            html += '<details class="preset-group" ' +
-                'ontoggle="this.open && this.querySelector(\'.preset-star\')?.focus()">' +
-                '<summary>' + escapeHtml(name) + '</summary>';
-            for (var si = 0; si < items.length; si++) {
-                var s = items[si];
-                var star = favs.indexOf(s.site_id) >= 0 ? '\u2605' : '\u2606';
-                html += '<div class="preset-row"><button class="preset-star" onclick="togglePresetFav(\'' +
-                    escapeJsString(s.site_id) + '\')">' + star + '</button>' +
-                    '<button class="preset-btn" onclick="selectPreset(\'' +
-                    escapeJsString(s.site_id) + '\', ' + Number(s.coords.lat) + ', ' +
-                    Number(s.coords.lon) + ', \'' + escapeJsString(s.name) + '\')">' +
-                    '<span>' + escapeHtml(s.name) + '</span> <span class="preset-id">' +
-                    escapeHtml(s.site_id) + '</span></button></div>';
-            }
-            html += '</details>';
+                '<span class="preset-card-star-sm" onclick="event.stopPropagation();togglePresetFav(\'' +
+                escapeJsString(s.site_id) + '\')">' + (sfav ? '\u2605' : '\u2606') + '</span> ' +
+                escapeHtml(s.name) + ' <span class="preset-card-id">' +
+                escapeHtml(s.site_id) + '</span></button>';
         }
+        html += '</div>';
     }
-    if (html) list.innerHTML = html;
+    list.innerHTML = html;
 }
 window.renderPresets = renderPresets;
 window.openStationModal = openStationModal;

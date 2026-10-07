@@ -1,5 +1,112 @@
 <!-- Phase A6 complete — detail deleted per protocol -->
 
+<a id="ux-map-modal"></a>
+## Phase Y1: Map as Full-Screen Station Selector
+
+**Change:** Station modal opens to a full-screen satellite map instead of a list
+panel with a hidden 260px map div. The map IS the station selector.
+
+**Composite style (MapLibre):**
+- Base: Esri World Imagery (raster satellite tiles)
+- Overlay: OpenFreeMap vector tiles with road lines, place labels, water labels
+- No toggle — satellite with labels is the permanent view
+
+**Map chrome:**
+- GeolocateControl (your GPS dot)
+- Gauge pins (color-coded: green = live, grey = dormant)
+- Saved spot stars
+- Crosshair cursor always active
+- Close X button in top-right corner
+
+**Files:**
+- `index.html` — new `<div id="map-modal">` overlay, full viewport; remove inline
+  station-map div from station modal; keep existing station modal as the entry panel
+- `map.js` — composite MapLibre style (raster + vector), open/close modal fns,
+  `showStationMap()` replaced by `openMapModal()`
+- `styles.css` — `.map-modal` full-screen overlay, close button, remove old
+  `.map-tile-toggle-btn`, `.leaflet-*` dead CSS
+
+---
+
+<a id="ux-pin-drop"></a>
+## Phase Y2: Tap-to-Pin + Floating Name Pill
+
+**Change:** Tap map → pin drops + floating name pill appears above pin.
+No bottom sheet, no modal-in-modal.
+
+**Flow:**
+1. Map crosshair cursor always active
+2. Tap anywhere → pin drops with spring animation, pill appears above it
+3. Pill contains: `[________] ✓` — type name or tap ✓ with empty field
+4. Auto-name fallback: `"Spot at 47.2°N, 122.3°W"`
+5. On save: pin becomes star, spots list updates, pill disappears
+
+**Files:**
+- `map.js` — onMapClick handler, pin placement, pill create/dismiss, save flow
+- `spots.js` — auto-name fallback logic
+- `styles.css` — `.map-pin-pill` with animation
+
+---
+
+<a id="ux-spot-chips"></a>
+## Phase Y3: Saved Spots as Compact Pill Chips
+
+**Change:** Saved spots render as pill chips above the river list instead of
+rows with full-width buttons.
+
+**Layout:**
+- `.spot-chips` flex row: each chip is a compact pill with spot name
+- "+" chip opens map to add a new spot
+- Up to 6 chips, then "View all" link
+- Chips appear above generic river content (personal > generic)
+
+**Files:**
+- `spots.js` — renderFavoriteSpots outputs chips
+- `index.html` — `.spot-chips` container
+- `styles.css` — chip styling
+
+---
+
+<a id="ux-river-finder"></a>
+## Phase Y4: Filterable River Finder
+
+**Change:** Replace static 15-river list with a search-as-you-type filter.
+
+**Layout:**
+- Text input at top: "Find a river..."
+- As you type, rivers filter in real time by name match
+- Empty filter shows: starred rivers → nearest rivers → "Show all 15" link
+- Card-based layout for filtered results (2-column grid)
+- Multi-gauge rivers (Puyallup) show all options inline, no collapse
+- Star toggle in card header
+
+**Files:**
+- `picker.js` — rewrite renderPresets() with filter logic
+- `index.html` — filter input above preset list
+- `styles.css` — card grid, filter input
+
+---
+
+<a id="ux-polish"></a>
+## Phase Y5: CSS Polish & Dead Code Removal
+
+**Remove:**
+- `.map-tile-toggle-btn`, `.map-tile-toggle-btn:hover`, `.map-tile-toggle-btn:active`
+- `.leaflet-*` dead CSS (already partial)
+- `.preset-group`, `.preset-group summary`, `.preset-group[open]`
+- `.preset-row`, `.preset-star` (replaced by card layout in Y4)
+
+**Add:**
+- `.map-modal`, `.map-modal-content`, `.map-close-btn` styles
+- `.map-pin-pill` (Y2 pill animation)
+- `.spot-chips`, `.spot-chip` styles
+- `.preset-card`, `.preset-card-header`, `.preset-card-row`, `.preset-card-sub`
+- Ensure all touch targets ≥ 44px
+
+**Files:** `styles.css`
+
+---
+
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

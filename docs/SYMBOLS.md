@@ -183,7 +183,7 @@ pass fails.
 
 ## src/features/station
 - **picker.js** — `openStationModal()`, `closeStationModal()`, `selectPreset()`,
-  `calcDistance()`, `useGPS()`, `renderPresets()`,
+  `calcDistance()`, `useGPS()`, `renderPresets()`, `onPresetFilter()`,
   `PRESET_FAV_KEY`, `togglePresetFav(siteId)`
 - **search.js** — `searchStation()`, `updateSearchAvailability()`
 
@@ -195,9 +195,10 @@ pass fails.
   `deleteSavedSpot(id)` — a spot is a lat/lon YOU pick (weather at the point, flow from the
   resolved gauge), RLS-private, cached locally
 - **spots-map.js** — `savedSpotPopupHtml(spot)` — popup HTML for saved spots
-- **map.js** — `showStationMap()`, `loadLeaflet()`, `refreshStationMap(center)`,
-  `mapCenter()`, `startSpotPick()`, `onSpotPick(e)` — MapLibre GL JS map with
-  raster tile layers, geolocate, and the "drop a point anywhere" spot picker
+- **map.js** — `openMapModal()`, `closeMapModal()`, `onMapClick()`,
+  `refreshStationMap(center)`, `mapCenter()`, `startSpotPick()`, `onSpotPick()`,
+  `confirmPinSpot()`, `cancelPinSpot()`, `mapModalOpen` — full-screen map modal
+  with composite satellite+labels, pin-drop with floating name pill
 
 ## src/app.js
 Bootstrap only — no public API. It wires `window.onload` to the globals above.

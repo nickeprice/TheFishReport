@@ -24,19 +24,42 @@ import { savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
 import { Map as MaplibreMap, Marker, GeolocateControl } from 'maplibre-gl';
 
-// ── Tile sources ──────────────────────────────────────────────────────────────────
-var STREET_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-var SATELLITE_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg';
+// ── Composite style: satellite base + road/label vector overlay ─────────────────
+var SATELLITE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg';
+var OVERLAY_URL = 'https://tiles.openfreemap.com/tiles/{z}/{x}/{y}.pbf';
 var MAP_DEFAULT_CENTER = [-122.302, 47.195];  // [lng, lat]
 var MAP_START_ZOOM = 10;
 
-var _stationMap = null;
-var _mapMarkers = [];           // { el, lng, lat, station? }
-var _spotsPlotted = 0;
-var _spotPicking = false;
-var _tileMode = 'street';       // 'street' | 'satellite'
+// MapLibre style JSON: satellite raster + OpenFreeMap vector overlay for roads/labels
+var MAP_STYLE = { version: 8, sources: {
+    satellite: { type: 'raster', tiles: [SATELLITE_URL], tileSize: 256, attribution: '\u00a9 Esri' },
+    overlay: { type: 'vector', tiles: [OVERLAY_URL], minzoom: 0, maxzoom: 14, attribution: '\u00a9 OpenFreeMap' }
+}, layers: [
+    { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 19 },
+    // Roads
+    { id: 'road-highway', type: 'line', source: 'overlay', 'source-layer': 'road',
+      filter: ['in', 'class', 'motorway', 'trunk', 'primary'],
+      paint: { 'line-color': '#fff', 'line-opacity': 0.35, 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1, 14, 3] }, minzoom: 6 },
+    { id: 'road-secondary', type: 'line', source: 'overlay', 'source-layer': 'road',
+      filter: ['!in', 'class', 'motorway', 'trunk', 'primary'],
+      paint: { 'line-color': '#ddd', 'line-opacity': 0.2, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 14, 1.5] }, minzoom: 8 },
+    // Place labels (city/town names)
+    { id: 'place-label', type: 'symbol', source: 'overlay', 'source-layer': 'place',
+      filter: ['==', ['geometry-type'], 'Point'],
+      paint: { 'text-color': '#fff', 'text-halo-color': '#000', 'text-halo-width': 1.5,
+               'text-size': ['match', ['get', 'class'], 'city', 13, 'town', 10, 8],
+               'text-field': ['get', 'name'], 'text-max-width': 8 }, minzoom: 6 },
+    // Water labels (river names)
+    { id: 'water-label', type: 'symbol', source: 'overlay', 'source-layer': 'water_name',
+      paint: { 'text-color': '#b0d0f0', 'text-halo-color': '#000', 'text-halo-width': 1.2,
+               'text-size': 10, 'text-field': ['get', 'name'] },
+      placement: 'line-center', minzoom: 8 }
+] };
 
-// ── Compatibility shim ────────────────────────────────────────────────────────────
+var _stationMap = null;
+var _mapMarkers = [];
+var _spotsPlotted = 0;
+
 export function loadLeaflet() { return Promise.resolve(true); }
 window.loadLeaflet = loadLeaflet;
 
@@ -120,7 +143,7 @@ function showPopup(html) {
         popup = document.createElement('div');
         popup.id = 'station-popup';
         popup.className = 'map-popup';
-        var box = document.getElementById('station-map');
+        var box = document.getElementById('map-modal-container');
         if (box) box.appendChild(popup);
     }
     if (!popup) return;
@@ -130,7 +153,6 @@ function showPopup(html) {
 }
 
 // ── Saved spot stars ──────────────────────────────────────────────────────────────
-// Plotted from LOCAL state only, on every refresh.
 export function plotSavedSpotStars() {
     if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
     var plotted = 0;
@@ -156,11 +178,9 @@ export async function refreshStationMap(center) {
     removeAllMarkers();
     if (res.ok) {
         var stations = (res.data && res.data.stations) ? res.data.stations : [];
-        // Centre dot
         var dotEl = document.createElement('div');
         dotEl.className = 'map-centre-dot';
         addMarker(dotEl, [center[1], center[0]]);
-        // Station pins
         stations.forEach(function (s) {
             if (s.lat == null || s.lon == null) return;
             var el = makePinEl(mapPinColor(s));
@@ -179,121 +199,170 @@ export async function refreshStationMap(center) {
     return out;
 }
 
-// ── Tile layer toggle ──────────────────────────────────────────────────────────────
-function toggleTiles() {
-    if (!_stationMap) return;
-    _tileMode = (_tileMode === 'street') ? 'satellite' : 'street';
-    var url = (_tileMode === 'street') ? STREET_TILES : SATELLITE_TILES;
-    var attr = (_tileMode === 'street') ? '\u00a9 OpenStreetMap' : '\u00a9 Esri';
-    var s = { version: 8, sources: { 'base': { type: 'raster', tiles: [url], tileSize: 256, attribution: attr } },
-        layers: [{ id: 'base', type: 'raster', source: 'base', minzoom: 0, maxzoom: 19 }] };
-    _stationMap.setStyle(s);
-    var btn = document.getElementById('map-tile-toggle');
-    if (btn) {
-        btn.textContent = (_tileMode === 'street') ? '\ud83d\uddfa Sat' : '\ud83d\uddfa Str';
-        btn.title = 'Switch to ' + (_tileMode === 'street' ? 'satellite' : 'street') + ' view';
-    }
-}
+// ── Open / close map modal ─────────────────────────────────────────────────────────
+export var mapModalOpen = false;
+window.mapModalOpen = mapModalOpen;
 
-// ── Spot picker ───────────────────────────────────────────────────────────────────
-export function startSpotPick() { openSpotPickMap(); }
-window.startSpotPick = startSpotPick;
-
-export async function openSpotPickMap() {
-    if (!_stationMap) {
-        spotsStatus('Loading the map\u2026');
-        try { await showStationMap(); } catch (e) {}
-    }
-    if (!_stationMap) {
-        spotsStatus('Map unavailable (offline or CDN blocked) \u2014 use the presets or GPS instead.');
-        return;
-    }
-    var p = document.getElementById('station-popup');
-    if (p) { p.style.display = 'none'; p.hidden = true; }
-    spotsStatus('Now tap the map where your spot is.');
-    if (_stationMap.getContainer) _stationMap.getContainer().style.cursor = 'crosshair';
-    _spotPicking = true;
-    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim() : '';
-    if (!label) { var inp = document.getElementById('spot-label'); if (inp && inp.focus) inp.focus(); }
-}
-
-export async function onSpotPick(e) {
-    if (_stationMap && _stationMap.getContainer) _stationMap.getContainer().style.cursor = '';
-    _spotPicking = false;
-    if (!e || (e.lat == null && (!e.latlng || e.latlng.lat == null))) return;
-    var lat = e.lat != null ? e.lat : e.latlng.lat;
-    var lng = e.lng != null ? e.lng : e.latlng.lng;
-    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX) : '';
-    if (!label) {
-        var typed = window.prompt('Name this spot', 'My spot');
-        if (typed == null) { spotsStatus('Cancelled \u2014 tap the map again when you are ready.'); return; }
-        label = String(typed).trim().slice(0, SPOT_LABEL_MAX);
-        if (!label) { spotsStatus('A spot needs a name \u2014 tap the map again.'); return; }
-        setFieldValue('spot-label', label);
-    }
-    spotsStatus('Saving\u2026');
-    var id = await saveSpotAt(lat, lng, label);
-    if (!id) { spotsStatus('Could not save that spot.'); return; }
-    setFieldValue('spot-label', '');
-    if (typeof showToast === 'function') showToast('Spot saved (private)', 'success', 2500);
-    await loadFavoriteSpots();
-    try { await refreshStationMap(mapCenter()); } catch (err) {}
-    spotsStatus('Saved. Tap its star to load the conditions there.');
-}
-
-// ── Show / build map ──────────────────────────────────────────────────────────────
-export async function showStationMap() {
-    var box = document.getElementById('station-map');
+export async function openMapModal() {
+    var modal = document.getElementById('map-modal');
     var note = document.getElementById('station-map-note');
-    if (!box) return;
-    box.hidden = false;
+    if (!modal) return;
+    modal.hidden = false;
     if (note) { note.hidden = false; note.textContent = 'Loading map\u2026'; }
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     var center = mapCenter();
-
     if (!_stationMap) {
-        var baseStyle = {
-            version: 8,
-            sources: { 'base': { type: 'raster', tiles: [STREET_TILES], tileSize: 256, attribution: '\u00a9 OpenStreetMap' } },
-            layers: [{ id: 'base', type: 'raster', source: 'base', minzoom: 0, maxzoom: 19 }]
-        };
+        var box = document.getElementById('map-modal-container');
+        if (!box) return;
         _stationMap = new MaplibreMap({
             container: box,
-            style: baseStyle,
+            style: MAP_STYLE,
             center: [center[1], center[0]],
             zoom: MAP_START_ZOOM,
             attribution: { compact: true }
         });
         _stationMap.on('click', function (e) {
-            if (_spotPicking) onSpotPick(e);
-            else { var p = document.getElementById('station-popup'); if (p) { p.style.display = 'none'; p.hidden = true; } }
+            var p = document.getElementById('station-popup');
+            if (p) { p.style.display = 'none'; p.hidden = true; }
+            onMapClick(e);
         });
         _stationMap.addControl(new GeolocateControl({
             positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 }
         }));
-        var tb = document.createElement('button');
-        tb.id = 'map-tile-toggle'; tb.className = 'map-tile-toggle-btn';
-        tb.addEventListener('click', toggleTiles);
-        tb.textContent = '\ud83d\uddfa Sat'; tb.title = 'Switch to satellite view';
-        box.appendChild(tb);
     } else {
         _stationMap.setCenter([center[1], center[0]]);
     }
-
     try {
         var out = await refreshStationMap(center);
         if (note) {
             var spotsN = (typeof spotsState !== 'undefined' && spotsState.rows.length)
                 ? ' \u00b7 ' + spotsState.rows.length + ' saved spot(s) (star).' : '';
             if (out.error) note.textContent = 'Could not load nearby gauges (' + out.error + ')' +
-                ' \u2014 use the presets, search or GPS above.' + (out.spots ? ' Your saved spots (star) are still shown.' : '');
+                ' \u2014 use the presets or GPS above.' + (out.spots ? ' Your saved spots (star) are still shown.' : '');
             else if (out.note) note.textContent = out.note;
-            else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live.' + spotsN + ' Tap a pin to fish it.';
+            else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live.' + spotsN;
             else note.textContent = 'No live gauges found nearby.' + spotsN;
         }
     } catch (e) {
         logDebug('Station map feed failed: ' + e.message, 'MAP');
-        if (note) note.textContent = 'Could not load nearby gauges \u2014 use the presets, search or GPS above.';
+        if (note) note.textContent = 'Could not load nearby gauges.';
+    }
+    mapModalOpen = true;
+}
+window.openMapModal = openMapModal;
+
+export function closeMapModal() {
+    var modal = document.getElementById('map-modal');
+    if (modal) modal.hidden = true;
+    mapModalOpen = false;
+}
+window.closeMapModal = closeMapModal;
+
+// ── Temporary pin for spot-drop —─────────────────────────────────────────────────
+var _tempPin = null;  // { el, lat, lng }
+
+function dropTempPin(lat, lng) {
+    clearTempPin();
+    var el = document.createElement('div');
+    el.className = 'station-pin';
+    el.innerHTML = '<span class="temp-pin-dot"></span>';
+    addMarker(el, [lng, lat]);
+    // last marker in the list is the new temp pin
+    _tempPin = _mapMarkers.length > 0 ? { el: _mapMarkers[_mapMarkers.length - 1].el, lat: lat, lng: lng } : null;
+}
+
+function clearTempPin() {
+    // Remove temp pin element and its marker entry
+    if (_tempPin) {
+        for (var i = 0; i < _mapMarkers.length; i++) {
+            if (_mapMarkers[i].el === _tempPin.el) {
+                _tempPin.el.remove();
+                _mapMarkers.splice(i, 1);
+                break;
+            }
+        }
+        _tempPin = null;
     }
 }
+
+// ── Floating name pill ───────────────────────────────────────────────────────────
+function showNamePill(lat, lng) {
+    var pill = document.getElementById('pin-name-pill');
+    if (!pill) {
+        pill = document.createElement('div');
+        pill.id = 'pin-name-pill';
+        pill.className = 'pin-name-pill';
+        var modal = document.getElementById('map-modal');
+        if (modal) modal.appendChild(pill);
+    }
+    pill.innerHTML = '<div class="pin-pill-body"><input type="text" id="pin-pill-input" maxlength="60" placeholder="Name this spot" value="">' +
+        '<button class="pin-pill-save" onclick="confirmPinSpot()">\u2713</button>' +
+        '<button class="pin-pill-cancel" onclick="cancelPinSpot()">\u2715</button></div>' +
+        '<div class="pin-pill-coords"></div>';
+    pill.style.display = 'flex';
+    pill.hidden = false;
+    var coords = document.querySelector('.pin-pill-coords');
+    if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N, ' + Number(lng).toFixed(4) + '\u00b0W';
+    var input = document.getElementById('pin-pill-input');
+    if (input) { input.focus(); input.select(); }
+    _pendingPin = { lat: lat, lng: lng };
+}
+
+function hideNamePill() {
+    var pill = document.getElementById('pin-name-pill');
+    if (pill) { pill.style.display = 'none'; pill.hidden = true; }
+}
+
+var _pendingPin = null;
+
+export function confirmPinSpot() {
+    if (!_pendingPin) return;
+    var input = document.getElementById('pin-pill-input');
+    var label = input ? input.value.trim().slice(0, SPOT_LABEL_MAX) : '';
+    if (!label) label = 'Spot at ' + Number(_pendingPin.lat).toFixed(4) + '\u00b0N ' + Number(_pendingPin.lng).toFixed(4) + '\u00b0W';
+    hideNamePill();
+    doSavePin(_pendingPin.lat, _pendingPin.lng, label);
+}
+window.confirmPinSpot = confirmPinSpot;
+
+export function cancelPinSpot() {
+    clearTempPin();
+    hideNamePill();
+    _pendingPin = null;
+}
+window.cancelPinSpot = cancelPinSpot;
+
+async function doSavePin(lat, lng, label) {
+    clearTempPin();
+    var id = await saveSpotAt(lat, lng, label);
+    if (!id) { if (typeof showToast === 'function') showToast('Could not save that spot.', 'warn', 4000); return; }
+    if (typeof showToast === 'function') showToast('Saved: ' + label, 'success', 2500);
+    await loadFavoriteSpots();
+    try { await refreshStationMap(mapCenter()); } catch (err) {}
+}
+
+// ── Map click handler ─────────────────────────────────────────────────────────────
+export function onMapClick(e) {
+    if (!e || e.lat == null || e.lng == null) {
+        if (!e || !e.latlng) return;
+    }
+    var lat = e.lat != null ? e.lat : e.latlng.lat;
+    var lng = e.lng != null ? e.lng : e.latlng.lng;
+    // Dismiss existing pill if present
+    if (_pendingPin) {
+        var pill = document.getElementById('pin-name-pill');
+        if (pill) { pill.style.display = 'none'; pill.hidden = true; }
+        _pendingPin = null;
+    }
+    dropTempPin(lat, lng);
+    showNamePill(lat, lng);
+}
+
+// ── Shims for backward compatibility ─────────────────────────────────────────────
+export async function showStationMap() { await openMapModal(); }
 window.showStationMap = showStationMap;
+
+export function startSpotPick() { openMapModal(); }
+window.startSpotPick = startSpotPick;
+
+export async function onSpotPick(e) { onMapClick(e); }

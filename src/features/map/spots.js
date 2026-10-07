@@ -96,52 +96,31 @@ window.loadFavoriteSpots = loadFavoriteSpots;
     return spotsState.rows;
 }
 
-// One row: the label block opens the spot, the small button deletes it.
-export function spotRowEl(spot) {
-    const row = document.createElement('div');
-    row.className = 'spot-row';
-
-    const open = document.createElement('button');
-    open.type = 'button';
-    open.className = 'spot-open';
-    open.textContent = spot.label || 'Saved spot';
-    const meta = document.createElement('span');
-    meta.className = 'spot-meta';
-    meta.textContent = spotGaugeText(spot);
-    open.appendChild(meta);
-    open.onclick = (function (id) { return function () { selectSavedSpot(id); }; })(spot.id);
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.className = 'mini-btn mini-btn-danger';
-    del.textContent = 'Delete';
-    del.onclick = (function (id) { return function () { deleteSavedSpot(id); }; })(spot.id);
-
-    row.appendChild(open);
-    row.appendChild(del);
-    return row;
+// ── Spot chips (Phase Y3) ───────────────────────────────────────────────────────
+// Each spot is a pill chip. The last chip is "+" to add a new spot from the map.
+export function spotChipEl(spot) {
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'spot-chip';
+    chip.textContent = spot.label || 'Spot';
+    chip.title = spotGaugeText(spot);
+    chip.onclick = (function (id) { return function () { selectSavedSpot(id); }; })(spot.id);
+    return chip;
 }
 
-// Paint the list + its one-line status. Text only (textContent), never innerHTML for the
-// label, which is user text.
 export function renderFavoriteSpots() {
-    const box = document.getElementById('favorite-spots');
-    // The save/pick controls stay VISIBLE even without a session: hiding them made "Place a
-    // spot on the map" invisible, which read as a broken feature. The status line explains
-    // what a session is for, and startSpotPick() refuses with a reason.
-    if (!box) return;
-    box.innerHTML = '';
-    spotsStatus(spotsState.offline
-        ? 'Showing the spots saved on this device \u2014 the server could not be reached.'
-        : '');
-    if (!spotsState.rows.length) {
-        const empty = document.createElement('div');
-        empty.className = 'spot-empty';
-        empty.textContent = 'No saved spots yet. Pick your river, then name it and tap "Save this spot".';
-        box.appendChild(empty);
-        return;
-    }
-    spotsState.rows.forEach(function (s) { box.appendChild(spotRowEl(s)); });
+    var chips = document.getElementById('spot-chips');
+    if (!chips) return;
+    chips.innerHTML = '';
+    spotsState.rows.forEach(function (s) { chips.appendChild(spotChipEl(s)); });
+    // "+" chip to add a new spot from the map
+    var addChip = document.createElement('button');
+    addChip.type = 'button';
+    addChip.className = 'spot-chip spot-chip-add';
+    addChip.textContent = '+';
+    addChip.title = 'Add a new spot from the map';
+    addChip.onclick = function () { if (typeof openMapModal === 'function') openMapModal(); };
+    chips.appendChild(addChip);
 }
 
 // ==================================================================================

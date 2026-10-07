@@ -439,17 +439,87 @@ tr.row-pending td:first-child { box-shadow: inset 2px 0 0 var(--accent-yellow); 
 .modal-content { background-color: var(--bg-panel); border: 1px solid #2c2c2e; border-radius: 12px; padding: 20px; max-width: 450px; margin: 40px auto; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
 .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--accent-blue); margin-top: 0; margin-bottom: 15px; text-transform: uppercase; }
 .modal-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; font-weight: bold; }
-.preset-list { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
-.preset-row { display: flex; gap: 6px; align-items: center; }
-.preset-star { width: 32px; padding: 0; font-size: 18px; background: none; border: none; cursor: pointer; color: #f5c842; min-height: 44px; line-height: 44px; }
-.preset-star:active { transform: scale(1.15); }
-.preset-btn { width: 100%; text-align: left; padding: 12px 15px; font-size: 14px; font-weight: bold; background: #2c2c2e; border: 1px solid #38383a; border-radius: 8px; color: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
-.preset-btn:active { background-color: #3a3a3c; }
-.preset-id { font-size: 10px; color: var(--text-muted); font-family: monospace; }
-.preset-group { margin: 0; }
-.preset-group summary { font-size: 14px; font-weight: bold; padding: 12px 15px; background: #2c2c2e; border: 1px solid #38383a; border-radius: 8px; color: #fff; cursor: pointer; min-height: 44px; }
-.preset-group[open] { padding-bottom: 8px; }
-.preset-group[open] .preset-row { margin-top: 6px; }
+/* Presets: card grid + filter (Phase Y4) */
+.preset-filter-row {
+    margin: 10px 0;
+}
+.preset-filter {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid #38383a;
+    border-radius: 8px;
+    background: #111;
+    color: #e5e7eb;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.preset-filter:focus { border-color: var(--accent-blue); }
+.preset-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+}
+.preset-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 12px;
+}
+.preset-card {
+    display: flex;
+    flex-direction: column;
+    background: #1c1c1f;
+    border: 1px solid #38383a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.preset-card-header {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e5e7eb;
+    padding: 8px 12px;
+    background: #2c2c2e;
+    border-bottom: 1px solid #38383a;
+    cursor: default;
+}
+.preset-card-star {
+    font-size: 16px;
+    cursor: pointer;
+    color: #f5c842;
+}
+.preset-card-star:active { transform: scale(1.2); }
+.preset-card-row {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    background: #1c1c1f;
+    border: none;
+    border-top: 1px solid #2c2c2e;
+    color: #c0c4cc;
+    cursor: pointer;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.preset-card-row:active { background: #313134; }
+.preset-card-row:first-of-type { border-top: none; }
+.preset-card-star-sm {
+    font-size: 13px;
+    cursor: pointer;
+    color: #f5c842;
+    margin-right: 4px;
+}
+.preset-card-id {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: monospace;
+    margin-left: auto;
+}
 .search-row { display: flex; gap: 10px; margin: 15px 0 25px 0; }
 .search-row input { flex: 1; }
 .search-row button { padding: 10px 20px; font-size: 14px; font-weight: bold; background: var(--accent-blue); color: #fff; border: none; border-radius: 8px; cursor: pointer; }
@@ -553,7 +623,7 @@ td.empty-state { padding: 30px 10px; }
     border: 2px solid #0b0b0d;
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.85);
 }
-/* MapLibre GL JS: popup overlay, tile toggle, marker styling */
+/* MapLibre GL JS: popup overlay, marker styling, full-screen modal */
 .map-popup {
     position: absolute;
     top: 10px;
@@ -571,22 +641,6 @@ td.empty-state { padding: 30px 10px; }
 }
 .map-popup a { color: var(--accent-blue); font-weight: bold; }
 .map-popup[hidden] { display: none; }
-.map-tile-toggle-btn {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 10;
-    background: #1c1c1f;
-    color: #e5e7eb;
-    border: 1px solid #38383a;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 11px;
-    cursor: pointer;
-    min-height: 36px;
-}
-.map-tile-toggle-btn:hover { background: #2c2c2e; }
-.map-tile-toggle-btn:active { background: #3a3a3c; }
 .map-centre-dot {
     display: block;
     width: 12px;
@@ -598,7 +652,154 @@ td.empty-state { padding: 30px 10px; }
 }
 .station-pin { background: none; border: none; }
 
-/* --- WS-5 private saved spots (station modal; the data itself is RLS-protected) --- */
+/* Full-screen map modal overlay */
+.map-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+}
+.map-modal[hidden] { display: none !important; }
+.map-modal-header {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 20;
+    padding: 8px 12px;
+}
+.map-close-btn {
+    background: #1c1c1f;
+    color: #e5e7eb;
+    border: 1px solid #38383a;
+    border-radius: 6px;
+    font-size: 20px;
+    line-height: 36px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.map-close-btn:active { background: #3a3a3c; }
+.map-modal-container {
+    flex: 1;
+    min-height: 100%;
+}
+
+/* Pin-drop pill overlay (Phase Y2) */
+.pin-name-pill {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    background: #1c1c1f;
+    border: 1px solid #38383a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 240px;
+    max-width: 320px;
+}
+.pin-name-pill[hidden] { display: none; }
+.pin-pill-body {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.pin-pill-body input {
+    flex: 1;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid #38383a;
+    border-radius: 6px;
+    background: #111;
+    color: #e5e7eb;
+    font-size: 14px;
+}
+.pin-pill-save {
+    min-height: 40px;
+    width: 40px;
+    background: #23402a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.pin-pill-save:active { background: #2d5a3a; }
+.pin-pill-cancel {
+    min-height: 40px;
+    width: 40px;
+    background: #3a2020;
+    color: #e5e7eb;
+    border: none;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.pin-pill-cancel:active { background: #5a3030; }
+.pin-pill-coords {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+}
+.temp-pin-dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #f5c842;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px rgba(245,200,66,0.6);
+    animation: pin-drop 0.3s ease-out;
+}
+@keyframes pin-drop {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- WS-5 private saved spots — pill chips (Phase Y3) ---------------------------- */
+.spot-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.spot-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: #2c2c2e;
+    border: 1px solid #38383a;
+    border-radius: 20px;
+    color: #e5e7eb;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 36px;
+    white-space: nowrap;
+}
+.spot-chip:active { background: #3a3a3c; }
+.spot-chip-add {
+    background: #23402a;
+    border-color: #2d5a3a;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 16px;
+}
+.spot-chip-add:active { background: #2d5a3a; }
 .spot-status {
     font-size: 10px;
     color: var(--text-muted);

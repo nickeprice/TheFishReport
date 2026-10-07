@@ -1,9 +1,8 @@
 # Fish Report — Active Plan
 
-## 🛠 Station Modal & Map
+## 🛠 UX Rework (Map-First Station Selector)
 
-- [x] Phase A6: MapLibre GL JS upgrade (satellite + vector + geolocate)
-      → map.js, package.json
+
 
 ## 🛠 Data Pipeline & Infrastructure
 

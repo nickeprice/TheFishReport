@@ -10,7 +10,6 @@
  * ES module.
  */
 import { logDebug } from '../../shared/debug.js';
-import { activeDateOffset, reportsData } from '../gear-sim/report-state.js';
 import { provVal } from '../../shared/format.js';
 // metric -> display spec. The keys are the SAME keys the pill uses in `weather_hourly`.
 const HOURLY_METRICS = {
@@ -35,8 +34,9 @@ export function openHourlyPopup(metricKey) {
     const modal = document.getElementById('hourly-modal');
     const strip = document.getElementById('hourly-strip');
     if (!spec || !modal || !strip) return;
-    const rep = (typeof reportsData !== 'undefined' && reportsData.length)
-        ? reportsData[Math.min(Math.max(activeDateOffset, 0), reportsData.length - 1)] : null;
+    const rd = window.reportsData || [];
+    const ao = window.activeDateOffset || 0;
+    const rep = rd.length ? rd[Math.min(Math.max(ao, 0), rd.length - 1)] : null;
     const rows = (rep && rep.weather_hourly) ? rep.weather_hourly : [];
     const ref = (rep && rep.weather_hour) ? rep.weather_hour : null;
 

@@ -6,7 +6,6 @@
  */
 import { logDebug } from '../../shared/debug.js';
 import { loadWaterReport } from '../telemetry/report.js';
-import { setActiveOffsetAndWindow } from '../telemetry/daynav.js';
 import { loadFavoriteSpots } from '../map/spots.js';
 import { State } from '../../shared/state.js';
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
@@ -26,7 +25,7 @@ export function closeStationModal() {
 window.closeStationModal = closeStationModal;
 
 export function selectPreset(id, lat, lon, name, isGps) {
-    setActiveOffsetAndWindow(0);
+    window.activeDateOffset = 0;
     const station = { id: id, lat: lat, lon: lon, name: name, isGps: !!isGps };
     localStorage.setItem('active_station', JSON.stringify(station));
     logDebug("Selected Station: " + name + " (" + id + ")", "STATE");

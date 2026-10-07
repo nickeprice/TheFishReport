@@ -5,7 +5,6 @@
  */
 // --- NAVIGATION ---
 import { logDebug } from './debug.js';
-import { setActiveOffsetAndWindow, activeDateOffset } from '../features/gear-sim/report-state.js';
 import { updateActiveDateUI } from '../features/telemetry/daynav.js';
 export function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('tab-active'); });
@@ -28,8 +27,8 @@ window.switchTab = switchTab;
 
 // Tapping the date header resets paging back to "Today" (offset 0).
 export function resetToToday() {
-    if (activeDateOffset === 0) return;
-    setActiveOffsetAndWindow(0);
+    if ((window.activeDateOffset || 0) === 0) return;
+    window.activeDateOffset = 0;
     if (typeof updateActiveDateUI === 'function') updateActiveDateUI();
 }
 window.resetToToday = resetToToday;

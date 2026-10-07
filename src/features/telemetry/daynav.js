@@ -8,20 +8,22 @@ import { logDebug } from '../../shared/debug.js';
 import { calculateSolarHours } from '../../utils/regulations.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
 import { applyReportWeather } from '../../services/water.js';
-import { activeDateOffset, reportsData, setReportDataAndWindow, setActiveOffsetAndWindow } from '../gear-sim/report-state.js';
 import { State } from '../../shared/state.js';
 import { checkRiverStatus } from '../../utils/regulations.js';
-// Re-export the master report state from report-state.js (breaks the
-// gear-sim/telemetry dependency cycle). The setters are the ONLY way to
-// mutate; the imported bindings are live (updated by report-state.js).
-export { activeDateOffset, reportsData, setReportDataAndWindow, setActiveOffsetAndWindow };
+// Re-export the OLD names from report-state.js for callers that still import them.
+// After Vite bundling, these are read-only live bindings. All state MUTATION
+// (setting reportsData / activeDateOffset) goes through window.* directly to
+// avoid Rollup minifier name collisions with Leaflet function names.
+export { reportsData, activeDateOffset } from '../gear-sim/report-state.js';
 
 export function stepDate(delta) {
-    const newOffset = activeDateOffset + delta;
+    const ao = window.activeDateOffset || 0;
+    const newOffset = ao + delta;
     if (newOffset < 0) return;
-    const maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
+    const rd = window.reportsData || [];
+    const maxOffset = rd.length > 0 ? rd.length - 1 : 14;
     if (newOffset > maxOffset) return;
-    setActiveOffsetAndWindow(newOffset);
+    window.activeDateOffset = newOffset;
     updateActiveDateUI();
 }
 
@@ -45,8 +47,12 @@ export function legalHoursLabel(rule, legalIn, legalOut) {
 
 
 export function updateActiveDateUI() {
+    // Read shared state from window.* (not from imported bindings) to avoid
+    // stale references after Vite bundling flattens module scopes.
+    const ao = window.activeDateOffset || 0;
+    const rd = window.reportsData || [];
     const d = new Date();
-    d.setDate(d.getDate() + activeDateOffset);
+    d.setDate(d.getDate() + ao);
 
     // 1. Centered Date Display: e.g. "Monday, September 14"
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
@@ -67,7 +73,7 @@ export function updateActiveDateUI() {
     // Prev/Next button states
     const prevBtn = document.getElementById('btn-prev-date');
     if (prevBtn) {
-        if (activeDateOffset <= 0) {
+        if (ao <= 0) {
             prevBtn.classList.add('disabled');
             prevBtn.disabled = true;
         } else {
@@ -77,8 +83,8 @@ export function updateActiveDateUI() {
     }
     const nextBtn = document.getElementById('btn-next-date');
     if (nextBtn) {
-        const maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
-        if (activeDateOffset >= maxOffset) {
+        const maxOffset = rd.length > 0 ? rd.length - 1 : 14;
+        if (ao >= maxOffset) {
             nextBtn.classList.add('disabled');
             nextBtn.disabled = true;
         } else {
@@ -118,7 +124,7 @@ export function updateActiveDateUI() {
     // 4. Dynamic Solar / Legal Hours Calculation
     const stLat = activeStation ? activeStation.lat : 47.1950;
     const stLon = activeStation ? activeStation.lon : -122.3020;
-    const rep = (activeDateOffset >= 0 && activeDateOffset < reportsData.length) ? reportsData[activeDateOffset] : null;
+    const rep = (ao >= 0 && ao < rd.length) ? rd[ao] : null;
     let legalIn = "--:--", legalOut = "--:--";
     // The waterbody's hours RULE comes from the region registry. Only a `daylight`
     // river may use the local solar approximation - a 24hr/unknown window is never

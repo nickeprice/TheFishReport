@@ -9,25 +9,12 @@
  */
 
 // The active day index set by daynav.js — starts at 0 (today).
-export var activeDateOffset = 0;
-window.activeDateOffset = activeDateOffset;
-
-// The full water-report payload array.
+// Shared water-report state. To avoid Rollup minifier colliding exported setter
+// functions with Leaflet function names, callers SET/GET directly via window.
 export var reportsData = [];
 window.reportsData = reportsData;
-
-// Setter MUST use a unique function name (20+ chars) that Rollup cannot
-// minify to the same 2-letter name as Leaflet's position setter.
-// If they collide, reportsData stays empty and day navigation breaks.
-export var setReportDataAndWindow = function setReportDataAndWindow(arr) {
-    reportsData = arr;
-    window.reportsData = reportsData;
-};
-
-export var setActiveOffsetAndWindow = function setActiveOffsetAndWindow(n) {
-    activeDateOffset = n;
-    window.activeDateOffset = activeDateOffset;
-};
+export var activeDateOffset = 0;
+window.activeDateOffset = activeDateOffset;
 
 // Live discharge for the Gear Sim + Catch Log. There is NO user-facing flow
 // input any more: the value comes from the current water report, falls back to
@@ -36,9 +23,10 @@ export var setActiveOffsetAndWindow = function setActiveOffsetAndWindow(n) {
 let lastKnownFlow = null;
 
 export function getActiveReport() {
-    if (typeof reportsData !== 'undefined' && typeof activeDateOffset !== 'undefined' &&
-        activeDateOffset >= 0 && activeDateOffset < reportsData.length) {
-        return reportsData[activeDateOffset];
+    const rd = window.reportsData || [];
+    const ao = window.activeDateOffset || 0;
+    if (rd.length > 0 && ao >= 0 && ao < rd.length) {
+        return rd[ao];
     }
     return null;
 }

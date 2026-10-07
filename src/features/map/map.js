@@ -204,8 +204,9 @@ export async function openMapModal() {
     var modal = document.getElementById('map-modal');
     var note = document.getElementById('station-map-note');
     if (!modal) return;
-    modal.hidden = false;
-    if (note) { note.hidden = false; note.textContent = 'Loading map\u2026'; }
+    modal.removeAttribute('hidden');
+    modal.style.display = 'flex';
+    if (note) { note.removeAttribute('hidden'); note.textContent = 'Loading map\u2026'; }
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     var center = mapCenter();
     if (!_stationMap) {
@@ -250,7 +251,10 @@ window.openMapModal = openMapModal;
 
 export function closeMapModal() {
     var modal = document.getElementById('map-modal');
-    if (modal) modal.hidden = true;
+    if (modal) {
+        modal.setAttribute('hidden', '');
+        modal.style.display = '';
+    }
     mapModalOpen = false;
 }
 window.closeMapModal = closeMapModal;
@@ -297,7 +301,6 @@ function showNamePill(lat, lng) {
         '<button class="pin-pill-cancel" onclick="cancelPinSpot()">\u2715</button></div>' +
         '<div class="pin-pill-coords"></div>';
     pill.style.display = 'flex';
-    pill.hidden = false;
     var coords = document.querySelector('.pin-pill-coords');
     if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N, ' + Number(lng).toFixed(4) + '\u00b0W';
     var input = document.getElementById('pin-pill-input');

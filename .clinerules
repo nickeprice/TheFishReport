@@ -71,6 +71,15 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 - Target <150 lines per feature file (data/type/contract files exempt).
 - Every feature file opens with `// public: a(), b() — purpose`.
 
+# Import Resolution Strategy
+- When importing shared primitives from `src/shared/` or feature helpers within `src/features/`, always use **relative paths with `.js` extensions** (e.g., `import { ... } from '../../shared/format.js'`).
+
+# Standard Browser APIs
+- Assume modern browser globals (`setTimeout`, `crypto`, `indexedDB`, `URLSearchParams`, `AbortController`, `fetch`, `console`, etc.) are available in all `src/` modules. Do not import external polyfills for standard Web APIs. Document known exceptions in `eslint.config.js` globals.
+
+# Batch Size Boundaries
+- Refactor in groups of **3–5 files maximum per prompt** to keep diffs reviewable and prevent token exhaustion. Larger migrations must be split across multiple handoffs.
+
 # Database
 - DB changes: idempotent timestamped migration under `supabase/migrations/`.
   Apply with `npx supabase db push --yes < /dev/null`.

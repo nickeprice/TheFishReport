@@ -41,9 +41,7 @@ window.SPOT_LABEL_MAX = SPOT_LABEL_MAX;
 
 export var spotsState = { rows: [], loaded: false, offline: false, gauge: {} };
 
-export function spotsSignedIn() {
-    return (typeof AuthState !== 'undefined') && !!(AuthState && AuthState.signedIn);
-}
+
 
 // The active station RECORD (id + name + coords) — the anchor a spot is saved against,
 // because /api/water_report needs a USGS site id to answer for a spot.
@@ -82,7 +80,7 @@ window.spotsStatus = spotsStatus;
 export async function loadFavoriteSpots() {
 window.loadFavoriteSpots = loadFavoriteSpots;
     if (!spotsState.loaded) spotsState.rows = readSpotCache();
-    if (spotsSignedIn() && typeof Supa !== 'undefined') {
+    if (typeof Supa !== 'undefined') {
         let rows = null;
         try { rows = await Supa.fetchFavoriteSpots(); } catch (e) { rows = null; }
         if (rows) {
@@ -133,10 +131,6 @@ export function renderFavoriteSpots() {
     // what a session is for, and startSpotPick() refuses with a reason.
     if (!box) return;
     box.innerHTML = '';
-    if (!spotsSignedIn()) {
-        spotsStatus('Start a session on the Catch Log tab to save spots here. They stay private to you.');
-        return;
-    }
     spotsStatus(spotsState.offline
         ? 'Showing the spots saved on this device \u2014 the server could not be reached.'
         : '');
@@ -265,10 +259,6 @@ export async function saveSpotAt(lat, lon, label) {
 // Save the CURRENT position (the GPS fix when we have one, else the active station's
 // gauge) - the "I am standing here" path. Private: label + coords go to the owner's rows.
 export async function saveCurrentSpot() {
-    if (!spotsSignedIn()) {
-        showToast('Start a session on the Catch Log tab first \u2014 spots save to your private account.', 'warn', 6000);
-        return;
-    }
     const label = (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX);
     if (!label) { showToast('Name this spot first.', 'warn', 4000); return; }
     const loc = (typeof mapCenter === 'function') ? mapCenter() : null;

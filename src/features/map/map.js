@@ -23,7 +23,7 @@ import { escapeHtml, escapeJsString } from '../../shared/format.js';
 import { showToast } from '../../shared/ui.js';
 import { getStr } from '../gear-sim/inputs.js';
 import { setFieldValue } from '../../shared/forms.js';
-import { spotsState, SPOTS_CACHE_KEY, SPOT_LABEL_MAX, spotsSignedIn, spotsStatus, loadFavoriteSpots, saveSpotAt, selectSavedSpot } from './spots.js';
+import { spotsState, SPOTS_CACHE_KEY, SPOT_LABEL_MAX, spotsStatus, loadFavoriteSpots, saveSpotAt, selectSavedSpot } from './spots.js';
 import { savedSpotIcon, savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
 import L from 'leaflet';
@@ -153,13 +153,6 @@ export async function refreshStationMap(center) {
 // point keeps its OWN coordinates for the weather (see the resolver note in spots.js).
 
 export function startSpotPick() {
-    // A spot belongs to a private account, so starting the pick without a session would be a
-    // dead end - say so instead of arming a tap that cannot save.
-    if (!spotsSignedIn()) {
-        spotsStatus('Start a session on the Catch Log tab first \u2014 spots save to your private account.');
-        if (typeof showToast === 'function') showToast('Start a session on the Catch Log tab first.', 'warn', 5000);
-        return;
-    }
     // THE MAP IS THIS BUTTON'S JOB: it used to refuse when the map had not been opened yet,
     // which read as "the button does nothing" (the map only exists after the map button).
     openSpotPickMap();
@@ -190,7 +183,6 @@ export async function openSpotPickMap() {
 export async function onSpotPick(e) {
     if (_stationMap && _stationMap.getContainer) _stationMap.getContainer().style.cursor = '';
     if (!e || !e.latlng) return;
-    if (!spotsSignedIn()) { spotsStatus('Start a session on the Catch Log tab first.'); return; }
     // Name it now if it was not named first: the tap is the moment the angler knows where it is.
     let label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX) : '';
     if (!label) {

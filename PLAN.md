@@ -10,10 +10,6 @@
       → index.html, picker.js
       [Detail → docs/PLAN_REFERENCE.md#ui-dynamic-presets]
 
-- [x] Phase A4: Remove Station Search / ID Lookup
-      → index.html, picker.js
-      [Detail → docs/PLAN_REFERENCE.md#ui-remove-search]
-
 - [ ] Phase A5: Saved spots — no sign-in required
       → spots.js, index.html
       [Detail → docs/PLAN_REFERENCE.md#ui-spots-no-auth]

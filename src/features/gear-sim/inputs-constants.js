@@ -56,11 +56,11 @@ export function getGPS(onFinish) {
         var watchdog = setTimeout(function () {
             if (settled) return;
             settled = true;
-            logDebug("GPS timeout after 5s — using fallback Puyallup coordinates", "WRN");
+            logDebug("GPS timeout after 1s — using fallback Puyallup coordinates", "WRN");
             State.userGPSCoords = fallback;
             if (typeof onFinish === 'function') onFinish(fallback);
             resolve(fallback);
-        }, 5000);
+        }, 1000);
         var options = { timeout: 5000, enableHighAccuracy: true };
         navigator.geolocation.getCurrentPosition(
             function (pos) {

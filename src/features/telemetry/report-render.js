@@ -22,9 +22,18 @@ export function renderReportDays(reports, station, rulesLoaded) {
     const first = reports[0];
     const actId = first.site_id || station.id;
 
-    // Update station name from payload
+    // Update station name from payload — but preserve a saved spot's label
+    // and append the river name so the header reads "My Hole (Puyallup River)".
     if (first.site_name) {
-        document.getElementById('active-station-name').innerText = first.site_name.toUpperCase();
+        var stored = null;
+        try { stored = JSON.parse(localStorage.getItem('active_station') || 'null'); } catch (e) {}
+        if (stored && stored.name && stored.name.toUpperCase() !== first.site_name.toUpperCase()) {
+            // User saved this spot with a custom label — show "LABEL (River Name)"
+            var riverName = first.site_name.split(',')[0].split(' AT ')[0];
+            document.getElementById('active-station-name').innerText = stored.name.toUpperCase() + ' (' + riverName.toUpperCase() + ')';
+        } else {
+            document.getElementById('active-station-name').innerText = first.site_name.toUpperCase();
+        }
     }
     // Badge is now permanently "🗺️ Change River" — do not overwrite
     // const badge = document.getElementById('active-station-badge');

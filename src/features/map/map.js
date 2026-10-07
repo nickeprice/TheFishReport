@@ -60,12 +60,16 @@ export function mapLegalText(rule) {
 export function stationPopupHtml(s) {
     const cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
     const gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
-    return '<b>' + escapeHtml(s.name || s.id) + '</b><br>' +
-        escapeHtml(cfs + ' CFS \u00b7 ' + gage + ' ft') + '<br>' +
-        escapeHtml(mapLegalText(s.legal_hours)) + '<br>' +
-        '<br><button class="btn-main" style="background-color: var(--accent-green); color: #000; padding: 8px; margin-top: 5px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="selectPreset(\'' + escapeJsString(s.id) + '\',' +
-        Number(s.lat) + ',' + Number(s.lon) + ',\'' + escapeJsString(s.name || s.id) +
-        '\'); closeMapScreen(); return false;">Fish this gauge</button>';
+    const legal = mapLegalText(s.legal_hours);
+    const safeId = escapeJsString(s.id || '');
+    const safeName = escapeJsString(s.name || s.id);
+    return '<span class="pin-popup-title">' + escapeHtml(s.name || s.id) + '</span>' +
+        '<span class="pin-popup-meta">USGS ' + escapeHtml(s.id || '') + '</span>' +
+        '<span class="pin-popup-cfs">' + escapeHtml(String(cfs)) + ' <span class="pin-popup-cfs-label">CFS</span> \u00b7 ' + escapeHtml(String(gage)) + ' <span class="pin-popup-cfs-label">ft</span></span>' +
+        (legal ? '<span class="pin-popup-gage">' + escapeHtml(legal) + '</span>' : '') +
+        '<button class="pin-popup-btn" onclick="selectPreset(\'' + safeId + '\',' +
+        Number(s.lat) + ',' + Number(s.lon) + ',\'' + safeName +
+        '\'); closeMapScreen(); return false;">\u00b7\u00b7\u00b7 Fish this gauge</button>';
 }
 
 // ── Map centre ───────────────────────────────────────────────────────────────────
@@ -405,8 +409,10 @@ async function doSavePin(lat, lng, label) {
     const id = await saveSpotAt(lat, lng, label);
     if (!id) { if (typeof showToast === 'function') showToast('Could not save that spot.', 'warn', 4000); return; }
     if (typeof showToast === 'function') showToast('Saved: ' + label, 'success', 2500);
-    await loadFavoriteSpots();
-    try { await refreshStationMap(mapCenter()); } catch (err) { }
+    // Remove old markers (temp pins, station pins, old stars) then re-plot stars only.
+    // spotsState.rows was already updated by saveSpotAt() so stars appear immediately.
+    removeAllMarkers();
+    if (typeof plotSavedSpotStars === 'function') plotSavedSpotStars();
 }
 
 // ── Map click handler ─────────────────────────────────────────────────────────────

@@ -876,11 +876,70 @@ td.empty-state { padding: 30px 10px; }
 }
 .pin-popup[hidden] { display: none; }
 .pin-popup-body {
-    padding: 14px 16px;
+    padding: 14px 18px;
     font-size: 13px;
     color: #e5e7eb;
     line-height: 1.5;
 }
+.pin-popup-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    display: block;
+    margin-bottom: 2px;
+}
+.pin-popup-meta {
+    font-size: 11px;
+    color: #8e8e93;
+    display: block;
+    margin-bottom: 4px;
+}
+.pin-popup-cfs {
+    font-size: 22px;
+    font-weight: 800;
+    color: #4ade80;
+    display: block;
+}
+.pin-popup-cfs-label {
+    font-size: 10px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+.pin-popup-gage {
+    font-size: 13px;
+    color: #e5e7eb;
+    display: block;
+}
+.pin-popup-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    margin-top: 8px;
+    background: #23402a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+}
+.pin-popup-btn:active { background: #2d5a3a; }
+.pin-popup-delete {
+    display: block;
+    width: 100%;
+    padding: 8px 0;
+    margin-top: 4px;
+    background: transparent;
+    color: #f87171;
+    border: 1px solid #f87171;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+.pin-popup-delete:active { background: rgba(248,113,113,0.15); }
 /* Floating action button — add a spot */
 .map-fab {
     position: absolute;

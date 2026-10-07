@@ -14,9 +14,12 @@ import { escapeHtml, escapeJsString } from '../../shared/format.js';
 // it. User/data text is escaped exactly like stationPopupHtml() does.
 export function savedSpotPopupHtml(spot) {
     const safeId = escapeJsString(String(spot.id || ''));
-    return '<b>' + escapeHtml(spot.label || 'Saved spot') + '</b><br>' +
-        escapeHtml(spot.river_name || 'No river saved') +
-        (spot.station_id ? '<br>' + escapeHtml('USGS ' + spot.station_id) : '') + '<br>' +
-        '<a href="#" onclick="selectSavedSpot(\'' + safeId + '\');return false;">Fish this spot</a> \u00b7 ' +
-        '<a href="#" onclick="deleteSavedSpot(\'' + safeId + '\');return false;">Delete</a>';
+    var location = escapeHtml(spot.river_name || '');
+    if (!location && spot.latitude && spot.longitude) {
+        location = Number(spot.latitude).toFixed(4) + '\u00b0N, ' + Number(spot.longitude).toFixed(4) + '\u00b0W';
+    }
+    return '<span class="pin-popup-title">' + escapeHtml(spot.label || 'Saved spot') + '</span>' +
+        '<span class="pin-popup-meta">' + (location || 'Flow from nearest gauge on tap') + '</span>' +
+        '<button class="pin-popup-btn" onclick="selectSavedSpot(\'' + safeId + '\');return false;">\u00b7\u00b7\u00b7 Fish this spot</button>' +
+        '<button class="pin-popup-delete" onclick="deleteSavedSpot(\'' + safeId + '\');return false;">Delete</button>';
 }

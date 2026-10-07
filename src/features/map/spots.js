@@ -211,6 +211,7 @@ export function spotGaugeText(spot) {
 
 // Save a spot at a LAT/LON the angler chose on the map. The nearest gauge is resolved
 // first and stored on the row so the row (and the report) say where the flow comes from.
+// Always caches to localStorage so the spot survives a reload — even offline.
 export async function saveSpotAt(lat, lon, label) {
     if (lat == null || lon == null || isNaN(Number(lat)) || isNaN(Number(lon))) {
         showToast('No position for that spot.', 'warn', 4000);
@@ -221,29 +222,39 @@ export async function saveSpotAt(lat, lon, label) {
     const resolved = await resolveSpotStation(Number(lat), Number(lon), want ? want.id : null);
     const station = (resolved && resolved.ok && resolved.station) ? resolved.station : null;
     if (station) spotsState.gauge[id] = { name: station.name, distance: station.distance };
+    const row = {
+        id: id, label: label,
+        station_id: station ? station.id : null,
+        river_name: station ? station.name : null,
+        latitude: Number(lat), longitude: Number(lon)
+    };
     let res = null;
     try {
         res = await Supa.saveFavoriteSpot({
-            clientId: id,
-            label: label,
+            clientId: id, label: label,
             stationId: station ? station.id : null,
             riverName: station ? station.name : null,
-            latitude: Number(lat),
-            longitude: Number(lon)
+            latitude: Number(lat), longitude: Number(lon)
         });
     } catch (e) { res = null; }
+    // Always write to localStorage cache (supabase success or offline fallback)
+    row._unsynced = !(res && res.ok);
+    const cached = readSpotCache();
+    cached.push(row);
+    writeSpotCache(cached);
+    // Also update in-memory state so the star + chip list appear immediately
+    spotsState.rows.push(row);
+    renderFavoriteSpots();
     if (res && res.ok) {
-        // The LABEL only: coordinates never reach the debug log (AGENTS.md GPS hygiene).
         logDebug('Favourite spot saved: ' + label + (station ? ' (flow via ' + station.id + ')' : ' (no gauge resolved)'), 'SPOT');
         if (resolved && !resolved.ok) {
-            // Saved, but the flow is NOT linked (the lookup was unreachable). Say so instead
-            // of letting the row read "flow from the nearest gauge" with no explanation.
             showToast('Spot saved \u2014 the gauge lookup failed, so flow is not linked yet. Open the spot later to retry.', 'warn', 6000);
         }
         return id;
     }
-    showToast('Could not save the spot: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
-    return null;
+    logDebug('Spot cached offline (Supabase unreachable): ' + label, 'WRN');
+    showToast('Spot saved offline (will sync when connected)', 'info', 4000);
+    return id;
 }
 
 // Save the CURRENT position (the GPS fix when we have one, else the active station's
@@ -285,7 +296,6 @@ export async function selectSavedSpot(id) {
             spotsState.gauge[spot.id] = { name: resolved.station.name, distance: resolved.station.distance };
             spot.station_id = gaugeId;
             spot.river_name = resolved.station.name;
-            // Persist it once so the row never has to resolve again (same id = an edit).
             try {
                 await Supa.saveFavoriteSpot({
                     clientId: spot.id, label: spot.label, stationId: gaugeId, riverName: resolved.station.name,
@@ -295,19 +305,16 @@ export async function selectSavedSpot(id) {
             renderFavoriteSpots();
         } else if (resolved && !resolved.ok) {
             const why = resolved.serverMessage || resolved.error || '';
-            spotsStatus('Could not reach the gauge lookup' + (why ? ' (' + why + ')' : '') +
-                ' \u2014 try again when you have signal.');
-            return;
+            spotsStatus('Gauge lookup unreachable' + (why ? ' (' + why + ')' : '') + ' \u2014 loading with spot coordinates only.');
         } else {
-            showToast('No USGS gauge near that spot yet \u2014 flow needs a nearby gauge.', 'warn', 6000);
-            spotsStatus('No USGS gauge near that spot, so there is no flow to show.');
-            return;
+            spotsStatus('No USGS gauge found near this spot \u2014 loading with weather only, no flow data.');
         }
     }
     spotsStatus('');
-    logDebug('Saved spot selected: ' + (spot.label || '') + ' (gauge ' + gaugeId + ')', 'SPOT');
-    selectPreset(gaugeId, Number(spot.latitude), Number(spot.longitude), spot.label || 'Saved spot', false);
+    logDebug('Saved spot selected: ' + (spot.label || '') + (gaugeId ? ' (gauge ' + gaugeId + ')' : ' (no gauge)'), 'SPOT');
+    selectPreset(gaugeId || spot.id, Number(spot.latitude), Number(spot.longitude), spot.label || 'Saved spot', false);
 }
+window.selectSavedSpot = selectSavedSpot;
 
 export async function deleteSavedSpot(id) {
     if (!window.confirm('Delete this saved spot? Your other spots are untouched.')) return;
@@ -321,3 +328,4 @@ export async function deleteSavedSpot(id) {
     }
 }
 window.saveCurrentSpot = saveCurrentSpot;
+window.deleteSavedSpot = deleteSavedSpot;

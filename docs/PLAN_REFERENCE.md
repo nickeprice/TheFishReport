@@ -107,16 +107,7 @@ rows with full-width buttons.
 
 ---
 
-<a id="hotfix-geolocate"></a>
-## H1: Geolocate — trackUserLocation + showUserLocation
-
-**Change:** Update GeolocateControl options to include `trackUserLocation: true` and `showUserLocation: true`.
-
-**Files:** `map.js` — add options to the existing `GeolocateControl` instantiation in `openMapScreen()`
-
-**Note:** Mobile browsers block GPS access unless served over HTTPS or localhost. Testing via local IP on a phone will fail.
-
----
+<!-- H1 complete — detail deleted per protocol -->
 
 <a id="hotfix-spots"></a>
 ## H2: Saved Spots localStorage + Star Rendering on Map

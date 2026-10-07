@@ -243,7 +243,9 @@ export async function openMapScreen() {
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
         _stationMap.addControl(new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 }
+            positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 },
+            trackUserLocation: true,
+            showUserLocation: true
         }));
     }
     if (loading) loading.style.display = 'none';

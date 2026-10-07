@@ -206,10 +206,13 @@ export async function openMapScreen() {
     if (!box) return;
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) { } }
     if (!_stationMap) {
+        // Use app's known GPS position as the map center when available
+        const initialCenter = mapCenter();  // returns [lat, lng]
+        const mapCenterLngLat = [initialCenter[1], initialCenter[0]];  // MapLibre expects [lng, lat]
         _stationMap = new maplibregl.Map({
             container: box,
             style: MAP_STYLE,
-            center: MAP_DEFAULT_CENTER,
+            center: mapCenterLngLat,
             zoom: MAP_START_ZOOM
         });
         // Render gauge pins on load with badge popups

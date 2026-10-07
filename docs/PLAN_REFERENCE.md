@@ -1,16 +1,3 @@
-<a id="data-river-techniques"></a>
-<!-- Phase A1 complete — detail deleted per protocol -->
-
-
-<a id="ui-dynamic-presets"></a>
-<!-- Phase A2 complete — detail deleted per protocol -->
-
-<!-- Phase A4 complete — detail deleted per protocol -->
-
-<!-- Phase A5 complete — detail deleted per protocol -->
-
-<!-- Phase A7 complete — detail deleted per protocol -->
-
 <a id="ui-maplibre"></a>
 ## Phase A6: MapLibre GL JS Upgrade (Satellite + Vector + Geolocate)
 

@@ -18,6 +18,7 @@ import { showToast } from '../../shared/ui.js';
 import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt, renderDrawerSpots } from './spots.js';
 import { savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
+import { getGPS } from '../gear-sim/inputs.js';
 
 const maplibregl = window.maplibregl;
 
@@ -246,24 +247,28 @@ export async function openMapScreen() {
         _stationMap.on('click', function (e) {
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
-        // GeolocateControl for the familiar white icon — but we swap its
-        // click handler to use a timed-out GPS call that falls back to mock
-        // coordinates on desktop so the button always works.
+        // GeolocateControl for the familiar white icon — but we strip its broken
+        // internal logic and build a fresh button that looks identical.
         const geolocateCtrl = new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: false },
             fitBoundsOptions: { padding: 100 }
         });
         _stationMap.addControl(geolocateCtrl);
-        // After the control renders, strip all MapLibre listeners via deep clone
-        // and attach our own handler that awaits getGPS() with fallback.
+        // After the control renders, replace it entirely with a fresh button
+        // that uses our own click handler (avoids disabled-state cloning).
         requestAnimationFrame(function () {
             const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
             if (!geoBtn) return;
             const parent = geoBtn.parentElement;
             if (!parent) return;
-            // Deep-clone to drop all MapLibre event listeners
-            const clone = geoBtn.cloneNode(true);
-            clone.addEventListener('click', async function (e) {
+            // Fresh button — NOT a clone, so no inherited disabled state
+            const fresh = document.createElement('button');
+            fresh.className = 'maplibregl-ctrl-geolocate';
+            fresh.title = 'Recenter map on your location';
+            const icon = document.createElement('div');
+            icon.className = 'maplibregl-ctrl-icon';
+            fresh.appendChild(icon);
+            fresh.addEventListener('click', async function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 try {
@@ -273,7 +278,7 @@ export async function openMapScreen() {
                     alert('Could not determine your location.\n' + err.message);
                 }
             });
-            parent.replaceChild(clone, geoBtn);
+            parent.replaceChild(fresh, geoBtn);
         });
     }
     if (loading) loading.style.display = 'none';

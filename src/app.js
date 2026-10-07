@@ -32,10 +32,11 @@ import './features/map/map.js';
 // --- BOOTSTRAP ---
 window.onload = async function() {
     // Start MSW to intercept USGS API calls and prevent 429 rate limits
-    if (import.meta.env.DEV) {
-        const { worker } = await import('./mocks/browser.js');
-        await worker.start({ onUnhandledRequest: 'bypass' });
-    }
+    // Temporarily disabled to diagnose MapLibre tile loading
+    // if (import.meta.env.DEV) {
+    //     const { worker } = await import('./mocks/browser.js');
+    //     await worker.start({ onUnhandledRequest: 'bypass' });
+    // }
 
     // URL param override: ?station=12101500 or ?lat=47.2&lon=-122.3
     const qs = window.location.search;

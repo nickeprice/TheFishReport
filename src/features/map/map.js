@@ -30,6 +30,7 @@ var MAP_START_ZOOM = 10;
 var _stationMap = null;
 var _mapMarkers = [];
 var _spotsPlotted = 0;
+var _stationWasOpen = false;
 
 export function loadLeaflet() { return Promise.resolve(true); }
 window.loadLeaflet = loadLeaflet;
@@ -177,6 +178,14 @@ window.mapModalOpen = mapModalOpen;
 export async function openMapModal() {
     var modal = document.getElementById('map-modal');
     if (!modal) return;
+    // Close the station modal so it doesn't overlap the map (z-index 4000 > 1000)
+    var stationModal = document.getElementById('station-modal');
+    if (stationModal && stationModal.style.display !== 'none') {
+        stationModal.style.display = 'none';
+        _stationWasOpen = true;
+    } else {
+        _stationWasOpen = false;
+    }
     modal.classList.remove('map-modal-hidden');
     var box = document.getElementById('map-modal-container');
     if (!box) return;
@@ -212,6 +221,11 @@ export function closeMapModal() {
     var modal = document.getElementById('map-modal');
     if (modal) {
         modal.classList.add('map-modal-hidden');
+    }
+    // Reopen the station modal if it was open before the map
+    if (_stationWasOpen) {
+        var stationModal = document.getElementById('station-modal');
+        if (stationModal) stationModal.style.display = '';
     }
     mapModalOpen = false;
 }

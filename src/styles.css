@@ -661,38 +661,34 @@ td.empty-state { padding: 30px 10px; }
     height: 100%;
     z-index: 1000;
     background: #000;
+    display: flex;
+    flex-direction: column;
 }
 .map-modal.map-modal-hidden { display: none !important; }
 .map-top-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10000;
-    height: 48px;
-    background: rgba(0,0,0,0.55);
+    height: 52px;
+    flex-shrink: 0;
+    background: #1a1a1a;
     display: flex;
     align-items: center;
+    border-bottom: 1px solid #555;
 }
 .map-back-btn {
-    background: none;
-    border: none;
+    background: #2c2c2e;
+    border: 2px solid #666;
+    border-radius: 8px;
     color: #fff;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     min-height: 44px;
-    padding: 0 16px;
+    padding: 0 20px;
+    margin-left: 12px;
 }
+.map-back-btn:active { background: #444; }
 .map-modal-container {
-    position: absolute;
-    top: 48px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex: 1;
+    display: block;
 }
 .map-loading {
     color: #e5e7eb;

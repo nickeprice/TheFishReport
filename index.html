@@ -13,6 +13,8 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>The Fish Report</title>
 <link rel="stylesheet" href="src/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <!-- Data globals (classic scripts, loaded before module entry point) -->
 <script src="/src/data/regions/washington.js"></script>
 <script src="/src/data/channel_measurements.js"></script>
@@ -24,9 +26,9 @@
 <!-- NAVIGATION (top bar: station selector + refresh; tabs live in the bottom bar) -->
 <div id="top-nav">
     <span style="width: 24px;"></span> <!-- left spacer → balances the ⟳ button so the station stays centered -->
-    <button id="station-header" onclick="openStationModal()" aria-haspopup="dialog" aria-label="Select river station">
+    <button id="station-header" onclick="openMapScreen()" aria-haspopup="dialog" aria-label="Select river station">
         <span id="active-station-name" style="font-weight: 800; color: #fff; font-size: 14px;">PUYALLUP RIVER AT PUYALLUP, WA</span>
-        <span id="active-station-badge" class="station-badge badge-manual">📌 USGS: 12101500</span>
+        <span id="active-station-badge" class="station-badge badge-manual">🗺️ Change River</span>
     </button>
     <button class="nav-refresh" onclick="refreshNow()" aria-label="Refresh live data" title="Refresh live data">⟳</button>
     <button onclick="if(typeof toggleDebug==='function')toggleDebug()" aria-label="Toggle debug console" title="Debug console" style="background:none;border:1px solid #4a4a4c;border-radius:8px;color:#0f0;font-size:16px;width:40px;height:40px;cursor:pointer;">🐛</button>
@@ -69,6 +71,9 @@
 <div id="map-screen" class="map-screen map-screen-hidden">
     <!-- MapLibre mounts here -->
     <div id="map-container" class="map-container"></div>
+
+    <!-- Close button -->
+    <button id="map-close-btn" class="map-close-btn" onclick="closeMapScreen()">✕</button>
 
     <!-- Loading message -->
     <div id="map-loading" class="map-loading">Loading the map&hellip;</div>

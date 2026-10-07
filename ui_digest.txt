@@ -1,3 +1,507 @@
+Directory structure:
+└── TheFishReport/
+    ├── index.html
+    └── src/
+        └── styles.css
+
+================================================
+FILE: index.html
+================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="description" content="Live water report, fishing window scoring and a deterministic Gear Sim for the Puyallup, White, Carbon, Green and Nisqually rivers.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fish Report">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<title>The Fish Report</title>
+<link rel="stylesheet" href="src/styles.css">
+<!-- Data globals (classic scripts, loaded before module entry point) -->
+<script src="/src/data/regions/washington.js"></script>
+<script src="/src/data/channel_measurements.js"></script>
+<script src="/src/data/river_widths.js"></script>
+<script src="/src/data/spot_widths.js"></script>
+</head>
+<body>
+
+<!-- NAVIGATION (top bar: station selector + refresh; tabs live in the bottom bar) -->
+<div id="top-nav">
+    <span style="width: 24px;"></span> <!-- left spacer → balances the ⟳ button so the station stays centered -->
+    <button id="station-header" onclick="openMapScreen()" aria-haspopup="dialog" aria-label="Select river station">
+        <span id="active-station-name" style="font-weight: 800; color: #fff; font-size: 14px;">PUYALLUP RIVER AT PUYALLUP, WA</span>
+        <span id="active-station-badge" class="station-badge badge-manual">🗺️ Change River</span>
+    </button>
+    <button class="nav-refresh" onclick="refreshNow()" aria-label="Refresh live data" title="Refresh live data">⟳</button>
+    <button onclick="if(typeof toggleDebug==='function')toggleDebug()" aria-label="Toggle debug console" title="Debug console" style="background:none;border:1px solid #4a4a4c;border-radius:8px;color:#0f0;font-size:16px;width:40px;height:40px;cursor:pointer;">🐛</button>
+</div>
+
+<!-- STATION SELECTION MODAL -->
+<div id="station-modal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Select River Station</h2>
+        
+        <button class="btn-main" onclick="useGPS()" style="background-color: var(--accent-blue); color: #fff; margin-top: 0; min-height: 44px;">📍 Use My GPS (Nearest River)</button>
+        <div id="gps-status" style="font-size: 11px; color: var(--accent-yellow); margin-top: 8px; text-align: center; font-weight: bold; min-height: 14px;"></div>
+
+        <!-- Open the full-screen map modal (satellite + street labels) -->
+        <button class="btn-main" onclick="openMapScreen()"
+                style="background-color: #23402a; color: #fff; margin-top: 12px; min-height: 44px;">
+            🗺️ Open Map
+        </button>
+        <div id="station-map-note" class="station-map-note" hidden></div>
+
+        <!-- PRIVATE SAVED SPOTS — chips that tap to open; "+" chip opens the map to add -->
+        <h3 class="modal-subtitle" style="margin-top: 25px;">My Spots</h3>
+        <div id="spot-chips" class="spot-chips"></div>
+        <div id="spot-status" class="spot-status" hidden></div>
+        <div id="favorite-spots" class="favorite-spots" hidden></div>
+        
+        <h3 class="modal-subtitle" style="margin-top: 25px;">Find a River</h3>
+        <div class="preset-filter-row">
+            <input type="text" id="preset-filter" class="preset-filter" aria-label="Filter river by name" placeholder="Search by name..." oninput="onPresetFilter()">
+        </div>
+        <div id="preset-list" class="preset-list"></div>
+        
+        
+        
+        <button class="btn-main" onclick="closeStationModal()" style="background-color: #333; color: #fff; margin-top: 10px; min-height: 44px;">CANCEL</button>
+    </div>
+</div>
+
+<!-- STEP 2: FULL-SCREEN MAP with Bottom-Sheet Drawer -->
+<div id="map-screen" class="map-screen map-screen-hidden">
+    <!-- MapLibre mounts here -->
+    <div id="map-container" class="map-container"></div>
+
+    <!-- Loading message -->
+    <div id="map-loading" class="map-loading">Loading the map&hellip;</div>
+
+    <!-- Bottom-sheet drawer (slides up from behind the handle) -->
+    <div id="map-drawer" class="map-drawer">
+        <!-- Saved spots — horizontal pill row -->
+        <div class="drawer-section">
+            <div id="drawer-spots" class="drawer-spots"></div>
+        </div>
+        <!-- River search -->
+        <div class="drawer-section">
+            <input type="text" id="drawer-search" class="drawer-search" aria-label="Find a river" placeholder="Find a river..." oninput="onDrawerFilter()">
+        </div>
+        <!-- Filtered results -->
+        <div class="drawer-section drawer-results-scroll">
+            <div id="drawer-results" class="drawer-results"></div>
+        </div>
+    </div>
+
+    <!-- Bottom thumb-zone handle — tap toggles drawer -->
+    <div id="map-bottom-handle" class="map-bottom-handle" onclick="toggleDrawer()">
+        <div class="map-handle-grabber"></div>
+        <span class="map-handle-station" id="map-handle-station">Select a river</span>
+        <span class="map-handle-arrow" id="map-handle-arrow">&#9650;</span>
+    </div>
+
+    <!-- Pin popup card -->
+    <div id="pin-popup" class="pin-popup" hidden>
+        <div id="pin-popup-body" class="pin-popup-body"></div>
+    </div>
+
+    <!-- Floating action button — toggles between add (+) and cancel (X) -->
+    <button id="map-fab" class="map-fab" onclick="toggleFabSpotDrop()">+</button>
+</div>
+
+<!-- HOURLY POPUP (WS-4): tap any of the six weather pills on a day card for that day's own
+     24-hour strip (the reference hour is outlined; the strip swipes left/right). -->
+<div id="hourly-modal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title" id="hourly-title">Hourly</h2>
+        <p id="hourly-sub" class="hourly-sub"></p>
+        <div id="hourly-strip" class="hourly-strip"></div>
+        <button class="btn-main" onclick="closeHourlyPopup()" style="background-color: #333; color: #fff; margin-top: 10px; min-height: 44px;">CLOSE</button>
+    </div>
+</div>
+
+<!-- TOOL 1: WATER REPORT -->
+<div id="tab-water-report" class="tab-content tab-active">
+    <div id="date-reg-header" class="date-reg-header">
+        <button class="date-nav-btn date-nav-prev" id="btn-prev-date" onclick="stepDate(-1)" aria-label="Previous day">&lt;</button>
+
+        <!-- 1. Date Text (tap to return to Today when paged forward) -->
+        <div class="date-nav-center">
+            <button type="button" id="date-nav-text" class="date-nav-text" onclick="resetToToday()" aria-label="Reset to today" title="Tap to return to today">Loading date...</button>
+            <span id="date-today-badge" class="date-today-badge" style="display:none;">(Today)</span>
+        </div>
+
+        <!-- 2. Status Pill -->
+        <div class="status-pill-row">
+            <div id="river-status-pill" class="reg-status-pill status-pill-closed">
+                ● RIVER CLOSED
+            </div>
+            <div id="reg-detail" class="reg-detail"></div>
+        </div>
+
+        <!-- 3. Legal Hours Text -->
+        <div id="hero-legal-hours" class="hero-legal-hours">
+            Legal Hours: --:-- – --:--
+        </div>
+
+        <button class="date-nav-btn date-nav-next" id="btn-next-date" onclick="stepDate(1)" aria-label="Next day">&gt;</button>
+    </div>
+    <div id="water-report-cards"></div>
+</div>
+
+<!-- TOOL 2: GEAR SIM -->
+<div id="tab-gear-sim" class="tab-content">
+    <!-- Outcome HUD (restructured 2026-09-29 on direct user asks). The two BANNERS sit SIDE BY
+         SIDE - Strike Zone Estimate on the LEFT, Line Height Estimate on the RIGHT, each centred
+         in its own half and each keeping its own colour grade - and then the summary paragraph
+         and the gear changes run FULL WIDTH beneath both. The per-reason bullets are gone: they
+         live on in the debug trail. -->
+    <div id="hud">
+        <div class="hud-banners">
+            <div class="hud-banner">
+                <span class="hud-cap">Strike Zone Estimate:</span>
+                <span id="hud-zone" class="hud-val">4.0" - 12.0"</span>
+            </div>
+            <div class="hud-banner">
+                <span class="hud-cap">Line Height Estimate:</span>
+                <span id="hud-hgt" class="hud-val">--</span>
+            </div>
+        </div>
+        <p id="hud-where" class="hud-outlook">Load a water report to see where the fish are holding today.</p>
+        <ul id="hud-changes" class="hud-changes"></ul>
+    </div>
+
+    <!-- Preset bar: saved rig configurations (localStorage MVP). -->
+    <div id="preset-bar" class="preset-bar">
+        <label for="preset-select" class="preset-label">Saved Rigs</label>
+        <select id="preset-select" onchange="onPresetSelect()">
+            <option value="">— Load a saved rig —</option>
+        </select>
+        <button type="button" id="btn-save-preset" onclick="saveCurrentPreset()" class="mini-btn">SAVE</button>
+        <button type="button" id="btn-delete-preset" onclick="deleteCurrentPreset()" class="mini-btn mini-btn-danger" style="display:none">✕</button>
+    </div>
+
+    <div class="bucket">
+        <!-- Resting gear ROWS — ONE gear group per line, field ORDER is the
+             user-specified CASCADE flow (sanity asserts it):
+             Mainline material → brand → lb test · Weight type → amount ·
+             Leader length → material → brand → lb test · Hook+Yarn · Foam 1+2 · Beads.
+             NO pre-selected defaults: values come from your last saved rig, and
+             anything you have never entered stays blank and is required.
+             Each child list is filled from src/data/tackle.json by its parent pick
+             (material → brand → lb test): the three picks resolve into the HIDDEN
+             ml-line / ld-line id that the solver, the catch row and the DB read, so
+             nothing downstream changed. The static <option> lists are the no-library
+             fallback — tackle.js replaces them with the library's own values at boot. -->
+        <div class="gear-rows">
+            <!-- Row 0 (Phase 1.6-1.7): Water type + Species at the top.
+                 Water type adjusts the simulation for the local hydraulic habitat.
+                 Species selects the target fish for interception probability scoring.
+                 Both sync with the Catch Log form via syncSelect(). -->
+            <div class="gear-row">
+                <div class="field">
+                    <div style="display:flex;align-items:center;gap:2px;margin-bottom:3px;">
+                        <label for="water-type" style="margin:0;">Water Type</label>
+                        <span id="wt-guide-btn" style="color:var(--accent-blue);cursor:pointer;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.03em;">ⓘ</span>
+                    </div>
+                    <select id="water-type" onchange="syncSelect('water-type')">
+                        <option value="run">Run (default)</option>
+                        <option value="pool">Pool</option>
+                        <option value="riffle">Riffle</option>
+                        <option value="glide">Glide</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="species">Species</label>
+                    <select id="species" onchange="syncSelect('species')">
+                        <option value="">—</option>
+                        <option value="Chinook">Chinook</option>
+                        <option value="Coho">Coho (Silver)</option>
+                        <option value="Pink">Pink</option>
+                        <option value="Chum">Chum</option>
+                        <option value="Steelhead">Steelhead</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Row 1 (3-up): Mainline material → brand → lb test. The ONLY 3-up row: a
+                 3-part cascade in 2 columns would wrap the lb test onto its own line. -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="ml-mat">Mainline Material</label>
+                    <select id="ml-mat" onchange="onLinePartChange('ml-mat')"><option value="">—</option><option value="braid">Braid</option><option value="mono">Mono</option><option value="copoly">Copoly</option></select>
+                </div>
+                <div class="field">
+                    <label for="ml-brand">Mainline Brand</label>
+                    <select id="ml-brand" onchange="onLinePartChange('ml-brand')"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ml-lb">Mainline LB Test</label>
+                    <select id="ml-lb" onchange="onLinePartChange('ml-lb')"><option value="">—</option></select>
+                    <input type="hidden" id="ml-line">
+                </div>
+            </div>
+
+            <!-- Row 2: Weight Setup → Weight type → Weight amount. The first field lets the
+                 angler choose between a sliding weight (free to slide on the mainline) or
+                 a weight fixed at a 3-way swivel. The type options are the weight rows'
+                 shape_label, so a rubber sleeve and tungsten get their own option; the
+                 amount list is the nominal oz those rows carry. -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="weight-setup">Weight Setup</label>
+                    <select id="weight-setup" onchange="syncSelect('weight-setup')"><option value="sliding">Sliding</option><option value="fixed">Fixed</option></select>
+                </div>
+                <div class="field">
+                    <label for="weight-shape">Weight Type</label>
+                    <select id="weight-shape" onchange="onWeightShapeChange('weight-shape')"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="weight">Weight Amount</label>
+                    <select id="weight" onchange="syncSelect('weight')"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option></select>
+                </div>
+            </div>
+
+            <!-- Row 3: Leader Length + Leader material (the leader cascade continues on
+                 the next row so the lb test still follows its brand). -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="ld-len">Leader Length (ft)</label>
+                    <input type="number" id="ld-len" min="1" max="20" step="1" onchange="syncSelect('ld-len')" placeholder="10">
+                </div>
+                <div class="field">
+                    <label for="ld-mat">Leader Material</label>
+                    <select id="ld-mat" onchange="onLinePartChange('ld-mat')"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluorocarbon</option></select>
+                </div>
+            </div>
+
+            <!-- Row 4: Leader brand → lb test (end of the leader cascade). -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="ld-brand">Leader Brand</label>
+                    <select id="ld-brand" onchange="onLinePartChange('ld-brand')"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ld-lb">Leader LB Test</label>
+                    <select id="ld-lb" onchange="onLinePartChange('ld-lb')"><option value="">—</option></select>
+                    <input type="hidden" id="ld-line">
+                </div>
+            </div>
+
+            <!-- Row 5: Hook Size + Yarn -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="hook">Hook Size</label>
+                    <select id="hook" onchange="syncSelect('hook')"><option value="">—</option><option value="2">Size 2</option><option value="1">Size 1</option><option value="0">1/0</option><option value="-1">2/0</option></select>
+                </div>
+                <div class="field">
+                    <label for="yarn">Yarn</label>
+                    <select id="yarn" onchange="syncSelect('yarn')"><option value="">—</option><option value="0">None</option><option value="0.5">1/2"</option><option value="1">1"</option><option value="1.5">1.5"</option><option value="2">2"</option></select>
+                </div>
+            </div>
+
+            <!-- Row 6: Foam 1 + Foam 2 + Bead -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="foam">Foam 1</label>
+                    <select id="foam" onchange="syncSelect('foam')"><option value="">—</option><option value="0">None</option><option value="14">Corky 14</option><option value="12">Corky 12</option><option value="10">Corky 10</option><option value="c12">Cheater 10</option></select>
+                </div>
+                <div class="field">
+                    <label for="foam2">Foam 2</label>
+                    <select id="foam2" onchange="syncSelect('foam2')"><option value="">—</option><option value="0">None</option><option value="14">Corky 14</option><option value="12">Corky 12</option><option value="10">Corky 10</option><option value="c12">Cheater 10</option></select>
+                </div>
+                <div class="field">
+                    <label for="foam3">Bead</label>
+                    <select id="foam3" onchange="onFoam3Change('foam3')"><option value="">—</option></select>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-main" id="btn-sim" onclick="runSim()">RUN SIMULATION</button>
+    </div>
+</div>
+
+<!-- TOOL 3: CATCH LOG -->
+<div id="tab-catch-log" class="tab-content">
+    <div class="bucket">
+        <!-- JOIN THE BOARD: back at the top of the tab. -->
+        <div id="auth-section">
+            <div id="auth-logged-out">
+                <h2 class="purple-heading">Join the Board</h2>
+                <div class="row">
+                    <div class="col"><label for="auth-name">Enter your name</label><input type="text" id="auth-name" placeholder="Your Brag Board name" maxlength="24" autocomplete="nickname"></div>
+                </div>
+                <button class="btn-main" id="btn-auth-start" onclick="startFishing()">JOIN THE BOARD</button>
+                <p class="auth-note">Anonymous guest session — no email or password. Your exact leader, hook, foam and GPS stay private; only your name, time, river and fish appear on the board.</p>
+            </div>
+            <div id="auth-logged-in" style="display:none;">
+                <h2 class="purple-heading">Session</h2>
+                <div class="auth-badge">
+                    <span><span class="auth-dot">●</span> Logged in as: <strong id="auth-display-name">--</strong></span>
+                    <span class="auth-link" onclick="stopFishing()">Sign Out</span>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="purple-heading">Current Gear Details</h2>
+        <p style="font-size:0.75rem; color:#aaa; margin:0 0 8px 0;">These match your Gear Sim automatically.</p>
+
+        <!-- DUPLICATED CONTROLS (kept in sync with the Gear Sim) — same ROW order and
+             the same cascade. Each parent pick here cascades BOTH tabs (they always share
+             one option set) and resolves the canonical HIDDEN ml-line / ld-line id in the
+             Gear Sim form, so the catch row is identical whichever tab you log from. -->
+        <div class="gear-rows">
+            <!-- Row 1 (3-up): Mainline material → brand → lb test. -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="ml-mat-log">Mainline Material</label>
+                    <select id="ml-mat-log" onchange="onLinePartChange('ml-mat-log', true)"><option value="">—</option><option value="braid">Braid</option><option value="mono">Mono</option><option value="copoly">Copoly</option></select>
+                </div>
+                <div class="field">
+                    <label for="ml-brand-log">Mainline Brand</label>
+                    <select id="ml-brand-log" onchange="onLinePartChange('ml-brand-log', true)"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ml-lb-log">Mainline LB Test</label>
+                    <select id="ml-lb-log" onchange="onLinePartChange('ml-lb-log', true)"><option value="">—</option></select>
+                </div>
+            </div>
+
+            <!-- Row 2: Weight Setup → Weight type → Weight amount -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="weight-setup-log">Weight Setup</label>
+                    <select id="weight-setup-log" onchange="syncSelect('weight-setup', true)"><option value="sliding">Sliding</option><option value="fixed">Fixed</option></select>
+                </div>
+                <div class="field">
+                    <label for="weight-shape-log">Weight Type</label>
+                    <select id="weight-shape-log" onchange="onWeightShapeChange('weight-shape', true)"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="weight-log">Weight Amount</label>
+                    <select id="weight-log" onchange="syncSelect('weight', true)"><option value="">—</option><option value="0.25">1/4 oz</option><option value="0.375">3/8 oz</option><option value="0.5">1/2 oz</option><option value="0.625">5/8 oz</option><option value="0.75">3/4 oz</option></select>
+                </div>
+            </div>
+
+            <!-- Row 3: Leader Length + Leader material -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="ld-len-log">Leader Length (ft)</label>
+                    <input type="number" id="ld-len-log" min="1" max="20" step="1" onchange="syncSelect('ld-len', true)" placeholder="10">
+                </div>
+                <div class="field">
+                    <label for="ld-mat-log">Leader Material</label>
+                    <select id="ld-mat-log" onchange="onLinePartChange('ld-mat-log', true)"><option value="">—</option><option value="mono">Mono</option><option value="copoly">Copoly</option><option value="fluoro">Fluorocarbon</option></select>
+                </div>
+            </div>
+
+            <!-- Row 4: Leader brand → lb test -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="ld-brand-log">Leader Brand</label>
+                    <select id="ld-brand-log" onchange="onLinePartChange('ld-brand-log', true)"><option value="">—</option></select>
+                </div>
+                <div class="field">
+                    <label for="ld-lb-log">Leader LB Test</label>
+                    <select id="ld-lb-log" onchange="onLinePartChange('ld-lb-log', true)"><option value="">—</option></select>
+                </div>
+            </div>
+
+            <!-- Row 5: Hook Size + Yarn -->
+            <div class="gear-row">
+                <div class="field">
+                    <label for="hook-log">Hook Size</label>
+                    <select id="hook-log" onchange="syncSelect('hook', true)"><option value="">—</option><option value="2">Size 2</option><option value="1">Size 1</option><option value="0">1/0</option><option value="-1">2/0</option></select>
+                </div>
+                <div class="field">
+                    <label for="yarn-log">Yarn</label>
+                    <select id="yarn-log" onchange="syncSelect('yarn', true)"><option value="">—</option><option value="0">None</option><option value="0.5">1/2"</option><option value="1">1"</option><option value="1.5">1.5"</option><option value="2">2"</option></select>
+                </div>
+            </div>
+
+            <!-- Row 6: Foam 1 + Foam 2 + Bead -->
+            <div class="gear-row gear-row-3">
+                <div class="field">
+                    <label for="foam-log">Foam 1</label>
+                    <select id="foam-log" onchange="syncSelect('foam', true)"><option value="">—</option><option value="0">None</option><option value="14">Corky 14</option><option value="12">Corky 12</option><option value="10">Corky 10</option><option value="c12">Cheater 10</option></select>
+                </div>
+                <div class="field">
+                    <label for="foam2-log">Foam 2</label>
+                    <select id="foam2-log" onchange="syncSelect('foam2', true)"><option value="">—</option><option value="0">None</option><option value="14">Corky 14</option><option value="12">Corky 12</option><option value="10">Corky 10</option><option value="c12">Cheater 10</option></select>
+                </div>
+                <div class="field">
+                    <label for="foam3-log">Bead</label>
+                    <select id="foam3-log" onchange="onFoam3Change('foam3-log', true)"><option value="">—</option></select>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="purple-heading">Catch Result</h2>
+        <div class="row">
+            <div class="col"><label for="species-log">Species Caught</label><select id="species-log" onchange="syncSelect('species', true)"><option value="">—</option><option value="Chinook">Chinook</option><option value="Coho">Coho (Silver)</option><option value="Pink">Pink</option><option value="Chum">Chum</option><option value="Steelhead">Steelhead</option></select></div>
+            <div class="col"><label for="water-type-log">Water Type</label><select id="water-type-log" onchange="syncSelect('water-type', true)"><option value="run">Run (default)</option><option value="pool">Pool</option><option value="riffle">Riffle</option><option value="glide">Glide</option></select></div>
+            <div class="col"><label for="log-datetime">Date &amp; Time</label><input type="datetime-local" id="log-datetime"></div>
+        </div>
+        
+        <button class="btn-main" id="btn-log" onclick="logData()">LOG CATCH DATA</button>
+
+        <h2 class="purple-heading">Catch Log</h2>
+        <div class="catch-scope-toggle" role="group" aria-label="Catch log view">
+            <button type="button" id="scope-everyone" class="scope-btn scope-active" onclick="setCatchScope('everyone')">Everyone</button>
+            <button type="button" id="scope-yours" class="scope-btn" onclick="setCatchScope('yours')">Yours</button>
+        </div>
+        <p id="catch-scope-note" style="font-size:0.7rem; color:var(--text-muted); margin:0 0 10px 0; line-height:1.5;">Public feed — name, time, river and fish. Gear profiles and GPS stay private.</p>
+
+        <div class="table-wrapper" id="catch-log-wrap" style="display:block;">
+            <table id="catch-log-table">
+                <thead id="catch-log-head">
+                    <tr><th>Name</th><th>Time</th><th>River</th><th>Fish</th></tr>
+                </thead>
+                <tbody id="catch-log-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="debug-console"><button onclick="if(typeof copyDebugLog==='function')copyDebugLog()" style="position:sticky;top:0;background:#333;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">📋 Copy All</button> <button onclick="if(typeof reportDebugIssue==='function')reportDebugIssue()" style="position:sticky;top:0;background:#333;color:#ff0;border:1px solid #ff0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">🐛 Report Issue</button></div>
+
+<!-- PERSISTENT BOTTOM TAB BAR (Water Report / Gear Sim / Catch Log) -->
+<nav id="bottom-tab-bar" class="bottom-tab-bar" role="tablist" aria-label="Primary navigation">
+    <button type="button" role="tab" id="tab-btn-water-report" class="tab-btn tab-btn-active" aria-selected="true" onclick="switchTab('tab-water-report')">Water Report</button>
+    <button type="button" role="tab" id="tab-btn-gear-sim" class="tab-btn" aria-selected="false" onclick="switchTab('tab-gear-sim')">Gear Sim</button>
+    <button type="button" role="tab" id="tab-btn-catch-log" class="tab-btn" aria-selected="false" onclick="switchTab('tab-catch-log')">Catch Log</button>
+</nav>
+
+<!-- WATER TYPE GUIDE MODAL (Phase 1.6) -->
+<div id="water-type-modal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Water Type Guide</h2>
+        <p style="font-size:0.75rem; color:#aaa; margin:0 0 12px 0;">
+            Your presentation (cast upstream and let the rig drift) means the local water
+            type changes how deep and fast the water is at your line. Pick the closest match
+            to where you are fishing to adjust the simulation.
+        </p>
+        <div id="water-type-guide-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <button class="btn-main" onclick="closeWaterTypeGuide()" style="margin-top:14px;min-height:44px;">Got it</button>
+    </div>
+</div>
+
+<!-- WATER TYPE ⓘ button handler already inline in the gear-row button above -->
+
+<!-- SCRIPTS: ES module entry point (Vite resolves imports) -->
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>
+
+
+
+================================================
+FILE: src/styles.css
+================================================
 /* COMBINED CSS FROM DRIFTSIM AND WATER REPORT */
 :root {
     --bg-main: #000000;
@@ -723,27 +1227,6 @@ td.empty-state { padding: 30px 10px; }
     margin-top: 2px;
 }
 
-/* Close button for map screen */
-.map-close-btn {
-    position: absolute;
-    top: calc(12px + env(safe-area-inset-top, 0px));
-    left: 12px;
-    z-index: 10000;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background-color: #1a1a1a;
-    color: #ffffff;
-    border: 2px solid #ffffff;
-    font-size: 20px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-.map-close-btn:active { background-color: #333; }
-
 /* Bottom-sheet drawer — slides up from behind the handle */
 .map-drawer {
     position: absolute;
@@ -1035,4 +1518,6 @@ td.empty-state { padding: 30px 10px; }
     text-shadow: 0 0 3px #000;
 }
 .spot-empty { font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px 2px; }
+
+
 

@@ -28,14 +28,15 @@ export async function loadWaterReport(silent) {
     
     // Update header & badge
     document.getElementById('active-station-name').innerText = station.name.toUpperCase();
-    let badge = document.getElementById('active-station-badge');
-    if (station.isGps) {
-        badge.innerText = "📍 GPS: " + station.id;
-        badge.className = "station-badge badge-gps";
-    } else {
-        badge.innerText = "📌 USGS: " + station.id;
-        badge.className = "station-badge badge-manual";
-    }
+    // Badge is now permanently "🗺️ Change River" — do not overwrite
+    // let badge = document.getElementById('active-station-badge');
+    // if (station.isGps) {
+    //     badge.innerText = "📍 GPS: " + station.id;
+    //     badge.className = "station-badge badge-gps";
+    // } else {
+    //     badge.innerText = "📌 USGS: " + station.id;
+    //     badge.className = "station-badge badge-manual";
+    // }
     updateActiveDateUI();
 
     // Regulations rules and the water report are independent network reads, so
@@ -112,11 +113,11 @@ export async function loadWaterReport(silent) {
                     '<div class="empty-state-hint">Last updated ' + hoursAgo + ' ago. Reconnect to refresh.</div>' +
                     '</div>';
             } else if (cards) {
-                badge = document.createElement('div');
-                badge.className = 'seasonal-warning';
-                badge.style.cssText = 'background:var(--card-bg);border:1px solid var(--accent-yellow);color:var(--accent-yellow);';
-                badge.textContent = 'Offline: Last updated ' + hoursAgo + ' ago';
-                cards.insertBefore(badge, cards.firstChild);
+                var _badge = document.createElement('div');
+                _badge.className = 'seasonal-warning';
+                _badge.style.cssText = 'background:var(--card-bg);border:1px solid var(--accent-yellow);color:var(--accent-yellow);';
+                _badge.textContent = 'Offline: Last updated ' + hoursAgo + ' ago';
+                cards.insertBefore(_badge, cards.firstChild);
             }
         }
         // Only replace the container with an empty-state when there is nothing to

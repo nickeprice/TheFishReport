@@ -26,8 +26,9 @@ export function renderReportDays(reports, station, rulesLoaded) {
     if (first.site_name) {
         document.getElementById('active-station-name').innerText = first.site_name.toUpperCase();
     }
-    const badge = document.getElementById('active-station-badge');
-    badge.innerText = (station.isGps ? "📍 GPS: " : "📌 USGS: ") + actId;
+    // Badge is now permanently "🗺️ Change River" — do not overwrite
+    // const badge = document.getElementById('active-station-badge');
+    // badge.innerText = (station.isGps ? "📍 GPS: " : "📌 USGS: ") + actId;
 
     // Seasonal warning
     let seasonalWarn = '';

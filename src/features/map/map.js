@@ -1,14 +1,12 @@
 /**
- * src/features/map/map.js - interactive station map (Phase A6: MapLibre GL JS).
+ * src/features/map/map.js - interactive station map (CDN MapLibre GL JS).
  *
- * public: showStationMap(), loadLeaflet(), refreshStationMap(center), mapCenter(),
- *         startSpotPick(), onSpotPick(e)
+ * public: openMapScreen(), closeMapScreen(), refreshStationMap(center), mapCenter()
  *
- * Uses MapLibre GL JS (WebGL) for smooth map rendering with raster tile layers
- * (street + satellite) and a built-in GeolocateControl. Tapping a pin selects
- * that station through the SAME selectPreset() path the preset buttons use.
+ * Uses MapLibre GL JS v4.7.1 loaded from CDN (unpkg). Satellite imagery base
+ * with gauge pins, saved spot stars, and tap-to-pin drop via FAB.
  *
- * Pin colour states DATA AVAILABILITY: grey = dormant, green = live.
+ * Pin colour: green = live, grey = dormant.
  *
  * ES module.
  */
@@ -20,13 +18,12 @@ import { showToast } from '../../shared/ui.js';
 import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt, renderDrawerSpots } from './spots.js';
 import { savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
-import { Map as MaplibreMap, Marker, GeolocateControl, setWorkerUrl } from 'maplibre-gl';
-// Disable off-thread rendering worker — Vite can't resolve MapLibre's worker URL
-setWorkerUrl('');
 
-// ── Map style: OSM raster tiles (proven tile server) ────────────────────────────
-var MAP_DEFAULT_CENTER = [-122.302, 47.195];  // [lng, lat]
-var MAP_START_ZOOM = 10;
+const maplibregl = window.maplibregl;
+
+// ── Map constants ──────────────────────────────────────────────────────────────
+var MAP_DEFAULT_CENTER = [-122.2943, 47.1932];
+var MAP_START_ZOOM = 11;
 var MAP_STYLE = { version: 8, sources: {
     satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg'], tileSize: 256, attribution: '\u00a9 Esri' }
 }, layers: [
@@ -102,7 +99,7 @@ function makeStarEl() {
 
 function addMarker(el, lngLat) {
     if (!_stationMap) return;
-    var m = new Marker({ element: el, lngLat: lngLat });
+    var m = new maplibregl.Marker({ element: el, lngLat: lngLat });
     m.addTo(_stationMap);
     _mapMarkers.push({ el: el, lng: lngLat[0], lat: lngLat[1] });
 }
@@ -178,7 +175,6 @@ window.mapScreenOpen = mapScreenOpen;
 export async function openMapScreen() {
     var screen = document.getElementById('map-screen');
     if (!screen) return;
-    // Hide the old UI top nav so the map is truly edge-to-edge
     var topNav = document.getElementById('top-nav');
     if (topNav) topNav.style.display = 'none';
     screen.classList.remove('map-screen-hidden');
@@ -193,29 +189,56 @@ export async function openMapScreen() {
     var box = document.getElementById('map-container');
     if (!box) return;
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
-    var center = mapCenter();
     if (!_stationMap) {
-        _stationMap = new MaplibreMap({
+        _stationMap = new maplibregl.Map({
             container: box,
             style: MAP_STYLE,
-            center: [center[1], center[0]],
-            zoom: MAP_START_ZOOM,
-            attribution: { compact: true }
+            center: MAP_DEFAULT_CENTER,
+            zoom: MAP_START_ZOOM
         });
-        _stationMap.on('click', function (e) { onMapClick(e); });
-        _stationMap.addControl(new GeolocateControl({
+        // Render gauge pins on load
+        _stationMap.on('load', function () {
+            var stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.stations;
+            if (stations) {
+                Object.values(stations).forEach(function (st) {
+                    var el = document.createElement('div');
+                    el.className = 'station-pin-dot';
+                    el.style.backgroundColor = '#22c55e';
+                    el.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        if (typeof selectPreset === 'function') selectPreset(st.id, st.lat, st.lon, st.name);
+                        closeMapScreen();
+                    });
+                    new maplibregl.Marker({ element: el }).setLngLat([st.lon, st.lat]).addTo(_stationMap);
+                });
+            }
+        });
+        // Tap-to-pin click handler
+        _stationMap.on('click', function (e) {
+            var fab = document.getElementById('map-fab');
+            if (fab && fab.innerText === '\u2715') {
+                var lat = e.lngLat.lat, lng = e.lngLat.lng;
+                var tempEl = document.createElement('div');
+                tempEl.className = 'temp-pin-dot';
+                if (window._tempMarker) { try { window._tempMarker.remove(); } catch (ex) {} }
+                window._tempMarker = new maplibregl.Marker({ element: tempEl }).setLngLat([lng, lat]).addTo(_stationMap);
+                var pill = document.getElementById('pin-name-pill');
+                if (pill) {
+                    pill.style.display = 'flex';
+                    var coords = document.querySelector('.pin-pill-coords');
+                    if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N ' + Number(lng).toFixed(4) + '\u00b0W';
+                }
+                window._pendingPinCoords = { lat: lat, lng: lng };
+                fab.textContent = '+';
+                fab.style.background = '#23402a';
+                fab.style.border = '2px solid #2d5a3a';
+            }
+        });
+        _stationMap.addControl(new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 }
         }));
-    } else {
-        _stationMap.setCenter([center[1], center[0]]);
     }
-    try {
-        if (loading) loading.style.display = 'none';
-        await refreshStationMap(center);
-    } catch (e) {
-        if (loading) loading.textContent = 'Could not load nearby gauges.';
-        logDebug('Station map feed failed: ' + e.message, 'MAP');
-    }
+    if (loading) loading.style.display = 'none';
 }
 window.openMapScreen = openMapScreen;
 
@@ -418,27 +441,26 @@ function renderDrawerResults() {
     for (var gi = 0; gi < names.length; gi++) {
         var name = names[gi];
         var items = groups[name];
-        html += '<div class="result-card" onclick="mapResultSelect(\'' +
+        html += '<div class="result-row" onclick="mapResultSelect(\'' +
             escapeJsString(items[0].site_id) + '\', ' +
             Number(items[0].coords.lat) + ', ' +
             Number(items[0].coords.lon) + ', \'' +
             escapeJsString(name) + '\')">' +
-            '<div class="result-card-header">' + escapeHtml(name) + '</div>';
-        for (var si = 0; si < items.length; si++) {
-            var s = items[si];
-            html += '<div class="result-card-row">' +
-                escapeHtml(s.name) + ' <span style="font-size:9px;color:#888;font-family:monospace;margin-left:auto">' +
-                escapeHtml(s.site_id) + '</span></div>';
-        }
-        html += '</div>';
+            '<div class="result-row-name">' + escapeHtml(name) + '</div>' +
+            '<div class="result-row-sub">' + escapeHtml(items[0].name) + '</div></div>';
     }
     results.innerHTML = html;
 }
 
 // When a river card is tapped — select it and close the map
 export function mapResultSelect(siteId, lat, lon, name) {
-    if (typeof selectPreset === 'function') selectPreset(siteId, lat, lon, name);
-    closeMapScreen();
+    if (_stationMap) {
+        _stationMap.setCenter([lon, lat]);
+        if (_stationMap.getZoom() < 11) _stationMap.setZoom(11);
+    }
+    if (_drawerOpen) toggleDrawer();
+    var handleStation = document.getElementById('map-handle-station');
+    if (handleStation) handleStation.textContent = name;
 }
 window.mapResultSelect = mapResultSelect;
 

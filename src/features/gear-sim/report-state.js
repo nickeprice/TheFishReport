@@ -16,15 +16,18 @@ window.activeDateOffset = activeDateOffset;
 export var reportsData = [];
 window.reportsData = reportsData;
 
-export function setReportsData(arr) {
+// Setter MUST use a unique function name (20+ chars) that Rollup cannot
+// minify to the same 2-letter name as Leaflet's position setter.
+// If they collide, reportsData stays empty and day navigation breaks.
+export var setReportDataAndWindow = function setReportDataAndWindow(arr) {
     reportsData = arr;
     window.reportsData = reportsData;
-}
+};
 
-export function setActiveDateOffset(n) {
+export var setActiveOffsetAndWindow = function setActiveOffsetAndWindow(n) {
     activeDateOffset = n;
     window.activeDateOffset = activeDateOffset;
-}
+};
 
 // Live discharge for the Gear Sim + Catch Log. There is NO user-facing flow
 // input any more: the value comes from the current water report, falls back to

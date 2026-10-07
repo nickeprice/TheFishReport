@@ -7,7 +7,7 @@
  */
 import { logDebug } from '../../shared/debug.js';
 import { idbPutAll, idbGetAll } from '../../shared/idb.js';
-import { renderWaterReportEmptyState, updateActiveDateUI, setReportsData, activeDateOffset, reportsData } from './daynav.js';
+import { renderWaterReportEmptyState, updateActiveDateUI, activeDateOffset, reportsData, setReportDataAndWindow } from './daynav.js';
 import { loadRules as loadRegulationsRules } from '../../utils/regulations.js';
 import { applyReportWeather } from '../../services/water.js';
 import { renderReportDays } from './report-render.js';
@@ -54,7 +54,7 @@ export async function loadWaterReport(silent) {
             cache: 'no-store'
         });
         const reports = await res.json();
-        setReportsData(reports);
+        setReportDataAndWindow(reports);
         logDebug("Water API success. Processing " + reports.length + " days.", "NET");
 
         // G1 (Phase 2.4): persist a durable offline snapshot of the report day-rows.
@@ -94,7 +94,7 @@ export async function loadWaterReport(silent) {
             try { snap = await idbGetAll('telemetry_snapshots'); } catch (e2) { snap = null; }
         }
         if (snap && snap.length) {
-            setReportsData(snap);
+            setReportDataAndWindow(snap);
             updateActiveDateUI();
             let hoursAgo = 'a while';
             try {

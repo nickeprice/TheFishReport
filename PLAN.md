@@ -49,10 +49,6 @@
       → chain-shooting.js, sim.js, solver.js, conftest.py, NEW test file
       [Detail → docs/PLAN_REFERENCE.md#test-playwright]
 
-- [ ] T5: ESLint prefer-const sweep
-      → ESLint rule on src/ — fix candidates to const where safe
-      [Detail → docs/PLAN_REFERENCE.md#test-const]
-
 - [ ] T6: HTML onclick handler audit
       → index.html, search for onclick= — verify each fn has window shim
       [Detail → docs/PLAN_REFERENCE.md#test-onclick]

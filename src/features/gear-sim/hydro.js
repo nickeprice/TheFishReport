@@ -10,12 +10,12 @@
  */
 
 // von Kármán constant (standard fluid dynamics, no site tuning)
-var KAPPA = 0.41;            // dimensionless — @provenance: standard
+const KAPPA = 0.41;            // dimensionless — @provenance: standard
 // Median cobble diameter, metres (D₅₀ = 10 cm default for gravel-cobble bed)
-var MEDIAN_COBBLE_M = 0.10;  // m — @provenance: literature (Nick Thorne 2025, PNW gravel-cobble)
+let MEDIAN_COBBLE_M = 0.10;  // m — @provenance: literature (Nick Thorne 2025, PNW gravel-cobble)
 // Roughness length z₀ = 0.033 · (2.5 · D₅₀) per Nikora 1992 / Raudkivi 1998
 // 0.033 · 0.25 = 0.00825 m ≈ 8 mm
-var ROUGHNESS_COBBLE = 0.033 * 2.5 * MEDIAN_COBBLE_M;  // m — @provenance: derived
+let ROUGHNESS_COBBLE = 0.033 * 2.5 * MEDIAN_COBBLE_M;  // m — @provenance: derived
 
 export { ROUGHNESS_COBBLE };
 
@@ -62,7 +62,7 @@ export function logLawVelocity(z, uStar, z0) {
  */
 export function uStarFromMax(uMax, H, z0) {
     if (!uMax || uMax <= 0 || !H || H <= 0 || !z0 || z0 <= 0) return null;
-    var lnArg = H / z0;
+    const lnArg = H / z0;
     if (lnArg <= 1) return null;                            // H must be > z0
     return uMax * KAPPA / Math.log(lnArg);
 }
@@ -85,11 +85,11 @@ export function uStarFromMax(uMax, H, z0) {
  */
 export function velocityProfile(z, H, uMax, z0) {
     z0 = (z0 && z0 > 0) ? z0 : ROUGHNESS_COBBLE;
-    var uStar = uStarFromMax(uMax, H, z0);
+    const uStar = uStarFromMax(uMax, H, z0);
     if (uStar === null) {
         return { vMs: 0, uStar: null, z0: z0, H: H };
     }
-    var v = logLawVelocity(z, uStar, z0);
+    const v = logLawVelocity(z, uStar, z0);
     return { vMs: v, uStar: uStar, z0: z0, H: H };
 }
 
@@ -116,8 +116,8 @@ export function turbulenceFluctuation(t, intensity, uMean) {
     // t is reserved; silence unused-param warnings by the convention of including it.
     if (!intensity || intensity <= 0 || !uMean || uMean <= 0) return 0;
     // Box-Muller: two uniform(0,1] → one standard normal
-    var u = 1 - Math.random();                              // (0,1] avoid ln(0)
-    var v = 1 - Math.random();
-    var z0bm = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    const u = 1 - Math.random();                              // (0,1] avoid ln(0)
+    const v = 1 - Math.random();
+    const z0bm = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
     return z0bm * intensity * uMean;
 }

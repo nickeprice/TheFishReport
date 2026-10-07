@@ -16,11 +16,11 @@ import { snapshotSave } from '../features/catch-log/outbox.js';
 // hook -> hook_size, yarn -> yarn, foam -> foam (+ foam2 -> foam_2),
 // bdMat/bdSz -> bead_material/bead_size.
 export function toCatchRow(payload) {
-    var t = payload.time ? new Date(payload.time) : new Date();
+    let t = payload.time ? new Date(payload.time) : new Date();
     if (isNaN(t.getTime())) t = new Date();
-    var lat = null, lon = null;
+    let lat = null, lon = null;
     if (payload.gps && payload.gps !== 'Denied') {
-        var parts = String(payload.gps).split(',');
+        const parts = String(payload.gps).split(',');
         if (parts.length === 2) {
             lat = parseFloat(parts[0]); lon = parseFloat(parts[1]);
             if (isNaN(lat)) lat = null;
@@ -90,15 +90,15 @@ export function toCatchRow(payload) {
  * already has `PRIMARY KEY (id)`.
  */
 export async function insertCatch(payload) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return { ok: false, offline: true, error: 'Supabase not configured or offline' };
     try {
-        var res = await client
+        const res = await client
             .from('catches')
             .upsert(toCatchRow(payload), { onConflict: 'id', ignoreDuplicates: true })
             .select('id');
         if (res.error) return { ok: false, error: res.error.message };
-        var row = (res.data && res.data.length) ? res.data[0] : null;
+        const row = (res.data && res.data.length) ? res.data[0] : null;
         // No row returned simply means it was ALREADY stored — the intended outcome of a
         // retry, so it counts as success rather than as a failure to retry forever.
         return { ok: true, id: row ? row.id : (payload.clientId || null), deduped: !row };
@@ -109,10 +109,10 @@ export async function insertCatch(payload) {
 
 /** Private read: the signed-in user's own catch rows (RLS guarantees ownership). */
 export async function fetchMyCatches() {
-    var client = getClient();
+    const client = getClient();
     if (!client) return [];
     try {
-        var res = await client.from('catches')
+        const res = await client.from('catches')
             .select('id,species,catch_time,flow,sim_score,angler_name,leader_length,leader_material,leader_lb,weight,foam,bead_material,bead_size,hook_size,yarn,line_height_in,zone_min_in,zone_max_in')
             .order('catch_time', { ascending: false })
             .limit(100);
@@ -125,10 +125,10 @@ export async function fetchMyCatches() {
 
 /** Private update: edit allowed columns on one of the user's own rows. */
 export async function updateMyCatch(id, patch) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return { ok: false, error: 'Supabase not configured or offline' };
     try {
-        var res = await client.from('catches').update(patch).eq('id', id);
+        const res = await client.from('catches').update(patch).eq('id', id);
         if (res.error) return { ok: false, error: res.error.message };
         return { ok: true };
     } catch (e) {
@@ -138,10 +138,10 @@ export async function updateMyCatch(id, patch) {
 
 /** Private delete: remove one of the user's own rows. */
 export async function deleteMyCatch(id) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return { ok: false, error: 'Supabase not configured or offline' };
     try {
-        var res = await client.from('catches').delete().eq('id', id);
+        const res = await client.from('catches').delete().eq('id', id);
         if (res.error) return { ok: false, error: res.error.message };
         return { ok: true };
     } catch (e) {
@@ -159,8 +159,8 @@ export async function deleteMyCatch(id) {
 
 /** payload -> favorite_spots columns. NEVER sets user_id (the DB default owns it). */
 export function toSpotRow(payload) {
-    var lat = parseFloat(payload.latitude);
-    var lon = parseFloat(payload.longitude);
+    const lat = parseFloat(payload.latitude);
+    const lon = parseFloat(payload.longitude);
     return {
         // Client-generated id: the same id on an edit, so an upsert cannot duplicate.
         id: (payload.clientId !== undefined && payload.clientId !== null) ? payload.clientId : undefined,
@@ -181,16 +181,16 @@ export function toSpotRow(payload) {
  * non-numeric coordinate is rejected BEFORE the network — a bad row cannot land.
  */
 export async function saveFavoriteSpot(payload) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return { ok: false, offline: true, error: 'Supabase not configured or offline' };
-    var row = toSpotRow(payload);
+    const row = toSpotRow(payload);
     if (!row.label || row.latitude === null || row.longitude === null) {
         return { ok: false, error: 'A spot needs a name and a position.' };
     }
     try {
-        var res = await client.from('favorite_spots').upsert(row, { onConflict: 'id' }).select('id');
+        const res = await client.from('favorite_spots').upsert(row, { onConflict: 'id' }).select('id');
         if (res.error) return { ok: false, error: res.error.message };
-        var saved = (res.data && res.data.length) ? res.data[0] : null;
+        const saved = (res.data && res.data.length) ? res.data[0] : null;
         return { ok: true, id: saved ? saved.id : (row.id || null) };
     } catch (e) {
         return { ok: false, error: e.message };
@@ -199,10 +199,10 @@ export async function saveFavoriteSpot(payload) {
 
 /** Private read: MY spots only (RLS guarantees ownership; no view, no RPC). */
 export async function fetchFavoriteSpots() {
-    var client = getClient();
+    const client = getClient();
     if (!client) return null;   // null = unreachable, [] = reachable and empty
     try {
-        var res = await client.from('favorite_spots')
+        const res = await client.from('favorite_spots')
             .select('id,label,station_id,river_name,latitude,longitude,notes,created_at')
             .order('created_at', { ascending: true });
         if (res.error) return null;
@@ -214,10 +214,10 @@ export async function fetchFavoriteSpots() {
 
 /** Private delete: remove one of MY spots. */
 export async function deleteFavoriteSpot(id) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return { ok: false, error: 'Supabase not configured or offline' };
     try {
-        var res = await client.from('favorite_spots').delete().eq('id', id);
+        const res = await client.from('favorite_spots').delete().eq('id', id);
         if (res.error) return { ok: false, error: res.error.message };
         return { ok: true };
     } catch (e) {
@@ -228,17 +228,17 @@ export async function deleteFavoriteSpot(id) {
 /** Public read: the rebuilt view exposes name / time / river / fish.
  * Falls back gracefully when run against an older view (name,time[,river]). */
 export async function fetchPublicFeed(limit) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return [];
     try {
-        var res = await client
+        const res = await client
             .from('public_catch_feed')
             .select('name,time,river,fish')
             .order('time', { ascending: false })
             .limit(limit || 100);
         if (res.error) {
             // Older view without river — retry so the board still loads.
-            var retry = await client
+            const retry = await client
                 .from('public_catch_feed')
                 .select('name,time')
                 .order('time', { ascending: false })
@@ -281,17 +281,17 @@ export async function fetchPublicFeed(limit) {
  * The mapper stays shape-tolerant so a slightly different RPC shape still maps cleanly.
  */
 export async function fetchGlobalCalibration(flow, species) {
-    var client = getClient();
+    const client = getClient();
     if (!client) return [];
     try {
-        var res = await client.rpc('get_global_calibration', { p_flow: flow, p_species: species });
+        const res = await client.rpc('get_global_calibration', { p_flow: flow, p_species: species });
         if (res.error || !res.data) return [];
         // G5: snapshot the successful read so community sonar works offline.
         try { snapshotSave('calibration_snapshot', res.data); } catch (e) {}
         return res.data.map(function (r) {
-            var num = function (v) {
+            const num = function (v) {
                 if (v === null || v === undefined || v === '') return null;
-                var n = Number(v);
+                const n = Number(v);
                 return isFinite(n) ? n : null;
             };
             return {

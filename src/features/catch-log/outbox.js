@@ -18,7 +18,7 @@
 import { newUuid } from '../../shared/format.js';
 import { idbOpen, idbGetAll, idbPutAll } from '../../shared/idb.js';
 import { logDebug } from '../../shared/debug.js';
-var OUTBOX = [];
+let OUTBOX = [];
 export var OUTBOX_STORE_KIND = 'idb';        // 'idb' | 'ls' — diagnostic
 window.OUTBOX_STORE_KIND = OUTBOX_STORE_KIND;
 export var LEGACY_CATCH_KEY = 'catch_db';
@@ -35,8 +35,8 @@ export function outboxStoreKind() { return OUTBOX_STORE_KIND; }
 
 export function outboxReadLegacy() {
     try {
-        var j = localStorage.getItem(LEGACY_CATCH_KEY);
-        var rows = j ? JSON.parse(j) : [];
+        const j = localStorage.getItem(LEGACY_CATCH_KEY);
+        const rows = j ? JSON.parse(j) : [];
         return Array.isArray(rows) ? rows : [];
     } catch (e) { return []; }
 }
@@ -48,27 +48,27 @@ export function outboxWriteLegacy() {
 // Merge by clientId, giving legacy rows (which predate clientId) a stable key so a
 // retry can never duplicate them. An already-synced row wins over an unsynced copy.
 export function outboxMerge(rows) {
-    var byKey = {};
+    const byKey = {};
     OUTBOX.forEach(function (r) { if (r && r.clientId) byKey[r.clientId] = r; });
     (rows || []).forEach(function (r) {
         if (!r || typeof r !== 'object') return;
         if (!r.clientId) r.clientId = newUuid();
-        var prev = byKey[r.clientId];
+        const prev = byKey[r.clientId];
         if (!prev || (!prev.syncedAt && r.syncedAt)) byKey[r.clientId] = r;
     });
     OUTBOX = Object.keys(byKey).map(function (k) { return byKey[k]; });
 }
 
 export async function outboxLoad() {
-    var db = await idbOpen();
-    var usingIdb = !!db;
+    const db = await idbOpen();
+    const usingIdb = !!db;
     if (!usingIdb) OUTBOX_STORE_KIND = 'ls';
 
     outboxMerge(usingIdb ? await idbGetAll('catches') : []);
     outboxMerge(outboxReadLegacy());
 
     if (usingIdb) {
-        var wrote = await idbPutAll('catches', OUTBOX);
+        const wrote = await idbPutAll('catches', OUTBOX);
         // Retire the legacy key ONLY once the durable copy is confirmed.
         if (wrote) { try { localStorage.removeItem(LEGACY_CATCH_KEY); } catch (e) {} }
     } else {
@@ -97,7 +97,7 @@ export function outboxAdd(row) {
 // community sonar still have real (honestly stale) data offline.
 export function snapshotSave(store, value) {
 window.snapshotSave = snapshotSave;
-    var row = { id: '_snapshot', ts: Date.now(), value: value };
+    const row = { id: '_snapshot', ts: Date.now(), value: value };
     if (typeof idbPutAll === 'function') {
         idbPutAll(store, [row]);   // write-through
     }
@@ -106,10 +106,10 @@ window.snapshotSave = snapshotSave;
 
 window.snapshotLoad = snapshotLoad;
 export async function snapshotLoad(store) {
-    var row = null;
+    let row = null;
     if (typeof idbGetAll === 'function') {
         try {
-            var rowsGet = await idbGetAll(store);
+            const rowsGet = await idbGetAll(store);
             if (rowsGet && rowsGet.length && rowsGet[0] && rowsGet[0].value) row = rowsGet[0];
         } catch (e) {}
     }

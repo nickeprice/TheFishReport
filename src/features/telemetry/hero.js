@@ -14,9 +14,9 @@ import { getFMIColor } from './tide.js';
 import { ESCAPEMENT_UPDATED_FALLBACK } from '../../services/water-weather.js';
 export function buildFishingHero(rep) {
     if (!rep) return '';
-    var score = 0;
-    var reasons = [];
-    var any = false;
+    let score = 0;
+    const reasons = [];
+    let any = false;
 
     // Thermal RUN status (WRIA 9 / King County thresholds - docs/LITERATURE.md SS8). A
     // tidal-reach river at/above the 21-22C migration-block range stalls the run: adults
@@ -24,8 +24,8 @@ export function buildFishingHero(rep) {
     // Own-gauge probe only - a missing reading makes NO claim. This is a RUN signal, not
     // the strike zone. 21C = 69.8F, 22C = 71.6F. Ordered first: a blocked run beats a freshet.
     if (provVal(rep.water_temp_f) !== null && provVal(rep.water_temp_f) !== undefined && !isNaN(Number(provVal(rep.water_temp_f)))) {
-        var wtF = Number(provVal(rep.water_temp_f));
-        var wtC = (wtF - 32) * 5 / 9;
+        const wtF = Number(provVal(rep.water_temp_f));
+        const wtC = (wtF - 32) * 5 / 9;
         if (wtC >= 22) { any = true; score -= 14; reasons.push('Lethal water (' + Math.round(wtF) + 'F) - the run has stalled'); }
         else if (wtC >= 21) { any = true; score -= 9; reasons.push('Migration-block range (' + Math.round(wtF) + 'F) - fish are holding'); }
     }
@@ -42,7 +42,7 @@ export function buildFishingHero(rep) {
         reasons.push('High pressure settling in');
     }
     if (provVal(rep.tide_curve) && provVal(rep.tide_curve).length) {
-        var highs = provVal(rep.tide_curve).filter(function (t) { return t.type === 'H'; });
+        const highs = provVal(rep.tide_curve).filter(function (t) { return t.type === 'H'; });
         if (highs.length) {
             any = true; score += Math.min(10, highs.length * 5);
             reasons.push(highs.length + ' high tide' + (highs.length > 1 ? 's' : '') + ' today');
@@ -61,7 +61,7 @@ export function buildFishingHero(rep) {
     if (rep.is_netting) { score -= 15; reasons.push('Netting day (Sun/Mon/Tue)'); }
     if (rep.clarity_outlook) { any = true; reasons.push(rep.clarity_outlook); }
 
-    var verdict, vColor;
+    let verdict, vColor;
     if (!any) {
         verdict = 'Live conditions unavailable';
         vColor = 'var(--text-muted)';
@@ -74,21 +74,21 @@ export function buildFishingHero(rep) {
     }
 
     // Best window: the server already computes rep.windows with start/end + trigger.
-    var best = null;
+    let best = null;
     if (rep.windows && rep.windows.length) {
-        for (var w = 0; w < rep.windows.length; w++) {
+        for (let w = 0; w < rep.windows.length; w++) {
             if (!best || rep.windows[w].score > best.score) best = rep.windows[w];
         }
     }
-    var peakTxt = '';
+    let peakTxt = '';
     if (best) {
-        var pCol = getFMIColor(best.score);
+        const pCol = getFMIColor(best.score);
         peakTxt = '<span class="hero-peak-time" style="color:' + pCol + ';">Best ' + best.start_str + ' \u2013 ' + best.end_str + '</span>';
     }
 
     // Join reasons into the strip (cap at 2 so the centred line never wraps on a
     // phone; the reasons are ordered by importance above).
-    var whyTxt = reasons.slice(0, 2).map(function (r) { return '<span class="hero-why-bit">' + r + '</span>'; }).join('<span class="hero-sep">\u00B7</span>');
+    const whyTxt = reasons.slice(0, 2).map(function (r) { return '<span class="hero-why-bit">' + r + '</span>'; }).join('<span class="hero-sep">\u00B7</span>');
 
     return '<div class="fishing-hero">' +
         '<div class="hero-line">' +
@@ -105,27 +105,27 @@ export function buildFishingHero(rep) {
 // numbers fold". escStocks is the water.js hatchery registry (may be absent => "--").
 export function buildSpeciesCalendarHtml(calendar, escStocks) {
     if (!calendar || !calendar.length) return '';
-    var html = '<div class="run-timing-cards">';
-    for (var i = 0; i < calendar.length; i++) {
-        var s = calendar[i];
-        var statusClass = 'spc-' + (s.position || 'off');
-        var prog = (typeof s.progress === 'number') ? Math.max(0, Math.min(1, s.progress)) : 0;
-        var peakFrac = (typeof s.peak_frac === 'number') ? Math.max(0, Math.min(1, s.peak_frac)) : 0.5;
-        var fillPct = (prog * 100).toFixed(1);
-        var peakLeft = (peakFrac * 100).toFixed(1);
+    let html = '<div class="run-timing-cards">';
+    for (let i = 0; i < calendar.length; i++) {
+        const s = calendar[i];
+        const statusClass = 'spc-' + (s.position || 'off');
+        const prog = (typeof s.progress === 'number') ? Math.max(0, Math.min(1, s.progress)) : 0;
+        const peakFrac = (typeof s.peak_frac === 'number') ? Math.max(0, Math.min(1, s.peak_frac)) : 0.5;
+        const fillPct = (prog * 100).toFixed(1);
+        const peakLeft = (peakFrac * 100).toFixed(1);
         // Species-safe key for count folding: match hatchery registry by exact
         // species name (Chinook/Coho/Pink vs the registry's Chinook/Coho/Jacks).
-        var escKey = String(s.species || '').toLowerCase();
-        var esc = null;
+        const escKey = String(s.species || '').toLowerCase();
+        let esc = null;
         if (escStocks && escStocks.stocks) {
-            for (var e = 0; e < escStocks.stocks.length; e++) {
+            for (let e = 0; e < escStocks.stocks.length; e++) {
                 if (String(escStocks.stocks[e].name || '').toLowerCase() === escKey) { esc = escStocks.stocks[e]; break; }
             }
         }
-        var wdfwForecast = null; // filled by 2.1d from src/data/wdfw_forecasts.json
-        var countVal = function (v) { return (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US'); };
-        var escName = esc ? esc.name : (s.species || '');
-        var escNameEsc = String(escName).replace(/[&<>"']/g, function (c) {
+        const wdfwForecast = null; // filled by 2.1d from src/data/wdfw_forecasts.json
+        const countVal = function (v) { return (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US'); };
+        const escName = esc ? esc.name : (s.species || '');
+        const escNameEsc = String(escName).replace(/[&<>"']/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
 

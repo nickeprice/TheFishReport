@@ -28,12 +28,12 @@ import { savedSpotIcon, savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
 import L from 'leaflet';
 
-var LEAFLET_TILES_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-var MAP_DEFAULT_CENTER = [47.195, -122.302];
-var MAP_START_ZOOM = 10;
+const LEAFLET_TILES_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const MAP_DEFAULT_CENTER = [47.195, -122.302];
+const MAP_START_ZOOM = 10;
 
-var _stationMap = null;
-var _stationMarkers = null;
+let _stationMap = null;
+let _stationMarkers = null;
 
 // Leaflet is imported statically at build time. The legacy dynamic CDN loader
 // (fetching unpkg.com/leaflet@1.9.4) is deleted — Vite resolves the npm package.
@@ -45,8 +45,8 @@ window.L = L;
 
 export function mapPinHasReading(station) {
     if (!station) return false;
-    var hasCfs = station.cfs !== undefined && station.cfs !== null;
-    var hasGage = station.gage !== undefined && station.gage !== null;
+    const hasCfs = station.cfs !== undefined && station.cfs !== null;
+    const hasGage = station.gage !== undefined && station.gage !== null;
     return hasCfs || hasGage;
 }
 
@@ -72,8 +72,8 @@ export function mapLegalText(rule) {
 }
 
 export function stationPopupHtml(s) {
-    var cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
-    var gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
+    const cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
+    const gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
     return '<b>' + escapeHtml(s.name || s.id) + '</b><br>' +
         escapeHtml(cfs + ' CFS \u00b7 ' + gage + ' ft') + '<br>' +
         escapeHtml(mapLegalText(s.legal_hours)) + '<br>' +
@@ -88,7 +88,7 @@ export function mapCenter() {
         return [State.userGPSCoords.lat, State.userGPSCoords.lon];
     }
     try {
-        var stored = JSON.parse(localStorage.getItem('active_station') || 'null');
+        const stored = JSON.parse(localStorage.getItem('active_station') || 'null');
         if (stored && stored.lat != null && stored.lon != null) return [stored.lat, stored.lon];
     } catch (e) {}
     return MAP_DEFAULT_CENTER;
@@ -101,7 +101,7 @@ export function mapCenter() {
 export function plotSavedSpotStars() {
     if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
     if (typeof savedSpotIcon !== 'function') return 0;
-    var plotted = 0;
+    let plotted = 0;
     spotsState.rows.forEach(function (sp) {
         if (sp.latitude == null || sp.longitude == null) return;
         L.marker([Number(sp.latitude), Number(sp.longitude)], { icon: savedSpotIcon(), title: sp.label })
@@ -119,11 +119,11 @@ export async function refreshStationMap(center) {
     if (!_stationMap || !_stationMarkers || typeof apiGetJson !== 'function') {
         return { count: 0, note: '', error: null, status: 0, spots: 0 };
     }
-    var out = { count: 0, note: '', error: null, status: 0, spots: 0 };
-    var res = await apiGetJson('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1],
+    const out = { count: 0, note: '', error: null, status: 0, spots: 0 };
+    const res = await apiGetJson('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1],
                               { label: 'nearby_stations' });
     if (res.ok) {
-        var stations = (res.data && res.data.stations) ? res.data.stations : [];
+        const stations = (res.data && res.data.stations) ? res.data.stations : [];
         _stationMarkers.clearLayers();
         L.circleMarker(center, { radius: 6, color: '#38bdf8', weight: 2, fillOpacity: 0.35 })
             .addTo(_stationMarkers);
@@ -180,9 +180,9 @@ export async function openSpotPickMap() {
     _stationMap.once('click', onSpotPick);
     // The name can come first or on the tap (the pick asks for it if it is still empty), so
     // nudge the field rather than blocking the pick.
-    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim() : '';
+    const label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim() : '';
     if (!label) {
-        var input = document.getElementById('spot-label');
+        const input = document.getElementById('spot-label');
         if (input && input.focus) input.focus();
     }
 }
@@ -192,16 +192,16 @@ export async function onSpotPick(e) {
     if (!e || !e.latlng) return;
     if (!spotsSignedIn()) { spotsStatus('Start a session on the Catch Log tab first.'); return; }
     // Name it now if it was not named first: the tap is the moment the angler knows where it is.
-    var label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX) : '';
+    let label = (typeof getStr === 'function') ? (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX) : '';
     if (!label) {
-        var typed = window.prompt('Name this spot', 'My spot');
+        const typed = window.prompt('Name this spot', 'My spot');
         if (typed == null) { spotsStatus('Cancelled \u2014 tap the map again when you are ready.'); return; }
         label = String(typed).trim().slice(0, SPOT_LABEL_MAX);
         if (!label) { spotsStatus('A spot needs a name \u2014 tap the map again.'); return; }
         setFieldValue('spot-label', label);
     }
     spotsStatus('Saving\u2026');
-    var id = await saveSpotAt(e.latlng.lat, e.latlng.lng, label);
+    const id = await saveSpotAt(e.latlng.lat, e.latlng.lng, label);
     if (!id) { spotsStatus('Could not save that spot.'); return; }
     setFieldValue('spot-label', '');
     if (typeof showToast === 'function') showToast('Spot saved (private)', 'success', 2500);
@@ -211,20 +211,20 @@ export async function onSpotPick(e) {
 }
 
 export async function showStationMap() {
-    var box = document.getElementById('station-map');
-    var note = document.getElementById('station-map-note');
+    const box = document.getElementById('station-map');
+    const note = document.getElementById('station-map-note');
     if (!box) return;
     box.hidden = false;
     if (note) { note.hidden = false; note.textContent = 'Loading map\u2026'; }
 
-    var available = await loadLeaflet();
+    const available = await loadLeaflet();
     if (!available) {
         box.hidden = true;
         if (note) note.textContent = 'Map unavailable (offline or CDN blocked) \u2014 use the presets, search or GPS above.';
         return;
     }
 
-    var center = mapCenter();
+    const center = mapCenter();
     // WS-5: refresh the private spot list first, so the star layer below is current.
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     if (!_stationMap) {
@@ -239,9 +239,9 @@ export async function showStationMap() {
     setTimeout(function () { if (_stationMap) _stationMap.invalidateSize(); }, 200);
 
     try {
-        var out = await refreshStationMap(center);
+        const out = await refreshStationMap(center);
         if (note) {
-            var spotsN = (typeof spotsState !== 'undefined' && spotsState.rows.length)
+            const spotsN = (typeof spotsState !== 'undefined' && spotsState.rows.length)
                 ? ' \u00b7 ' + spotsState.rows.length + ' saved spot(s) (star).' : '';
             if (out.error) {
                 // Name the CAUSE (status / timeout / network) instead of blaming the data:

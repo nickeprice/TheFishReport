@@ -12,42 +12,42 @@
 // Friction coefficients: lead-on-wet-cobble
 // Literature range 0.55–0.75 for wet lead on rock (National Physics Laboratory 2020).
 // @provenance: literature
-var MU_STATIC = 0.65;          // dimensionless — static friction, lead-on-wet-cobble
-var MU_KINETIC = 0.35;         // dimensionless — kinetic friction, sliding on wet cobble
+const MU_STATIC = 0.65;          // dimensionless — static friction, lead-on-wet-cobble
+const MU_KINETIC = 0.35;         // dimensionless — kinetic friction, sliding on wet cobble
 // Reduced elastic modulus, GPa — lead (E₁=16 GPa, ν₁=0.44) on basalt (E₂=60 GPa, ν₂=0.25)
 // 1/E* = (1−ν₁²)/E₁ + (1−ν₂²)/E₂ = (1−0.194)/16 + (1−0.0625)/60 = 0.0504 + 0.0156 = 0.066
 // 1/0.066 ≈ 15.1 GPa — @provenance: derived (Hertz contact theory, material properties from
 // engineering handbooks)
-var E_STAR_GPA = 12;           // GPa — @provenance: informed_estimate (conservative rounding)
+const E_STAR_GPA = 12;           // GPa — @provenance: informed_estimate (conservative rounding)
 
 // Nominal cobble radius for Hertz contact, metres
 // D₅₀ = 0.10m → R_cobble = 0.05m
-var R_COBBLE_M = 0.05;         // m — @provenance: derived (from MEDIAN_COBBLE_M in hydro.js)
+const R_COBBLE_M = 0.05;         // m — @provenance: derived (from MEDIAN_COBBLE_M in hydro.js)
 
 // Spectral roughness coefficients — sum-of-sines approximation of self-affine gravel bed.
 // N=6 log-spaced wavenumbers k ∈ [2π/(10·D₅₀), 2π/(D₅₀/4)] with A ∝ k^(-β), β = H+1, H≈0.7.
 // Deterministic phase offsets (fixed numbers, not random).
 // @provenance: literature (Robert 2003, Aberle & Nikora 2006 — self-affine gravel roughness)
-var BED_RGH = [];
+const BED_RGH = [];
 (function() {
-    var D50 = 2 * R_COBBLE_M;                       // median cobble diameter (0.10 m)
-    var kMin = 2 * Math.PI / (10 * D50);            // 6.283 — longest wavelength
-    var kMax = 2 * Math.PI / (D50 / 4);             // 251.3 — shortest wavelength
-    var N = 6;
+    const D50 = 2 * R_COBBLE_M;                       // median cobble diameter (0.10 m)
+    const kMin = 2 * Math.PI / (10 * D50);            // 6.283 — longest wavelength
+    const kMax = 2 * Math.PI / (D50 / 4);             // 251.3 — shortest wavelength
+    const N = 6;
     // Fixed phase offsets (radians) — deterministic, seeded
-    var phX = [0.0, 1.2, 2.7, 4.1, 5.3, 0.8];
-    var phY = [1.8, 3.4, 0.5, 2.2, 4.9, 3.1];
-    var amps = [];
-    var sumA2 = 0;
+    const phX = [0.0, 1.2, 2.7, 4.1, 5.3, 0.8];
+    const phY = [1.8, 3.4, 0.5, 2.2, 4.9, 3.1];
+    const amps = [];
+    let sumA2 = 0;
     for (var i = 0; i < N; i++) {
-        var k = Math.exp(Math.log(kMin) + i * (Math.log(kMax) - Math.log(kMin)) / (N - 1));
-        var a = Math.pow(k, -1.7);                  // power-law amplitude before normalisation
+        const k = Math.exp(Math.log(kMin) + i * (Math.log(kMax) - Math.log(kMin)) / (N - 1));
+        const a = Math.pow(k, -1.7);                  // power-law amplitude before normalisation
         amps.push(a);
         sumA2 += a * a;
     }
     // Normalise so RMS roughness ≈ D50 / 4 = 0.025 m
-    var targetRMS = D50 / 4;
-    var norm = Math.sqrt(2 * targetRMS * targetRMS / sumA2);
+    const targetRMS = D50 / 4;
+    const norm = Math.sqrt(2 * targetRMS * targetRMS / sumA2);
     for (i = 0; i < N; i++) {
         BED_RGH.push({
             k: Math.exp(Math.log(kMin) + i * (Math.log(kMax) - Math.log(kMin)) / (N - 1)),
@@ -70,9 +70,9 @@ var BED_RGH = [];
  */
 export function bedElevation(x, y) {
     if (isNaN(x) || isNaN(y)) return 0;
-    var z = 0;
-    for (var i = 0; i < BED_RGH.length; i++) {
-        var r = BED_RGH[i];
+    let z = 0;
+    for (let i = 0; i < BED_RGH.length; i++) {
+        const r = BED_RGH[i];
         z += r.amp * Math.sin(r.k * x + r.phX) * Math.sin(r.k * y + r.phY);
     }
     return z;
@@ -99,17 +99,17 @@ export function bedElevation(x, y) {
  * @error: ±30% — E* is approximate and damping is linearised.
  */
 export function contactForce(z, z_bed, v_z) {
-    var delta = z_bed - z;                           // penetration depth (m)
+    const delta = z_bed - z;                           // penetration depth (m)
     if (delta <= 0) {
         return { forceN: 0, dampedN: 0, penetration: delta, inContact: false };
     }
     // Hertz stiffness
-    var eStarPa = E_STAR_GPA * 1e9;                  // GPa → Pa
-    var effRadius = R_COBBLE_M;                      // R* ≈ cobble radius (sinker << cobble)
-    var k = (4.0 / 3.0) * eStarPa * Math.sqrt(effRadius);
-    var forceN = k * Math.pow(delta, 1.5);
+    const eStarPa = E_STAR_GPA * 1e9;                  // GPa → Pa
+    const effRadius = R_COBBLE_M;                      // R* ≈ cobble radius (sinker << cobble)
+    const k = (4.0 / 3.0) * eStarPa * Math.sqrt(effRadius);
+    const forceN = k * Math.pow(delta, 1.5);
     // Linear damping (proportional to v_z, capped to prevent instabilities)
-    var dampingN = Math.min(0, v_z) * 0.5 * delta;
+    const dampingN = Math.min(0, v_z) * 0.5 * delta;
     return {
         forceN: forceN,
         dampedN: forceN + dampingN,
@@ -136,14 +136,14 @@ export function frictionForce(v_xy, F_n) {
     if (!F_n || F_n <= 0 || isNaN(v_xy)) {
         return { magnitudeN: 0, direction: 0, isSticking: true };
     }
-    var speed = Math.abs(v_xy);
+    const speed = Math.abs(v_xy);
     if (speed < 1e-6) {
         // Static friction — holding until a threshold force
         return { magnitudeN: F_n * MU_STATIC, direction: 0, isSticking: true };
     }
     // Kinetic friction — opposes motion
-    var mag = F_n * MU_KINETIC;
-    var dir = (v_xy > 0) ? -1 : 1;                  // opposes velocity
+    const mag = F_n * MU_KINETIC;
+    const dir = (v_xy > 0) ? -1 : 1;                  // opposes velocity
     return { magnitudeN: mag, direction: dir, isSticking: false };
 }
 
@@ -169,11 +169,11 @@ export function isSnagged(z, z_bed, pullVec, muS) {
     if (!pullVec) {
         return { snagged: true, reason: 'embedded_no_pull' };
     }
-    var xyMag = Math.sqrt(pullVec.x * pullVec.x + pullVec.y * pullVec.y);
+    const xyMag = Math.sqrt(pullVec.x * pullVec.x + pullVec.y * pullVec.y);
     if (xyMag < 1e-12) {
         return { snagged: true, reason: 'embedded_vertical_pull_only' };
     }
-    var pullDot = pullVec.z / xyMag;                  // vertical leverage ratio
+    const pullDot = pullVec.z / xyMag;                  // vertical leverage ratio
     if (pullDot <= muS) {
         return { snagged: true, reason: 'friction_lock' };
     }

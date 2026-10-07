@@ -6,7 +6,7 @@ import { logDebug } from "../../shared/debug.js";
 import { State } from "../../shared/state.js";
 import { GEAR_OPTIONS } from "../../shared/gear-options.js";
 // tackle.js imports from inputs.js (circular) — deferred lazy import
-var _tackleMod = null;
+let _tackleMod = null;
 import('../../shared/tackle.js').then(function(m) { _tackleMod = m; });
 // Physics is pure math:  F = 0.5 * rho * Cd * A * v^2. No tuned constants, no
 // reference flow, no calibration anchors. Community catches never bend
@@ -20,14 +20,14 @@ export var BASE_ZONE_MAX = 12.0;    // inches - baseline strike zone ceiling
 window.BASE_ZONE_MAX = BASE_ZONE_MAX;
 
 export function getNum(id) {
-    var el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (!el) return 0;
-    var val = parseFloat(el.value);
+    const val = parseFloat(el.value);
     return isNaN(val) ? 0 : val;
 }
 window.getNum = getNum;
 export function getStr(id) {
-    var el = document.getElementById(id);
+    const el = document.getElementById(id);
     return el ? el.value : '';
 }
 window.getStr = getStr;
@@ -70,16 +70,16 @@ window.FOAM_PICKER_MAP = FOAM_PICKER_MAP;
  */
 window.parseFoam = parseFoam;
 export function parseFoam(rawValue) {
-    var key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
+    const key = (rawValue === undefined || rawValue === null) ? '0' : String(rawValue);
     if (key === '0' || key === '') {
         return { key: '0', size: 0, buoyancy_g: 0, mass_g: 0, net_buoyancy_g: 0, label: 'None', areaCm2: 0, cd: 1.0 };
     }
-    var tid = FOAM_PICKER_MAP[key];
-    var item = tid ? (_tackleMod && typeof _tackleMod.tackleById === 'function' ? _tackleMod.tackleById(tid) : null) : null;
+    const tid = FOAM_PICKER_MAP[key];
+    const item = tid ? (_tackleMod && typeof _tackleMod.tackleById === 'function' ? _tackleMod.tackleById(tid) : null) : null;
     if (item) {
-        var size = parseFloat(key);
+        let size = parseFloat(key);
         if (isNaN(size)) size = 0;
-        var rawBuoy = item.buoyancy_g || 0;
+        const rawBuoy = item.buoyancy_g || 0;
         return {
             key: key, size: size,
             buoyancy_g: rawBuoy,
@@ -97,16 +97,16 @@ export function parseFoam(rawValue) {
 // Backwards compatible with records that only stored a numeric `corky` value.
 export function foamLabelFromRecord(row) {
     if (!row) return '--';
-    var raw = (row.foam !== undefined && row.foam !== null) ? row.foam : row.corky;
+    const raw = (row.foam !== undefined && row.foam !== null) ? row.foam : row.corky;
     return parseFoam(raw).label;
 }
 
 export function hookLabel(hook) {
     if (!hook) return '--';
-    var MAP = GEAR_OPTIONS.hookIdMap;
-    var tid = MAP[String(hook)];
+    const MAP = GEAR_OPTIONS.hookIdMap;
+    const tid = MAP[String(hook)];
     if (!tid) return '--';
-    var item = (_tackleMod && typeof _tackleMod.tackleById === 'function') ? _tackleMod.tackleById(tid) : null;
+    const item = (_tackleMod && typeof _tackleMod.tackleById === 'function') ? _tackleMod.tackleById(tid) : null;
     return item ? item.label : '--';
 }
 
@@ -118,18 +118,18 @@ export function hookLabel(hook) {
  */
 window.tackleHookData = tackleHookData;
 export function tackleHookData(hookVal) {
-    var MAP = GEAR_OPTIONS.hookIdMap;
-    var key = String(hookVal);
-    var tid = MAP[key];
+    const MAP = GEAR_OPTIONS.hookIdMap;
+    const key = String(hookVal);
+    let tid = MAP[key];
     if (!tid) {
-        var LEGACY = { '2': 'gam-oct-2', '1': 'gam-oct-1', '0': 'gam-oct-1-0', '-1': 'gam-oct-2-0' };
+        const LEGACY = { '2': 'gam-oct-2', '1': 'gam-oct-1', '0': 'gam-oct-1-0', '-1': 'gam-oct-2-0' };
         tid = MAP[LEGACY[key]];
     }
     if (!tid) return null;
-    var item = (_tackleMod && typeof _tackleMod.tackleById === 'function') ? _tackleMod.tackleById(tid) : null;
+    const item = (_tackleMod && typeof _tackleMod.tackleById === 'function') ? _tackleMod.tackleById(tid) : null;
     if (!item) return null;
-    var massG = item.mass_g || 0;
-    var buoyG = item.buoyancy_g || (massG / 7.85);
+    const massG = item.mass_g || 0;
+    const buoyG = item.buoyancy_g || (massG / 7.85);
     return { mass_g: massG, buoyancy_g: buoyG, areaCm2: item.area_cm2 || 0, cd: item.cd || 1.05 };
 }
 
@@ -141,11 +141,11 @@ export function tackleHookData(hookVal) {
 window.tackleBeadData = tackleBeadData;
 export function tackleBeadData(bdSz) {
     if (!bdSz) return null;
-    var beads = (_tackleMod && typeof _tackleMod.tackleItems === 'function') ? _tackleMod.tackleItems('bead') : [];
-    for (var i = 0; i < beads.length; i++) {
+    const beads = (_tackleMod && typeof _tackleMod.tackleItems === 'function') ? _tackleMod.tackleItems('bead') : [];
+    for (let i = 0; i < beads.length; i++) {
         if (Math.abs(Number(beads[i].diameter_mm) - Number(bdSz)) < 0.01) {
-            var b = beads[i];
-            var massG = b.mass_g || 0, buoyG = b.buoyancy_g || 0;
+            const b = beads[i];
+            const massG = b.mass_g || 0, buoyG = b.buoyancy_g || 0;
             return { mass_g: massG, buoyancy_g: buoyG, netSinkG: Math.max(0, massG - buoyG),
                 areaCm2: b.area_cm2 || 0, cd: b.cd || 0.47 };
         }

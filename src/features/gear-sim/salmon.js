@@ -11,7 +11,7 @@
  */
 
 /** Species morphological registry. SALMON_DEFAULTS points to the active entry. */
-var SALMON_SPECIES = {
+const SALMON_SPECIES = {
     chinook: {
         label: 'Chinook',
         freqHz: 1.0,
@@ -45,10 +45,10 @@ var SALMON_SPECIES = {
 };
 
 /** Points to the currently selected species entry in SALMON_SPECIES. */
-var SALMON_DEFAULTS = SALMON_SPECIES.chinook;
+let SALMON_DEFAULTS = SALMON_SPECIES.chinook;
 
 /** Active species key — default 'chinook'. Updated by setSalmonSpecies(). */
-var ACTIVE_SALMON_SPECIES = 'chinook';
+let ACTIVE_SALMON_SPECIES = 'chinook';
 
 /**
  * Switch the active species.
@@ -93,14 +93,14 @@ export function getSalmonSpecies() {
  */
 export function salmonState(t, freqHz, dutyCycle, phase) {
 window.salmonState = salmonState;
-    var f = freqHz || SALMON_DEFAULTS.freqHz;
-    var d = dutyCycle || SALMON_DEFAULTS.dutyCycle;
-    var p = phase || 0;
+    const f = freqHz || SALMON_DEFAULTS.freqHz;
+    const d = dutyCycle || SALMON_DEFAULTS.dutyCycle;
+    const p = phase || 0;
     // Normalised sinusoid: -1 to 1
-    var s = Math.sin(2 * Math.PI * f * t + p);
+    const s = Math.sin(2 * Math.PI * f * t + p);
     // Convert to mouth fraction: open when s crosses the duty-cycle threshold
-    var threshold = 1 - 2 * d;   // for d=0.35, threshold = 0.3
-    var frac = Math.max(0, Math.min(1, (s - threshold) / (1 - threshold)));
+    const threshold = 1 - 2 * d;   // for d=0.35, threshold = 0.3
+    const frac = Math.max(0, Math.min(1, (s - threshold) / (1 - threshold)));
     return {
         mouthOpen: frac > 0.01,
         mouthFraction: frac
@@ -117,9 +117,9 @@ window.salmonState = salmonState;
  * @provenance: derived from SALMON_DEFAULTS mouth dimensions.
  */
 export function salmonMouthCone(mouthFraction) {
-    var w = SALMON_DEFAULTS.mouthWidthMm * 0.001;
-    var h = SALMON_DEFAULTS.mouthHeightMm * 0.001;
-    var frac = mouthFraction || 0;
+    const w = SALMON_DEFAULTS.mouthWidthMm * 0.001;
+    const h = SALMON_DEFAULTS.mouthHeightMm * 0.001;
+    const frac = mouthFraction || 0;
     return {
         widthM: w,
         heightM: h,
@@ -136,7 +136,7 @@ export function salmonMouthCone(mouthFraction) {
  */
 export function salmonPositionZ(depthMinM, depthMaxM) {
 window.salmonPositionZ = salmonPositionZ;
-    var lo = depthMinM || SALMON_DEFAULTS.depthMinM;
-    var hi = depthMaxM || SALMON_DEFAULTS.depthMaxM;
+    const lo = depthMinM || SALMON_DEFAULTS.depthMinM;
+    const hi = depthMaxM || SALMON_DEFAULTS.depthMaxM;
     return lo + Math.random() * (hi - lo);
 }

@@ -13,11 +13,11 @@
  */
 
 // Physical constants (standard fluid properties, never tuned)
-var RHO_WATER = 998;       // kg/m^3, fresh water at 20degC
-var G = 9.81;              // m/s^2
-var N_TO_GF = 101.97;      // 1 N = 101.97 grams-force
-var CFS_TO_MS = 0.3048;    // ft/s -> m/s
-var NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10°C
+const RHO_WATER = 998;       // kg/m^3, fresh water at 20degC
+const G = 9.81;              // m/s^2
+const N_TO_GF = 101.97;      // 1 N = 101.97 grams-force
+const CFS_TO_MS = 0.3048;    // ft/s -> m/s
+const NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10°C
 
 export { CFS_TO_MS };
 
@@ -29,7 +29,7 @@ export { CFS_TO_MS };
 
 export function lineCd(reynolds) {
     if (!reynolds || reynolds <= 0) return 1.0;
-    var reClamped = Math.max(reynolds, 0.1);          // stagnation safety: floor at 0.1
+    const reClamped = Math.max(reynolds, 0.1);          // stagnation safety: floor at 0.1
     return Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
 }
 
@@ -45,13 +45,13 @@ export function lineCd(reynolds) {
  */
 export function lineDragPerFt(diameterMm, velocityFtS) {
     if (!diameterMm || diameterMm <= 0 || !velocityFtS || velocityFtS <= 0) return 0.001;
-    var dM = diameterMm * 0.001;               // mm -> m
-    var vMs = velocityFtS * CFS_TO_MS;          // ft/s -> m/s
-    var areaPerFtM2 = dM * 0.3048;             // m^2 - 1 ft broadside projection
-    var re = (vMs * dM) / NU_WATER;            // Reynolds number (dimensionless)
-    var reClamped = Math.max(re, 0.1);         // stagnation safety: floor at 0.1
-    var cd = Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
-    var forceN = 0.5 * RHO_WATER * cd * areaPerFtM2 * vMs * vMs;
+    const dM = diameterMm * 0.001;               // mm -> m
+    const vMs = velocityFtS * CFS_TO_MS;          // ft/s -> m/s
+    const areaPerFtM2 = dM * 0.3048;             // m^2 - 1 ft broadside projection
+    const re = (vMs * dM) / NU_WATER;            // Reynolds number (dimensionless)
+    const reClamped = Math.max(re, 0.1);         // stagnation safety: floor at 0.1
+    const cd = Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
+    const forceN = 0.5 * RHO_WATER * cd * areaPerFtM2 * vMs * vMs;
     return Math.max(0.001, forceN * N_TO_GF);
 }
 
@@ -66,10 +66,10 @@ export function lineDragPerFt(diameterMm, velocityFtS) {
  */
 export function lineNetBuoyancyPerFt(density_g_cm3, diameterMm) {
     if (!diameterMm || diameterMm <= 0 || !density_g_cm3 || density_g_cm3 <= 0) return 0;
-    var dM = diameterMm * 0.001;                 // mm -> m
-    var volPerFtM3 = Math.PI * (dM / 2) * (dM / 2) * 0.3048;  // m^3 per foot
-    var rhoLine = density_g_cm3 * 1000;          // g/cm^3 -> kg/m^3
-    var netForceN = (RHO_WATER - rhoLine) * G * volPerFtM3;
+    const dM = diameterMm * 0.001;                 // mm -> m
+    const volPerFtM3 = Math.PI * (dM / 2) * (dM / 2) * 0.3048;  // m^3 per foot
+    const rhoLine = density_g_cm3 * 1000;          // g/cm^3 -> kg/m^3
+    const netForceN = (RHO_WATER - rhoLine) * G * volPerFtM3;
     return netForceN * N_TO_GF;                  // gf per ft (positive = buoyant)
 }
 
@@ -82,8 +82,8 @@ export function lineNetBuoyancyPerFt(density_g_cm3, diameterMm) {
  */
 export function pointDragGf(areaCm2, cd, velocityFtS) {
     if (!areaCm2 || areaCm2 <= 0 || !cd || cd <= 0 || !velocityFtS || velocityFtS <= 0) return 0;
-    var areaM2 = areaCm2 * 1e-4;               // cm^2 -> m^2
-    var vMs = velocityFtS * CFS_TO_MS;
+    const areaM2 = areaCm2 * 1e-4;               // cm^2 -> m^2
+    const vMs = velocityFtS * CFS_TO_MS;
     return 0.5 * RHO_WATER * cd * areaM2 * vMs * vMs * N_TO_GF;
 }
 
@@ -101,7 +101,7 @@ export function pointDragGf(areaCm2, cd, velocityFtS) {
 export function totalDragPerFt(velocityFtS, leaderDiaMm, leaderLenFt,
                         weight, corky1, corky2, bead, hook, yarn) {
     if (!leaderLenFt || leaderLenFt <= 0) return 0.001;
-    var w = lineDragPerFt(leaderDiaMm, velocityFtS);
+    let w = lineDragPerFt(leaderDiaMm, velocityFtS);
     function spread(obj) {
         if (!obj || !obj.areaCm2 || obj.areaCm2 <= 0) return;
         w += pointDragGf(obj.areaCm2, obj.cd || 1.0, velocityFtS) / leaderLenFt;
@@ -154,9 +154,9 @@ export function computeLiftGf(corky1NetG, corky2NetG, hookMassG, beadNetSinkG, y
  */
 export function presentationHeightInches(liftGf, dragGfPerFt, leaderFt) {
     if (leaderFt <= 0 || dragGfPerFt <= 0) return 0;
-    var l = Math.max(0.01, liftGf);   // prevent /0
-    var x = (dragGfPerFt * leaderFt) / l;
-    var riseFt = (l / dragGfPerFt) * Math.asinh(x);
+    const l = Math.max(0.01, liftGf);   // prevent /0
+    const x = (dragGfPerFt * leaderFt) / l;
+    const riseFt = (l / dragGfPerFt) * Math.asinh(x);
     if (!isFinite(riseFt) || riseFt < 0) return 0;
     return Math.min(riseFt * 12, leaderFt * 12);
 }

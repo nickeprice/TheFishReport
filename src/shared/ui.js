@@ -5,7 +5,7 @@
  */
 // --- UTILITIES: toast notifications ---
 
-var TOAST_KIND_CLASS = {
+const TOAST_KIND_CLASS = {
     info: 'toast-info',
     success: 'toast-success',
     warn: 'toast-warn',
@@ -28,7 +28,7 @@ var TOAST_KIND_CLASS = {
  */
 export function showToast(msg, kind, ms, action) {
     if (typeof document === 'undefined') return;
-    var stack = document.getElementById('toast-stack');
+    let stack = document.getElementById('toast-stack');
     if (!stack) {
         stack = document.createElement('div');
         stack.id = 'toast-stack';
@@ -38,10 +38,10 @@ export function showToast(msg, kind, ms, action) {
         document.body.appendChild(stack);
     }
 
-    var toast = document.createElement('div');
+    const toast = document.createElement('div');
     toast.className = 'toast ' + (TOAST_KIND_CLASS[kind] || TOAST_KIND_CLASS.info);
 
-    var text = document.createElement('span');
+    const text = document.createElement('span');
     text.className = 'toast-msg';
     text.textContent = String(msg == null ? '' : msg);
     toast.appendChild(text);
@@ -50,7 +50,7 @@ export function showToast(msg, kind, ms, action) {
         // An actionable toast: a button performs the action, tapping the body
         // still dismisses it. Nothing is ever done to the page automatically.
         toast.classList.add('toast-action');
-        var btn = document.createElement('button');
+        const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'toast-btn';
         btn.textContent = action.label;
@@ -68,7 +68,7 @@ export function showToast(msg, kind, ms, action) {
     void toast.offsetWidth;
     toast.classList.add('toast-show');
 
-    var life = (typeof ms === 'number') ? ms : 4000;
+    const life = (typeof ms === 'number') ? ms : 4000;
     var timer = setTimeout(dismiss, life);
 
     function dismiss() {

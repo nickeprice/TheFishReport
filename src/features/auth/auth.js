@@ -22,14 +22,14 @@ window.AuthState = AuthState;
 export function applyAuthState(signedIn, name) {
     AuthState.signedIn = !!signedIn;
     AuthState.name = name || '';
-    var out = document.getElementById('auth-logged-out');
-    var inn = document.getElementById('auth-logged-in');
+    const out = document.getElementById('auth-logged-out');
+    const inn = document.getElementById('auth-logged-in');
     if (out) out.style.display = signedIn ? 'none' : 'block';
     if (inn) inn.style.display = signedIn ? 'block' : 'none';
-    var label = document.getElementById('auth-display-name');
+    const label = document.getElementById('auth-display-name');
     if (label) label.innerText = AuthState.name || '--';
 
-    var btnLog = document.getElementById('btn-log');
+    const btnLog = document.getElementById('btn-log');
     if (btnLog) {
         if (!signedIn) {
             btnLog.innerText = 'SIGN IN TO LOG CATCHES';
@@ -53,20 +53,20 @@ export async function initAuth() {
         return;
     }
     try { await Supa.ensureSdk(); } catch (e) {}
-    var sess = null;
+    let sess = null;
     try { sess = await Supa.getSession(); } catch (e) { sess = null; }
-    var name = (sess && sess.name) ? sess.name : '';
+    const name = (sess && sess.name) ? sess.name : '';
     if (name) setFieldValue('auth-name', name);
     applyAuthState(!!(sess && (sess.user || name)), name);
     if (AuthState.signedIn) syncPendingCatches();
 }
 
 export async function startFishing() {
-    var name = (getStr('auth-name') || '').trim();
+    const name = (getStr('auth-name') || '').trim();
     if (!name) { showToast('Enter a name to start fishing.', 'warn'); return; }
-    var btn = document.getElementById('btn-auth-start');
+    const btn = document.getElementById('btn-auth-start');
     if (btn) { btn.innerText = 'CONNECTING...'; btn.disabled = true; }
-    var res = null;
+    let res = null;
     try {
         res = await Supa.signInGuest(name);
     } catch (e) {
@@ -98,12 +98,12 @@ export async function stopFishing() {
 // ON CONFLICT DO NOTHING), so a retry can never double-log a catch.
 export async function syncPendingCatches() {
     if (typeof outboxPending !== 'function') return 0;
-    var pending = outboxPending();
+    const pending = outboxPending();
     if (!pending.length) return 0;
 
-    var synced = 0;
-    for (var i = 0; i < pending.length; i++) {
-        var res = null;
+    let synced = 0;
+    for (let i = 0; i < pending.length; i++) {
+        let res = null;
         try { res = await Supa.insertCatch(pending[i]); } catch (e) { res = null; }
         if (res && res.ok) {
             outboxUpdate(pending[i].clientId, { pendingSync: false, syncedAt: new Date().toISOString() });

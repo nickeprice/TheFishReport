@@ -27,7 +27,7 @@ window.closeStationModal = closeStationModal;
 
 export function selectPreset(id, lat, lon, name, isGps) {
     setActiveDateOffset(0);
-    var station = { id: id, lat: lat, lon: lon, name: name, isGps: !!isGps };
+    const station = { id: id, lat: lat, lon: lon, name: name, isGps: !!isGps };
     localStorage.setItem('active_station', JSON.stringify(station));
     logDebug("Selected Station: " + name + " (" + id + ")", "STATE");
     closeStationModal();
@@ -36,13 +36,13 @@ export function selectPreset(id, lat, lon, name, isGps) {
 
 // Haversine distance in miles
 export function calcDistance(lat1, lon1, lat2, lon2) {
-    var R = 3958.8; // Radius of Earth in miles
-    var dLat = (lat2 - lat1) * Math.PI / 180;
-    var dLon = (lon2 - lon1) * Math.PI / 180;
-    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    const R = 3958.8; // Radius of Earth in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
             Math.sin(dLon/2) * Math.sin(dLon/2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
 }
 
@@ -52,14 +52,14 @@ export function calcDistance(lat1, lon1, lat2, lon2) {
 // it "failed and closed out of the menu". Retry = tap the same button again (useGPS
 // stays bound to it).
 export function useGPS() {
-    var status = document.getElementById('gps-status');
+    const status = document.getElementById('gps-status');
     status.innerText = "Waiting for GPS (grant the location prompt)...";
     if (!navigator.geolocation) {
         status.innerText = "Geolocation is not supported on this device \u2014 pick a river below or search by name/ID.";
         return;
     }
-    var settled = false;
-    var watchdog = setTimeout(function () {
+    let settled = false;
+    const watchdog = setTimeout(function () {
         if (settled) return;
         settled = true;
         status.innerText = "GPS took too long. Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
@@ -69,29 +69,29 @@ export function useGPS() {
         if (settled) return;
         settled = true;
         clearTimeout(watchdog);
-        var lat = pos.coords.latitude;
-        var lon = pos.coords.longitude;
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
         // Hold the fix privately: mapCenter() centres on it and logData() can enrich the
         // private catch row. Never surfaced in the public feed or debug UI.
         State.userGPSCoords = { lat: lat, lon: lon };
         status.innerText = "Captured position. Searching nearby USGS gauges...";
-        var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-        var fetchTimer = setTimeout(function () { if (controller) controller.abort(); }, 10000);
+        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const fetchTimer = setTimeout(function () { if (controller) controller.abort(); }, 10000);
         try {
             // Same-origin server-side USGS lookup (reliable on mobile). Retry once if the
             // first response is empty OR errors (a cold Cloudflare tunnel connection can
             // return an aborted body on the very first request). The real status/body is
             // logged so an upstream USGS outage is distinguishable from a code bug.
-            var timeSeries = null;
-            var lastErr = null;
-            for (var attempt = 0; attempt < 2; attempt++) {
-                var response = await fetch('/api/nearby_stations?lat=' + lat + '&lon=' + lon, { cache: "no-store", signal: controller ? controller.signal : undefined });
-                var bodyText = await response.text();
+            let timeSeries = null;
+            let lastErr = null;
+            for (let attempt = 0; attempt < 2; attempt++) {
+                const response = await fetch('/api/nearby_stations?lat=' + lat + '&lon=' + lon, { cache: "no-store", signal: controller ? controller.signal : undefined });
+                const bodyText = await response.text();
                 if (!response.ok) {
                     lastErr = "HTTP " + response.status;
                     logDebug("nearby_stations " + response.status + ": " + String(bodyText).slice(0, 200), "ERR");
                 } else {
-                    var data = null;
+                    let data = null;
                     try { data = JSON.parse(bodyText); } catch (pe) { lastErr = "bad JSON"; }
                     timeSeries = (data && data.stations) ? data.stations : [];
                     if (timeSeries.length > 0) break;
@@ -104,13 +104,13 @@ export function useGPS() {
                 logDebug("nearby_stations returned 0 stations" + (lastErr ? " (" + lastErr + ")" : ""), "ERR");
                 return;
             }
-            var stationsMap = {};
+            const stationsMap = {};
             timeSeries.forEach(function(ts) {
-                var sCode = ts.id;
-                var sName = ts.name;
-                var sLat = ts.lat;
-                var sLon = ts.lon;
-                var sDist = ts.distance_mi;
+                const sCode = ts.id;
+                const sName = ts.name;
+                const sLat = ts.lat;
+                const sLon = ts.lon;
+                const sDist = ts.distance_mi;
                 if (!stationsMap[sCode]) {
                     stationsMap[sCode] = {
                         id: sCode,
@@ -121,10 +121,10 @@ export function useGPS() {
                     };
                 }
             });
-            var stationsList = Object.values(stationsMap);
+            const stationsList = Object.values(stationsMap);
             stationsList.sort(function(a, b) { return a.distance - b.distance; });
             if (stationsList.length > 0) {
-                var closest = stationsList[0];
+                const closest = stationsList[0];
                 status.innerText = "Found: " + closest.name + " (" + closest.distance.toFixed(1) + " mi)";
                 setTimeout(function() { selectPreset(closest.id, closest.lat, closest.lon, closest.name, true); }, 1500);
             } else {
@@ -140,7 +140,7 @@ export function useGPS() {
         if (settled) return;
         settled = true;
         clearTimeout(watchdog);
-        var msg = (err && err.code === 3) ? "GPS timed out"
+        const msg = (err && err.code === 3) ? "GPS timed out"
             : (err && err.code === 1) ? "Location access was denied"
             : "GPS is unavailable";
         status.innerText = msg + ". Tap \u201CUse My GPS\u201D to retry, or pick a river below.";

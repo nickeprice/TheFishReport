@@ -6,8 +6,8 @@
  */
 import { logDebug } from './debug.js';
 export function syncSelect(baseId, fromLog) {
-    var a = document.getElementById(baseId);
-    var b = document.getElementById(baseId + '-log');
+    const a = document.getElementById(baseId);
+    const b = document.getElementById(baseId + '-log');
     if (!a || !b) return;
     if (fromLog) a.value = b.value; else b.value = a.value;
     logDebug("Synced Field: " + baseId, "STATE");
@@ -15,7 +15,7 @@ export function syncSelect(baseId, fromLog) {
 window.syncSelect = syncSelect;
 
 export function setFieldValue(id, value) {
-    var el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (el) el.value = value;
 }
 window.setFieldValue = setFieldValue;

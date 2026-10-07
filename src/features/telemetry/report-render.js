@@ -19,18 +19,18 @@ export function renderReportDays(reports, station, rulesLoaded) {
         logDebug('No river data to render', 'NET');
         return rulesLoaded;
     }
-    var first = reports[0];
-    var actId = first.site_id || station.id;
+    const first = reports[0];
+    const actId = first.site_id || station.id;
 
     // Update station name from payload
     if (first.site_name) {
         document.getElementById('active-station-name').innerText = first.site_name.toUpperCase();
     }
-    var badge = document.getElementById('active-station-badge');
+    const badge = document.getElementById('active-station-badge');
     badge.innerText = (station.isGps ? "📍 GPS: " : "📌 USGS: ") + actId;
 
     // Seasonal warning
-    var seasonalWarn = '';
+    let seasonalWarn = '';
     if (first.seasonal_warning && first.seasonal_warning !== '') {
         seasonalWarn = '<div class="seasonal-warning">' + provVal(first.seasonal_warning) + '</div>';
     }
@@ -38,30 +38,30 @@ export function renderReportDays(reports, station, rulesLoaded) {
     // Today's barometer / cloud / rain for the Gear Sim strike zone
     if (typeof refreshZonePreview === 'function') refreshZonePreview();
 
-    var cardsHtml = '';
-    for (var i = 0; i < reports.length; i++) {
-        var rep = reports[i];
-        var dStyle = (i === activeDateOffset) ? "block" : "none";
+    let cardsHtml = '';
+    for (let i = 0; i < reports.length; i++) {
+        const rep = reports[i];
+        const dStyle = (i === activeDateOffset) ? "block" : "none";
 
         // CFS + gage
-        var cfsVal = (provVal(rep.cfs) !== null) ? provVal(rep.cfs) + ' CFS' : '-- CFS';
-        var gageVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' ft Gauge Height' : '-- ft Gauge Height';
+        const cfsVal = (provVal(rep.cfs) !== null) ? provVal(rep.cfs) + ' CFS' : '-- CFS';
+        const gageVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' ft Gauge Height' : '-- ft Gauge Height';
 
         // Water quality
-        var waterQualityHtml = '';
-        var wt = provVal(rep.water_temp_f);
-        var tb = provVal(rep.turbidity_fnu);
+        let waterQualityHtml = '';
+        const wt = provVal(rep.water_temp_f);
+        const tb = provVal(rep.turbidity_fnu);
         if (wt !== null || tb !== null) {
-            var parts = [];
+            const parts = [];
             if (wt !== null) parts.push(Math.round(Number(wt)) + '°F');
             if (tb !== null) parts.push(Number(tb).toFixed(0) + ' FNU');
             waterQualityHtml = ' <span class="telemetry-sep">•</span> <span class="telemetry-water-quality">' + parts.join(' • ') + '</span>';
         }
 
                 // Pressure trend for barometer and temp badges
-        var pressDelta = rep.press_delta;
-        var pressTrend = '\u2014';
-        var pressColor = '#ffffff';
+        const pressDelta = rep.press_delta;
+        let pressTrend = '\u2014';
+        let pressColor = '#ffffff';
         if (pressDelta !== null && pressDelta !== undefined && pressDelta < -0.04) { pressTrend = '\u2193'; pressColor = 'var(--accent-red)'; }
         else if (pressDelta !== null && pressDelta !== undefined && pressDelta > 0.04) { pressTrend = '\u2191'; pressColor = 'var(--accent-green)'; }
 cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dStyle + ';">' +
@@ -96,7 +96,7 @@ cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dSty
     }
 
     // Render cards into DOM
-    var container = document.getElementById('water-report-cards');
+    const container = document.getElementById('water-report-cards');
     if (container) container.innerHTML = cardsHtml;
 
     // Rules

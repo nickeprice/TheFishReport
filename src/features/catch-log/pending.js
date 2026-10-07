@@ -37,14 +37,14 @@ export function pendingRows() {
 // Pending rows the server list does not already contain (id === clientId).
 window.pendingNotIn = pendingNotIn;
 export function pendingNotIn(serverRows) {
-    var seen = {};
+    const seen = {};
     (serverRows || []).forEach(function (r) { if (r && r.id != null) seen[String(r.id)] = true; });
     return pendingRows().filter(function (r) { return !seen[String(r.clientId)]; });
 }
 
 window.pendingBadge = pendingBadge;
 export function pendingBadge() {
-    var span = document.createElement('span');
+    const span = document.createElement('span');
     span.className = 'sync-badge';
     span.textContent = 'Syncing...';
     span.title = 'Saved on this device — will upload when the connection returns.';
@@ -68,7 +68,7 @@ export function asMyCatchRow(r) {
 window.refreshCatchLists = refreshCatchLists;
 export async function refreshCatchLists() {
     // Dynamic import avoids circular dep with board.js
-    var board = await import('./board.js');
+    const board = await import('./board.js');
     if (typeof board.setCatchScope === 'function' && typeof board.CATCH_SCOPE !== 'undefined') {
         board.setCatchScope(board.CATCH_SCOPE);
     }

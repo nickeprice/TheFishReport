@@ -80,7 +80,7 @@ window.GEAR_OPTIONS = GEAR_OPTIONS;
 // Populate all static gear dropdowns from GEAR_OPTIONS (offline fallback before
 // tackle.json loads). Runs immediately on load. Mirrors both -sim and -log tabs.
 export function populateStaticGear() {
-  var fields = [
+  const fields = [
     { id: 'weight', items: GEAR_OPTIONS.weight },
     { id: 'hook', items: GEAR_OPTIONS.hook },
     { id: 'yarn', items: GEAR_OPTIONS.yarn },
@@ -90,17 +90,17 @@ export function populateStaticGear() {
     { id: 'ml-mat', items: GEAR_OPTIONS.lineMat.ml },
     { id: 'ld-mat', items: GEAR_OPTIONS.lineMat.ld }
   ];
-  for (var f = 0; f < fields.length; f++) {
-    var sel = document.getElementById(fields[f].id);
+  for (let f = 0; f < fields.length; f++) {
+    const sel = document.getElementById(fields[f].id);
     if (!sel) continue;
-    var html = '<option value="">—</option>';
-    for (var i = 0; i < fields[f].items.length; i++) {
-      var o = fields[f].items[i];
+    let html = '<option value="">—</option>';
+    for (let i = 0; i < fields[f].items.length; i++) {
+      const o = fields[f].items[i];
       html += '<option value="' + o.val + '">' + o.label + '</option>';
     }
     sel.innerHTML = html;
     // Mirror to the -log twin
-    var logSel = document.getElementById(fields[f].id + '-log');
+    const logSel = document.getElementById(fields[f].id + '-log');
     if (logSel) logSel.innerHTML = html;
   }
 }

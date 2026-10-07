@@ -23,16 +23,16 @@ import { setFieldValue } from './forms.js';
  *         tackleWeightArea(shapeLabel, oz), tackleBeadSizes(mat)
  * ES module.
  */
-var TACKLE = (TACKLE_DATA && TACKLE_DATA.items && TACKLE_DATA.items.length) ? TACKLE_DATA : null;
+let TACKLE = (TACKLE_DATA && TACKLE_DATA.items && TACKLE_DATA.items.length) ? TACKLE_DATA : null;
 window.TACKLE = TACKLE;
 
 // Which line materials each picker offers: braid is mainline-only, fluoro is
 // leader-only, mono and copoly are fished as either.
-var TACKLE_LINE_ROLES = {
+const TACKLE_LINE_ROLES = {
     mainline: ['braid', 'mono', 'copoly'],
     leader: ['mono', 'copoly', 'fluoro']
 };
-var TACKLE_MAT_LABELS = {
+const TACKLE_MAT_LABELS = {
     braid: 'Braid', mono: 'Mono', copoly: 'Copoly', fluoro: 'Fluorocarbon'
 };
 
@@ -49,8 +49,8 @@ export function tackleItems(type) {
 window.tackleLineById = tackleLineById;
 export function tackleLineById(id) {
     if (!id) return null;
-    var lines = tackleItems('line');
-    for (var i = 0; i < lines.length; i++) {
+    const lines = tackleItems('line');
+    for (let i = 0; i < lines.length; i++) {
         if (lines[i].id === id) return lines[i];
     }
     return null;
@@ -58,7 +58,7 @@ export function tackleLineById(id) {
 // Generic lookup by id across ALL tackle types (not just lines).
 export function tackleById(id) {
     if (!id || !TACKLE || !TACKLE.items) return null;
-    for (var i = 0; i < TACKLE.items.length; i++) {
+    for (let i = 0; i < TACKLE.items.length; i++) {
         if (TACKLE.items[i].id === id) return TACKLE.items[i];
     }
     return null;
@@ -89,16 +89,16 @@ export function brandLabel(brand) {
 // Generic FIRST - it is the averaged row for that size, i.e. the honest default when the
 // angler's own line is not in the library. Everything else stays A-Z.
 export function brandOrder(a, b) {
-    var ga = isGenericBrand(a), gb = isGenericBrand(b);
+    const ga = isGenericBrand(a), gb = isGenericBrand(b);
     if (ga !== gb) return ga ? -1 : 1;
     return String(a).localeCompare(String(b));
 }
 
 export function tackleLineByMatLb(mat, lb) {
-    var lines = tackleItems('line');
-    var first = null;
-    for (var i = 0; i < lines.length; i++) {
-        var it = lines[i];
+    const lines = tackleItems('line');
+    let first = null;
+    for (let i = 0; i < lines.length; i++) {
+        const it = lines[i];
         if (it.material !== mat || Number(it.lb_test) !== Number(lb)) continue;
         if (isGenericLine(it)) return it;
         if (!first) first = it;
@@ -113,8 +113,8 @@ export function tackleLineByMatLb(mat, lb) {
 // resolves (library not loaded, or the row predates both fields).
 export function tackleRowLine(row, role) {
     if (!row) return null;
-    var isLeader = (role === 'leader');
-    var byId = tackleLineById(isLeader ? (row.ldLine || row.leader_line_id)
+    const isLeader = (role === 'leader');
+    const byId = tackleLineById(isLeader ? (row.ldLine || row.leader_line_id)
                                       : (row.mlLine || row.mainline_line_id));
     if (byId) return byId;
     return tackleLineByMatLb(
@@ -136,9 +136,9 @@ export function tackleRowLine(row, role) {
 // rather than to a guessed brand; missingRigFields() is what blocks the sim/log then.
 export function tackleLineFind(mat, brand, lb) {
     if (!mat || !brand || !lb) return null;
-    var lines = tackleItems('line');
-    for (var i = 0; i < lines.length; i++) {
-        var it = lines[i];
+    const lines = tackleItems('line');
+    for (let i = 0; i < lines.length; i++) {
+        const it = lines[i];
         if (it.material === mat && String(it.brand) === brand &&
             Number(it.lb_test) === Number(lb)) return it;
     }
@@ -147,8 +147,8 @@ export function tackleLineFind(mat, brand, lb) {
 
 // Brands on offer for a material (blank material -> every brand the role allows).
 export function tackleLineBrands(mat, role) {
-    var ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
-    var seen = {}, out = [];
+    const ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
+    const seen = {}, out = [];
     tackleItems('line').forEach(function (it) {
         if (ok.indexOf(it.material) === -1 || !it.brand || seen[it.brand]) return;
         seen[it.brand] = true;
@@ -159,12 +159,12 @@ export function tackleLineBrands(mat, role) {
 
 // LB tests on offer for a (material, brand) pair (blank parent -> the union).
 export function tackleLineLbs(mat, brand, role) {
-    var ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
-    var seen = {}, out = [];
+    const ok = mat ? [mat] : (TACKLE_LINE_ROLES[role] || []);
+    const seen = {}, out = [];
     tackleItems('line').forEach(function (it) {
         if (ok.indexOf(it.material) === -1) return;
         if (brand && String(it.brand) !== brand) return;
-        var lb = Number(it.lb_test);
+        const lb = Number(it.lb_test);
         if (!lb || seen[lb]) return;
         seen[lb] = true;
         out.push(lb);
@@ -182,22 +182,22 @@ export function lineField(role, part) {
 // lockstep; a stale value that fell out of its parent's list is cleared by the same
 // browser rule on both sides (assigning an absent value leaves the select empty).
 export function fillBothSelects(baseId, entries) {
-    var base = document.getElementById(baseId);
-    var twin = document.getElementById(baseId + '-log');
+    const base = document.getElementById(baseId);
+    const twin = document.getElementById(baseId + '-log');
     if (base) fillSelect(base, entries);
     if (twin) fillSelect(twin, entries);
     if (base && twin) twin.value = base.value;
 }
 
 export function mirrorValue(baseId) {
-    var base = document.getElementById(baseId);
-    var twin = document.getElementById(baseId + '-log');
+    const base = document.getElementById(baseId);
+    const twin = document.getElementById(baseId + '-log');
     if (base && twin) twin.value = base.value;
 }
 
 // Rebuild BRAND + LB from the material/brand picks, then refresh the hidden id.
 export function cascadeLine(role) {
-    var mat = getStr(lineField(role, 'mat'));
+    const mat = getStr(lineField(role, 'mat'));
     fillBothSelects(lineField(role, 'brand'),
         tackleLineBrands(mat, role).map(function (b) { return { value: b, text: brandLabel(b) }; }));
     fillBothSelects(lineField(role, 'lb'),
@@ -208,7 +208,7 @@ export function cascadeLine(role) {
 
 // Resolve the HIDDEN line id from the three visible picks (incomplete pick -> no id).
 export function resolveLineId(role) {
-    var line = tackleLineFind(getStr(lineField(role, 'mat')),
+    const line = tackleLineFind(getStr(lineField(role, 'mat')),
                               getStr(lineField(role, 'brand')),
                               getStr(lineField(role, 'lb')));
     setFieldValue(lineField(role, 'line'), line ? line.id : '');
@@ -219,10 +219,10 @@ export function resolveLineId(role) {
 // came from the Catch Log, then re-cascade: a brand the new material does not offer is
 // dropped here, so a stale pick can never resolve a wrong diameter or a wrong id.
 export function onLinePartChange(fieldId, fromLog) {
-    var base = String(fieldId).replace(/-log$/, '');
+    const base = String(fieldId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(fieldId));
-    var role = (base.indexOf('ld-') === 0) ? 'leader' : 'mainline';
-    var line = cascadeLine(role);
+    const role = (base.indexOf('ld-') === 0) ? 'leader' : 'mainline';
+    const line = cascadeLine(role);
     mirrorValue(base);
     logDebug('Line ' + role + ': ' + (line ? line.label : '--'), 'STATE');
 }
@@ -230,7 +230,7 @@ export function onLinePartChange(fieldId, fromLog) {
 // The weight TYPE is its own control; mirror it and rebuild the amount list from the
 // rows that carry that type.
 export function onWeightShapeChange(baseId, fromLog) {
-    var base = String(baseId).replace(/-log$/, '');
+    const base = String(baseId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(baseId));
     fillBothSelects('weight', tackleWeightOz(getStr(base)));
     mirrorValue(base);
@@ -239,7 +239,7 @@ export function onWeightShapeChange(baseId, fromLog) {
 
 // Foam 3 (bead) change — populates size list.
 export function onFoam3Change(fieldId, fromLog) {
-    var base = String(fieldId).replace(/-log$/, '');
+    const base = String(fieldId).replace(/-log$/, '');
     if (fromLog) setFieldValue(base, getStr(fieldId));
     mirrorValue(base);
     logDebug('Foam 3 (bead): ' + getStr(base), 'STATE');
@@ -252,12 +252,12 @@ export function onFoam3Change(fieldId, fromLog) {
 var OZ_LABEL_RE = /(\d+)(?:\/(\d+))?\s*oz\s*$/i;
 
 export function tackleWeightOz(shape) {
-    var seen = {}, out = [];
+    const seen = {}, out = [];
     tackleItems('weight').forEach(function (it) {
         if (shape && it.shape_label !== shape) return;
-        var m = String(it.label || '').match(OZ_LABEL_RE);
+        const m = String(it.label || '').match(OZ_LABEL_RE);
         if (!m) return;
-        var oz = Number(m[1]) / (m[2] ? Number(m[2]) : 1);
+        const oz = Number(m[1]) / (m[2] ? Number(m[2]) : 1);
         if (!oz || seen[oz]) return;
         seen[oz] = true;
         out.push({ value: String(oz), text: m[0].replace(/\s+/g, ' ').trim() });
@@ -277,12 +277,12 @@ export function tackleWeightOz(shape) {
 // as a zero.
 export function tackleWeightRow(shapeLabel, oz) {
     if (!shapeLabel || !oz) return null;
-    var found = null;
+    let found = null;
     tackleItems('weight').forEach(function (it) {
         if (it.shape_label !== shapeLabel) return;
-        var m = String(it.label || '').match(OZ_LABEL_RE);
+        const m = String(it.label || '').match(OZ_LABEL_RE);
         if (!m) return;
-        var nominal = Number(m[1]) / (m[2] ? Number(m[2]) : 1);
+        const nominal = Number(m[1]) / (m[2] ? Number(m[2]) : 1);
         if (Math.abs(nominal - Number(oz)) < 1e-9) found = it;
     });
     return found;
@@ -291,8 +291,8 @@ export function tackleWeightRow(shapeLabel, oz) {
 // Projected (broadside) area in cm2 of the picked weight, or null. Kept separate from
 // tackleWeightRow() so the physics module never has to know the library's field names.
 export function tackleWeightArea(shapeLabel, oz) {
-    var row = tackleWeightRow(shapeLabel, oz);
-    var area = row ? Number(row.area_cm2) : 0;
+    const row = tackleWeightRow(shapeLabel, oz);
+    const area = row ? Number(row.area_cm2) : 0;
     return area > 0 ? area : null;
 }
 
@@ -301,25 +301,25 @@ export function tackleWeightArea(shapeLabel, oz) {
 // size the library has.
 window.tackleBeadSizes = tackleBeadSizes;
 export function tackleBeadSizes() {
-    var out = [{ value: '0', text: 'None' }];
+    const out = [{ value: '0', text: 'None' }];
     tackleItems('bead').forEach(function (it) {
-        var mm = Number(it.diameter_mm);
+        const mm = Number(it.diameter_mm);
         if (!mm || out.some(function (o) { return o.value === String(mm); })) return;
-        var label = (it.label || (mm + 'mm')).replace(/^Bead\s+/i, '');
+        const label = (it.label || (mm + 'mm')).replace(/^Bead\s+/i, '');
         out.push({ value: String(mm), text: label });
     });
     return out.sort(function (a, b) { return Number(a.value) - Number(b.value); });
 }
 
 export function fillSelect(sel, entries) {
-    var previous = sel.value;
-    var frag = document.createDocumentFragment();
-    var blank = document.createElement('option');
+    const previous = sel.value;
+    const frag = document.createDocumentFragment();
+    const blank = document.createElement('option');
     blank.value = '';
     blank.textContent = '\u2014';
     frag.appendChild(blank);
     entries.forEach(function (e) {
-        var opt = document.createElement('option');
+        const opt = document.createElement('option');
         opt.value = e.value;
         opt.textContent = e.text;
         frag.appendChild(opt);
@@ -336,7 +336,7 @@ export function fillSelect(sel, entries) {
 export function populateTacklePickers() {
     if (!TACKLE) return;
     [['ml', 'mainline'], ['ld', 'leader']].forEach(function (pair) {
-        var mats = TACKLE_LINE_ROLES[pair[1]].filter(function (mat) {
+        const mats = TACKLE_LINE_ROLES[pair[1]].filter(function (mat) {
             return tackleItems('line').some(function (it) { return it.material === mat; });
         });
         fillBothSelects(pair[0] + '-mat', mats.map(function (mat) {
@@ -347,7 +347,7 @@ export function populateTacklePickers() {
 
     // Weight TYPES: every distinct shape_label in the weight rows (the pair
     // shape_label + oz identifies exactly one weight row, metal + sleeve included).
-    var seen = {}, shapes = [];
+    const seen = {}, shapes = [];
     tackleItems('weight').forEach(function (it) {
         if (!it.shape_label || seen[it.shape_label]) return;
         seen[it.shape_label] = true;

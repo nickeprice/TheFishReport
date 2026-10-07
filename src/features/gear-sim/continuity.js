@@ -28,10 +28,10 @@
  */
 import { hydraulicVelocity } from './inputs.js';
 export var SAME_REACH_UNCERTAINTY = 0.20;        // +/- this much without a spot measurement
-var SAME_REACH_MEASURED_UNCERTAINTY = 0.10; // +/- 10% when spot width IS measured
+const SAME_REACH_MEASURED_UNCERTAINTY = 0.10; // +/- 10% when spot width IS measured
 
 // Site ID -> SPOT_WIDTHS river key lookup.
-var SPOT_WIDTHS_SITE_MAP = {
+const SPOT_WIDTHS_SITE_MAP = {
     "12101500": "puyallup",
     "12098500": "white",
     "12094000": "carbon",
@@ -40,21 +40,21 @@ var SPOT_WIDTHS_SITE_MAP = {
 };
 
 export function gaugeWidthFt(siteId) {
-    var all = (typeof window !== 'undefined') ? window.RIVER_WIDTHS : null;
+    const all = (typeof window !== 'undefined') ? window.RIVER_WIDTHS : null;
     if (!all || !siteId || !all[String(siteId)]) return null;
-    var w = Number(all[String(siteId)].width_ft);
+    const w = Number(all[String(siteId)].width_ft);
     return (w > 0) ? w : null;
 }
 
 // Haversine distance in metres (used for nearest-neighbour SPOT_WIDTHS lookup).
 export function haversineM(lat1, lon1, lat2, lon2) {
-    var R = 6371000;
-    var dLat = (lat2 - lat1) * Math.PI / 180;
-    var dLon = (lon2 - lon1) * Math.PI / 180;
-    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
 
@@ -62,19 +62,19 @@ export function haversineM(lat1, lon1, lat2, lon2) {
 // Returns { point, distance_m } or null when unavailable.
 export function spotNearestWidth(siteId) {
     if (!siteId) return null;
-    var key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
+    const key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
     if (!key) return null;
-    var all = (typeof window !== 'undefined') ? window.SPOT_WIDTHS : null;
+    const all = (typeof window !== 'undefined') ? window.SPOT_WIDTHS : null;
     if (!all || !all.rivers) return null;
-    var river = all.rivers[key];
+    const river = all.rivers[key];
     if (!river || !river.points || !river.points.length) return null;
 
     // Read the active station's GPS coordinates from localStorage.
-    var lat = null, lon = null;
+    let lat = null, lon = null;
     try {
-        var raw = localStorage.getItem('active_station');
+        const raw = localStorage.getItem('active_station');
         if (raw) {
-            var st = JSON.parse(raw);
+            const st = JSON.parse(raw);
             if (st.lat != null && st.lon != null) {
                 lat = Number(st.lat);
                 lon = Number(st.lon);
@@ -84,10 +84,10 @@ export function spotNearestWidth(siteId) {
     if (lat == null || lon == null) return null;
 
     // Linear scan — SPOT_WIDTHS is small (under 100 points per river).
-    var best = null, bestDist = Infinity;
-    for (var i = 0; i < river.points.length; i++) {
-        var p = river.points[i];
-        var d = haversineM(lat, lon, p.lat, p.lon);
+    let best = null, bestDist = Infinity;
+    for (let i = 0; i < river.points.length; i++) {
+        const p = river.points[i];
+        const d = haversineM(lat, lon, p.lat, p.lon);
         if (d < bestDist) {
             bestDist = d;
             best = p;
@@ -101,10 +101,10 @@ export function spotNearestWidth(siteId) {
 // When SPOT_WIDTHS data exists for the active station's river, uses the nearest
 // DEM cross-section. Otherwise falls back to 1.0 (same-reach estimate).
 export function spotWidthRatio(siteId) {
-    var gaugeFt = gaugeWidthFt(siteId);
-    var near = spotNearestWidth(siteId);
+    const gaugeFt = gaugeWidthFt(siteId);
+    const near = spotNearestWidth(siteId);
     if (near && near.point && near.point.wetted_ft > 0 && gaugeFt && gaugeFt > 0) {
-        var ratio = gaugeFt / near.point.wetted_ft;
+        const ratio = gaugeFt / near.point.wetted_ft;
         return {
             ratio: ratio,
             measured: true,
@@ -122,12 +122,12 @@ export function spotWidthRatio(siteId) {
 // Otherwise falls back to the simple continuity ratio (w_gauge / w_spot).
 window.velocityAtSpot = velocityAtSpot;
 export function velocityAtSpot(flow, siteId) {
-    var v = hydraulicVelocity(flow, siteId);
-    var r = spotWidthRatio(siteId);
-    var has = v && v.mean && v.mean > 0;
+    const v = hydraulicVelocity(flow, siteId);
+    const r = spotWidthRatio(siteId);
+    const has = v && v.mean && v.mean > 0;
     // Manning velocity exponent: (w_spot/w_gauge)^(2/5) = (1/r.ratio)^(2/5) = r.ratio^(-0.4)
-    var velFactor = (r.measured && r.ratio > 0) ? Math.pow(r.ratio, -0.4) : r.ratio;
-    var uncertainty = r.measured ? SAME_REACH_MEASURED_UNCERTAINTY : SAME_REACH_UNCERTAINTY;
+    const velFactor = (r.measured && r.ratio > 0) ? Math.pow(r.ratio, -0.4) : r.ratio;
+    const uncertainty = r.measured ? SAME_REACH_MEASURED_UNCERTAINTY : SAME_REACH_UNCERTAINTY;
     return {
         mean: has ? v.mean * velFactor : null,
         bottom: has ? v.bottom * velFactor : null,
@@ -160,20 +160,20 @@ export function velocityAtSpot(flow, siteId) {
 // honest answer, and beyond that the spread grows where the reader can see it. With no
 // measured site there is no number at all - never a fabricated spot depth.
 // ==================================================================================
-var DEPTH_NEAREST_N = 6;      // rows around today's flow that set the median
-var DEPTH_MIN_ROWS = 1;
+const DEPTH_NEAREST_N = 6;      // rows around today's flow that set the median
+const DEPTH_MIN_ROWS = 1;
 
 // The site's usable rows, or null. `points[].a` / `points[].w` are the measured
 // area/width the depth comes from - nothing here invents a value.
 export function siteDepthRows(siteId) {
-    var all = (typeof window !== 'undefined') ? window.CHANNEL_MEASUREMENTS : null;
+    const all = (typeof window !== 'undefined') ? window.CHANNEL_MEASUREMENTS : null;
     if (!all || !all.sites || !siteId) return null;
-    var site = all.sites[String(siteId)];
+    const site = all.sites[String(siteId)];
     if (!site || !site.points || !site.points.length) return null;
-    var rows = [];
-    for (var i = 0; i < site.points.length; i++) {
-        var p = site.points[i];
-        var q = Number(p.q), w = Number(p.w), a = Number(p.a), v = Number(p.v);
+    const rows = [];
+    for (let i = 0; i < site.points.length; i++) {
+        const p = site.points[i];
+        const q = Number(p.q), w = Number(p.w), a = Number(p.a), v = Number(p.v);
         if (!(q > 0) || !(w > 0) || !(a > 0)) continue;
         rows.push({ q: q, w: w, a: a, v: v, d: a / w, date: p.t });
     }
@@ -183,29 +183,29 @@ export function siteDepthRows(siteId) {
 // Measured mean depth (ft) at the gauge for this discharge, with its provenance.
 // null when the gauge has no measured cross-section.
 export function depthAtGauge(flow, siteId) {
-    var s = siteDepthRows(siteId);
+    const s = siteDepthRows(siteId);
     if (!s) return null;
-    var q = (Number(flow) > 0) ? Number(flow) : 0;
+    const q = (Number(flow) > 0) ? Number(flow) : 0;
     if (!q || q <= 0) return null;
-    var rows = s.rows.slice().sort(function (x, y) {
+    const rows = s.rows.slice().sort(function (x, y) {
         return Math.abs(Math.log(x.q / q)) - Math.abs(Math.log(y.q / q));
     });
-    var picked = rows.slice(0, DEPTH_NEAREST_N);
+    const picked = rows.slice(0, DEPTH_NEAREST_N);
     if (picked.length < DEPTH_MIN_ROWS) return null;
 
-    var ds = picked.map(function (r) { return r.d; }).sort(function (a, b) { return a - b; });
-    var mid = (ds.length % 2)
+    const ds = picked.map(function (r) { return r.d; }).sort(function (a, b) { return a - b; });
+    const mid = (ds.length % 2)
         ? ds[(ds.length - 1) / 2]
         : (ds[ds.length / 2 - 1] + ds[ds.length / 2]) / 2;      // median
 
     // Continuity cross-check: A/W vs Q/(W*V) on the same rows. The generator already
     // drops rows failing Q = v*A (5%), so a large value here means a row slipped in.
-    var worst = 0;
-    for (var i = 0; i < picked.length; i++) {
-        var r = picked[i];
+    let worst = 0;
+    for (let i = 0; i < picked.length; i++) {
+        const r = picked[i];
         if (!(r.v > 0)) continue;
-        var viaQ = r.q / (r.w * r.v);
-        var dev = Math.abs(r.d - viaQ) / r.d;
+        const viaQ = r.q / (r.w * r.v);
+        const dev = Math.abs(r.d - viaQ) / r.d;
         if (dev > worst) worst = dev;
     }
 
@@ -232,11 +232,11 @@ export function depthAtGauge(flow, siteId) {
 // value === null means "unmeasured", never a placeholder number.
 window.spotDepthFt = spotDepthFt;
 export function spotDepthFt(flow, siteId) {
-    var d = depthAtGauge(flow, siteId);
-    var r = spotWidthRatio(siteId);
+    const d = depthAtGauge(flow, siteId);
+    const r = spotWidthRatio(siteId);
     // Manning depth exponent: (w_gauge/w_spot)^(3/5) = r.ratio^0.6
-    var depthFactor = (r.measured && r.ratio > 0) ? Math.pow(r.ratio, 0.6) : 1.0;
-    var uncertainty = r.measured ? SAME_REACH_MEASURED_UNCERTAINTY : SAME_REACH_UNCERTAINTY;
+    const depthFactor = (r.measured && r.ratio > 0) ? Math.pow(r.ratio, 0.6) : 1.0;
+    const uncertainty = r.measured ? SAME_REACH_MEASURED_UNCERTAINTY : SAME_REACH_UNCERTAINTY;
     if (!d) {
         return {
             value: null, bandLow: null, bandHigh: null, atGauge: false, ratio: r.ratio, ratioMeasured: r.measured,

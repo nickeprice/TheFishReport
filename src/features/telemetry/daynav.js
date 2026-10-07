@@ -17,9 +17,9 @@ import { checkRiverStatus } from '../../utils/regulations.js';
 export { activeDateOffset, reportsData, setReportsData, setActiveDateOffset };
 
 export function stepDate(delta) {
-    var newOffset = activeDateOffset + delta;
+    const newOffset = activeDateOffset + delta;
     if (newOffset < 0) return;
-    var maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
+    const maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
     if (newOffset > maxOffset) return;
     setActiveDateOffset(newOffset);
     updateActiveDateUI();
@@ -45,27 +45,27 @@ export function legalHoursLabel(rule, legalIn, legalOut) {
 
 
 export function updateActiveDateUI() {
-    var d = new Date();
+    const d = new Date();
     d.setDate(d.getDate() + activeDateOffset);
 
     // 1. Centered Date Display: e.g. "Monday, September 14"
-    var options = { weekday: 'long', month: 'long', day: 'numeric' };
-    var dateStr = d.toLocaleDateString('en-US', options);
-    var dateEl = document.getElementById('date-nav-text');
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    const dateStr = d.toLocaleDateString('en-US', options);
+    const dateEl = document.getElementById('date-nav-text');
     if (dateEl) dateEl.innerText = dateStr;
 
     // Subtle (Today) badge if matches current calendar day
-    var now = new Date();
-    var isToday = (
+    const now = new Date();
+    const isToday = (
         d.getFullYear() === now.getFullYear() &&
         d.getMonth() === now.getMonth() &&
         d.getDate() === now.getDate()
     );
-    var badgeEl = document.getElementById('date-today-badge');
+    const badgeEl = document.getElementById('date-today-badge');
     if (badgeEl) badgeEl.style.display = isToday ? 'inline' : 'none';
 
     // Prev/Next button states
-    var prevBtn = document.getElementById('btn-prev-date');
+    const prevBtn = document.getElementById('btn-prev-date');
     if (prevBtn) {
         if (activeDateOffset <= 0) {
             prevBtn.classList.add('disabled');
@@ -75,9 +75,9 @@ export function updateActiveDateUI() {
             prevBtn.disabled = false;
         }
     }
-    var nextBtn = document.getElementById('btn-next-date');
+    const nextBtn = document.getElementById('btn-next-date');
     if (nextBtn) {
-        var maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
+        const maxOffset = reportsData.length > 0 ? reportsData.length - 1 : 14;
         if (activeDateOffset >= maxOffset) {
             nextBtn.classList.add('disabled');
             nextBtn.disabled = true;
@@ -88,20 +88,20 @@ export function updateActiveDateUI() {
     }
 
     // 2. Resolve Active Station & GPS
-    var activeStation = null;
+    let activeStation = null;
     try {
-        var sStr = localStorage.getItem('active_station');
+        const sStr = localStorage.getItem('active_station');
         if (sStr) activeStation = JSON.parse(sStr);
     } catch(e) {}
-    var riverId = activeStation ? activeStation.id : "12101500";
-    var riverName = (activeStation && activeStation.name) ? activeStation.name : 'Puyallup River';
-    var gpsCoords = (activeStation && activeStation.isGps) ? { lat: activeStation.lat, lon: activeStation.lon } : (State.userGPSCoords || null);
+    const riverId = activeStation ? activeStation.id : "12101500";
+    const riverName = (activeStation && activeStation.name) ? activeStation.name : 'Puyallup River';
+    const gpsCoords = (activeStation && activeStation.isGps) ? { lat: activeStation.lat, lon: activeStation.lon } : (State.userGPSCoords || null);
 
     // 3. Dynamic Regulations Engine Evaluation
     if (typeof checkRiverStatus === 'function') {
         // New engine signature: checkRiverStatus(date, gpsCoords, activeRiverName) -> ruled by src/utils/regulations.js.
-        var reg = checkRiverStatus(d, gpsCoords, riverName);
-        var pill = document.getElementById('river-status-pill');
+        const reg = checkRiverStatus(d, gpsCoords, riverName);
+        const pill = document.getElementById('river-status-pill');
         if (pill) {
             // Plain pill: just OPEN / CLOSED. No reason or zone-detail text on the
             // pill itself — the title attr keeps the full rule detail for assistive tech.
@@ -109,21 +109,21 @@ export function updateActiveDateUI() {
             pill.className = 'reg-status-pill ' + (reg && reg.isOpen ? 'status-pill-open' : 'status-pill-closed');
             pill.title = (reg && reg.ruleDetail) ? String(reg.ruleDetail) : 'WDFW regulation status for ' + riverName;
         }
-        var regDetail = document.getElementById('reg-detail');
+        const regDetail = document.getElementById('reg-detail');
         if (regDetail) {
             regDetail.innerHTML = '';
         }
     }
 
     // 4. Dynamic Solar / Legal Hours Calculation
-    var stLat = activeStation ? activeStation.lat : 47.1950;
-    var stLon = activeStation ? activeStation.lon : -122.3020;
-    var rep = (activeDateOffset >= 0 && activeDateOffset < reportsData.length) ? reportsData[activeDateOffset] : null;
-    var legalIn = "--:--", legalOut = "--:--";
+    const stLat = activeStation ? activeStation.lat : 47.1950;
+    const stLon = activeStation ? activeStation.lon : -122.3020;
+    const rep = (activeDateOffset >= 0 && activeDateOffset < reportsData.length) ? reportsData[activeDateOffset] : null;
+    let legalIn = "--:--", legalOut = "--:--";
     // The waterbody's hours RULE comes from the region registry. Only a `daylight`
     // river may use the local solar approximation - a 24hr/unknown window is never
     // invented client-side (UPDATE 3.0 Phase 1.5).
-    var legalRule = (rep && rep.legal_hours) ? rep.legal_hours : 'daylight';
+    const legalRule = (rep && rep.legal_hours) ? rep.legal_hours : 'daylight';
 
     // Primary: backend legal window (already computed from the registry rule).
     if (rep && rep.lines_in && rep.lines_out && !rep.api_offline) {
@@ -131,7 +131,7 @@ export function updateActiveDateUI() {
         legalOut = rep.lines_out;
     } else if (legalRule === 'daylight' && typeof calculateSolarHours === 'function') {
         // Offline fallback: local approximation for the active station coords.
-        var solar = calculateSolarHours(d, stLat, stLon);
+        const solar = calculateSolarHours(d, stLat, stLon);
         if (solar && solar.lines_in && solar.lines_out && solar.lines_in !== '--') {
             legalIn = solar.lines_in;
             legalOut = solar.lines_out;
@@ -145,18 +145,18 @@ export function updateActiveDateUI() {
         legalOut = rep.lines_out;
     }
 
-    var heroHours = document.getElementById('hero-legal-hours');
+    const heroHours = document.getElementById('hero-legal-hours');
     if (heroHours) {
         heroHours.innerText = legalHoursLabel(legalRule, legalIn, legalOut);
     }
 
     // 5. Toggle active day card
-    var cards = document.getElementsByClassName('day-card');
-    for (var i = 0; i < cards.length; i++) {
+    const cards = document.getElementsByClassName('day-card');
+    for (let i = 0; i < cards.length; i++) {
         cards[i].style.display = 'none';
     }
     if (rep) {
-        var targetCard = document.getElementById(rep.id);
+        const targetCard = document.getElementById(rep.id);
         if (targetCard) targetCard.style.display = 'block';
     }
 
@@ -177,7 +177,7 @@ export function updateActiveDateUI() {
  * @param {boolean} offline whether the failure was a network failure
  */
 export function renderWaterReportEmptyState(title, hint, offline) {
-    var box = document.getElementById('water-report-cards');
+    const box = document.getElementById('water-report-cards');
     if (!box) return;
     box.innerHTML = '<div class="empty-state empty-state-panel">' +
         '<div class="empty-state-icon">' + (offline ? '📡' : '🌊') + '</div>' +

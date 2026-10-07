@@ -22,9 +22,9 @@
 import { logDebug } from '../../shared/debug.js';
 import { showToast } from '../../shared/ui.js';
 import { syncPendingCatches, AuthState } from '../auth/auth.js';
-var RECONCILE_MIN_INTERVAL_MS = 15000;
-var _reconcileInFlight = false;
-var _reconcileLastAt = 0;
+const RECONCILE_MIN_INTERVAL_MS = 15000;
+let _reconcileInFlight = false;
+let _reconcileLastAt = 0;
 
 export async function reconcileCatches(force) {
     if (_reconcileInFlight) return 0;
@@ -35,7 +35,7 @@ export async function reconcileCatches(force) {
 
     _reconcileInFlight = true;
     try {
-        var n = await syncPendingCatches();
+        const n = await syncPendingCatches();
         _reconcileLastAt = Date.now();
         if (n > 0) showToast(n + ' queued catch' + (n === 1 ? '' : 'es') + ' synced', 'success', 2500);
         return n;

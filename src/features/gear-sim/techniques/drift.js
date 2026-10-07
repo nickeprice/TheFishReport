@@ -33,30 +33,30 @@ export var DRIFT_TECHNIQUE = {
     waterbody_types: ['river'],
 
     compute: function (rig, env) {
-        var flow = env.flow;
-        var dbArray = env.dbArray || [];
-        var species = env.species;
-        var weightOz = rig.weightOz, ldLen = rig.ldLen;
-        var weightShape = rig.weightShape;
-        var hook = rig.hook, yarn = rig.yarn;
-        var foam = rig.foam, foam2 = rig.foam2, bdSz = rig.bdSz;
-        var ldDia = rig.ldDia || 0, mlDia = rig.mlDia || 0;
+        const flow = env.flow;
+        const dbArray = env.dbArray || [];
+        const species = env.species;
+        const weightOz = rig.weightOz, ldLen = rig.ldLen;
+        const weightShape = rig.weightShape;
+        const hook = rig.hook, yarn = rig.yarn;
+        const foam = rig.foam, foam2 = rig.foam2, bdSz = rig.bdSz;
+        const ldDia = rig.ldDia || 0, mlDia = rig.mlDia || 0;
 
         // 2. Pure-math fluid dynamics (no tuned constants) --------------------------
-        var velocity = hydraulicVelocity(flow, env.siteId);
+        let velocity = hydraulicVelocity(flow, env.siteId);
         // Use spot velocity when available (continuity-adjusts for river width at the
         // angler's location vs the gauge). Falls back to gauge velocity.
-        var spotVel = (typeof velocityAtSpot === 'function')
+        const spotVel = (typeof velocityAtSpot === 'function')
             ? velocityAtSpot(flow, velocity.station || null) : null;
         if (spotVel && spotVel.bottom && spotVel.bottom > 0) {
             velocity = { mean: spotVel.mean, bottom: spotVel.bottom, source: velocity.source,
                 station: velocity.station, spotRatio: spotVel.ratio };
         }
-        var bedVel = velocity.bottom;
+        let bedVel = velocity.bottom;
 
         // Apply water type multipliers (Phase 1.6): local hydraulic habitat adjusts
         // the Manning/continuity-corrected velocity and depth.
-        var wtMultiplier = (typeof waterTypeMultiplier === 'function')
+        const wtMultiplier = (typeof waterTypeMultiplier === 'function')
             ? waterTypeMultiplier(rig.waterType) : null;
         if (wtMultiplier && wtMultiplier.velMul !== 1.0) {
             velocity = {
@@ -70,43 +70,43 @@ export var DRIFT_TECHNIQUE = {
         }
 
         // Lift: read NET values from tackle.json (buoyancy_g - mass_g)
-        var f1G = foam.net_buoyancy_g;
-        var f2G = foam2.net_buoyancy_g;
-        var hData = (typeof tackleHookData === 'function') ? tackleHookData(hook) : null;
-        var hookMassG = hData ? (hData.mass_g - hData.buoyancy_g) : 0;
-        var bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdSz) : null;
-        var beadNetSink = bData ? bData.netSinkG : 0;
-        var yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(yarn) : 0;
-        var liftGf = computeLiftGf(f1G, f2G, hookMassG, beadNetSink, yG);
+        const f1G = foam.net_buoyancy_g;
+        const f2G = foam2.net_buoyancy_g;
+        const hData = (typeof tackleHookData === 'function') ? tackleHookData(hook) : null;
+        const hookMassG = hData ? (hData.mass_g - hData.buoyancy_g) : 0;
+        const bData = (typeof tackleBeadData === 'function') ? tackleBeadData(bdSz) : null;
+        const beadNetSink = bData ? bData.netSinkG : 0;
+        const yG = (typeof tackleYarnBuoyancyG === 'function') ? tackleYarnBuoyancyG(yarn) : 0;
+        const liftGf = computeLiftGf(f1G, f2G, hookMassG, beadNetSink, yG);
 
         // Drag: line + point objects (weight, corky, bead, hook, yarn, mainline)
-        var wData = (typeof tackleWeightPhysicsData === 'function')
+        const wData = (typeof tackleWeightPhysicsData === 'function')
             ? tackleWeightPhysicsData(weightShape, weightOz) : null;
-        var weightObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
+        const weightObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
         // Gear mass (submerged) for hook-seat momentum calculation in kg
-        var gearMassKg = wData ? wData.submerged_mass_g / 1000 : 0.030;
-        var corky1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
-        var corky2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
-        var beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
-        var hookObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
+        const gearMassKg = wData ? wData.submerged_mass_g / 1000 : 0.030;
+        const corky1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
+        const corky2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
+        const beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
+        const hookObj = hData ? { areaCm2: hData.areaCm2, cd: hData.cd } : null;
         // @provenance: informed_estimate — porous cylinder (5mm × 50mm), Cd=0.8
-        var yarnDrag = (typeof tackleYarnDragData === 'function') ? tackleYarnDragData() : null;
-        var yarnObj = yarnDrag ? { areaCm2: yarnDrag.areaCm2, cd: yarnDrag.cd } : null;
+        const yarnDrag = (typeof tackleYarnDragData === 'function') ? tackleYarnDragData() : null;
+        const yarnObj = yarnDrag ? { areaCm2: yarnDrag.areaCm2, cd: yarnDrag.cd } : null;
 
-        var dragGfPerFt = totalDragPerFt(bedVel, ldDia, ldLen,
+        let dragGfPerFt = totalDragPerFt(bedVel, ldDia, ldLen,
             weightObj, corky1Obj, corky2Obj, beadObj, hookObj, yarnObj);
         // @provenance: derived — mainline distributed drag (mlDia from form, mean velocity)
         if (mlDia > 0) {
             dragGfPerFt += lineDragPerFt(mlDia, velocity.mean);
         }
-        var hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
-        var fallbackHgt = hgt;  // preserve for when chain solver does not converge
-        var blownOut = (bedVel > 3.5 && weightOz < 0.5);
+        let hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
+        const fallbackHgt = hgt;  // preserve for when chain solver does not converge
+        const blownOut = (bedVel > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------
-        var sonar = communitySonar(dbArray, flow, species, env.siteId);
-        var zone = computeStrikeZone(null);  // sonar paused until physics is validated
-        var score = 5.0;
+        const sonar = communitySonar(dbArray, flow, species, env.siteId);
+        const zone = computeStrikeZone(null);  // sonar paused until physics is validated
+        let score = 5.0;
         if (blownOut) {
             score = 0.0;
         } else {
@@ -120,11 +120,11 @@ export var DRIFT_TECHNIQUE = {
         // Only "what the zone is doing to you" and "what to change", and ONLY when the rig is
         // off target (an on-target rig gets no rows: the summary above the list already says
         // the line is in the band). No calibration meta-talk, no re-statement of the form.
-        var suggestions = [];
+        const suggestions = [];
         // WS-8b (a2/c/d follow-up): the search now proposes what an angler actually changes -
         // corky, second corky, hook, yarn, bead - and falls back to leader/lead only when no
         // tackle swap can reach the zone (see bestZoneRig() in zone.js).
-        var best = bestZoneRig(zone, rig, velocity);
+        const best = bestZoneRig(zone, rig, velocity);
 
         if (blownOut) {
             // Plain words: what to DO, not what the numbers are (the ft/s and the oz still go to
@@ -138,7 +138,7 @@ export var DRIFT_TECHNIQUE = {
         // ON TARGET -> NO suggestion rows at all (direct user ask, 2026-09-29): the summary
         // above the list already says the rig is where the fish are, so an "On target" row is noise.
 
-        var plainChanges = [];
+        let plainChanges = [];
         if (best && !blownOut && score < 5.0) {
             // Plain directions only, in the order the angler would make the changes, and only
             // what actually changes. The precise list (brands, sizes, projected height) rides
@@ -148,8 +148,8 @@ export var DRIFT_TECHNIQUE = {
                 // A beginner can act on TWO changes, not five. When the full solution needs more,
                 // say "closer" - the projection belongs to the WHOLE set, so claiming it for a
                 // partial list would be a lie. (The full list is on out.rigChangesPlain.)
-                var shown = plainChanges.slice(0, 2);
-                var capped = plainChanges.length > shown.length;
+                const shown = plainChanges.slice(0, 2);
+                const capped = plainChanges.length > shown.length;
                 suggestions.push('Try this: ' + joinPlain(shown) + ' \u2014 ' + (capped
                     ? 'that should get you much closer.'
                     : 'that should put your rig ' + (hgt < zone.min ? 'up' : 'down') + ' where the fish are.'));
@@ -162,28 +162,28 @@ export var DRIFT_TECHNIQUE = {
         // Neither is pushed into `suggestions` - where the FISH are is not "what to change" -
         // which keeps the frozen suggestion baseline untouched. `rigChanges` is the PRECISE
         // version of the plain advice (brands, sizes, projected height) for the debug trail.
-        var where = (typeof whereToFish === 'function') ? whereToFish(zone, hgt) : null;
-        var outlook = (typeof fishOutlook === 'function') ? fishOutlook(zone, hgt) : null;
-        var precise = (best && typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
+        const where = (typeof whereToFish === 'function') ? whereToFish(zone, hgt) : null;
+        const outlook = (typeof fishOutlook === 'function') ? fishOutlook(zone, hgt) : null;
+        const precise = (best && typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
 
         // ====== NEW PIPELINE (Phase 8): chain solver ======
         // Use the unified chain solver (RK4 + shooting + air catenary)
         // which replaces cable.js, terminal.js, and sinker.js with one ODE.
         // Dynamic spot depth: pull from continuity.js, fall back to 6.0 ft.
-        var spotDepth = (typeof spotDepthFt === 'function')
+        const spotDepth = (typeof spotDepthFt === 'function')
             ? spotDepthFt(env.flow, env.siteId) : null;
-        var depthFt = (spotDepth && spotDepth.value) ? spotDepth.value : 6.0;
+        let depthFt = (spotDepth && spotDepth.value) ? spotDepth.value : 6.0;
         // Water type depth multiplier (Phase 1.6)
         if (wtMultiplier && wtMultiplier.depthMul !== 1.0 && depthFt > 0) {
             depthFt *= wtMultiplier.depthMul;
         }
-        var H = depthFt * 0.3048;  // ft → m
-        var hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
-        var chainResult = null, chainEnv = null;
+        const H = depthFt * 0.3048;  // ft → m
+        let hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
+        let chainResult = null, chainEnv = null;
         try {
             if (typeof chainSolve === 'function') {
-                var bedVelMs = bedVel * CFS_TO_MS;
-                var meanVelMs = velocity.mean * CFS_TO_MS;
+                const bedVelMs = bedVel * CFS_TO_MS;
+                const meanVelMs = velocity.mean * CFS_TO_MS;
                 chainEnv = {
                     depthM: H,
                     uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
@@ -194,7 +194,7 @@ export var DRIFT_TECHNIQUE = {
                 hookDepthM = chainResult.converged ? chainResult.hookDepthM : null;
 
                 if (typeof interceptionProbability === 'function') {
-                    var ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);
+                    const ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);
                     interceptionProb = ip.probability;
                     sweepQuality = ip.avgSweepQuality;
                 }
@@ -211,7 +211,7 @@ export var DRIFT_TECHNIQUE = {
             hgt = fallbackHgt;
         }
         // Blend interception probability into score: 70% positional, 30% interception
-        var blendedScore = score * (0.7 + 0.3 * interceptionProb);
+        const blendedScore = score * (0.7 + 0.3 * interceptionProb);
         score = Math.max(0.0, Math.min(5.0, Number(blendedScore.toFixed(3))));
         // ====== END NEW PIPELINE ======
 

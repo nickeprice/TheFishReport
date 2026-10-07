@@ -103,31 +103,7 @@ daynav.js, report.js, hero.js, and supabase.js.
 
 ---
 
-<a id="test-const"></a>
-## T5: ESLint `prefer-const` Sweep
 
-**Goal:** Identify every `let`/`var` that is never reassigned and should be `const`.
-In ES modules, `const` eliminates accidental reassignment and makes the module
-dependency graph clearer.
-
-**Run:**
-```bash
-cd /path/to/project
-npx eslint@8 src/ --rule 'prefer-const: error' --env browser --env es2021 \
-  --parser-options sourceType:module 2>&1 | grep -v 'Parsing error'
-```
-
-**Fix threshold:** Auto-fix with `--fix` is available for `prefer-const` in ESLint.
-Run with `--fix` to convert all safe candidates at once.
-
-**Risk:** Low — `const` vs `let`/`var` changes no runtime behavior. The only risk is
-if a `const` variable is used in a `typeof` guard before its module initializes, but
-`const` in ES modules is hoisted to the TDZ (temporal dead zone) and accessing it
-before init throws — `typeof` would NOT be safe on a TDZ `const`. So `var` or `let`
-must be kept for any variable accessed via `typeof` from another module before init.
-**Check for this edge case before auto-fixing.**
-
-**Files:** All `.js` under `src/`.
 
 ---
 

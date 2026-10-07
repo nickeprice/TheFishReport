@@ -24,8 +24,8 @@
  */
 import { escapeHtml } from './format.js';
 import { logDebug } from './debug.js';
-var API_RETRY_DELAY_MS = 700;
-var API_TIMEOUT_MS = 12000;
+const API_RETRY_DELAY_MS = 700;
+const API_TIMEOUT_MS = 12000;
 
 export function apiSleep(ms) {
     return new Promise(function (r) { setTimeout(r, ms); });
@@ -39,7 +39,7 @@ function apiLogLabel(path) {
 // A short, single-line, HTML-escaped slice of a response body - enough to recognise a
 // Cloudflare/gateway error page without ever injecting markup or coordinates.
 function apiBodySnippet(body) {
-    var s = String(body == null ? '' : body).replace(/\s+/g, ' ').slice(0, 120);
+    const s = String(body == null ? '' : body).replace(/\s+/g, ' ').slice(0, 120);
     return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[<>]/g, '');
 }
 
@@ -50,13 +50,13 @@ function apiLog(path, text) {
 // The server's own explanation, when a failure body is JSON we understand.
 function apiServerMessage(data) {
     if (!data) return null;
-    var msg = data.error || data.note || null;
+    const msg = data.error || data.note || null;
     return msg ? String(msg).slice(0, 120) : null;
 }
 
 function apiParseJson(body) {
     try {
-        var d = JSON.parse(body);
+        const d = JSON.parse(body);
         return (d && typeof d === 'object') ? d : null;
     } catch (e) {
         return null;
@@ -66,26 +66,26 @@ function apiParseJson(body) {
 // { signal, done() } - the abort timer is cleared on every path, so no timer outlives its call.
 function apiTimeout(ms) {
     if (typeof AbortController === 'undefined' || !ms) return { signal: undefined, done: function () {} };
-    var c = new AbortController();
-    var t = setTimeout(function () { c.abort(); }, ms);
+    const c = new AbortController();
+    const t = setTimeout(function () { c.abort(); }, ms);
     return { signal: c.signal, done: function () { clearTimeout(t); } };
 }
 
 export async function apiGetJson(path, opts) {
 window.apiGetJson = apiGetJson;
     opts = opts || {};
-    var attempts = opts.attempts || 2;
-    var status = 0;
-    var error = null;
-    var serverMessage = null;
-    for (var i = 0; i < attempts; i++) {
-        var t = apiTimeout(opts.timeoutMs || API_TIMEOUT_MS);
+    const attempts = opts.attempts || 2;
+    let status = 0;
+    let error = null;
+    let serverMessage = null;
+    for (let i = 0; i < attempts; i++) {
+        const t = apiTimeout(opts.timeoutMs || API_TIMEOUT_MS);
         try {
-            var res = await fetch(path, { cache: 'no-store', signal: t.signal });
+            const res = await fetch(path, { cache: 'no-store', signal: t.signal });
             status = res.status;
-            var body = await res.text();
+            const body = await res.text();
             t.done();
-            var data = apiParseJson(body);
+            const data = apiParseJson(body);
             if (res.ok) {
                 if (data) {
                     return { ok: true, status: status, data: data, error: null,

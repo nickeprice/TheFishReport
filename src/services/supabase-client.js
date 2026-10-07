@@ -9,7 +9,7 @@ const SUPABASE_URL = 'https://pztcfsqifbfkjvosygcy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CJcIKTHTSUGSFkw6POK6XA_tNfo37Gr';
 export const GUEST_NAME_KEY = 'angler_display_name';
 
-var _client = null;
+let _client = null;
 
 export function isConfigured() {
     return SUPABASE_URL.indexOf('PASTE_YOUR') !== 0 && SUPABASE_ANON_KEY.indexOf('PASTE_YOUR') !== 0;
@@ -30,7 +30,7 @@ export function getClient() {
 
 export async function ensureSdk() {
     try {
-        var mod = await import('@supabase/supabase-js');
+        const mod = await import('@supabase/supabase-js');
         return mod && typeof mod.createClient === 'function' ? mod : null;
     } catch (e) {
         return null;

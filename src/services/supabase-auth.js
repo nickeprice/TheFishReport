@@ -11,18 +11,18 @@ import { getClient, ensureSdk, rememberName, recallName, GUEST_NAME_KEY } from '
  * we stash the display name in user_metadata so the public feed can show it.
  */
 export async function signInGuest(name) {
-    var clean = String(name || '').trim().slice(0, 24);
+    const clean = String(name || '').trim().slice(0, 24);
     if (!clean) return { ok: false, error: 'Enter a name to start fishing.' };
     rememberName(clean);
 
-    var client = getClient();
+    const client = getClient();
     if (!client) return { ok: true, offline: true, name: clean, user: null };
 
     try {
         if (typeof client.auth.signInAnonymously !== 'function') {
             return { ok: true, offline: true, name: clean, user: null };
         }
-        var res = await client.auth.signInAnonymously({ options: { data: { display_name: clean } } });
+        const res = await client.auth.signInAnonymously({ options: { data: { display_name: clean } } });
         if (res.error) return { ok: false, error: res.error.message, name: clean };
         return { ok: true, name: clean, user: res.data ? res.data.user : null };
     } catch (e) {
@@ -31,7 +31,7 @@ export async function signInGuest(name) {
 }
 
 export async function signOut() {
-    var client = getClient();
+    const client = getClient();
     try { if (client) await client.auth.signOut(); } catch (e) {}
     try { localStorage.removeItem(GUEST_NAME_KEY); } catch (e) {}
     return { ok: true };
@@ -42,14 +42,14 @@ export async function signOut() {
  * the UI still shows an identity when Supabase is unreachable.
  */
 export async function getSession() {
-    var sdk = await ensureSdk();
-    var client = sdk ? getClient() : null;
+    const sdk = await ensureSdk();
+    const client = sdk ? getClient() : null;
     if (!client) return { session: null, user: null, name: recallName(), isGuest: false, offline: true };
     try {
-        var res = await client.auth.getSession();
-        var session = (res && res.data) ? res.data.session : null;
-        var user = session ? session.user : null;
-        var meta = (user && user.user_metadata) ? user.user_metadata : {};
+        const res = await client.auth.getSession();
+        const session = (res && res.data) ? res.data.session : null;
+        const user = session ? session.user : null;
+        const meta = (user && user.user_metadata) ? user.user_metadata : {};
         return {
             session: session,
             user: user,

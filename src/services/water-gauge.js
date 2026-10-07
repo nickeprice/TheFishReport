@@ -45,8 +45,8 @@ export async function fetchCFSMomentum(siteId) {
     try {
         // G4 (Phase 2.4): cache the last momentum window so a dead zone still shows the
         // trend if it is fresh (< 12 h old); stale cache -> hide the arrow, never lie.
-        var CACHE_PREFIX = 'cfs_momentum_';
-        var FRESH_MS = 12 * 3600 * 1000;
+        const CACHE_PREFIX = 'cfs_momentum_';
+        const FRESH_MS = 12 * 3600 * 1000;
 
         // WDFN first; legacy nwis/iv only when the modern endpoint is unusable.
         let readings = null;
@@ -56,7 +56,7 @@ export async function fetchCFSMomentum(siteId) {
         }
         if (!readings || readings.length < 2) {
             // Unreachable: fall back to a fresh cached trend, else paint nothing.
-            var cachedRaw = null;
+            let cachedRaw = null;
             try { cachedRaw = JSON.parse(localStorage.getItem(CACHE_PREFIX + siteId) || 'null'); } catch (e) { cachedRaw = null; }
             if (cachedRaw && cachedRaw.readings && (Date.now() - (cachedRaw.ts || 0)) < FRESH_MS) {
                 renderCfsTrend(siteId, cachedRaw.readings);
@@ -116,9 +116,9 @@ export function renderCfsTrend(siteId, sorted) {
 // station does not report them, both stay hidden entirely (the card renders
 // only the fields that carry a value).
 export function applyOwnGaugeWaterQuality(waterTempF, turbidityFnu) {
-    var hasTemp = (waterTempF !== undefined && waterTempF !== null && !isNaN(waterTempF));
+    const hasTemp = (waterTempF !== undefined && waterTempF !== null && !isNaN(waterTempF));
     State.waterTempF = hasTemp ? Number(waterTempF) : null;   // Gear Sim falls back to the baseline zone when temp is unknown
-    var hasTurb = (turbidityFnu !== undefined && turbidityFnu !== null && !isNaN(turbidityFnu));
+    const hasTurb = (turbidityFnu !== undefined && turbidityFnu !== null && !isNaN(turbidityFnu));
     // WS-8a: the Gear Sim's colour term reads the SAME own-gauge reading the card paints,
     // so the zone can never use a turbidity the angler cannot see. null -> no term at all.
     State.turbidityFnu = hasTurb ? Number(turbidityFnu) : null;

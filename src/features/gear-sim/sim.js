@@ -15,10 +15,10 @@ import { readRigFromForm, loadCalibrationData, buildSimStats, paintSimHud } from
 import { gearTechnique } from './registry.js';
 import { saveRig } from './rig.js';
 export async function runSim() {
-    var simBtn = document.getElementById('btn-sim');
+    const simBtn = document.getElementById('btn-sim');
 
     // No defaults: every gear field must be chosen before the solver can run.
-    var missing = missingRigFields();
+    const missing = missingRigFields();
     if (missing.length) {
         showToast('Fill in: ' + missing.join(', '), 'warn', 6000);
         return;
@@ -27,19 +27,19 @@ export async function runSim() {
     if (simBtn) { simBtn.innerText = 'CALCULATING...'; simBtn.disabled = true; }
 
     // 1. Read the rig off the form.
-    var rig = readRigFromForm();
+    const rig = readRigFromForm();
 
     // 2. Community sonar - the only await (a network read with a local fallback).
-    var dbArray = await loadCalibrationData(rig.flow, rig.species);
+    const dbArray = await loadCalibrationData(rig.flow, rig.species);
 
     // 3-4. Solve + score through the registered technique. Only `drift` ships today;
     // its compute() owns the locked-Cd physics, the strike zone and the suggestions.
     // The active station's own USGS-measured velocity curve shapes the response.
-    var siteId = getActiveStationId();
-    var out = gearTechnique().compute(rig, { flow: rig.flow, species: rig.species, dbArray: dbArray, siteId: siteId });
+    const siteId = getActiveStationId();
+    const out = gearTechnique().compute(rig, { flow: rig.flow, species: rig.species, dbArray: dbArray, siteId: siteId });
 
     // 5. Persist the rig + paint the HUD.
-    var stats = buildSimStats(rig, out);
+    const stats = buildSimStats(rig, out);
     window.currentStats = stats;
     saveRig();
     paintSimHud(rig, out, stats);

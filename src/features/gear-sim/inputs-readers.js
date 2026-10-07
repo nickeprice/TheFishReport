@@ -7,7 +7,7 @@ import { logDebug } from "../../shared/debug.js";
 import { State } from "../../shared/state.js";
 import { GEAR_OPTIONS } from "../../shared/gear-options.js";
 // tackle.js imports from inputs.js (circular) — deferred lazy import
-var _tackleMod = null;
+let _tackleMod = null;
 import('../../shared/tackle.js').then(function(m) { _tackleMod = m; });
 // Default (Run) applies 1.0 multipliers — no change from the continuity calculation.
 // ==================================================================================
@@ -29,9 +29,9 @@ window.DEFAULT_WATER_TYPE = DEFAULT_WATER_TYPE;
 export function tackleYarnBuoyancyG(inches) {
 window.tackleYarnBuoyancyG = tackleYarnBuoyancyG;
     if (!inches || inches <= 0) return 0;
-    var yb = -0.012;
+    let yb = -0.012;
     if (_tackleMod && typeof _tackleMod.tackleItems === 'function') {
-        var yarns = _tackleMod.tackleItems('yarn');
+        const yarns = _tackleMod.tackleItems('yarn');
         if (yarns && yarns.length > 0 && yarns[0].buoyancy_per_inch_g !== undefined) {
             yb = Number(yarns[0].buoyancy_per_inch_g);
         }
@@ -49,11 +49,11 @@ window.tackleYarnBuoyancyG = tackleYarnBuoyancyG;
  */
 export function tackleYarnDragData() {
 window.tackleYarnDragData = tackleYarnDragData;
-    var dflt = { areaCm2: 1.8, cd: 0.8 };
+    const dflt = { areaCm2: 1.8, cd: 0.8 };
     if (!_tackleMod || typeof _tackleMod.tackleItems !== 'function') return dflt;
-    var yarns = _tackleMod.tackleItems('yarn');
+    const yarns = _tackleMod.tackleItems('yarn');
     if (!yarns || yarns.length === 0) return dflt;
-    var y = yarns[0];
+    const y = yarns[0];
     if (y.area_cm2 && y.cd) {
         return { areaCm2: Number(y.area_cm2), cd: Number(y.cd) };
     }
@@ -74,11 +74,11 @@ export function tackleWeightPhysicsData(shapeLabel, oz) {
 window.tackleWeightPhysicsData = tackleWeightPhysicsData;
     if (!shapeLabel || !oz) return null;
     if (!_tackleMod || typeof _tackleMod.tackleWeightRow !== 'function') return null;
-    var row = _tackleMod.tackleWeightRow(shapeLabel, Number(oz));
+    const row = _tackleMod.tackleWeightRow(shapeLabel, Number(oz));
     if (!row) return null;
-    var mass_g = Number(row.mass_g) || 0;
-    var density = row.density_g_cm3 ? Number(row.density_g_cm3) : 11.34;
-    var submerged_mass_g = mass_g;
+    const mass_g = Number(row.mass_g) || 0;
+    const density = row.density_g_cm3 ? Number(row.density_g_cm3) : 11.34;
+    let submerged_mass_g = mass_g;
     if (density > 0) {
         submerged_mass_g = mass_g * (1 - WATER_DENSITY_G_CM3 / density);
         if (submerged_mass_g < 0) submerged_mass_g = 0;
@@ -110,9 +110,9 @@ window.SHAPE_MAX = SHAPE_MAX;
 // The station the sim is currently solving for (set by the station picker).
 export function getActiveStationId() {
     try {
-        var raw = localStorage.getItem('active_station');
+        const raw = localStorage.getItem('active_station');
         if (raw) {
-            var st = JSON.parse(raw);
+            const st = JSON.parse(raw);
             if (st && st.id) return String(st.id);
         }
     } catch (e) {}
@@ -122,11 +122,11 @@ export function getActiveStationId() {
 // Published hydraulic-geometry curve for a gauge: {a, b} or null when unmeasured.
 export function measuredFit(siteId) {
     if (!siteId || typeof window === 'undefined') return null;
-    var all = window.CHANNEL_MEASUREMENTS;
+    const all = window.CHANNEL_MEASUREMENTS;
     if (!all || !all.sites) return null;
-    var site = all.sites[String(siteId)];
+    const site = all.sites[String(siteId)];
     if (!site || !site.fit) return null;
-    var a = Number(site.fit.a), b = Number(site.fit.b);
+    const a = Number(site.fit.a), b = Number(site.fit.b);
     return (a > 0 && b > 0)
         ? { a: a, b: b, n: site.n || 0, thin: !!site.thin_recent }
         : null;
@@ -134,18 +134,18 @@ export function measuredFit(siteId) {
 
 // v = a * Q^b (ft/s) measured at that gauge, or null.
 export function measuredVelocity(siteId, flow) {
-    var fit = measuredFit(siteId);
+    const fit = measuredFit(siteId);
     if (!fit) return null;
     return fit.a * Math.pow(Math.max(flow, 1), fit.b);
 }
 
 export function hydraulicVelocity(flow, siteId) {
-    var meanEstimate = 0.25 * Math.pow(Math.max(flow, 1), 0.4);      // ft/s power-law estimate
-    var bottomEstimate = meanEstimate * Math.pow(0.05, 1 / 6);       // ft/s at bed
-    var out = { mean: meanEstimate, bottom: bottomEstimate, source: 'estimate' };
+    const meanEstimate = 0.25 * Math.pow(Math.max(flow, 1), 0.4);      // ft/s power-law estimate
+    const bottomEstimate = meanEstimate * Math.pow(0.05, 1 / 6);       // ft/s at bed
+    const out = { mean: meanEstimate, bottom: bottomEstimate, source: 'estimate' };
 
-    var here = measuredVelocity(siteId, flow);
-    var fit = measuredFit(siteId);
+    const here = measuredVelocity(siteId, flow);
+    const fit = measuredFit(siteId);
     if (here && here > 0 && fit) {
         out.mean = here;                           // true ft/s from gauge
         out.bottom = here * Math.pow(0.05, 1 / 6); // true ft/s at bed
@@ -197,8 +197,8 @@ window.THERMAL_BANDS = THERMAL_BANDS;
 
 export function thermalOptimum(tempF) {
     if (tempF === null || tempF === undefined || isNaN(tempF)) return null;
-    var t = Number(tempF);
-    var b;
+    const t = Number(tempF);
+    let b;
     if (t < 45) b = THERMAL_BANDS[0];
     else if (t < 50) b = THERMAL_BANDS[1];
     else if (t < 64) b = THERMAL_BANDS[2];

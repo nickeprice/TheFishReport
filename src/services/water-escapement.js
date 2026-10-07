@@ -16,7 +16,7 @@ export function escNum(v) {
 // orphans. Jacks are pooled separately from the dataset's dedicated
 // jack_count column.
 export function escBucketName(species, run) {
-    var sp = String(species || '').trim();
+    const sp = String(species || '').trim();
     // Chinook (any run) -> 'Chinook'. Legacy 'Fall Chinook' rows map here too.
     if (sp.toLowerCase().indexOf('chinook') !== -1 || sp.toLowerCase() === 'king') return 'Chinook';
     return sp || 'Unknown';
@@ -40,10 +40,10 @@ export function escWowBadge(wow) {
 // unparseable stamp returns the honest fallback wording — never a fabricated date.
 export function formatEscapementUpdated(iso) {
     if (!iso) return ESCAPEMENT_UPDATED_FALLBACK;
-    var d = new Date(iso);
+    const d = new Date(iso);
     if (isNaN(d.getTime())) return ESCAPEMENT_UPDATED_FALLBACK;
-    var datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    var timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     return 'Last updated ' + datePart + ' \u00B7 ' + timePart;
 }
 
@@ -63,66 +63,66 @@ export function formatEscapementUpdated(iso) {
 // MAX Socrata system column :updated_at across the rows (WDFW's own publish time,
 // never a client guess) — null when the feed does not expose it.
 export async function fetchEscapementLive(siteId) {
-    var facilities = escapementFacilities[siteId ? String(siteId) : ''];
+    const facilities = escapementFacilities[siteId ? String(siteId) : ''];
     if (!facilities || !facilities.length) return null;
 
-    var year = new Date().getFullYear();
-    var quoted = facilities.map(function(f) { return "'" + f + "'"; }).join(',');
-    var where = "event='" + ESCAPEMENT_EVENT + "' AND facility in(" + quoted + ")" +
+    const year = new Date().getFullYear();
+    const quoted = facilities.map(function(f) { return "'" + f + "'"; }).join(',');
+    const where = "event='" + ESCAPEMENT_EVENT + "' AND facility in(" + quoted + ")" +
         " AND date >= '" + (year - 5) + "-01-01T00:00:00.000'";
-    var url = ESCAPEMENT_SOCRATA +
+    const url = ESCAPEMENT_SOCRATA +
         '?$select=date,species,run,sum(adult_count) AS adults,sum(jack_count) AS jacks,max(:updated_at) AS lastUpdated' +
         '&$group=date,species,run' +
         '&$where=' + encodeURIComponent(where) +
         '&$order=date DESC&$limit=5000';
 
-    var res = await fetch(url, { cache: 'no-store' });
-    var rows = await res.json();
+    const res = await fetch(url, { cache: 'no-store' });
+    const rows = await res.json();
     if (!rows || !rows.length) return null;
 
-    var today = new Date();
-    var DAY = 86400000;
-    var acc = {};   // display bucket -> { days: { 'YYYY-MM-DD': adultSum } }
-    var jacc = {};  // pooled jacks across every species and run
-    var lastUpdated = null; // MAX :updated_at across every returned row
-    for (var i = 0; i < rows.length; i++) {
-        var r = rows[i];
-        var stamp = r.lastUpdated;
+    const today = new Date();
+    const DAY = 86400000;
+    const acc = {};   // display bucket -> { days: { 'YYYY-MM-DD': adultSum } }
+    const jacc = {};  // pooled jacks across every species and run
+    let lastUpdated = null; // MAX :updated_at across every returned row
+    for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const stamp = r.lastUpdated;
         if (stamp && (!lastUpdated || String(stamp) > lastUpdated)) lastUpdated = String(stamp);
-        var key = String(r.date || '').slice(0, 10);
+        const key = String(r.date || '').slice(0, 10);
         if (!key) continue;
-        var bucket = escBucketName(r.species, r.run);
-        var a = parseFloat(r.adults) || 0;
-        var j = parseFloat(r.jacks) || 0;
+        const bucket = escBucketName(r.species, r.run);
+        const a = parseFloat(r.adults) || 0;
+        const j = parseFloat(r.jacks) || 0;
         if (!acc[bucket]) acc[bucket] = { days: {} };
         acc[bucket].days[key] = (acc[bucket].days[key] || 0) + a;
         jacc[key] = (jacc[key] || 0) + j;
     }
     acc['Jacks'] = { days: jacc };
 
-    var out = {};
+    const out = {};
     Object.keys(acc).forEach(function(sp) {
-        var days = acc[sp].days;
-        var keys = Object.keys(days);
+        const days = acc[sp].days;
+        const keys = Object.keys(days);
         if (!keys.length) return;
 
         // Freshest trap date anchors the WoW windows so WDFW reporting lag can't skew it.
-        var latestKey = keys[0];
+        let latestKey = keys[0];
         keys.forEach(function(k) { if (k > latestKey) latestKey = k; });
-        var maxT = new Date(latestKey + 'T00:00:00').getTime();
-        var anchorYear = parseInt(latestKey.slice(0, 4), 10);
+        const maxT = new Date(latestKey + 'T00:00:00').getTime();
+        const anchorYear = parseInt(latestKey.slice(0, 4), 10);
 
-        var total = 0, cur = 0, prev = 0, byYear = {};
+        let total = 0, cur = 0, prev = 0; const byYear = {};
         keys.forEach(function(k) {
-            var n = days[k];
+            const n = days[k];
             if (parseInt(k.slice(0, 4), 10) === anchorYear) total += n;
-            var t = new Date(k + 'T00:00:00').getTime();
+            const t = new Date(k + 'T00:00:00').getTime();
             // Week-over-Week: [max-6 .. max] vs [max-13 .. max-7]
             if (t > maxT - 6 * DAY && t <= maxT) cur += n;
             else if (t > maxT - 13 * DAY && t <= maxT - 7 * DAY) prev += n;
             // 5-yr average over the same calendar window (month/day <= today)
-            var d = new Date(k + 'T00:00:00');
-            var y = d.getFullYear();
+            const d = new Date(k + 'T00:00:00');
+            const y = d.getFullYear();
             if (y < year && y >= year - 5) {
                 if (d.getMonth() < today.getMonth() ||
                     (d.getMonth() === today.getMonth() && d.getDate() <= today.getDate())) {
@@ -131,11 +131,11 @@ export async function fetchEscapementLive(siteId) {
             }
         });
 
-        var delta = cur - prev;
-        var pct = (prev > 0) ? Math.round((delta / prev) * 100) : null;
-        var avg = null, ys = Object.keys(byYear);
+        const delta = cur - prev;
+        const pct = (prev > 0) ? Math.round((delta / prev) * 100) : null;
+        let avg = null; const ys = Object.keys(byYear);
         if (ys.length) {
-            var sum = 0;
+            let sum = 0;
             ys.forEach(function(y) { sum += byYear[y]; });
             avg = Math.round(sum / ys.length);
         }
@@ -154,8 +154,8 @@ export async function fetchEscapementLive(siteId) {
 // throws - any failure leaves the existing "--" placeholders in place so the UI stays
 // stable. Also stashes rec.lastUpdated (WDFW's max :updated_at) for the counts fold.
 export async function loadEscapementData(siteId) {
-    var key = siteId ? String(siteId) : '';
-    var rec = hatcheryEscapement[key];
+    const key = siteId ? String(siteId) : '';
+    const rec = hatcheryEscapement[key];
     if (!rec) return null;
     try {
         var live = await fetchEscapementLive(key);
@@ -169,7 +169,7 @@ export async function loadEscapementData(siteId) {
         }
     } catch(e) {
         // Offline fallback (G2): serve the cached snapshot, honestly stale.
-        var cached = null;
+        let cached = null;
         try { cached = JSON.parse(localStorage.getItem('esc_snapshot_' + key) || 'null'); } catch (e2) { cached = null; }
         if (cached && cached.stocks) {
             live = { stocks: cached.stocks, lastUpdated: cached.lastUpdated || null };
@@ -180,11 +180,11 @@ export async function loadEscapementData(siteId) {
     }
     if (live && live.stocks) {
         rec.stocks.forEach(function(st) {
-            var want = String(st.name).toLowerCase();
-            var base = want.replace(/^(fall|spring|summer|winter)\s+/, '');
-            var hit = null;
+            const want = String(st.name).toLowerCase();
+            const base = want.replace(/^(fall|spring|summer|winter)\s+/, '');
+            let hit = null;
             Object.keys(live.stocks).forEach(function(sp) {
-                var l = sp.toLowerCase().replace(/^(fall|spring|summer|winter)\s+/, '');
+                const l = sp.toLowerCase().replace(/^(fall|spring|summer|winter)\s+/, '');
                 if (!hit && (sp.toLowerCase() === want || l === base)) hit = live.stocks[sp];
             });
             if (hit) {
@@ -210,15 +210,15 @@ export async function loadEscapementData(siteId) {
 // active waterbody so Green River doesn't show Puyallup's numbers.
 window.refreshWdfwForecast = refreshWdfwForecast;
 export async function refreshWdfwForecast(actId) {
-    var cell = document.querySelector('[data-count="wdfw"]');
+    const cell = document.querySelector('[data-count="wdfw"]');
     if (!cell) return;
     if (!actId) return;
     try {
         // Build gauge → waterbody reverse lookup from the region registry
         // so we know which waterbody the active station belongs to.
-        var wb = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+        const wb = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
         if (!wb) return;
-        var gaugeToWb = {};
+        const gaugeToWb = {};
         wb.forEach(function (w) {
             if (w.gauge && w.gauge.site_id) {
                 gaugeToWb[String(w.gauge.site_id)] = String(w.id);
@@ -232,28 +232,28 @@ export async function refreshWdfwForecast(actId) {
                 });
             }
         });
-        var wbId = gaugeToWb[String(actId)];
+        const wbId = gaugeToWb[String(actId)];
         if (!wbId) return;  // No matching waterbody → never leak forecasts
 
-        var res = await fetch('/src/data/wdfw_forecasts.json', { cache: 'no-store' });
-        var data = await res.json();
+        const res = await fetch('/src/data/wdfw_forecasts.json', { cache: 'no-store' });
+        const data = await res.json();
         if (!data || !data.waterbodies) return;
         // Look up the active waterbody's stocks directly — the JSON is keyed
         // by waterbody id (e.g. "puyallup", "green"), so no cross-river leak.
-        var wbEntry = data.waterbodies[wbId];
+        const wbEntry = data.waterbodies[wbId];
         if (!wbEntry || !wbEntry.stocks) return;
-        var bySp = {};
+        const bySp = {};
         wbEntry.stocks.forEach(function (st) {
             if (!st.species) return;
             bySp[st.species.toLowerCase()] = st.forecast;
         });
         if (!Object.keys(bySp).length) return;
         document.querySelectorAll('.run-card[data-species]').forEach(function (card) {
-            var sp = card.getAttribute('data-species');
+            const sp = card.getAttribute('data-species');
             if (!sp) return;
-            var val = bySp[sp];
-            var out = (val === null || val === undefined || isNaN(val)) ? '--' : Number(val).toLocaleString('en-US');
-            var target = card.querySelector('[data-count="wdfw"]');
+            const val = bySp[sp];
+            const out = (val === null || val === undefined || isNaN(val)) ? '--' : Number(val).toLocaleString('en-US');
+            const target = card.querySelector('[data-count="wdfw"]');
             if (target) target.textContent = out;
         });
         logDebug('WDFW forecast applied from wdfw_forecasts.json', 'NET');
@@ -269,20 +269,20 @@ export async function refreshWdfwForecast(actId) {
 // geometry stays put). Rivers with no facility mapping keep their "--" placeholders.
 window.refreshEscapement = refreshEscapement;
 export async function refreshEscapement(siteId) {
-    var key = siteId ? String(siteId) : '';
+    const key = siteId ? String(siteId) : '';
     if (!hatcheryEscapement[key]) return;
     await loadEscapementData(key);
-    var rec = hatcheryEscapement[key];
+    const rec = hatcheryEscapement[key];
     document.querySelectorAll('.run-card[data-species]').forEach(function(card) {
-        var sp = card.getAttribute('data-species');
+        const sp = card.getAttribute('data-species');
         if (!sp) return;
-        var hit = null;
-        for (var i = 0; i < rec.stocks.length; i++) {
+        let hit = null;
+        for (let i = 0; i < rec.stocks.length; i++) {
             if (String(rec.stocks[i].name || '').toLowerCase() === sp) { hit = rec.stocks[i]; break; }
         }
         if (!hit) return;
-        var set = function(countKey, val) {
-            var cell = card.querySelector('[data-count="' + countKey + '"]');
+        const set = function(countKey, val) {
+            const cell = card.querySelector('[data-count="' + countKey + '"]');
             if (cell) cell.textContent = (val === null || val === undefined || isNaN(val)) ? '--' : Number(val).toLocaleString('en-US');
         };
         set('return', hit.totalReturn);
@@ -305,11 +305,11 @@ export async function refreshEscapement(siteId) {
 //   mean_elevation_ft, mean_precip_in } | null on hard failure.
 
 export async function fetchStreamStats(lat, lon, siteId) {
-    var query = '/api/streamstats?lat=' + encodeURIComponent(String(lat)) +
+    let query = '/api/streamstats?lat=' + encodeURIComponent(String(lat)) +
                 '&lon=' + encodeURIComponent(String(lon));
     if (siteId) query += '&site_id=' + encodeURIComponent(String(siteId));
     try {
-        var res = await apiGetJson(query, { label: 'streamstats' });
+        const res = await apiGetJson(query, { label: 'streamstats' });
         if (res && res.ok && res.data && res.data.ok === true) {
             return res.data;   // { mode: 'live'|'offline', ...provenance }
         }

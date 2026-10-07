@@ -20,9 +20,9 @@ window.CATCH_SCOPE = CATCH_SCOPE;
 
 export function setCatchScope(scope) {
     CATCH_SCOPE = (scope === 'everyone') ? 'everyone' : 'yours';
-    var yoursBtn = document.getElementById('scope-yours');
-    var everyoneBtn = document.getElementById('scope-everyone');
-    var note = document.getElementById('catch-scope-note');
+    const yoursBtn = document.getElementById('scope-yours');
+    const everyoneBtn = document.getElementById('scope-everyone');
+    const note = document.getElementById('catch-scope-note');
     if (yoursBtn) yoursBtn.classList.toggle('scope-active', CATCH_SCOPE === 'yours');
     if (everyoneBtn) everyoneBtn.classList.toggle('scope-active', CATCH_SCOPE === 'everyone');
     if (note) {
@@ -31,7 +31,7 @@ export function setCatchScope(scope) {
             : 'Public feed — name, time, river and fish only. Gear profiles and GPS stay private.';
     }
     // Swap the table headers to match the active scope, then render.
-    var head = document.getElementById('catch-log-head');
+    const head = document.getElementById('catch-log-head');
     if (head) {
         head.innerHTML = (CATCH_SCOPE === 'yours')
             ? '<tr><th>Species</th><th>Time</th><th>Flow</th><th>Score</th><th></th></tr>'
@@ -49,12 +49,12 @@ export function setCatchScope(scope) {
 // the local buffer when offline or unconfigured.
 window.loadDatabase = loadDatabase;
 export async function loadDatabase() {
-    var tbody = document.getElementById('catch-log-body');
+    const tbody = document.getElementById('catch-log-body');
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    var rows = [];
-    var fromCloud = false;
+    let rows = [];
+    let fromCloud = false;
     try {
         rows = await Supa.fetchPublicFeed(100);
         fromCloud = rows.length > 0;
@@ -63,13 +63,13 @@ export async function loadDatabase() {
     if (!fromCloud) {
         // Offline fallback: first the durable read-through snapshot (last-known
         // public board), then the durable outbox, then nothing.
-        var snapRows = (typeof snapshotLoad === 'function') ? await snapshotLoad('feed_snapshot') : null;
+        const snapRows = (typeof snapshotLoad === 'function') ? await snapshotLoad('feed_snapshot') : null;
         if (snapRows && snapRows.length) {
             rows = snapRows;
             logDebug('Brag board falling back to cached snapshot: ' + rows.length + ' row(s)', 'DB');
         } else {
             // Fallback: the durable outbox (in-memory mirror, loaded at boot).
-            var local = (typeof outboxAll === 'function') ? outboxAll() : [];
+            const local = (typeof outboxAll === 'function') ? outboxAll() : [];
             rows = local.slice().reverse();
             logDebug('Brag board falling back to ' + rows.length + ' buffered row(s)', 'DB');
         }
@@ -79,36 +79,36 @@ export async function loadDatabase() {
     // a "Syncing..." badge. The public view exposes no id (privacy boundary), so a row that
     // was stored but whose reply was lost can appear twice until the retry clears it —
     // see the DEDUPE note in pending.js.
-    var localFallback = !fromCloud;
-    var entries = [];
+    const localFallback = !fromCloud;
+    const entries = [];
     if (!localFallback && typeof pendingRows === 'function') {
-        var pending = pendingRows();
-        for (var p = 0; p < pending.length; p++) entries.push({ row: pending[p], pending: true });
+        const pending = pendingRows();
+        for (let p = 0; p < pending.length; p++) entries.push({ row: pending[p], pending: true });
     }
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         // Already rendered from the outbox in the fallback case — badge, don't duplicate.
         entries.push({ row: rows[i], pending: localFallback && !!rows[i].pendingSync });
     }
 
-    var rendered = 0;
-    for (var e = 0; e < entries.length; e++) {
-        var src = entries[e];
-        var r = normalizeFeedRow(src.row);
+    let rendered = 0;
+    for (let e = 0; e < entries.length; e++) {
+        const src = entries[e];
+        const r = normalizeFeedRow(src.row);
         if (!r) continue;
-        var tr = document.createElement('tr');
+        const tr = document.createElement('tr');
         if (src.pending) tr.className = 'row-pending';
-        var tdName = document.createElement('td');
+        const tdName = document.createElement('td');
         tdName.textContent = (r.name !== undefined && r.name !== null && r.name !== '') ? String(r.name) : '--';
         // The badge rides inside the Name cell so the board keeps its four public columns.
         if (src.pending && typeof pendingBadge === 'function') {
             tdName.appendChild(document.createTextNode(' '));
             tdName.appendChild(pendingBadge());
         }
-        var tdTime = document.createElement('td');
+        const tdTime = document.createElement('td');
         tdTime.textContent = formatCatchTime(r.time);
-        var tdRiver = document.createElement('td');
+        const tdRiver = document.createElement('td');
         tdRiver.textContent = (r.river !== undefined && r.river !== null && r.river !== '') ? String(r.river) : '--';
-        var tdSpc = document.createElement('td');
+        const tdSpc = document.createElement('td');
         tdSpc.textContent = (r.spc !== undefined && r.spc !== null && r.spc !== '') ? String(r.spc) : '--';
         tr.appendChild(tdName);
         tr.appendChild(tdTime);
@@ -119,7 +119,7 @@ export async function loadDatabase() {
     }
 
     if (rendered === 0) {
-        var empty = document.createElement('tr');
+        const empty = document.createElement('tr');
         empty.innerHTML = '<td colspan="4" class="empty-state">' +
             '<div class="empty-state-icon">\ud83c\udfa3</div>' +
             '<div class="empty-state-title">No catches on the board yet</div>' +

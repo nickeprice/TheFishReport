@@ -49,7 +49,7 @@ export function spotsSignedIn() {
 // because /api/water_report needs a USGS site id to answer for a spot.
 export function activeStationRecord() {
     try {
-        var st = JSON.parse(localStorage.getItem('active_station') || 'null');
+        const st = JSON.parse(localStorage.getItem('active_station') || 'null');
         if (st && st.id) return st;
     } catch (e) {}
     return null;
@@ -57,8 +57,8 @@ export function activeStationRecord() {
 
 export function readSpotCache() {
     try {
-        var raw = localStorage.getItem(SPOTS_CACHE_KEY);
-        var rows = raw ? JSON.parse(raw) : [];
+        const raw = localStorage.getItem(SPOTS_CACHE_KEY);
+        const rows = raw ? JSON.parse(raw) : [];
         return Object.prototype.toString.call(rows) === '[object Array]' ? rows : [];
     } catch (e) {
         return [];
@@ -71,7 +71,7 @@ export function writeSpotCache(rows) {
 
 export function spotsStatus(text) {
 window.spotsStatus = spotsStatus;
-    var el = document.getElementById('spot-status');
+    const el = document.getElementById('spot-status');
     if (!el) return;
     el.hidden = !text;
     el.textContent = text || '';
@@ -83,7 +83,7 @@ export async function loadFavoriteSpots() {
 window.loadFavoriteSpots = loadFavoriteSpots;
     if (!spotsState.loaded) spotsState.rows = readSpotCache();
     if (spotsSignedIn() && typeof Supa !== 'undefined') {
-        var rows = null;
+        let rows = null;
         try { rows = await Supa.fetchFavoriteSpots(); } catch (e) { rows = null; }
         if (rows) {
             spotsState.rows = rows;
@@ -100,20 +100,20 @@ window.loadFavoriteSpots = loadFavoriteSpots;
 
 // One row: the label block opens the spot, the small button deletes it.
 export function spotRowEl(spot) {
-    var row = document.createElement('div');
+    const row = document.createElement('div');
     row.className = 'spot-row';
 
-    var open = document.createElement('button');
+    const open = document.createElement('button');
     open.type = 'button';
     open.className = 'spot-open';
     open.textContent = spot.label || 'Saved spot';
-    var meta = document.createElement('span');
+    const meta = document.createElement('span');
     meta.className = 'spot-meta';
     meta.textContent = spotGaugeText(spot);
     open.appendChild(meta);
     open.onclick = (function (id) { return function () { selectSavedSpot(id); }; })(spot.id);
 
-    var del = document.createElement('button');
+    const del = document.createElement('button');
     del.type = 'button';
     del.className = 'mini-btn mini-btn-danger';
     del.textContent = 'Delete';
@@ -127,7 +127,7 @@ export function spotRowEl(spot) {
 // Paint the list + its one-line status. Text only (textContent), never innerHTML for the
 // label, which is user text.
 export function renderFavoriteSpots() {
-    var box = document.getElementById('favorite-spots');
+    const box = document.getElementById('favorite-spots');
     // The save/pick controls stay VISIBLE even without a session: hiding them made "Place a
     // spot on the map" invisible, which read as a broken feature. The status line explains
     // what a session is for, and startSpotPick() refuses with a reason.
@@ -141,7 +141,7 @@ export function renderFavoriteSpots() {
         ? 'Showing the spots saved on this device \u2014 the server could not be reached.'
         : '');
     if (!spotsState.rows.length) {
-        var empty = document.createElement('div');
+        const empty = document.createElement('div');
         empty.className = 'spot-empty';
         empty.textContent = 'No saved spots yet. Pick your river, then name it and tap "Save this spot".';
         box.appendChild(empty);
@@ -176,12 +176,12 @@ export function renderFavoriteSpots() {
 // otherwise the closest one does.
 export function pickNearestStation(list, preferId) {
     if (!list || !list.length) return null;
-    var prefer = (preferId != null) ? String(preferId) : null;
-    var nearest = null;
-    for (var i = 0; i < list.length; i++) {
-        var s = list[i];
+    const prefer = (preferId != null) ? String(preferId) : null;
+    let nearest = null;
+    for (let i = 0; i < list.length; i++) {
+        const s = list[i];
         if (!s || !s.id || s.lat == null || s.lon == null) continue;
-        var cand = {
+        const cand = {
             id: String(s.id),
             name: s.name ? String(s.name) : String(s.id),
             distance: (s.distance_mi != null && isFinite(Number(s.distance_mi))) ? Number(s.distance_mi) : null
@@ -199,7 +199,7 @@ export async function resolveSpotStation(lat, lon, preferId) {
     if (typeof fetch !== 'function' || lat == null || lon == null) {
         return { ok: false, status: 0, error: 'no position', serverMessage: null };
     }
-    var res = await apiGetJson('/api/nearby_stations?lat=' + lat + '&lon=' + lon,
+    const res = await apiGetJson('/api/nearby_stations?lat=' + lat + '&lon=' + lon,
                                { label: 'nearby_stations' });
     if (!res.ok) {
         return { ok: false, status: res.status, error: res.error, serverMessage: res.serverMessage };
@@ -207,21 +207,21 @@ export async function resolveSpotStation(lat, lon, preferId) {
     // HTTP 200 carrying the server's degradation note = BOTH USGS upstreams were unreachable.
     // That is "could not ask", never the fact "no gauge exists here" (the API is explicit about
     // this, so an empty list must not be read as the answer).
-    var note = (res.data && res.data.note) ? String(res.data.note) : '';
+    const note = (res.data && res.data.note) ? String(res.data.note) : '';
     if (/could not be reached/i.test(note)) {
         return { ok: false, status: res.status, error: note, serverMessage: null };
     }
-    var list = (res.data && res.data.stations) ? res.data.stations : [];
+    const list = (res.data && res.data.stations) ? res.data.stations : [];
     return { ok: true, station: pickNearestStation(list, preferId) };
 }
 
 // The gauge NAME for a spot row (and the distance when this session resolved it).
 export function spotGaugeText(spot) {
     if (!spot) return '';
-    var known = spotsState.gauge[spot.id];
-    var name = (known && known.name) ? known.name : (spot.river_name || null);
+    const known = spotsState.gauge[spot.id];
+    const name = (known && known.name) ? known.name : (spot.river_name || null);
     if (!name) return 'flow from the nearest gauge';
-    var dist = (known && known.distance != null) ? ' \u00b7 ' + known.distance + ' mi away' : '';
+    const dist = (known && known.distance != null) ? ' \u00b7 ' + known.distance + ' mi away' : '';
     return 'flow: ' + name + dist;
 }
 
@@ -232,12 +232,12 @@ export async function saveSpotAt(lat, lon, label) {
         showToast('No position for that spot.', 'warn', 4000);
         return null;
     }
-    var id = newUuid();
-    var want = activeStationRecord();
-    var resolved = await resolveSpotStation(Number(lat), Number(lon), want ? want.id : null);
-    var station = (resolved && resolved.ok && resolved.station) ? resolved.station : null;
+    const id = newUuid();
+    const want = activeStationRecord();
+    const resolved = await resolveSpotStation(Number(lat), Number(lon), want ? want.id : null);
+    const station = (resolved && resolved.ok && resolved.station) ? resolved.station : null;
     if (station) spotsState.gauge[id] = { name: station.name, distance: station.distance };
-    var res = null;
+    let res = null;
     try {
         res = await Supa.saveFavoriteSpot({
             clientId: id,
@@ -269,14 +269,14 @@ export async function saveCurrentSpot() {
         showToast('Start a session on the Catch Log tab first \u2014 spots save to your private account.', 'warn', 6000);
         return;
     }
-    var label = (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX);
+    const label = (getStr('spot-label') || '').trim().slice(0, SPOT_LABEL_MAX);
     if (!label) { showToast('Name this spot first.', 'warn', 4000); return; }
-    var loc = (typeof mapCenter === 'function') ? mapCenter() : null;
+    const loc = (typeof mapCenter === 'function') ? mapCenter() : null;
     if (!loc || loc[0] == null || loc[1] == null) {
         showToast('No position yet \u2014 pick a river first.', 'warn', 4000);
         return;
     }
-    var saved = await saveSpotAt(loc[0], loc[1], label);
+    const saved = await saveSpotAt(loc[0], loc[1], label);
     if (saved) {
         setFieldValue('spot-label', '');
         showToast('Spot saved (private)', 'success', 2500);
@@ -289,17 +289,17 @@ export async function saveCurrentSpot() {
 // coordinates ride along, so the report's weather is for the saved point while the flow comes
 // from the resolved gauge - and the row names that gauge, so the provenance is visible.
 export async function selectSavedSpot(id) {
-    var spot = null;
-    for (var i = 0; i < spotsState.rows.length; i++) {
+    let spot = null;
+    for (let i = 0; i < spotsState.rows.length; i++) {
         if (spotsState.rows[i].id === id) { spot = spotsState.rows[i]; break; }
     }
     if (!spot) return;
 
-    var gaugeId = spot.station_id || null;
+    let gaugeId = spot.station_id || null;
     if (!gaugeId) {
         spotsStatus('Finding the nearest gauge for that spot\u2026');
-        var want = activeStationRecord();
-        var resolved = await resolveSpotStation(Number(spot.latitude), Number(spot.longitude), want ? want.id : null);
+        const want = activeStationRecord();
+        const resolved = await resolveSpotStation(Number(spot.latitude), Number(spot.longitude), want ? want.id : null);
         if (resolved && resolved.ok && resolved.station) {
             gaugeId = resolved.station.id;
             spotsState.gauge[spot.id] = { name: resolved.station.name, distance: resolved.station.distance };
@@ -314,7 +314,7 @@ export async function selectSavedSpot(id) {
             } catch (e) {}
             renderFavoriteSpots();
         } else if (resolved && !resolved.ok) {
-            var why = resolved.serverMessage || resolved.error || '';
+            const why = resolved.serverMessage || resolved.error || '';
             spotsStatus('Could not reach the gauge lookup' + (why ? ' (' + why + ')' : '') +
                 ' \u2014 try again when you have signal.');
             return;
@@ -331,7 +331,7 @@ export async function selectSavedSpot(id) {
 
 export async function deleteSavedSpot(id) {
     if (!window.confirm('Delete this saved spot? Your other spots are untouched.')) return;
-    var res = null;
+    let res = null;
     try { res = await Supa.deleteFavoriteSpot(id); } catch (e) { res = null; }
     if (res && res.ok) {
         showToast('Spot deleted', 'success', 2500);

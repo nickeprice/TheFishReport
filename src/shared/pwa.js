@@ -25,7 +25,7 @@ export function registerServiceWorker() {
         logDebug('Service worker registered (scope ' + reg.scope + ')', 'PWA');
 
         reg.addEventListener('updatefound', function () {
-            var installing = reg.installing;
+            const installing = reg.installing;
             if (!installing) return;
             installing.addEventListener('statechange', function () {
                 if (installing.state !== 'installed') return;
@@ -72,8 +72,8 @@ window.registerServiceWorker = registerServiceWorker;
 // Apply a ?tab= deep link so the PWA manifest shortcuts land on the right tool.
 export function applyTabDeepLink() {
     try {
-        var params = new URLSearchParams(window.location.search);
-        var tab = params.get('tab');
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
         if (!tab) return false;
         if (!document.getElementById(tab)) return false;
         document.querySelectorAll('.tab-content').forEach(function (el) {

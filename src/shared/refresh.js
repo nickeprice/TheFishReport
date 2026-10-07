@@ -14,7 +14,7 @@ import { logDebug } from './debug.js';
 // loadWaterReport(true) — a "silent" refresh that updates the whole report +
 // hero but never overwrites a Gear Sim CFS the angler typed by hand.
 export var AUTO_REFRESH_MS = 5 * 60 * 1000;
-var autoRefreshTimer = null;
+let autoRefreshTimer = null;
 
 export function silenceableRefresh() {
     if (document.visibilityState === 'visible' && navigator.onLine !== false) {

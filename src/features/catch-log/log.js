@@ -22,9 +22,9 @@ import { State } from '../../shared/state.js';
 // to '--'. Never exposes exact coordinates on the public board.
 export function deriveRiverName() {
     try {
-        var active = JSON.parse(localStorage.getItem('active_station') || 'null');
-        var nm = (active && active.name) ? String(active.name) : '';
-        var m = nm.match(/([A-Za-z]+(?:\s+[A-Za-z]+)?)\s+(?:River|Creek|Ck)/i);
+        const active = JSON.parse(localStorage.getItem('active_station') || 'null');
+        const nm = (active && active.name) ? String(active.name) : '';
+        const m = nm.match(/([A-Za-z]+(?:\s+[A-Za-z]+)?)\s+(?:River|Creek|Ck)/i);
         if (m) return m[1].replace(/\s+/g, ' ').trim() + ' River';
         // Fall back to a known station-id map.
         if (active && active.id) {
@@ -43,35 +43,35 @@ export function deriveRiverName() {
 export async function logData() {
     if (!AuthState.signedIn) {
         switchTab('tab-catch-log');
-        var nameField = document.getElementById('auth-name');
+        const nameField = document.getElementById('auth-name');
         if (nameField) nameField.focus();
         showToast('Join the board first: enter your name and tap JOIN THE BOARD.', 'warn', 5000);
         return;
     }
     // No defaults anywhere: gear, species and time must all be filled in.
-    var missing = missingRigFields();
+    const missing = missingRigFields();
     if (getStr('species') === '') missing.push('Species Caught');
     if (getStr('log-datetime') === '') missing.push('Date & Time');
     if (missing.length) {
         showToast('Fill in: ' + missing.join(', '), 'warn', 6000);
         return;
     }
-    var foamRaw = getStr('foam');
-    var activeRep = getActiveReport();
+    const foamRaw = getStr('foam');
+    const activeRep = getActiveReport();
     // The environment signature at catch time, over the SAME variable set the sim uses, so a
     // later sim can match this catch's conditions against today's.
-    var envSig = envSignature(activeRep);
+    const envSig = envSignature(activeRep);
     // The notebook: record the model's PREDICTED zone on every catch, even when the sim was
     // not run - the residual (actual catch height vs this centre) needs both sides stored.
-    var priorZone = (!currentStats) ? computeStrikeZone() : null;
+    const priorZone = (!currentStats) ? computeStrikeZone() : null;
     // Decoupled from the Gear Sim: logging works straight from the form. When a
     // sim HAS been run we still carry its solved geometry (hook/height/zone) so
     // logs keep the rich private columns, but nothing here requires runSim().
-    var simFlow = (currentStats && currentStats.flow != null) ? currentStats.flow : null;
+    const simFlow = (currentStats && currentStats.flow != null) ? currentStats.flow : null;
     // Flow is derived from the live report now — never read off a form field.
-    var flowValue = (simFlow != null) ? simFlow : getCurrentFlow();
-    var hookValue = (currentStats && currentStats.hook != null) ? currentStats.hook : (getStr('hook') || 'gam-oct-2');
-    var payload = {
+    const flowValue = (simFlow != null) ? simFlow : getCurrentFlow();
+    const hookValue = (currentStats && currentStats.hook != null) ? currentStats.hook : (getStr('hook') || 'gam-oct-2');
+    const payload = {
         // Client-generated id -> becomes the row's primary key, so a retry that follows a
         // lost response is deduped instead of logging the fish twice (Phase 3.2).
         clientId: newUuid(),
@@ -131,7 +131,7 @@ export async function logData() {
     logDebug('Catch buffered in the outbox', 'DB');
 
     // 2. Async push of the private record to Supabase (idempotent on clientId).
-    var res = null;
+    let res = null;
     try { res = await Supa.insertCatch(payload); } catch (e) { res = null; }
     if (res && res.ok) {
         outboxUpdate(payload.clientId, { syncedAt: new Date().toISOString(), pendingSync: false });

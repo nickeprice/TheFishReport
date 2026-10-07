@@ -4,14 +4,14 @@
  * ES module.
  */
 // --- DEBUG MATRIX (Double Tap / Double Click Header, or Debug button) ---
-var lastTap = 0;
+let lastTap = 0;
 export function toggleDebug() {
-    var con = document.getElementById('debug-console');
+    const con = document.getElementById('debug-console');
     con.classList.toggle('open');
     logDebug(con.classList.contains('open') ? 'Debug Matrix Opened' : 'Debug Matrix Closed', "SYS");
 }
 function _toggleDebug(e) {
-    var now = Date.now();
+    const now = Date.now();
     if (now - lastTap < 500) {
         toggleDebug();
         e.preventDefault();
@@ -24,8 +24,8 @@ document.getElementById('top-nav').addEventListener('click', _toggleDebug);
 window.toggleDebug = toggleDebug;
 
 export function logDebug(msg, source) {
-    var con = document.getElementById('debug-console');
-    var time = new Date().toISOString().split('T')[1].slice(0,-1);
+    const con = document.getElementById('debug-console');
+    const time = new Date().toISOString().split('T')[1].slice(0,-1);
     con.innerHTML += '<div class="log-entry">[' + time + '] <b>' + source + '</b>: ' + msg + '</div>';
     con.scrollTop = con.scrollHeight;
 }
@@ -33,15 +33,15 @@ window.logDebug = logDebug;
 
 // Copy all debug entries as plain text
 export function copyDebugLog() {
-    var con = document.getElementById('debug-console');
-    var text = '';
-    var entries = con.querySelectorAll('.log-entry');
-    for (var i = 0; i < entries.length; i++) {
-        var t = entries[i].textContent || entries[i].innerText || '';
+    const con = document.getElementById('debug-console');
+    let text = '';
+    const entries = con.querySelectorAll('.log-entry');
+    for (let i = 0; i < entries.length; i++) {
+        const t = entries[i].textContent || entries[i].innerText || '';
         if (t) text += t + '\n';
     }
     if (!text) { logDebug('Nothing to copy', 'SYS'); return; }
-    var ta = document.createElement('textarea');
+    const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'absolute'; ta.style.left = '0'; ta.style.top = '0';
     ta.style.width = '1px'; ta.style.height = '1px'; ta.style.opacity = '0';
@@ -56,11 +56,11 @@ window.copyDebugLog = copyDebugLog;
 
 // Open a GitHub issue with the current debug log as the body.
 export function reportDebugIssue() {
-    var con = document.getElementById('debug-console');
-    var entries = con.querySelectorAll('.log-entry');
-    var logText = '';
-    for (var i = 0; i < entries.length; i++) {
-        var t = entries[i].textContent || entries[i].innerText || '';
+    const con = document.getElementById('debug-console');
+    const entries = con.querySelectorAll('.log-entry');
+    let logText = '';
+    for (let i = 0; i < entries.length; i++) {
+        const t = entries[i].textContent || entries[i].innerText || '';
         if (t) logText += t + '\n';
     }
     if (!logText) { logDebug('Nothing to report', 'SYS'); return; }

@@ -16,8 +16,8 @@ import { refreshZonePreview } from '../gear-sim/zone-core.js';
 // a background auto-refresh: it must NOT overwrite a Gear Sim CFS the angler
 // typed by hand (the initial load + manual station change still auto-sync).
 export async function loadWaterReport(silent) {
-    var active = localStorage.getItem('active_station');
-    var station = null;
+    const active = localStorage.getItem('active_station');
+    let station = null;
     try {
         if (active) station = JSON.parse(active);
     } catch(e) {}
@@ -28,7 +28,7 @@ export async function loadWaterReport(silent) {
     
     // Update header & badge
     document.getElementById('active-station-name').innerText = station.name.toUpperCase();
-    var badge = document.getElementById('active-station-badge');
+    let badge = document.getElementById('active-station-badge');
     if (station.isGps) {
         badge.innerText = "📍 GPS: " + station.id;
         badge.className = "station-badge badge-gps";
@@ -42,7 +42,7 @@ export async function loadWaterReport(silent) {
     // start them concurrently instead of paying for the two round trips in
     // series. The promise is awaited just before the date UI evaluates river
     // status, so behaviour is identical - only the wait is shorter.
-    var rulesPromise = (typeof loadRegulationsRules === 'function')
+    const rulesPromise = (typeof loadRegulationsRules === 'function')
         ? Promise.resolve().then(loadRegulationsRules).catch(function (e) {
             logDebug('Regulations rules error: ' + e.message, 'ERR');
         })
@@ -50,10 +50,10 @@ export async function loadWaterReport(silent) {
 
     logDebug("Fetching Water API for " + station.name + " (" + station.id + ")...", "NET");
     try {
-        var res = await fetch('/api/water_report?site=' + station.id + '&lat=' + station.lat + '&lon=' + station.lon + '&_t=' + Date.now(), {
+        const res = await fetch('/api/water_report?site=' + station.id + '&lat=' + station.lat + '&lon=' + station.lon + '&_t=' + Date.now(), {
             cache: 'no-store'
         });
-        var reports = await res.json();
+        const reports = await res.json();
         setReportsData(reports);
         logDebug("Water API success. Processing " + reports.length + " days.", "NET");
 
@@ -79,7 +79,7 @@ export async function loadWaterReport(silent) {
         // WS-4: each day's card already carries ITS OWN reference-hour weather (rendered
         // above from that day's payload), so this only re-paints the ACTIVE day (and it is
         // what makes the day switch repaint in updateActiveDateUI).
-        var activeRep = reports[Math.min(Math.max(activeDateOffset, 0), reports.length - 1)];
+        const activeRep = reports[Math.min(Math.max(activeDateOffset, 0), reports.length - 1)];
         if (activeRep && typeof applyReportWeather === 'function') {
             applyReportWeather(activeRep);
         }
@@ -89,21 +89,21 @@ export async function loadWaterReport(silent) {
         // G1 (Phase 2.4): on a failed fetch, fall back to the durable IndexedDB
         // snapshot of the last report and label it honestly — legal hours, the
         // fishing hero and the Gear Sim globals still compute from cached data.
-        var snap = null;
+        let snap = null;
         if (typeof idbGetAll === 'function') {
             try { snap = await idbGetAll('telemetry_snapshots'); } catch (e2) { snap = null; }
         }
         if (snap && snap.length) {
             setReportsData(snap);
             updateActiveDateUI();
-            var hoursAgo = 'a while';
+            let hoursAgo = 'a while';
             try {
-                var ts = parseInt(localStorage.getItem('telemetry_snapshot_ts') || '0', 10);
+                const ts = parseInt(localStorage.getItem('telemetry_snapshot_ts') || '0', 10);
                 if (ts && isFinite(ts)) {
                     hoursAgo = Math.max(0, Math.round((Date.now() - ts) / 3600000)) + ' hour(s)';
                 }
             } catch (e3) {}
-            var cards = document.getElementById('water-report-cards');
+            const cards = document.getElementById('water-report-cards');
             if (cards && !cards.children.length) {
                 cards.innerHTML = '<div class="empty-state empty-state-panel">' +
                     '<div class="empty-state-icon">📡</div>' +
@@ -120,7 +120,7 @@ export async function loadWaterReport(silent) {
         }
         // Only replace the container with an empty-state when there is nothing to
         // show — a previously rendered (or snapshot-restored) report wins.
-        var existing2 = document.getElementById('water-report-cards');
+        const existing2 = document.getElementById('water-report-cards');
         if ((!snap || !snap.length) && existing2 && !existing2.children.length) {
             renderWaterReportEmptyState(
                 navigator.onLine === false ? 'Offline — no cached report yet' : 'Water report unavailable',

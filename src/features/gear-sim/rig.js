@@ -11,7 +11,7 @@ window.RIG_STORE_KEY = RIG_STORE_KEY;
 
 export function saveRig() {
     try {
-        var rig = {
+        const rig = {
             // The line CASCADE, part by part, saved alongside the resolved id so a
             // restore can rebuild the three visible picks instead of guessing them.
             mlMat: getStr('ml-mat'), mlBrand: getStr('ml-brand'), mlLb: getStr('ml-lb'),
@@ -33,17 +33,17 @@ export function saveRig() {
 }
 
 export function restoreRig() {
-    var raw = null;
+    let raw = null;
     try { raw = localStorage.getItem(RIG_STORE_KEY); } catch (e) { return; }
     if (!raw) return;
-    var rig = null;
+    let rig = null;
     try { rig = JSON.parse(raw); } catch (e) { return; }
     if (!rig) return;
 
     // Pre-fill from the angler's OWN last-used values. Anything they have never
     // entered stays blank (the set() guard skips empty strings) and is required.
     function set(id, val) {
-        var el = document.getElementById(id);
+        const el = document.getElementById(id);
         if (el && val !== undefined && val !== null && val !== '') el.value = String(val);
     }
     // Every VISIBLE control exists twice (Gear Sim + Catch Log mirror); the hidden
@@ -54,7 +54,7 @@ export function restoreRig() {
     // recover the brand + lb test from the saved line id, and material+lb as the last
     // resort — that is the pre-picker contract, so an old rig still restores.
     ['ml', 'ld'].forEach(function (pre) {
-        var line = rig[pre + 'Line'] ? tackleLineById(rig[pre + 'Line']) : null;
+        let line = rig[pre + 'Line'] ? tackleLineById(rig[pre + 'Line']) : null;
         if (!line && rig[pre + 'Mat']) line = tackleLineByMatLb(rig[pre + 'Mat'], rig[pre + 'Lb']);
         if (!line) return;
         if (!rig[pre + 'Mat']) rig[pre + 'Mat'] = line.material;

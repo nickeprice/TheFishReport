@@ -25,7 +25,7 @@ export function savedSpotIcon() {
 // Popup for a saved spot: open it (the same selectPreset path as a gauge pin) or delete
 // it. User/data text is escaped exactly like stationPopupHtml() does.
 export function savedSpotPopupHtml(spot) {
-    var safeId = escapeJsString(String(spot.id || ''));
+    const safeId = escapeJsString(String(spot.id || ''));
     return '<b>' + escapeHtml(spot.label || 'Saved spot') + '</b><br>' +
         escapeHtml(spot.river_name || 'No river saved') +
         (spot.station_id ? '<br>' + escapeHtml('USGS ' + spot.station_id) : '') + '<br>' +

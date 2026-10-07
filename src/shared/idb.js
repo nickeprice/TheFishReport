@@ -10,11 +10,11 @@
  *
  * ES module.
  */
-var IDB_NAME = 'puyallup_companion';
-var IDB_VERSION = 2;
+const IDB_NAME = 'puyallup_companion';
+const IDB_VERSION = 2;
 // Only stores that are actually used — onupgradeneeded adds any missing one, so a future
 // store just needs a version bump here (or a new key with a bumped IDB_VERSION).
-var IDB_KEYPATH = {
+const IDB_KEYPATH = {
     catches: 'clientId',
     // Phase 2.4 offline-resilience snapshots: each store holds ONE row
     // { id: '_snapshot', ts: <ms>, value: <payload> } written on success.
@@ -22,7 +22,7 @@ var IDB_KEYPATH = {
     feed_snapshot: 'id',
     calibration_snapshot: 'id',
 };
-var _idbPromise = null;
+let _idbPromise = null;
 
 export function idbAvailable() {
     try {
@@ -38,9 +38,9 @@ export function idbOpen() {
     _idbPromise = new Promise(function (resolve) {
         if (!idbAvailable()) return resolve(null);
         try {
-            var req = indexedDB.open(IDB_NAME, IDB_VERSION);
+            const req = indexedDB.open(IDB_NAME, IDB_VERSION);
             req.onupgradeneeded = function (ev) {
-                var db = ev.target.result;
+                const db = ev.target.result;
                 Object.keys(IDB_KEYPATH).forEach(function (name) {
                     if (!db.objectStoreNames.contains(name)) {
                         db.createObjectStore(name, { keyPath: IDB_KEYPATH[name] });
@@ -64,14 +64,14 @@ function idbRun(store, mode, work) {
     return idbOpen().then(function (db) {
         if (!db) return null;
         return new Promise(function (resolve) {
-            var tx;
+            let tx;
             try { tx = db.transaction(store, mode); } catch (e) { return resolve(null); }
-            var result = null;
+            let result = null;
             tx.oncomplete = function () { resolve(result === null ? true : result); };
             tx.onerror = function () { resolve(null); };
             tx.onabort = function () { resolve(null); };
             try {
-                var maybe = work(tx.objectStore(store));
+                const maybe = work(tx.objectStore(store));
                 if (maybe && typeof maybe.onsuccess !== 'undefined') {
                     maybe.onsuccess = function () { result = maybe.result; };
                 }

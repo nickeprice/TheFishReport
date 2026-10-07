@@ -30,7 +30,7 @@ export function setActiveDateOffset(n) {
 // input any more: the value comes from the current water report, falls back to
 // the last reading we saw this session, and finally to the 1040 CFS reference so
 // the solver always has a number to work with. It is still RECORDED on a catch.
-var lastKnownFlow = null;
+let lastKnownFlow = null;
 
 export function getActiveReport() {
     if (typeof reportsData !== 'undefined' && typeof activeDateOffset !== 'undefined' &&
@@ -41,11 +41,11 @@ export function getActiveReport() {
 }
 
 export function getCurrentFlow() {
-    var rep = getActiveReport();
+    const rep = getActiveReport();
     if (!rep) return (lastKnownFlow !== null) ? lastKnownFlow : 1040;
-    var provVal = window.provVal;
+    const provVal = window.provVal;
     if (typeof provVal === 'function') {
-        var cfsV = provVal(rep.cfs);
+        const cfsV = provVal(rep.cfs);
         if (cfsV !== null && cfsV !== undefined && !rep.api_offline) {
             lastKnownFlow = cfsV;
             return cfsV;

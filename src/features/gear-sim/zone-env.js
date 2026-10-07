@@ -16,7 +16,7 @@ import { State } from '../../shared/state.js';
 // required: the triple is what resolves to ONE measured line, and a partial pick
 // deliberately resolves to no id at all (see src/shared/tackle.js).
 // Foam 2 is required too (pick "None" for a single-corky rig).
-var RIG_REQUIRED = [
+const RIG_REQUIRED = [
     { id: 'ml-mat',   label: 'Mainline material' },
     { id: 'ml-brand', label: 'Mainline brand' },
     { id: 'ml-lb',    label: 'Mainline lb test' },
@@ -33,8 +33,8 @@ var RIG_REQUIRED = [
 ];
 
 export function missingRigFields() {
-    var missing = [];
-    for (var i = 0; i < RIG_REQUIRED.length; i++) {
+    const missing = [];
+    for (let i = 0; i < RIG_REQUIRED.length; i++) {
         if (getStr(RIG_REQUIRED[i].id) === '') missing.push(RIG_REQUIRED[i].label);
     }
     return missing;
@@ -44,9 +44,9 @@ export function getWaterTempF() {
     if (State.waterTempF !== undefined && State.waterTempF !== null && !isNaN(State.waterTempF)) {
         return Number(State.waterTempF);
     }
-    var el = document.querySelector('.water-temp');
+    const el = document.querySelector('.water-temp');
     if (el) {
-        var parsed = parseFloat(String(el.innerText).replace(/[^0-9.\-]/g, ''));
+        const parsed = parseFloat(String(el.innerText).replace(/[^0-9.\-]/g, ''));
         if (!isNaN(parsed) && parsed > 25 && parsed < 90) return parsed;
     }
     return null;
@@ -60,9 +60,9 @@ export function getTurbidityFnu() {
     if (State.turbidityFnu !== undefined && State.turbidityFnu !== null && !isNaN(State.turbidityFnu)) {
         return Number(State.turbidityFnu);
     }
-    var el = document.querySelector('.turbidity-val');
+    const el = document.querySelector('.turbidity-val');
     if (el) {
-        var parsed = parseFloat(String(el.innerText).replace(/[^0-9.\-]/g, ''));
+        const parsed = parseFloat(String(el.innerText).replace(/[^0-9.\-]/g, ''));
         if (!isNaN(parsed) && parsed >= 0 && parsed < 5000) return parsed;
     }
     return null;
@@ -73,13 +73,13 @@ export function getTurbidityFnu() {
 // depend on when it was called, which breaks the sim's determinism contract and would
 // make the frozen baselines flap between 7 AM and 7 PM. null -> no light term.
 export function refHourBlock() {
-    var rep = getActiveReport();
-    var wh = rep && rep.weather_hour;
+    const rep = getActiveReport();
+    const wh = rep && rep.weather_hour;
     if (!wh) return null;
-    var m = wh.iso ? /T(\d{2}):/.exec(String(wh.iso)) : null;
+    const m = wh.iso ? /T(\d{2}):/.exec(String(wh.iso)) : null;
     if (!m) return null;
     // The date rides along too: the light term needs it for the solar declination (WS-8b b2').
-    var d = wh.iso ? /(\d{4})-(\d{2})-(\d{2})/.exec(String(wh.iso)) : null;
+    const d = wh.iso ? /(\d{4})-(\d{2})-(\d{2})/.exec(String(wh.iso)) : null;
     return {
         hour: Number(m[1]),
         label: wh.label || '',
@@ -93,7 +93,7 @@ export function refHourBlock() {
 // move SHALLOWER and tighter to cover; clear water does the opposite. Brackets are the
 // angler-facing colour classes, and the shifts stay small - colour is a modifier, not
 // the driver (the thermal curve and the barometer lead).
-var TURBIDITY_BANDS = [
+const TURBIDITY_BANDS = [
     { max: 8,        shift: -0.50, label: 'clear' },
     { max: 20,       shift:  0.25, label: 'light stain' },
     { max: 50,       shift:  0.75, label: 'coloured' },
@@ -101,11 +101,11 @@ var TURBIDITY_BANDS = [
 ];
 
 export function turbidityTerm() {
-    var fnu = getTurbidityFnu();
+    const fnu = getTurbidityFnu();
     if (fnu === null) return null;
-    for (var i = 0; i < TURBIDITY_BANDS.length; i++) {
+    for (let i = 0; i < TURBIDITY_BANDS.length; i++) {
         if (fnu < TURBIDITY_BANDS[i].max) {
-            var where = (TURBIDITY_BANDS[i].shift > 0)
+            const where = (TURBIDITY_BANDS[i].shift > 0)
                 ? 'fish move up and closer to cover.'
                 : 'fish are spooky - they sit deep and tight.';
             return { shift: TURBIDITY_BANDS[i].shift, label: TURBIDITY_BANDS[i].label, fnu: fnu, note: where };
@@ -127,19 +127,19 @@ export function turbidityTerm() {
 // elevation. The ENDPOINTS are unchanged from b1.
 //
 // Direction corroborated by Keefer et al. 2013.
-var LIGHT_LOW_SHIFT = 1.00;      // sun at/under the horizon edge
-var LIGHT_BRIGHT_SHIFT = -0.75;  // sun genuinely high
-var LIGHT_SUN_DARK_DEG = 3;      // <= this elevation: full low-light lift
-var LIGHT_SUN_NEUTRAL_DEG = 30;  // ramps to neutral here
-var LIGHT_SUN_FULL_DEG = 50;     // and to the full high-sun penalty here
-var LIGHT_DEFAULT_LAT = 47.195;  // default station latitude (same as map default centre)
+const LIGHT_LOW_SHIFT = 1.00;      // sun at/under the horizon edge
+const LIGHT_BRIGHT_SHIFT = -0.75;  // sun genuinely high
+const LIGHT_SUN_DARK_DEG = 3;      // <= this elevation: full low-light lift
+const LIGHT_SUN_NEUTRAL_DEG = 30;  // ramps to neutral here
+const LIGHT_SUN_FULL_DEG = 50;     // and to the full high-sun penalty here
+const LIGHT_DEFAULT_LAT = 47.195;  // default station latitude (same as map default centre)
 
 // '6:30 AM' -> 390 (minutes past midnight). null when unparseable.
 export function parseClockMinutes(text) {
     if (!text) return null;
-    var m = /(\d{1,2}):(\d{2})\s*([AP]M)/i.exec(String(text));
+    const m = /(\d{1,2}):(\d{2})\s*([AP]M)/i.exec(String(text));
     if (!m) return null;
-    var h = Number(m[1]) % 12;
+    let h = Number(m[1]) % 12;
     if (m[3].toUpperCase() === 'PM') h += 12;
     return (h * 60) + Number(m[2]);
 }
@@ -147,39 +147,39 @@ export function parseClockMinutes(text) {
 // Solar declination for a DATE (NOAA approximation). Date only - no clock, no timezone.
 export function solarDeclinationDeg(year, month, day) {
     if (!year || !month || !day) return null;
-    var n = (Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 1)) / 86400000;
+    const n = (Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 1)) / 86400000;
     return 23.44 * Math.sin((360 / 365) * (n - 81) * Math.PI / 180);
 }
 
 export function activeStationLat() {
-    var el = document.querySelector('.station-gauge');
+    const el = document.querySelector('.station-gauge');
     return el ? Number(el.getAttribute('data-lat')) || null : null;
 }
 
 // Solar elevation for the reference HOUR, using the payload's OWN sunrise/sunset.
 export function solarElevationDeg(block, rep) {
     if (!block || !rep) return null;
-    var lat = activeStationLat();
+    let lat = activeStationLat();
     if (!lat || !isFinite(lat)) lat = LIGHT_DEFAULT_LAT;
-    var sunrise = parseClockMinutes(rep.sunrise);
-    var sunset = parseClockMinutes(rep.sunset);
+    const sunrise = parseClockMinutes(rep.sunrise);
+    const sunset = parseClockMinutes(rep.sunset);
     if (sunrise === null || sunset === null) return null;
-    var decl = solarDeclinationDeg(block.year, block.month, block.day);
+    const decl = solarDeclinationDeg(block.year, block.month, block.day);
     if (decl === null) return null;
-    var solarNoon = (sunrise + sunset) / 2;
-    var hourAngle = (15 * (((block.hour + 0.5) * 60) - solarNoon) / 60) * Math.PI / 180;
-    var rad = lat * Math.PI / 180, drad = decl * Math.PI / 180;
-    var s = Math.sin(rad) * Math.sin(drad) + Math.cos(rad) * Math.cos(drad) * Math.cos(hourAngle);
+    const solarNoon = (sunrise + sunset) / 2;
+    const hourAngle = (15 * (((block.hour + 0.5) * 60) - solarNoon) / 60) * Math.PI / 180;
+    const rad = lat * Math.PI / 180, drad = decl * Math.PI / 180;
+    const s = Math.sin(rad) * Math.sin(drad) + Math.cos(rad) * Math.cos(drad) * Math.cos(hourAngle);
     return Math.asin(Math.max(-1, Math.min(1, s))) * 180 / Math.PI;
 }
 
 // `block` = {hour, label, year, month, day} from refHourBlock(); `rep` = that day's report.
 export function lightTerm(block, rep) {
     if (!block) return null;
-    var elev = solarElevationDeg(block, rep);
+    const elev = solarElevationDeg(block, rep);
 
     if (elev !== null) {
-        var shift;
+        let shift;
         if (elev <= LIGHT_SUN_DARK_DEG) {
             shift = LIGHT_LOW_SHIFT;
         } else if (elev <= LIGHT_SUN_NEUTRAL_DEG) {
@@ -201,7 +201,7 @@ export function lightTerm(block, rep) {
 
     // No solar times on this day -> the old fixed brackets
     if (block.hour === null || block.hour === undefined || isNaN(block.hour)) return null;
-    var h = Number(block.hour);
+    const h = Number(block.hour);
     if (h < 7 || h >= 19) {
         return { shift: LIGHT_LOW_SHIFT, label: 'low light', note: 'fish hold higher and are quicker to take.' };
     }
@@ -214,40 +214,40 @@ export function lightTerm(block, rep) {
 // ==================================================================================
 // TIDE TERM (tidal reaches only)
 // ==================================================================================
-var TIDE_RISING_SHIFT = 1.00;    // flood: fish move up with the push
-var TIDE_FALLING_SHIFT = -1.00;  // ebb: fish drop back to deeper water
+const TIDE_RISING_SHIFT = 1.00;    // flood: fish move up with the push
+const TIDE_FALLING_SHIFT = -1.00;  // ebb: fish drop back to deeper water
 // The tide at the report's reference hour: { heightFt, trend, shift } or null when the day
 // carries no hourly tide curve.
 export function tideAt(block, rep) {
     if (!block || !rep || !provVal(rep.tide_points) || !provVal(rep.tide_points).length) return null;
-    var pts = provVal(rep.tide_points);
-    var target = Number(block.hour);
+    const pts = provVal(rep.tide_points);
+    const target = Number(block.hour);
     if (!isFinite(target)) return null;
-    var best = -1, bestDiff = Infinity;
-    for (var i = 0; i < pts.length; i++) {
-        var mins = parseClockMinutes(pts[i] && pts[i].t);
+    let best = -1, bestDiff = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+        const mins = parseClockMinutes(pts[i] && pts[i].t);
         if (mins === null) continue;
-        var hh = mins / 60;
-        var d = Math.abs(hh - target);
+        const hh = mins / 60;
+        let d = Math.abs(hh - target);
         if (d > 12) d = 24 - d;
         if (d < bestDiff) { bestDiff = d; best = i; }
     }
     if (best < 0) return null;
-    var h = Number(pts[best].h);
+    const h = Number(pts[best].h);
     if (!isFinite(h)) return null;
-    var prev = (best > 0) ? Number(pts[best - 1].h) : NaN;
-    var next = (best < pts.length - 1) ? Number(pts[best + 1].h) : NaN;
-    var slope = 0;
+    const prev = (best > 0) ? Number(pts[best - 1].h) : NaN;
+    const next = (best < pts.length - 1) ? Number(pts[best + 1].h) : NaN;
+    let slope = 0;
     if (isFinite(prev) && isFinite(next)) slope = (next - prev) / 2;
     else if (isFinite(next)) slope = next - h;
     else if (isFinite(prev)) slope = h - prev;
-    var trend = (slope > 0.05) ? 'rising' : (slope < -0.05) ? 'falling' : 'slack';
-    var shift = (trend === 'rising') ? TIDE_RISING_SHIFT : (trend === 'falling') ? TIDE_FALLING_SHIFT : 0;
+    const trend = (slope > 0.05) ? 'rising' : (slope < -0.05) ? 'falling' : 'slack';
+    const shift = (trend === 'rising') ? TIDE_RISING_SHIFT : (trend === 'falling') ? TIDE_FALLING_SHIFT : 0;
     return { heightFt: Math.round(h * 100) / 100, trend: trend, shift: Math.round(shift * 20) / 20 };
 }
 
 export function tideTerm(block, rep) {
-    var t = tideAt(block, rep);
+    const t = tideAt(block, rep);
     if (!t || t.shift === 0) return null;
     return {
         shift: t.shift, trend: t.trend, heightFt: t.heightFt,
@@ -262,16 +262,16 @@ export function tideTerm(block, rep) {
 // ==================================================================================
 export function envNum(v) {
     if (v === null || v === undefined || v === '') return null;
-    var n = Number(v);
+    const n = Number(v);
     return isFinite(n) ? n : null;
 }
 
 export function envSignature(rep) {
-    var r = rep || getActiveReport();
+    const r = rep || getActiveReport();
     if (!r) return null;
-    var block = refHourBlock();
-    var light = block ? lightTerm(block, r) : null;
-    var tide = block ? tideAt(block, r) : null;
+    const block = refHourBlock();
+    const light = block ? lightTerm(block, r) : null;
+    const tide = block ? tideAt(block, r) : null;
     return {
         tempF: getWaterTempF(),
         cloudPct: envNum(provVal(r.cloud_pct)),

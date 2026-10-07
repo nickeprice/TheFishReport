@@ -10,20 +10,20 @@
  */
 import { logDebug } from '../../shared/debug.js';
 import { escapeHtml, escapeJsString } from '../../shared/format.js';
-var WDFN_LOCATIONS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items';
-var WDFN_LATEST = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/latest-continuous/items';
+const WDFN_LOCATIONS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items';
+const WDFN_LATEST = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/latest-continuous/items';
 
 export function searchRegionStateName() {
-    var r = (typeof window !== 'undefined' && window.REGIONS) ? window.REGIONS.WA : null;
+    const r = (typeof window !== 'undefined' && window.REGIONS) ? window.REGIONS.WA : null;
     return (r && r.state_name) || 'Washington';
 }
 
 // WDFN returns GeoJSON: coordinates are [lon, lat] and the id carries a USGS- prefix.
 export function wdfnLocationsToStations(feats) {
-    var out = [];
+    const out = [];
     (feats || []).forEach(function (f) {
-        var p = f.properties || {};
-        var coords = (f.geometry && f.geometry.coordinates) || [];
+        const p = f.properties || {};
+        const coords = (f.geometry && f.geometry.coordinates) || [];
         if (!p.id || coords.length < 2) return;
         out.push({
             id: String(p.id).replace('USGS-', ''),
@@ -50,12 +50,12 @@ export function searchErrorHtml(msg) {
 // G3 (Phase 2.4): when there is no network, WDFN search cannot work — disable the
 // input and point the angler at the static discovery pool. Re-enabled automatically.
 export function updateSearchAvailability() {
-    var input = document.getElementById('station-search');
+    const input = document.getElementById('station-search');
     if (!input) return;
-    var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    const offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
     input.disabled = offline;
     input.placeholder = offline ? 'Search unavailable offline — use the quick picker below' : 'Search by USGS station ID or river name';
-    var results = document.getElementById('search-results');
+    const results = document.getElementById('search-results');
     if (offline && results) {
         results.style.display = 'block';
         results.innerHTML = searchErrorHtml('Search is unavailable offline. Use the station presets or GPS lookup below.');
@@ -71,17 +71,17 @@ if (typeof window !== 'undefined') {
 
 export async function searchStation() {
     // G3 (Phase 2.4): hard guard even if the input was somehow still enabled.
-    var offlineNow = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    const offlineNow = (typeof navigator !== 'undefined' && navigator.onLine === false);
     if (offlineNow) {
-        var rb = document.getElementById('search-results');
+        const rb = document.getElementById('search-results');
         if (rb) {
             rb.style.display = 'block';
             rb.innerHTML = searchErrorHtml('Search is unavailable offline. Use the station presets or GPS lookup below.');
         }
         return;
     }
-    var term = document.getElementById('station-search').value.trim();
-    var resultsBox = document.getElementById('search-results');
+    const term = document.getElementById('station-search').value.trim();
+    const resultsBox = document.getElementById('search-results');
 
     if (!term) return;
     resultsBox.style.display = 'block';
@@ -91,9 +91,9 @@ export async function searchStation() {
     if (term.match(/^\d{8}$/)) {
         resultsBox.innerHTML = '<div style="color:var(--accent-yellow); font-weight:bold; padding:8px;">Fetching metadata...</div>';
         try {
-            var res = await fetch(WDFN_LOCATIONS + '?id=USGS-' + encodeURIComponent(term) + '&limit=1');
-            var data = await res.json();
-            var hits = wdfnLocationsToStations(data && data.features);
+            const res = await fetch(WDFN_LOCATIONS + '?id=USGS-' + encodeURIComponent(term) + '&limit=1');
+            const data = await res.json();
+            const hits = wdfnLocationsToStations(data && data.features);
             resultsBox.innerHTML = hits.length
                 ? presetButtonHtml(hits[0].id, hits[0].name, hits[0].lat, hits[0].lon)
                 : searchErrorHtml('USGS Station ID not found.');
@@ -106,30 +106,30 @@ export async function searchStation() {
 
     // 2. River-name search: CQL2 LIKE over the registry state's STREAM sites, then keep
     //    only the ones reporting live discharge/gage (the old "active stations" filter).
-    var stateName = searchRegionStateName();
+    const stateName = searchRegionStateName();
     resultsBox.innerHTML = '<div style="color:var(--accent-yellow); font-weight:bold; padding:8px;">Searching ' + stateName + ' rivers...</div>';
     try {
         // NWIS names are uppercase; strip LIKE wildcards so the term is matched literally.
-        var safe = term.toUpperCase().replace(/[%_']/g, '');
-        var filter = "monitoring_location_name LIKE '%" + safe + "%'";
-        var lres = await fetch(WDFN_LOCATIONS + '?filter=' + encodeURIComponent(filter) + '&filter-lang=cql2-text'
+        const safe = term.toUpperCase().replace(/[%_']/g, '');
+        const filter = "monitoring_location_name LIKE '%" + safe + "%'";
+        const lres = await fetch(WDFN_LOCATIONS + '?filter=' + encodeURIComponent(filter) + '&filter-lang=cql2-text'
             + '&state_name=' + encodeURIComponent(stateName) + '&site_type_code=ST&limit=25');
-        var ldata = await lres.json();
-        var found = wdfnLocationsToStations(ldata && ldata.features);
+        const ldata = await lres.json();
+        const found = wdfnLocationsToStations(ldata && ldata.features);
         if (!found.length) {
             resultsBox.innerHTML = searchErrorHtml('No matching stations found.');
             return;
         }
 
         // Second step: which of those gauges actually report live readings right now?
-        var liveIds = {};
-        var ids = found.map(function (s) { return 'USGS-' + s.id; }).join(',');
-        var vres = await fetch(WDFN_LATEST + '?monitoring_location_id=' + ids + '&parameter_code=00060,00065&limit=200');
-        var vdata = await vres.json();
+        const liveIds = {};
+        const ids = found.map(function (s) { return 'USGS-' + s.id; }).join(',');
+        const vres = await fetch(WDFN_LATEST + '?monitoring_location_id=' + ids + '&parameter_code=00060,00065&limit=200');
+        const vdata = await vres.json();
         ((vdata && vdata.features) || []).forEach(function (f) {
             liveIds[String((f.properties || {}).monitoring_location_id).replace('USGS-', '')] = true;
         });
-        var results = Object.keys(liveIds).length
+        const results = Object.keys(liveIds).length
             ? found.filter(function (s) { return liveIds[s.id]; })
             : found;   // if the live check failed, still offer the matches
 

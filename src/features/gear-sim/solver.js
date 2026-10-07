@@ -14,12 +14,12 @@
 // The line PICKERS carry a brand-specific id; resolve it to the real measured diameter
 // so the drag term uses the angler's actual line, not just its material+lb class.
 export function pickedLineDiameter(pickId) {
-    var line = (typeof tackleLineById === 'function') ? tackleLineById(getStr(pickId)) : null;
+    const line = (typeof tackleLineById === 'function') ? tackleLineById(getStr(pickId)) : null;
     return (line && line.diameter_mm) ? line.diameter_mm : 0;   // 0 -> generic lookup
 }
 
 export function readRigFromForm() {
-    var hookRaw = getStr('hook');
+    const hookRaw = getStr('hook');
     return {
         flow: getCurrentFlow(),
         weightOz: getNum('weight'),
@@ -55,13 +55,13 @@ import { snapshotLoad, outboxAll } from '../catch-log/outbox.js';
 import { velocityAtSpot, spotDepthFt } from './continuity.js';
 import { zoneColor, paintZoneHud } from './zone-core.js';
 export async function loadCalibrationData(flow, species) {
-    var dbArray = [];
+    let dbArray = [];
     try { dbArray = await Supa.fetchGlobalCalibration(flow, species); } catch (e) { dbArray = []; }
     if (!dbArray.length) {
         // Offline fallback: the durable calibration snapshot first (exact match
         // to the same flow/species is not guaranteed here — the snapshot is a
         // per-call capture), then the durable outbox.
-        var snap = (typeof snapshotLoad === 'function') ? await snapshotLoad('calibration_snapshot') : null;
+        const snap = (typeof snapshotLoad === 'function') ? await snapshotLoad('calibration_snapshot') : null;
         if (Array.isArray(snap) && snap.length) {
             dbArray = snap;
         } else {
@@ -105,7 +105,7 @@ export function buildSimStats(rig, out) {
 }
 
 export function paintSimHud(rig, out, stats) {
-    var hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
+    const hgt = out.hgt, zone = out.zone, suggestions = out.suggestions, velocity = out.velocity;
 
     // BANNERS + SUMMARY: the strike-zone banner (gradient colour) and the ONE cohesive
     // "where the fish are" paragraph, printed under both banners. Same painter as the live
@@ -114,23 +114,23 @@ export function paintSimHud(rig, out, stats) {
 
     // The line-height banner keeps its own grade: colour-graded toward the zone MIDDLE in
     // 0.1" steps (green = dead centre, yellow = halfway, red = at/beyond the edge).
-    var eHgt = document.getElementById('hud-hgt');
+    const eHgt = document.getElementById('hud-hgt');
     eHgt.innerText = hgt.toFixed(1) + '"';
     eHgt.style.color = zoneColor(hgt, zone);
 
     // Rig changes ONLY when off target (an on-target rig has no suggestions: the summary
     // already states the line is in the band).
-    var ul = document.getElementById('hud-changes');
+    const ul = document.getElementById('hud-changes');
     if (ul) {
         ul.innerHTML = '';
         suggestions.forEach(function (s) {
-            var li = document.createElement('li');
+            const li = document.createElement('li');
             li.textContent = s;
             ul.appendChild(li);
         });
     }
 
-    var simBtn = document.getElementById('btn-sim');
+    const simBtn = document.getElementById('btn-sim');
     if (simBtn) { simBtn.innerText = 'RUN SIMULATION'; simBtn.disabled = false; }
     // Continuity record: log the gauge value WITH the (currently unmeasured) spot ratio, so
     // the trail shows exactly what was assumed instead of an unexplained single number.
@@ -146,10 +146,10 @@ export function paintSimHud(rig, out, stats) {
         ', species ' + (rig.species || 'default') +
         ', flow ' + rig.flow + ' cfs', 'RIG');
 
-    var shownBottom = velocity.bottom;
-    var near = (typeof velocityAtSpot === 'function')
+    const shownBottom = velocity.bottom;
+    const near = (typeof velocityAtSpot === 'function')
         ? velocityAtSpot(rig.flow, velocity.station || null) : null;
-    var spotDepth = (typeof spotDepthFt === 'function')
+    const spotDepth = (typeof spotDepthFt === 'function')
         ? spotDepthFt(rig.flow, velocity.station || null) : null;
     logDebug('Sim: height ' + hgt.toFixed(2) + '", bed velocity ' + shownBottom.toFixed(2) +
         ' ft/s (' + velocity.source + (typeof velocity.trueBottom === 'number'
@@ -182,10 +182,10 @@ export function paintSimHud(rig, out, stats) {
     // residual = where the fish actually were minus where the model predicted. Both sides of
     // every residual are stored on the catch, so it can be re-derived later. A persistent
     // direction is the signal to fix the math, add a missing variable, or re-measure.
-    var nbRows = (out.sonar && out.sonar.residuals) ? out.sonar.residuals : [];
+    const nbRows = (out.sonar && out.sonar.residuals) ? out.sonar.residuals : [];
     if (nbRows.length) {
-        var nbSum = 0;
-        for (var bi = 0; bi < nbRows.length; bi++) nbSum += nbRows[bi];
+        let nbSum = 0;
+        for (let bi = 0; bi < nbRows.length; bi++) nbSum += nbRows[bi];
         logDebug('Notebook: model residual ' + (nbSum / nbRows.length).toFixed(2) +
             '" over ' + nbRows.length + ' catch(es) (actual - predicted)', 'SIM');
 }

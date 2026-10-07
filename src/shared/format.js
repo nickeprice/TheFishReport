@@ -26,8 +26,8 @@ window.newUuid = newUuid;
     } catch (e) {}
     // RFC 4122 v4 fallback for older WebViews without crypto.randomUUID.
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = (Math.random() * 16) | 0;
-        var v = c === 'x' ? r : ((r & 0x3) | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : ((r & 0x3) | 0x8);
         return v.toString(16);
     });
 }
@@ -63,13 +63,13 @@ window.normalizeFeedRow = normalizeFeedRow;
 
 export function formatCatchTime(value) {
     if (!value) return '--';
-    var d = new Date(value);
+    const d = new Date(value);
     if (isNaN(d.getTime())) return String(value).slice(0, 16).replace('T', ' ');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var h = d.getHours();
-    var suffix = h >= 12 ? 'PM' : 'AM';
-    var h12 = h % 12; if (h12 === 0) h12 = 12;
-    var mins = d.getMinutes(); if (mins < 10) mins = '0' + mins;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const h = d.getHours();
+    const suffix = h >= 12 ? 'PM' : 'AM';
+    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    let mins = d.getMinutes(); if (mins < 10) mins = '0' + mins;
     return months[d.getMonth()] + ' ' + d.getDate() + ', ' + h12 + ':' + mins + ' ' + suffix;
 }
 window.formatCatchTime = formatCatchTime;

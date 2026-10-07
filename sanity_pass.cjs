@@ -215,7 +215,7 @@ function staticIntegrity() {
   // resolves through FOAM_PICKER_MAP -> tackle.json, keeping the lift from the library.
   {
     const cheater = (html.match(/<option value="c12">Cheater 10<\/option>/g) || []).length;
-    const inSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'inputs.js'), 'utf8');
+    const inSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'inputs-constants.js'), 'utf8');
     const hasMap = /FOAM_PICKER_MAP.*foamMap/.test(inSrc) && /GEAR_OPTIONS\.foamMap/.test(inSrc);
     (!html.includes('Presentation') && cheater === 4 && hasMap)
       ? ok('bead labels are plain and the Cheater float reads "Cheater 10"',
@@ -255,10 +255,13 @@ function staticIntegrity() {
 
   // Phase 2.4.1: the hatchery freshness stamp rides on WDFW's own :updated_at
   // system column (never a fabricated date), and both forms rest in 6 rows.
-  (waterSrc.includes('max(:updated_at) AS lastUpdated') && waterSrc.includes('formatEscapementUpdated'))
+  // Escapement code was split from water.js to water-escapement.js during Vite migration.
+  const escSrc = fs.readFileSync(path.join(ROOT, 'src', 'services', 'water-escapement.js'), 'utf8');
+  const weatherSrc = fs.readFileSync(path.join(ROOT, 'src', 'services', 'water-weather.js'), 'utf8');
+  (escSrc.includes('max(:updated_at) AS lastUpdated') && escSrc.includes('formatEscapementUpdated'))
     ? ok('escapement feed requests + formats max(:updated_at)', 'real WDFW publish time')
     : fail('escapement feed requests + formats max(:updated_at)', 'missing :updated_at wiring');
-  (waterSrc.includes('Hatchery data may lag WDFW reporting.'))
+  (weatherSrc.includes('Hatchery data may lag WDFW reporting.'))
     ? ok('honest fallback when no :updated_at stamp exists', 'never a fake date')
     : fail('honest fallback when no :updated_at stamp exists', 'fallback wording missing');
 
@@ -269,7 +272,12 @@ function staticIntegrity() {
     ? fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'water-types.js'), 'utf8')
     : '';
   const solverSrcFinal = fs.readFileSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'solver.js'), 'utf8');
-  const wtLoaded = localScriptPaths().some((p) => p.indexOf('gear-sim/water-types.js') !== -1);
+  const appJsPath = path.join(ROOT, 'src', 'app.js');
+  const appJsSrc = fs.existsSync(appJsPath) ? fs.readFileSync(appJsPath, 'utf8') : '';
+  // Check both classic <script> tags and Vite ES module imports
+  const wtLoaded = localScriptPaths().some((p) => p.indexOf('gear-sim/water-types.js') !== -1) ||
+    appJsSrc.includes("'./features/gear-sim/water-types.js'") ||
+    appJsSrc.includes('"./features/gear-sim/water-types.js"');
   (wtLoaded &&
    /function openWaterTypeGuide/.test(waterTypesSrc) &&
    /function closeWaterTypeGuide/.test(waterTypesSrc) &&
@@ -280,18 +288,23 @@ function staticIntegrity() {
     : fail('water type guide is a standalone module, functions are global',
            `fileExists=${fs.existsSync(path.join(ROOT, 'src', 'features', 'gear-sim', 'water-types.js'))} loaded=${wtLoaded} inWaterTypes=${/function openWaterTypeGuide/.test(waterTypesSrc)} inSolver=${/function openWaterTypeGuide/.test(solverSrcFinal)}`);
 
-  const appSrc = readAllScripts();
-  (!appSrc.includes('hero-lbl') && appSrc.includes('[ FISHING OUTLOOK ]') &&
-   appSrc.includes('Forecast &amp; Hatchery Report') && appSrc.includes('data-esc-updated'))
+  // ES module source files (Vite loads these, not classic <script> tags)
+  const heroSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'telemetry', 'hero.js'), 'utf8');
+  const renderSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'telemetry', 'report-render.js'), 'utf8');
+  const escRenamedSrc = fs.readFileSync(path.join(ROOT, 'src', 'services', 'water-escapement.js'), 'utf8');
+  const allAppSrc = heroSrc + '\n' + renderSrc + '\n' + escRenamedSrc;
+  (!allAppSrc.includes('hero-lbl') && allAppSrc.includes('[ FISHING OUTLOOK ]') &&
+   allAppSrc.includes('Forecast &amp; Hatchery Report') && allAppSrc.includes('data-esc-updated'))
     ? ok('hero uses a real section header + renamed counts fold', 'no in-pill label')
     : fail('hero uses a real section header + renamed counts fold', 'stale hero-lbl / fold label');
-  (!appSrc.includes('peakLine') && !appSrc.includes('run-footer'))
+  (!allAppSrc.includes('peakLine') && !allAppSrc.includes('run-footer'))
     ? ok('run cards carry no peak day-counter', 'peak date label only')
     : fail('run cards carry no peak day-counter', 'peakLine / .run-footer remnants');
 
   // Phase 3.2: the catch write MUST be idempotent, or a retry after a response lost in
   // a dead zone inserts a second copy of the same fish.
-  const supabaseSrc = fs.readFileSync(path.join(ROOT, 'src', 'services', 'supabase.js'), 'utf8');
+  // CRUD code was split from supabase.js to supabase-crud.js during Vite migration.
+  const supabaseSrc = fs.readFileSync(path.join(ROOT, 'src', 'services', 'supabase-crud.js'), 'utf8');
   (/onConflict:\s*'id'/.test(supabaseSrc) && /ignoreDuplicates:\s*true/.test(supabaseSrc) &&
    /id:\s*\(payload\.clientId/.test(supabaseSrc))
     ? ok('catch writes are idempotent', 'clientId -> ON CONFLICT (id) DO NOTHING')
@@ -329,14 +342,18 @@ function staticIntegrity() {
   // Phase 3.4: a just-logged catch must paint immediately with a pending-sync badge, and
   // the badge must clear once the flush confirms. Both scopes read ONE pending source
   // (outboxPending) — no second store — and pending.js must load before its consumers.
+  // With Vite ES modules, load order is determined by the import graph (checked below),
+  // not by <script> tag order in index.html.
   const pendingSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'pending.js'), 'utf8');
   const boardSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'board.js'), 'utf8');
   const mineSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'catch-log', 'mycatches.js'), 'utf8');
   const authSrc = fs.readFileSync(path.join(ROOT, 'src', 'features', 'auth', 'auth.js'), 'utf8');
-  const loaded = localScriptPaths();
-  const pIdx = loaded.findIndex((p) => p.indexOf('catch-log/pending.js') !== -1);
-  const bIdx = loaded.findIndex((p) => p.indexOf('catch-log/board.js') !== -1);
-  const mIdx = loaded.findIndex((p) => p.indexOf('catch-log/mycatches.js') !== -1);
+  // Verify the Vite ES module import chain: auth.js imports pending.js and board.js,
+  // board.js imports mycatches.js — this defines the topological load order.
+  const importChainOk =
+    authSrc.includes("'../catch-log/pending.js'") &&
+    authSrc.includes("'../catch-log/board.js'") &&
+    boardSrc.includes("'./mycatches.js'");
   // Slice the flush body rather than regex-window it — the badge reset must be inside it.
   const flush = authSrc.slice(authSrc.indexOf('async function syncPendingCatches()'));
   const flushBody = flush.slice(0, flush.indexOf('\n}\n') + 3);
@@ -344,7 +361,7 @@ function staticIntegrity() {
    boardSrc.indexOf('pendingBadge()') !== -1 &&
    mineSrc.indexOf('pendingBadge()') !== -1 &&
    /refreshCatchLists\(\)/.test(flushBody) &&
-   pIdx >= 0 && bIdx > pIdx && mIdx > pIdx)
+   importChainOk)
     ? ok('pending catches paint optimistically with a sync badge', 'both scopes; cleared by the flush')
     : fail('pending catches paint optimistically with a sync badge', 'badge, flush reset or load order missing');
 

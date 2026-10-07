@@ -39,6 +39,16 @@
 
 ---
 
+<a id="build-html"></a>
+<a id="build-tests"></a>
+<a id="build-tooling"></a>
+<a id="build-deploy"></a>
+<a id="test-429-timeout"></a>
+<a id="test-esm-safety"></a>
+<a id="test-catch-cycle"></a>
+<a id="test-sim-cycle"></a>
+<a id="test-undef-sweep"></a>
+<a id="test-playwright"></a>
 <a id="build-split"></a>
 ## Phase V6: Split Oversized Files (<150 lines)
 

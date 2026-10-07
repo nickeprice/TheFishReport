@@ -52,6 +52,7 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 
 # Workflow
 - Use native Git CLI commands (`git add`, `git commit -m "..."`, `git push`) for version control. Do not use custom node scripts.
+- NEVER run raw `git diff`, `git log`, or `git status` without flags that prevent interactive pagination. Always use `git --no-pager <command>` or flags like `--stat`.
 - After a phase handoff is accepted, check off the task in `PLAN.md` (`- [x]`) and delete its `##` section from `PLAN_REFERENCE.md`.
 - Delete the completed `- [x]` line from `PLAN.md` after commit (git history is the record).
 

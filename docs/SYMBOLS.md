@@ -183,7 +183,8 @@ pass fails.
 
 ## src/features/station
 - **picker.js** — `openStationModal()`, `closeStationModal()`, `selectPreset()`,
-  `calcDistance()`, `useGPS()`
+  `calcDistance()`, `useGPS()`, `renderPresets()`,
+  `PRESET_FAV_KEY`, `togglePresetFav(siteId)`
 - **search.js** — `searchStation()`, `updateSearchAvailability()`
 
 ## src/features/map

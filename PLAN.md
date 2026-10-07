@@ -10,13 +10,11 @@
       → index.html, picker.js
       [Detail → docs/PLAN_REFERENCE.md#ui-dynamic-presets]
 
-- [ ] Phase A5: Saved spots — no sign-in required
+- [x] Phase A5: Saved spots — no sign-in required
       → spots.js, index.html
-      [Detail → docs/PLAN_REFERENCE.md#ui-spots-no-auth]
 
-- [ ] Phase A7: Grouped collapsible river presets + favorites
+- [x] Phase A7: Grouped collapsible river presets + favorites
       → picker.js
-      [Detail → docs/PLAN_REFERENCE.md#ui-grouped-presets]
 
 - [ ] Phase A6: MapLibre GL JS upgrade (satellite + vector + geolocate)
       → map.js, package.json

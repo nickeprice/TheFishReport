@@ -1,7 +1,8 @@
 /**
  * src/features/station/picker.js - station modal, GPS pick and presets.
  * public: openStationModal(), closeStationModal(), selectPreset(),
- *         calcDistance(), useGPS()
+ *         calcDistance(), useGPS(), renderPresets(),
+ *         togglePresetFav(siteId), PRESET_FAV_KEY
  * ES module.
  */
 import { logDebug } from '../../shared/debug.js';
@@ -19,27 +20,104 @@ export function openStationModal() {
     renderPresets();
 }
 
+// ── Preset Favorites (localStorage) ────────────────────────────────────────────
+export var PRESET_FAV_KEY = 'preset_favorites';
+window.PRESET_FAV_KEY = PRESET_FAV_KEY;
+
+function loadFavs() {
+    try { var r = localStorage.getItem(PRESET_FAV_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; }
+}
+function saveFavs(arr) {
+    try { localStorage.setItem(PRESET_FAV_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+
+export function togglePresetFav(siteId) {
+    var arr = loadFavs();
+    var idx = arr.indexOf(siteId);
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(siteId);
+    saveFavs(arr);
+    renderPresets();
+}
+window.togglePresetFav = togglePresetFav;
+
 // Build Quick Regional Presets from the registry discovery_pool.
-// This replaces the old 5-button hardcode — all 15 waterbodies now appear,
-// and new rivers added to the registry show up automatically.
+// Groups under parent waterbody names. Single-gauge → direct select button.
+// Multi-gauge (e.g. Puyallup) → collapsible <details>.
+// Starred waterbodies float to top.
 export function renderPresets() {
-    const list = document.getElementById('preset-list');
+    var list = document.getElementById('preset-list');
     if (!list) return;
-    const pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
-    if (!pool || !pool.length) {
-        list.innerHTML = ''; // clean slate when offline/unavailable
-        return;
+    var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!pool || !pool.length) { list.innerHTML = ''; return; }
+
+    // site_id → waterbody name
+    var siteToWb = {};
+    if (wbs) {
+        for (var i = 0; i < wbs.length; i++) {
+            var wb = wbs[i];
+            if (wb.gauge && wb.gauge.site_id) siteToWb[wb.gauge.site_id] = wb.name;
+            if (wb.related_gauges) {
+                for (var j = 0; j < wb.related_gauges.length; j++)
+                    siteToWb[wb.related_gauges[j].site_id] = wb.name;
+            }
+        }
     }
-    let html = '';
-    for (let i = 0; i < pool.length; i++) {
-        const s = pool[i];
+
+    var favs = loadFavs();
+
+    // Group pool entries by waterbody name
+    var groups = {};
+    for (var k = 0; k < pool.length; k++) {
+        var s = pool[k];
         if (!s || !s.site_id || !s.coords) continue;
-        html += '<button class="preset-btn" onclick="selectPreset(\'' +
-            escapeJsString(s.site_id) + '\', ' +
-            Number(s.coords.lat) + ', ' + Number(s.coords.lon) + ', \'' +
-            escapeJsString(s.name) + ')\">' +
-            '<span>' + escapeHtml(s.name) + '</span> <span class="preset-id">' +
-            escapeHtml(s.site_id) + '</span></button>';
+        var wbName = siteToWb[s.site_id] || s.name.replace(/ at .*$/, '').replace(/ near .*$/, '');
+        if (!groups[wbName]) groups[wbName] = [];
+        groups[wbName].push(s);
+    }
+
+    // Sort: waterbodies with a starred gauge first (alpha), then rest (alpha)
+    var names = Object.keys(groups).sort(function (a, b) {
+        var aFav = groups[a].some(function (s) { return favs.indexOf(s.site_id) >= 0; });
+        var bFav = groups[b].some(function (s) { return favs.indexOf(s.site_id) >= 0; });
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
+        return a.localeCompare(b);
+    });
+
+    var html = '';
+    for (var gi = 0; gi < names.length; gi++) {
+        var name = names[gi];
+        var items = groups[name];
+        if (items.length === 1) {
+            // Single-gauge river → direct-select button
+            var s = items[0];
+            var star = favs.indexOf(s.site_id) >= 0 ? '\u2605' : '\u2606';
+            html += '<div class="preset-row"><button class="preset-star" onclick="togglePresetFav(\'' +
+                escapeJsString(s.site_id) + '\')">' + star + '</button>' +
+                '<button class="preset-btn" onclick="selectPreset(\'' +
+                escapeJsString(s.site_id) + '\', ' + Number(s.coords.lat) + ', ' +
+                Number(s.coords.lon) + ', \'' + escapeJsString(s.name) + '\')">' +
+                '<span>' + escapeHtml(name) + '</span> <span class="preset-id">' +
+                escapeHtml(s.site_id) + '</span></button></div>';
+        } else {
+            // Multi-gauge river → collapsible section
+            html += '<details class="preset-group" ' +
+                'ontoggle="this.open && this.querySelector(\'.preset-star\')?.focus()">' +
+                '<summary>' + escapeHtml(name) + '</summary>';
+            for (var si = 0; si < items.length; si++) {
+                var s = items[si];
+                var star = favs.indexOf(s.site_id) >= 0 ? '\u2605' : '\u2606';
+                html += '<div class="preset-row"><button class="preset-star" onclick="togglePresetFav(\'' +
+                    escapeJsString(s.site_id) + '\')">' + star + '</button>' +
+                    '<button class="preset-btn" onclick="selectPreset(\'' +
+                    escapeJsString(s.site_id) + '\', ' + Number(s.coords.lat) + ', ' +
+                    Number(s.coords.lon) + ', \'' + escapeJsString(s.name) + '\')">' +
+                    '<span>' + escapeHtml(s.name) + '</span> <span class="preset-id">' +
+                    escapeHtml(s.site_id) + '</span></button></div>';
+            }
+            html += '</details>';
+        }
     }
     if (html) list.innerHTML = html;
 }

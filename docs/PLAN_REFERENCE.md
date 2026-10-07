@@ -7,32 +7,9 @@
 
 <!-- Phase A4 complete — detail deleted per protocol -->
 
-<a id="ui-spots-no-auth"></a>
-## Phase A5: Saved Spots — No Sign-In Required
+<!-- Phase A5 complete — detail deleted per protocol -->
 
-**Change:** Remove the `spotsSignedIn()` gate from save/load spot functions.
-Spots always save to localStorage cache; server sync is a bonus when signed in.
-Render the spots list without the "start a session" auth blocker.
-
-**Files:**
-- `src/features/map/spots.js` — remove auth gates from saveCurrentSpot(), saveSpotAt(), startSpotPick()
-- `index.html` — compact save row layout (Name + Save + 📍 Map on one line)
-
----
-
-<a id="ui-grouped-presets"></a>
-## Phase A7: Grouped Collapsible River Presets + Favorites
-
-**Change:** Group the flat discovery_pool preset list under parent waterbody names.
-Single-gauge rivers tap to select directly. Multi-gauge rivers (e.g. Puyallup)
-tap to expand/collapse their sub-gauge options. Favorites (star) stored in
-localStorage, float to top of list. Sort: starred (alpha) → rest (alpha).
-
-**Files:**
-- `src/features/station/picker.js` — rewrite renderPresets() for grouped + collapsible + star/favorites
-- `index.html` — section label/heading tweaks
-
----
+<!-- Phase A7 complete — detail deleted per protocol -->
 
 <a id="ui-maplibre"></a>
 ## Phase A6: MapLibre GL JS Upgrade (Satellite + Vector + Geolocate)

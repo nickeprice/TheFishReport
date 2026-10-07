@@ -663,26 +663,27 @@ td.empty-state { padding: 30px 10px; }
     background: #000;
 }
 .map-modal.map-modal-hidden { display: none !important; }
-.map-close-btn {
+.map-top-bar {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    font-size: 22px;
-    line-height: 44px;
-    width: 44px;
-    height: 44px;
-    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    height: 48px;
+    background: rgba(0,0,0,0.55);
     display: flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
-.map-close-btn:active { background: #3a3a3c; }
+.map-back-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0 16px;
+}
 .map-modal-container {
     position: absolute;
     top: 0;

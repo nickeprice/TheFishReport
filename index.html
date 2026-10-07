@@ -67,7 +67,9 @@
 
 <!-- FULL-SCREEN MAP MODAL (Phase Y1): satellite imagery + street labels + pin drops -->
 <div id="map-modal" class="map-modal map-modal-hidden">
-    <button class="map-close-btn" onclick="closeMapModal()">&times;</button>
+    <div class="map-top-bar">
+        <button class="map-back-btn" onclick="closeMapModal()">&larr; Back to stations</button>
+    </div>
     <div id="map-modal-container" class="map-modal-container"></div>
     <div id="map-modal-note" class="station-map-note" hidden></div>
 </div>

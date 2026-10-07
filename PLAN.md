@@ -49,10 +49,6 @@
       → chain-shooting.js, sim.js, solver.js, conftest.py, NEW test file
       [Detail → docs/PLAN_REFERENCE.md#test-playwright]
 
-- [ ] T4: Audit remaining typeof guards
-      → quick grep across src/ — 0 new code, pure verification
-      [Detail → docs/PLAN_REFERENCE.md#test-typeof]
-
 - [ ] T5: ESLint prefer-const sweep
       → ESLint rule on src/ — fix candidates to const where safe
       [Detail → docs/PLAN_REFERENCE.md#test-const]

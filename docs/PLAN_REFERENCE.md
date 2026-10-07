@@ -99,30 +99,7 @@ daynav.js, report.js, hero.js, and supabase.js.
 
 ---
 
-<a id="test-typeof"></a>
-## T4: Audit Remaining typeof Guards
 
-**Goal:** Find every `typeof X === 'function'` that is NOT preceded by a corresponding
-`import` statement (i.e., a guard relying on the window shim alone). These are spots
-where a missing import could silently skip logic.
-
-**Method:**
-```bash
-# List every typeof-fn guard together with the file's imports, flag any without
-# a matching import line.
-grep -rn "typeof.*=== 'function'" src/ --include='*.js' | \
-  while IFS=: read file line text; do
-    fn=$(echo "$text" | sed -n 's/.*typeof \([a-zA-Z0-9_]*\).*/\1/p')
-    if ! head -"$line" "$file" | grep -q "import.*\b$fn\b"; then
-      echo "MISSING IMPORT: $file:$line ($fn)"
-    fi
-  done
-```
-
-**Expected result:** 0 lines flagged (all remaining typeof guards have matching imports).
-If any are found, they need a window shim in the defining module.
-
-**Files:** grep only, no new code.
 
 ---
 

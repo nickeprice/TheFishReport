@@ -109,16 +109,7 @@ rows with full-width buttons.
 
 <!-- H1 complete — detail deleted per protocol -->
 
-<a id="hotfix-spots"></a>
-## H2: Saved Spots localStorage + Star Rendering on Map
-
-**Change:** Ensure `saveSpotAt()` writes to localStorage under `SPOTS_CACHE_KEY`. `loadFavoriteSpots()` reads from cache and syncs. On map load, render saved spots as yellow star markers.
-
-**Files:**
-- `spots.js` — keep `writeSpotCache(rows)` / `readSpotCache()` working
-- `map.js` — on `map.on('load')`, iterate `spotsState.rows`, create star marker for each
-
----
+<!-- H2 complete — detail deleted per protocol -->
 
 <a id="hotfix-pill"></a>
 ## H3: Name Pill Save/Cancel Wiring (No Ghost Pins)

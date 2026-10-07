@@ -2,10 +2,6 @@
 
 ## 🛠 Immediate Map Hotfixes & Polish
 
-- [ ] H2: Saved spots localStorage + star rendering on map
-      → spots.js, map.js
-      [Detail → docs/PLAN_REFERENCE.md#hotfix-spots]
-
 - [ ] H3: Name pill save/cancel wiring (no ghost pins)
       → map.js
       [Detail → docs/PLAN_REFERENCE.md#hotfix-pill]

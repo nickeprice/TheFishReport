@@ -107,6 +107,71 @@ rows with full-width buttons.
 
 ---
 
+<a id="hotfix-geolocate"></a>
+## H1: Geolocate — trackUserLocation + showUserLocation
+
+**Change:** Update GeolocateControl options to include `trackUserLocation: true` and `showUserLocation: true`.
+
+**Files:** `map.js` — add options to the existing `GeolocateControl` instantiation in `openMapScreen()`
+
+**Note:** Mobile browsers block GPS access unless served over HTTPS or localhost. Testing via local IP on a phone will fail.
+
+---
+
+<a id="hotfix-spots"></a>
+## H2: Saved Spots localStorage + Star Rendering on Map
+
+**Change:** Ensure `saveSpotAt()` writes to localStorage under `SPOTS_CACHE_KEY`. `loadFavoriteSpots()` reads from cache and syncs. On map load, render saved spots as yellow star markers.
+
+**Files:**
+- `spots.js` — keep `writeSpotCache(rows)` / `readSpotCache()` working
+- `map.js` — on `map.on('load')`, iterate `spotsState.rows`, create star marker for each
+
+---
+
+<a id="hotfix-pill"></a>
+## H3: Name Pill Save/Cancel Wiring (No Ghost Pins)
+
+**Change:** `confirmPinSpot()` reads `#pin-pill-input` value, calls `doSavePin(lat, lng, label)`, dismisses pill, clears temp pin. `cancelPinSpot()` clears temp pin + dismisses pill. No ghost pins left on the map.
+
+**Audit targets:**
+- `doSavePin()` saves via `saveSpotAt()`, then calls `refreshStationMap()` (which calls `removeAllMarkers()` — must not remove temp pin)
+- `onMapClick()` invokes `dropTempPin()` then `showNamePill()`
+
+---
+
+<a id="hotfix-glare"></a>
+## H4: Glare-Resistant Pin Popups (High-Contrast Flow Cards)
+
+**Change:** Rewrite popup HTML and styles for outdoor readability.
+
+**Design:**
+- Dark background (`#1c1c1f`) with high-contrast white text
+- CFS as large prominent number with bold white font
+- Legal hours as colored badge: `#22c55e` (OPEN), `#f5c842` (DAYLIGHT), `#f87171` (CLOSED)
+- Thin border `#38383a`, 12px border-radius, subtle shadow
+
+**Files:**
+- `styles.css` — `.pin-popup` and `.pin-popup-body` styles
+- `map.js` — `showPopup()` content generation
+
+---
+
+<a id="hotfix-coords"></a>
+## H5: Override Sloppy USGS Coords for Puyallup + Green
+
+**Change:** Manually override two primary river gauge coordinates in `washington.js`.
+
+**New coords:**
+- Puyallup 12101500: `lat: 47.2028, lon: -122.2965`
+- Green 12113000: `lat: 47.3125, lon: -122.2027`
+
+Update the corresponding `waterbodies[].coords` entries too.
+
+**NLDI note (future):** Use `https://labs.waterdata.usgs.gov/api/nldi/linked-data/nwissite/USGS-{site_id}` to fetch precise snapped river centerline coords for all 15 stations. Write a Python script to hit this endpoint and overwrite `coords` objects in `washington.js` programmatically.
+
+---
+
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper
 

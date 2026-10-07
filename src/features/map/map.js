@@ -22,17 +22,19 @@ import { selectPreset } from '../station/picker.js';
 const maplibregl = window.maplibregl;
 
 // ── Map constants ──────────────────────────────────────────────────────────────
-var MAP_DEFAULT_CENTER = [-122.2943, 47.1932];
-var MAP_START_ZOOM = 11;
-var MAP_STYLE = { version: 8, sources: {
-    satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg'], tileSize: 256, attribution: '\u00a9 Esri' }
-}, layers: [
-    { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 19 }
-] };
+const MAP_DEFAULT_CENTER = [-122.2943, 47.1932];
+const MAP_START_ZOOM = 11;
+const MAP_STYLE = {
+    version: 8, sources: {
+        satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg'], tileSize: 256, attribution: '\u00a9 Esri' }
+    }, layers: [
+        { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 19 }
+    ]
+};
 
-var _stationMap = null;
-var _mapMarkers = [];
-var _spotsPlotted = 0;
+let _stationMap = null;
+let _mapMarkers = [];
+let _spotsPlotted = 0;
 
 export function loadLeaflet() { return Promise.resolve(true); }
 window.loadLeaflet = loadLeaflet;
@@ -41,7 +43,7 @@ window.loadLeaflet = loadLeaflet;
 export function mapPinHasReading(station) {
     if (!station) return false;
     return (station.cfs !== undefined && station.cfs !== null) ||
-           (station.gage !== undefined && station.gage !== null);
+        (station.gage !== undefined && station.gage !== null);
 }
 
 export function mapPinColor(station) {
@@ -55,43 +57,43 @@ export function mapLegalText(rule) {
 }
 
 export function stationPopupHtml(s) {
-    var cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
-    var gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
+    const cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
+    const gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
     return '<b>' + escapeHtml(s.name || s.id) + '</b><br>' +
         escapeHtml(cfs + ' CFS \u00b7 ' + gage + ' ft') + '<br>' +
         escapeHtml(mapLegalText(s.legal_hours)) + '<br>' +
-        '<a href="#" onclick="selectPreset(\'' + escapeJsString(s.id) + '\',' +
+        '<br><button class="btn-main" style="background-color: var(--accent-green); color: #000; padding: 8px; margin-top: 5px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="selectPreset(\'' + escapeJsString(s.id) + '\',' +
         Number(s.lat) + ',' + Number(s.lon) + ',\'' + escapeJsString(s.name || s.id) +
-        '\');return false;">Fish this gauge</a>';
+        '\'); closeMapScreen(); return false;">Fish this gauge</button>';
 }
 
 // ── Map centre ───────────────────────────────────────────────────────────────────
 export function mapCenter() {
     if (_stationMap) {
-        var c = _stationMap.getCenter();
+        const c = _stationMap.getCenter();
         if (c) return [c.lat, c.lng];
     }
     if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
         return [State.userGPSCoords.lat, State.userGPSCoords.lon];
     }
     try {
-        var stored = JSON.parse(localStorage.getItem('active_station') || 'null');
+        const stored = JSON.parse(localStorage.getItem('active_station') || 'null');
         if (stored && stored.lat != null && stored.lon != null) return [stored.lat, stored.lon];
-    } catch (e) {}
+    } catch (e) { }
     return [MAP_DEFAULT_CENTER[1], MAP_DEFAULT_CENTER[0]];  // [lat, lng]
 }
 window.mapCenter = mapCenter;
 
 // ── Marker helpers ───────────────────────────────────────────────────────────────
 function makePinEl(color) {
-    var el = document.createElement('div');
+    const el = document.createElement('div');
     el.className = 'station-pin';
     el.innerHTML = '<span class="station-pin-dot" style="background:' + color + '"></span>';
     return el;
 }
 
 function makeStarEl() {
-    var el = document.createElement('div');
+    const el = document.createElement('div');
     el.className = 'spot-pin';
     el.innerHTML = '<span class="spot-pin-dot">\u2605</span>';
     return el;
@@ -99,22 +101,24 @@ function makeStarEl() {
 
 function addMarker(el, lngLat) {
     if (!_stationMap) return;
-    var m = new maplibregl.Marker({ element: el, lngLat: lngLat });
+    // MapLibre fix: lngLat must be set via method, not the config object
+    const m = new maplibregl.Marker({ element: el });
+    m.setLngLat(lngLat);
     m.addTo(_stationMap);
     _mapMarkers.push({ el: el, lng: lngLat[0], lat: lngLat[1] });
 }
 
 function removeAllMarkers() {
-    for (var i = 0; i < _mapMarkers.length; i++) _mapMarkers[i].el.remove();
+    for (let i = 0; i < _mapMarkers.length; i++) _mapMarkers[i].el.remove();
     _mapMarkers = [];
     _spotsPlotted = 0;
 }
 
 // ── Popup overlay ─────────────────────────────────────────────────────────────────
 function showPopup(html) {
-    var popup = document.getElementById('pin-popup');
+    const popup = document.getElementById('pin-popup');
     if (popup) {
-        var body = document.getElementById('pin-popup-body');
+        const body = document.getElementById('pin-popup-body');
         if (body) body.innerHTML = html;
         popup.hidden = false;
         popup.style.display = 'block';
@@ -124,11 +128,14 @@ function showPopup(html) {
 // ── Saved spot stars ──────────────────────────────────────────────────────────────
 export function plotSavedSpotStars() {
     if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
-    var plotted = 0;
+    let plotted = 0;
     spotsState.rows.forEach(function (sp) {
         if (sp.latitude == null || sp.longitude == null) return;
-        var el = makeStarEl();
-        el.addEventListener('click', function () { showPopup(savedSpotPopupHtml(sp)); });
+        const el = makeStarEl();
+        el.addEventListener('click', function (e) {
+            e.stopPropagation();
+            showPopup(savedSpotPopupHtml(sp));
+        });
         addMarker(el, [Number(sp.longitude), Number(sp.latitude)]);
         plotted++;
     });
@@ -141,19 +148,22 @@ export async function refreshStationMap(center) {
     if (!_stationMap || typeof apiGetJson !== 'function') {
         return { count: 0, note: '', error: null, status: 0, spots: 0 };
     }
-    var out = { count: 0, note: '', error: null, status: 0, spots: 0 };
-    var res = await apiGetJson('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1],
-                              { label: 'nearby_stations' });
+    const out = { count: 0, note: '', error: null, status: 0, spots: 0 };
+    const res = await apiGetJson('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1],
+        { label: 'nearby_stations' });
     removeAllMarkers();
     if (res.ok) {
-        var stations = (res.data && res.data.stations) ? res.data.stations : [];
-        var dotEl = document.createElement('div');
+        const stations = (res.data && res.data.stations) ? res.data.stations : [];
+        const dotEl = document.createElement('div');
         dotEl.className = 'map-centre-dot';
         addMarker(dotEl, [center[1], center[0]]);
         stations.forEach(function (s) {
             if (s.lat == null || s.lon == null) return;
-            var el = makePinEl(mapPinColor(s));
-            el.addEventListener('click', function () { showPopup(stationPopupHtml(s)); });
+            const el = makePinEl(mapPinColor(s));
+            el.addEventListener('click', function (e) {
+                e.stopPropagation();
+                showPopup(stationPopupHtml(s));
+            });
             addMarker(el, [s.lon, s.lat]);
         });
         out.count = stations.length;
@@ -173,22 +183,28 @@ export var mapScreenOpen = false;
 window.mapScreenOpen = mapScreenOpen;
 
 export async function openMapScreen() {
-    var screen = document.getElementById('map-screen');
+    const screen = document.getElementById('map-screen');
     if (!screen) return;
-    var topNav = document.getElementById('top-nav');
+    const topNav = document.getElementById('top-nav');
     if (topNav) topNav.style.display = 'none';
     screen.classList.remove('map-screen-hidden');
-    var loading = document.getElementById('map-loading');
+
+    // Fix: Force MapLibre to recalculate layout to prevent black screen when reopening
+    if (_stationMap) {
+        setTimeout(function () { _stationMap.resize(); }, 50);
+    }
+
+    const loading = document.getElementById('map-loading');
     if (loading) loading.style.display = 'block';
-    var handleStation = document.getElementById('map-handle-station');
+    const handleStation = document.getElementById('map-handle-station');
     if (handleStation) {
-        var activeName = document.getElementById('active-station-name');
+        const activeName = document.getElementById('active-station-name');
         handleStation.textContent = activeName ? activeName.textContent : 'Select a river';
     }
     mapScreenOpen = true;
-    var box = document.getElementById('map-container');
+    const box = document.getElementById('map-container');
     if (!box) return;
-    if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
+    if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) { } }
     if (!_stationMap) {
         _stationMap = new maplibregl.Map({
             container: box,
@@ -196,43 +212,35 @@ export async function openMapScreen() {
             center: MAP_DEFAULT_CENTER,
             zoom: MAP_START_ZOOM
         });
-        // Render gauge pins on load
+        // Render gauge pins on load with badge popups
         _stationMap.on('load', function () {
-            var stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.stations;
+            const stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
             if (stations) {
-                Object.values(stations).forEach(function (st) {
-                    var el = document.createElement('div');
-                    el.className = 'station-pin-dot';
-                    el.style.backgroundColor = '#22c55e';
+                stations.forEach(function (st) {
+                    if (!st.coords) return;
+                    const el = document.createElement('div');
+                    el.className = 'station-pin';
+                    el.innerHTML = '<span class="station-pin-dot" style="background:#22c55e"></span>';
                     el.addEventListener('click', function (e) {
                         e.stopPropagation();
-                        if (typeof selectPreset === 'function') selectPreset(st.id, st.lat, st.lon, st.name);
-                        closeMapScreen();
+                        // Show the badge popup
+                        showPopup(stationPopupHtml({
+                            id: st.site_id,
+                            name: st.name,
+                            lat: st.coords.lat,
+                            lon: st.coords.lon
+                        }));
                     });
-                    new maplibregl.Marker({ element: el }).setLngLat([st.lon, st.lat]).addTo(_stationMap);
+                    const m = new maplibregl.Marker({ element: el });
+                    m.setLngLat([st.coords.lon, st.coords.lat]);
+                    m.addTo(_stationMap);
                 });
             }
+            plotSavedSpotStars();
         });
         // Tap-to-pin click handler
         _stationMap.on('click', function (e) {
-            var fab = document.getElementById('map-fab');
-            if (fab && fab.innerText === '\u2715') {
-                var lat = e.lngLat.lat, lng = e.lngLat.lng;
-                var tempEl = document.createElement('div');
-                tempEl.className = 'temp-pin-dot';
-                if (window._tempMarker) { try { window._tempMarker.remove(); } catch (ex) {} }
-                window._tempMarker = new maplibregl.Marker({ element: tempEl }).setLngLat([lng, lat]).addTo(_stationMap);
-                var pill = document.getElementById('pin-name-pill');
-                if (pill) {
-                    pill.style.display = 'flex';
-                    var coords = document.querySelector('.pin-pill-coords');
-                    if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N ' + Number(lng).toFixed(4) + '\u00b0W';
-                }
-                window._pendingPinCoords = { lat: lat, lng: lng };
-                fab.textContent = '+';
-                fab.style.background = '#23402a';
-                fab.style.border = '2px solid #2d5a3a';
-            }
+            onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
         _stationMap.addControl(new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 }
@@ -243,22 +251,24 @@ export async function openMapScreen() {
 window.openMapScreen = openMapScreen;
 
 export function closeMapScreen() {
-    var screen = document.getElementById('map-screen');
+    const screen = document.getElementById('map-screen');
     if (screen) screen.classList.add('map-screen-hidden');
     // Restore the old UI top nav
-    var topNav = document.getElementById('top-nav');
+    const topNav = document.getElementById('top-nav');
     if (topNav) topNav.style.display = '';
     mapScreenOpen = false;
+    const popup = document.getElementById('pin-popup');
+    if (popup) { popup.style.display = 'none'; popup.hidden = true; }
 }
 window.closeMapScreen = closeMapScreen;
 
 // ── Drawer toggle ──────────────────────────────────────────────────────────────────
-var _drawerOpen = false;
+let _drawerOpen = false;
 
 export function toggleDrawer() {
     _drawerOpen = !_drawerOpen;
-    var drawer = document.getElementById('map-drawer');
-    var arrow = document.getElementById('map-handle-arrow');
+    const drawer = document.getElementById('map-drawer');
+    const arrow = document.getElementById('map-handle-arrow');
     if (drawer) {
         if (_drawerOpen) {
             drawer.classList.add('map-drawer-open');
@@ -274,11 +284,11 @@ export function toggleDrawer() {
 window.toggleDrawer = toggleDrawer;
 
 // ── Temporary pin for spot-drop —─────────────────────────────────────────────────
-var _tempPin = null;  // { el, lat, lng }
+let _tempPin = null;  // { el, lat, lng }
 
 function dropTempPin(lat, lng) {
     clearTempPin();
-    var el = document.createElement('div');
+    const el = document.createElement('div');
     el.className = 'station-pin';
     el.innerHTML = '<span class="temp-pin-dot"></span>';
     addMarker(el, [lng, lat]);
@@ -289,7 +299,7 @@ function dropTempPin(lat, lng) {
 function clearTempPin() {
     // Remove temp pin element and its marker entry
     if (_tempPin) {
-        for (var i = 0; i < _mapMarkers.length; i++) {
+        for (let i = 0; i < _mapMarkers.length; i++) {
             if (_mapMarkers[i].el === _tempPin.el) {
                 _tempPin.el.remove();
                 _mapMarkers.splice(i, 1);
@@ -302,12 +312,12 @@ function clearTempPin() {
 
 // ── Floating name pill ───────────────────────────────────────────────────────────
 function showNamePill(lat, lng) {
-    var pill = document.getElementById('pin-name-pill');
+    let pill = document.getElementById('pin-name-pill');
     if (!pill) {
         pill = document.createElement('div');
         pill.id = 'pin-name-pill';
         pill.className = 'pin-name-pill';
-        var modal = document.getElementById('map-modal');
+        const modal = document.getElementById('map-screen');
         if (modal) modal.appendChild(pill);
     }
     pill.innerHTML = '<div class="pin-pill-body"><input type="text" id="pin-pill-input" maxlength="60" placeholder="Name this spot" value="">' +
@@ -315,15 +325,15 @@ function showNamePill(lat, lng) {
         '<button class="pin-pill-cancel" onclick="cancelPinSpot()">\u2715</button></div>' +
         '<div class="pin-pill-coords"></div>';
     pill.style.display = 'flex';
-    var coords = document.querySelector('.pin-pill-coords');
+    const coords = document.querySelector('.pin-pill-coords');
     if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N, ' + Number(lng).toFixed(4) + '\u00b0W';
-    var input = document.getElementById('pin-pill-input');
+    const input = document.getElementById('pin-pill-input');
     if (input) { input.focus(); input.select(); }
     _pendingPin = { lat: lat, lng: lng };
 }
 
 function hideNamePill() {
-    var pill = document.getElementById('pin-name-pill');
+    const pill = document.getElementById('pin-name-pill');
     if (pill) { pill.style.display = 'none'; pill.hidden = true; }
 }
 
@@ -331,8 +341,8 @@ var _pendingPin = null;
 
 export function confirmPinSpot() {
     if (!_pendingPin) return;
-    var input = document.getElementById('pin-pill-input');
-    var label = input ? input.value.trim().slice(0, SPOT_LABEL_MAX) : '';
+    const input = document.getElementById('pin-pill-input');
+    let label = input ? input.value.trim().slice(0, SPOT_LABEL_MAX) : '';
     if (!label) label = 'Spot at ' + Number(_pendingPin.lat).toFixed(4) + '\u00b0N ' + Number(_pendingPin.lng).toFixed(4) + '\u00b0W';
     hideNamePill();
     doSavePin(_pendingPin.lat, _pendingPin.lng, label);
@@ -348,11 +358,11 @@ window.cancelPinSpot = cancelPinSpot;
 
 async function doSavePin(lat, lng, label) {
     clearTempPin();
-    var id = await saveSpotAt(lat, lng, label);
+    const id = await saveSpotAt(lat, lng, label);
     if (!id) { if (typeof showToast === 'function') showToast('Could not save that spot.', 'warn', 4000); return; }
     if (typeof showToast === 'function') showToast('Saved: ' + label, 'success', 2500);
     await loadFavoriteSpots();
-    try { await refreshStationMap(mapCenter()); } catch (err) {}
+    try { await refreshStationMap(mapCenter()); } catch (err) { }
 }
 
 // ── Map click handler ─────────────────────────────────────────────────────────────
@@ -360,30 +370,40 @@ export function onMapClick(e) {
     if (!e || e.lat == null || e.lng == null) {
         if (!e || !e.latlng) return;
     }
-    var lat = e.lat != null ? e.lat : e.latlng.lat;
-    var lng = e.lng != null ? e.lng : e.latlng.lng;
+    const lat = e.lat != null ? e.lat : e.latlng.lat;
+    const lng = e.lng != null ? e.lng : e.latlng.lng;
+
+    // Hide standard popup if open
+    const popup = document.getElementById('pin-popup');
+    if (popup && !popup.hidden) {
+        popup.style.display = 'none';
+        popup.hidden = true;
+    }
+
     // If FAB pin-drop mode is active, drop a pin
     if (_fabPinning) {
         dropTempPin(lat, lng);
         showNamePill(lat, lng);
         // Reset FAB to + state
         _fabPinning = false;
-        var fab = document.getElementById('map-fab');
+        const fab = document.getElementById('map-fab');
         if (fab) { fab.textContent = '+'; fab.style.background = '#23402a'; fab.style.border = '2px solid #2d5a3a'; }
         return;
     }
+
     // Dismiss existing pill if present
     if (_pendingPin) {
-        var pill = document.getElementById('pin-name-pill');
+        const pill = document.getElementById('pin-name-pill');
         if (pill) { pill.style.display = 'none'; pill.hidden = true; }
         _pendingPin = null;
+        clearTempPin();
     }
 }
 
 // ── Drawer content: spots + river results ──────────────────────────────────────
 function renderDrawerContent() {
     // Populate saved spots row
-    var spotsRow = document.getElementById('drawer-spots');
+    const spotsRow = document.getElementById('drawer-spots');
     if (spotsRow && typeof renderDrawerSpots === 'function') renderDrawerSpots(spotsRow);
     // Populate river results
     renderDrawerResults();
@@ -395,59 +415,68 @@ export function onDrawerFilter() {
 window.onDrawerFilter = onDrawerFilter;
 
 function renderDrawerResults() {
-    var results = document.getElementById('drawer-results');
-    var filterEl = document.getElementById('drawer-search');
+    const results = document.getElementById('drawer-results');
+    const filterEl = document.getElementById('drawer-search');
     if (!results) return;
-    var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
-    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    const pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    const wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
     if (!pool || !pool.length) { results.innerHTML = ''; return; }
-    var filter = filterEl ? filterEl.value.trim().toLowerCase() : '';
+    const filter = filterEl ? filterEl.value.trim().toLowerCase() : '';
     // Build site_id → waterbody name lookup
-    var siteToWb = {};
+    const siteToWb = {};
     if (wbs) {
-        for (var i = 0; i < wbs.length; i++) {
-            var wb = wbs[i];
+        for (let i = 0; i < wbs.length; i++) {
+            const wb = wbs[i];
             if (wb.gauge && wb.gauge.site_id) siteToWb[wb.gauge.site_id] = wb.name;
             if (wb.related_gauges) {
-                for (var j = 0; j < wb.related_gauges.length; j++)
+                for (let j = 0; j < wb.related_gauges.length; j++)
                     siteToWb[wb.related_gauges[j].site_id] = wb.name;
             }
         }
     }
     // Group pool by waterbody name
-    var groups = {};
-    for (var k = 0; k < pool.length; k++) {
-        var s = pool[k];
+    const groups = {};
+    for (let k = 0; k < pool.length; k++) {
+        const s = pool[k];
         if (!s || !s.site_id || !s.coords) continue;
-        var wbName = siteToWb[s.site_id] || s.name.replace(/ at .*$/, '').replace(/ near .*$/, '');
+        const wbName = siteToWb[s.site_id] || s.name.replace(/ at .*$/, '').replace(/ near .*$/, '');
         if (!groups[wbName]) groups[wbName] = [];
         groups[wbName].push(s);
     }
-    var names = Object.keys(groups);
+    let names = Object.keys(groups);
     // Filter
     if (filter) {
-        names = names.filter(function(n) {
+        names = names.filter(function (n) {
             if (n.toLowerCase().indexOf(filter) >= 0) return true;
-            for (var fi = 0; fi < groups[n].length; fi++) {
+            for (let fi = 0; fi < groups[n].length; fi++) {
                 if (groups[n][fi].name.toLowerCase().indexOf(filter) >= 0 ||
                     groups[n][fi].site_id.indexOf(filter) >= 0) return true;
             }
             return false;
         });
     }
-    names.sort(function(a, b) { return a.localeCompare(b); });
+    names.sort(function (a, b) { return a.localeCompare(b); });
     if (!names.length) { results.innerHTML = ''; return; }
-    var html = '';
-    for (var gi = 0; gi < names.length; gi++) {
-        var name = names[gi];
-        var items = groups[name];
+    let html = '';
+    for (let gi = 0; gi < names.length; gi++) {
+        const name = names[gi];
+        const items = groups[name];
+        const fullName = items[0].name;
+
+        // Clean Subtitle Split: Extract "near ___" or "at ___" for the subtitle
+        let subTitle = fullName;
+        const match = fullName.match(/(?:near|at)\s+.*/i);
+        if (match) {
+            subTitle = match[0];
+        }
+
         html += '<div class="result-row" onclick="mapResultSelect(\'' +
             escapeJsString(items[0].site_id) + '\', ' +
             Number(items[0].coords.lat) + ', ' +
             Number(items[0].coords.lon) + ', \'' +
             escapeJsString(name) + '\')">' +
             '<div class="result-row-name">' + escapeHtml(name) + '</div>' +
-            '<div class="result-row-sub">' + escapeHtml(items[0].name) + '</div></div>';
+            '<div class="result-row-sub">' + escapeHtml(subTitle) + '</div></div>';
     }
     results.innerHTML = html;
 }
@@ -459,7 +488,7 @@ export function mapResultSelect(siteId, lat, lon, name) {
         if (_stationMap.getZoom() < 11) _stationMap.setZoom(11);
     }
     if (_drawerOpen) toggleDrawer();
-    var handleStation = document.getElementById('map-handle-station');
+    const handleStation = document.getElementById('map-handle-station');
     if (handleStation) handleStation.textContent = name;
 }
 window.mapResultSelect = mapResultSelect;
@@ -469,7 +498,7 @@ var _fabPinning = false;
 
 export function toggleFabSpotDrop() {
     _fabPinning = !_fabPinning;
-    var fab = document.getElementById('map-fab');
+    const fab = document.getElementById('map-fab');
     if (fab) {
         if (_fabPinning) {
             fab.textContent = '\u2715';
@@ -483,7 +512,7 @@ export function toggleFabSpotDrop() {
             fab.style.border = '2px solid #2d5a3a';
             var handle = document.getElementById('map-handle-station');
             if (handle) {
-                var activeName = document.getElementById('active-station-name');
+                const activeName = document.getElementById('active-station-name');
                 handle.textContent = activeName ? activeName.textContent : 'Select a river';
             }
             cancelPinSpot();

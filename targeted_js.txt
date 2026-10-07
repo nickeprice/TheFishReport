@@ -1,0 +1,1052 @@
+/**
+ * src/features/map/map.js - interactive station map (CDN MapLibre GL JS).
+ *
+ * public: openMapScreen(), closeMapScreen(), refreshStationMap(center), mapCenter()
+ *
+ * Uses MapLibre GL JS v4.7.1 loaded from CDN (unpkg). Satellite imagery base
+ * with gauge pins, saved spot stars, and tap-to-pin drop via FAB.
+ *
+ * Pin colour: green = live, grey = dormant.
+ *
+ * ES module.
+ */
+import { logDebug } from '../../shared/debug.js';
+import { apiGetJson } from '../../shared/api.js';
+import { State } from '../../shared/state.js';
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
+import { showToast } from '../../shared/ui.js';
+import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt, renderDrawerSpots } from './spots.js';
+import { savedSpotPopupHtml } from './spots-map.js';
+import { selectPreset } from '../station/picker.js';
+
+const maplibregl = window.maplibregl;
+
+// ── Map constants ──────────────────────────────────────────────────────────────
+var MAP_DEFAULT_CENTER = [-122.2943, 47.1932];
+var MAP_START_ZOOM = 11;
+var MAP_STYLE = { version: 8, sources: {
+    satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg'], tileSize: 256, attribution: '\u00a9 Esri' }
+}, layers: [
+    { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 19 }
+] };
+
+var _stationMap = null;
+var _mapMarkers = [];
+var _spotsPlotted = 0;
+
+export function loadLeaflet() { return Promise.resolve(true); }
+window.loadLeaflet = loadLeaflet;
+
+// ── Pin helpers ──────────────────────────────────────────────────────────────────
+export function mapPinHasReading(station) {
+    if (!station) return false;
+    return (station.cfs !== undefined && station.cfs !== null) ||
+           (station.gage !== undefined && station.gage !== null);
+}
+
+export function mapPinColor(station) {
+    return mapPinHasReading(station) ? '#22c55e' : '#94a3b8';
+}
+
+export function mapLegalText(rule) {
+    if (rule === '24hr') return 'Open all day';
+    if (rule === 'daylight') return 'Daylight window (1h either side of sunrise/sunset)';
+    return 'Hours not verified \u2014 check the regulations';
+}
+
+export function stationPopupHtml(s) {
+    var cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
+    var gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
+    return '<b>' + escapeHtml(s.name || s.id) + '</b><br>' +
+        escapeHtml(cfs + ' CFS \u00b7 ' + gage + ' ft') + '<br>' +
+        escapeHtml(mapLegalText(s.legal_hours)) + '<br>' +
+        '<a href="#" onclick="selectPreset(\'' + escapeJsString(s.id) + '\',' +
+        Number(s.lat) + ',' + Number(s.lon) + ',\'' + escapeJsString(s.name || s.id) +
+        '\');return false;">Fish this gauge</a>';
+}
+
+// ── Map centre ───────────────────────────────────────────────────────────────────
+export function mapCenter() {
+    if (_stationMap) {
+        var c = _stationMap.getCenter();
+        if (c) return [c.lat, c.lng];
+    }
+    if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
+        return [State.userGPSCoords.lat, State.userGPSCoords.lon];
+    }
+    try {
+        var stored = JSON.parse(localStorage.getItem('active_station') || 'null');
+        if (stored && stored.lat != null && stored.lon != null) return [stored.lat, stored.lon];
+    } catch (e) {}
+    return [MAP_DEFAULT_CENTER[1], MAP_DEFAULT_CENTER[0]];  // [lat, lng]
+}
+window.mapCenter = mapCenter;
+
+// ── Marker helpers ───────────────────────────────────────────────────────────────
+function makePinEl(color) {
+    var el = document.createElement('div');
+    el.className = 'station-pin';
+    el.innerHTML = '<span class="station-pin-dot" style="background:' + color + '"></span>';
+    return el;
+}
+
+function makeStarEl() {
+    var el = document.createElement('div');
+    el.className = 'spot-pin';
+    el.innerHTML = '<span class="spot-pin-dot">\u2605</span>';
+    return el;
+}
+
+function addMarker(el, lngLat) {
+    if (!_stationMap) return;
+    var m = new maplibregl.Marker({ element: el, lngLat: lngLat });
+    m.addTo(_stationMap);
+    _mapMarkers.push({ el: el, lng: lngLat[0], lat: lngLat[1] });
+}
+
+function removeAllMarkers() {
+    for (var i = 0; i < _mapMarkers.length; i++) _mapMarkers[i].el.remove();
+    _mapMarkers = [];
+    _spotsPlotted = 0;
+}
+
+// ── Popup overlay ─────────────────────────────────────────────────────────────────
+function showPopup(html) {
+    var popup = document.getElementById('pin-popup');
+    if (popup) {
+        var body = document.getElementById('pin-popup-body');
+        if (body) body.innerHTML = html;
+        popup.hidden = false;
+        popup.style.display = 'block';
+    }
+}
+
+// ── Saved spot stars ──────────────────────────────────────────────────────────────
+export function plotSavedSpotStars() {
+    if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
+    var plotted = 0;
+    spotsState.rows.forEach(function (sp) {
+        if (sp.latitude == null || sp.longitude == null) return;
+        var el = makeStarEl();
+        el.addEventListener('click', function () { showPopup(savedSpotPopupHtml(sp)); });
+        addMarker(el, [Number(sp.longitude), Number(sp.latitude)]);
+        plotted++;
+    });
+    _spotsPlotted = plotted;
+    return plotted;
+}
+
+// ── Refresh stations ──────────────────────────────────────────────────────────────
+export async function refreshStationMap(center) {
+    if (!_stationMap || typeof apiGetJson !== 'function') {
+        return { count: 0, note: '', error: null, status: 0, spots: 0 };
+    }
+    var out = { count: 0, note: '', error: null, status: 0, spots: 0 };
+    var res = await apiGetJson('/api/nearby_stations?lat=' + center[0] + '&lon=' + center[1],
+                              { label: 'nearby_stations' });
+    removeAllMarkers();
+    if (res.ok) {
+        var stations = (res.data && res.data.stations) ? res.data.stations : [];
+        var dotEl = document.createElement('div');
+        dotEl.className = 'map-centre-dot';
+        addMarker(dotEl, [center[1], center[0]]);
+        stations.forEach(function (s) {
+            if (s.lat == null || s.lon == null) return;
+            var el = makePinEl(mapPinColor(s));
+            el.addEventListener('click', function () { showPopup(stationPopupHtml(s)); });
+            addMarker(el, [s.lon, s.lat]);
+        });
+        out.count = stations.length;
+        out.note = (res.data && res.data.note) || '';
+        logDebug('Station map: ' + stations.length + ' gauge(s) plotted', 'MAP');
+    } else {
+        out.error = res.error;
+        out.status = res.status;
+        out.note = res.serverMessage || '';
+    }
+    out.spots = plotSavedSpotStars();
+    return out;
+}
+
+// ── Open / close map modal ─────────────────────────────────────────────────────────
+export var mapScreenOpen = false;
+window.mapScreenOpen = mapScreenOpen;
+
+export async function openMapScreen() {
+    var screen = document.getElementById('map-screen');
+    if (!screen) return;
+    var topNav = document.getElementById('top-nav');
+    if (topNav) topNav.style.display = 'none';
+    screen.classList.remove('map-screen-hidden');
+    var loading = document.getElementById('map-loading');
+    if (loading) loading.style.display = 'block';
+    var handleStation = document.getElementById('map-handle-station');
+    if (handleStation) {
+        var activeName = document.getElementById('active-station-name');
+        handleStation.textContent = activeName ? activeName.textContent : 'Select a river';
+    }
+    mapScreenOpen = true;
+    var box = document.getElementById('map-container');
+    if (!box) return;
+    if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
+    if (!_stationMap) {
+        _stationMap = new maplibregl.Map({
+            container: box,
+            style: MAP_STYLE,
+            center: MAP_DEFAULT_CENTER,
+            zoom: MAP_START_ZOOM
+        });
+        // Render gauge pins on load
+        _stationMap.on('load', function () {
+            var stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.stations;
+            if (stations) {
+                Object.values(stations).forEach(function (st) {
+                    var el = document.createElement('div');
+                    el.className = 'station-pin-dot';
+                    el.style.backgroundColor = '#22c55e';
+                    el.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        if (typeof selectPreset === 'function') selectPreset(st.id, st.lat, st.lon, st.name);
+                        closeMapScreen();
+                    });
+                    new maplibregl.Marker({ element: el }).setLngLat([st.lon, st.lat]).addTo(_stationMap);
+                });
+            }
+        });
+        // Tap-to-pin click handler
+        _stationMap.on('click', function (e) {
+            var fab = document.getElementById('map-fab');
+            if (fab && fab.innerText === '\u2715') {
+                var lat = e.lngLat.lat, lng = e.lngLat.lng;
+                var tempEl = document.createElement('div');
+                tempEl.className = 'temp-pin-dot';
+                if (window._tempMarker) { try { window._tempMarker.remove(); } catch (ex) {} }
+                window._tempMarker = new maplibregl.Marker({ element: tempEl }).setLngLat([lng, lat]).addTo(_stationMap);
+                var pill = document.getElementById('pin-name-pill');
+                if (pill) {
+                    pill.style.display = 'flex';
+                    var coords = document.querySelector('.pin-pill-coords');
+                    if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N ' + Number(lng).toFixed(4) + '\u00b0W';
+                }
+                window._pendingPinCoords = { lat: lat, lng: lng };
+                fab.textContent = '+';
+                fab.style.background = '#23402a';
+                fab.style.border = '2px solid #2d5a3a';
+            }
+        });
+        _stationMap.addControl(new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 }
+        }));
+    }
+    if (loading) loading.style.display = 'none';
+}
+window.openMapScreen = openMapScreen;
+
+export function closeMapScreen() {
+    var screen = document.getElementById('map-screen');
+    if (screen) screen.classList.add('map-screen-hidden');
+    // Restore the old UI top nav
+    var topNav = document.getElementById('top-nav');
+    if (topNav) topNav.style.display = '';
+    mapScreenOpen = false;
+}
+window.closeMapScreen = closeMapScreen;
+
+// ── Drawer toggle ──────────────────────────────────────────────────────────────────
+var _drawerOpen = false;
+
+export function toggleDrawer() {
+    _drawerOpen = !_drawerOpen;
+    var drawer = document.getElementById('map-drawer');
+    var arrow = document.getElementById('map-handle-arrow');
+    if (drawer) {
+        if (_drawerOpen) {
+            drawer.classList.add('map-drawer-open');
+            if (arrow) arrow.textContent = '\u25bc';
+            // Populate spots + results on first open
+            renderDrawerContent();
+        } else {
+            drawer.classList.remove('map-drawer-open');
+            if (arrow) arrow.textContent = '\u25b2';
+        }
+    }
+}
+window.toggleDrawer = toggleDrawer;
+
+// ── Temporary pin for spot-drop —─────────────────────────────────────────────────
+var _tempPin = null;  // { el, lat, lng }
+
+function dropTempPin(lat, lng) {
+    clearTempPin();
+    var el = document.createElement('div');
+    el.className = 'station-pin';
+    el.innerHTML = '<span class="temp-pin-dot"></span>';
+    addMarker(el, [lng, lat]);
+    // last marker in the list is the new temp pin
+    _tempPin = _mapMarkers.length > 0 ? { el: _mapMarkers[_mapMarkers.length - 1].el, lat: lat, lng: lng } : null;
+}
+
+function clearTempPin() {
+    // Remove temp pin element and its marker entry
+    if (_tempPin) {
+        for (var i = 0; i < _mapMarkers.length; i++) {
+            if (_mapMarkers[i].el === _tempPin.el) {
+                _tempPin.el.remove();
+                _mapMarkers.splice(i, 1);
+                break;
+            }
+        }
+        _tempPin = null;
+    }
+}
+
+// ── Floating name pill ───────────────────────────────────────────────────────────
+function showNamePill(lat, lng) {
+    var pill = document.getElementById('pin-name-pill');
+    if (!pill) {
+        pill = document.createElement('div');
+        pill.id = 'pin-name-pill';
+        pill.className = 'pin-name-pill';
+        var modal = document.getElementById('map-modal');
+        if (modal) modal.appendChild(pill);
+    }
+    pill.innerHTML = '<div class="pin-pill-body"><input type="text" id="pin-pill-input" maxlength="60" placeholder="Name this spot" value="">' +
+        '<button class="pin-pill-save" onclick="confirmPinSpot()">\u2713</button>' +
+        '<button class="pin-pill-cancel" onclick="cancelPinSpot()">\u2715</button></div>' +
+        '<div class="pin-pill-coords"></div>';
+    pill.style.display = 'flex';
+    var coords = document.querySelector('.pin-pill-coords');
+    if (coords) coords.textContent = Number(lat).toFixed(4) + '\u00b0N, ' + Number(lng).toFixed(4) + '\u00b0W';
+    var input = document.getElementById('pin-pill-input');
+    if (input) { input.focus(); input.select(); }
+    _pendingPin = { lat: lat, lng: lng };
+}
+
+function hideNamePill() {
+    var pill = document.getElementById('pin-name-pill');
+    if (pill) { pill.style.display = 'none'; pill.hidden = true; }
+}
+
+var _pendingPin = null;
+
+export function confirmPinSpot() {
+    if (!_pendingPin) return;
+    var input = document.getElementById('pin-pill-input');
+    var label = input ? input.value.trim().slice(0, SPOT_LABEL_MAX) : '';
+    if (!label) label = 'Spot at ' + Number(_pendingPin.lat).toFixed(4) + '\u00b0N ' + Number(_pendingPin.lng).toFixed(4) + '\u00b0W';
+    hideNamePill();
+    doSavePin(_pendingPin.lat, _pendingPin.lng, label);
+}
+window.confirmPinSpot = confirmPinSpot;
+
+export function cancelPinSpot() {
+    clearTempPin();
+    hideNamePill();
+    _pendingPin = null;
+}
+window.cancelPinSpot = cancelPinSpot;
+
+async function doSavePin(lat, lng, label) {
+    clearTempPin();
+    var id = await saveSpotAt(lat, lng, label);
+    if (!id) { if (typeof showToast === 'function') showToast('Could not save that spot.', 'warn', 4000); return; }
+    if (typeof showToast === 'function') showToast('Saved: ' + label, 'success', 2500);
+    await loadFavoriteSpots();
+    try { await refreshStationMap(mapCenter()); } catch (err) {}
+}
+
+// ── Map click handler ─────────────────────────────────────────────────────────────
+export function onMapClick(e) {
+    if (!e || e.lat == null || e.lng == null) {
+        if (!e || !e.latlng) return;
+    }
+    var lat = e.lat != null ? e.lat : e.latlng.lat;
+    var lng = e.lng != null ? e.lng : e.latlng.lng;
+    // If FAB pin-drop mode is active, drop a pin
+    if (_fabPinning) {
+        dropTempPin(lat, lng);
+        showNamePill(lat, lng);
+        // Reset FAB to + state
+        _fabPinning = false;
+        var fab = document.getElementById('map-fab');
+        if (fab) { fab.textContent = '+'; fab.style.background = '#23402a'; fab.style.border = '2px solid #2d5a3a'; }
+        return;
+    }
+    // Dismiss existing pill if present
+    if (_pendingPin) {
+        var pill = document.getElementById('pin-name-pill');
+        if (pill) { pill.style.display = 'none'; pill.hidden = true; }
+        _pendingPin = null;
+    }
+}
+
+// ── Drawer content: spots + river results ──────────────────────────────────────
+function renderDrawerContent() {
+    // Populate saved spots row
+    var spotsRow = document.getElementById('drawer-spots');
+    if (spotsRow && typeof renderDrawerSpots === 'function') renderDrawerSpots(spotsRow);
+    // Populate river results
+    renderDrawerResults();
+}
+
+export function onDrawerFilter() {
+    renderDrawerResults();
+}
+window.onDrawerFilter = onDrawerFilter;
+
+function renderDrawerResults() {
+    var results = document.getElementById('drawer-results');
+    var filterEl = document.getElementById('drawer-search');
+    if (!results) return;
+    var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!pool || !pool.length) { results.innerHTML = ''; return; }
+    var filter = filterEl ? filterEl.value.trim().toLowerCase() : '';
+    // Build site_id → waterbody name lookup
+    var siteToWb = {};
+    if (wbs) {
+        for (var i = 0; i < wbs.length; i++) {
+            var wb = wbs[i];
+            if (wb.gauge && wb.gauge.site_id) siteToWb[wb.gauge.site_id] = wb.name;
+            if (wb.related_gauges) {
+                for (var j = 0; j < wb.related_gauges.length; j++)
+                    siteToWb[wb.related_gauges[j].site_id] = wb.name;
+            }
+        }
+    }
+    // Group pool by waterbody name
+    var groups = {};
+    for (var k = 0; k < pool.length; k++) {
+        var s = pool[k];
+        if (!s || !s.site_id || !s.coords) continue;
+        var wbName = siteToWb[s.site_id] || s.name.replace(/ at .*$/, '').replace(/ near .*$/, '');
+        if (!groups[wbName]) groups[wbName] = [];
+        groups[wbName].push(s);
+    }
+    var names = Object.keys(groups);
+    // Filter
+    if (filter) {
+        names = names.filter(function(n) {
+            if (n.toLowerCase().indexOf(filter) >= 0) return true;
+            for (var fi = 0; fi < groups[n].length; fi++) {
+                if (groups[n][fi].name.toLowerCase().indexOf(filter) >= 0 ||
+                    groups[n][fi].site_id.indexOf(filter) >= 0) return true;
+            }
+            return false;
+        });
+    }
+    names.sort(function(a, b) { return a.localeCompare(b); });
+    if (!names.length) { results.innerHTML = ''; return; }
+    var html = '';
+    for (var gi = 0; gi < names.length; gi++) {
+        var name = names[gi];
+        var items = groups[name];
+        html += '<div class="result-row" onclick="mapResultSelect(\'' +
+            escapeJsString(items[0].site_id) + '\', ' +
+            Number(items[0].coords.lat) + ', ' +
+            Number(items[0].coords.lon) + ', \'' +
+            escapeJsString(name) + '\')">' +
+            '<div class="result-row-name">' + escapeHtml(name) + '</div>' +
+            '<div class="result-row-sub">' + escapeHtml(items[0].name) + '</div></div>';
+    }
+    results.innerHTML = html;
+}
+
+// When a river card is tapped — select it and close the map
+export function mapResultSelect(siteId, lat, lon, name) {
+    if (_stationMap) {
+        _stationMap.setCenter([lon, lat]);
+        if (_stationMap.getZoom() < 11) _stationMap.setZoom(11);
+    }
+    if (_drawerOpen) toggleDrawer();
+    var handleStation = document.getElementById('map-handle-station');
+    if (handleStation) handleStation.textContent = name;
+}
+window.mapResultSelect = mapResultSelect;
+
+// ── FAB toggle: + / X state ─────────────────────────────────────────────────────
+var _fabPinning = false;
+
+export function toggleFabSpotDrop() {
+    _fabPinning = !_fabPinning;
+    var fab = document.getElementById('map-fab');
+    if (fab) {
+        if (_fabPinning) {
+            fab.textContent = '\u2715';
+            fab.style.background = '#5a3030';
+            fab.style.border = '2px solid #8a5050';
+            var handle = document.getElementById('map-handle-station');
+            if (handle) handle.textContent = 'Tap the map to drop a pin';
+        } else {
+            fab.textContent = '+';
+            fab.style.background = '#23402a';
+            fab.style.border = '2px solid #2d5a3a';
+            var handle = document.getElementById('map-handle-station');
+            if (handle) {
+                var activeName = document.getElementById('active-station-name');
+                handle.textContent = activeName ? activeName.textContent : 'Select a river';
+            }
+            cancelPinSpot();
+        }
+    }
+}
+window.toggleFabSpotDrop = toggleFabSpotDrop;
+
+// ── Shims for backward compatibility ─────────────────────────────────────────────
+export async function showStationMap() { await openMapScreen(); }
+window.showStationMap = showStationMap;
+
+export function startSpotPick() { openMapScreen(); }
+window.startSpotPick = startSpotPick;
+
+export async function onSpotPick(e) { onMapClick(e); }
+
+// Legacy aliases (removed old modal names)
+export var mapModalOpen = mapScreenOpen;
+window.mapModalOpen = mapModalOpen;
+export async function openMapModal() { return openMapScreen(); }
+window.openMapModal = openMapModal;
+export function closeMapModal() { return closeMapScreen(); }
+window.closeMapModal = closeMapModal;
+/**
+ * src/features/station/search.js - USGS site search (gauge id or river name).
+ *
+ * public: searchStation()
+ *
+ * Source: the modernized WDFN OGC API (waterservices/nwis is decommissioned in
+ * Q1 2027). The state filter comes from the region registry (state_name), NOT a
+ * hardcoded `stateCd=wa`, so adding a state does not touch this file.
+ * ES module.
+ */
+import { logDebug } from '../../shared/debug.js';
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
+const WDFN_LOCATIONS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items';
+const WDFN_LATEST = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/latest-continuous/items';
+
+export function searchRegionStateName() {
+    const r = (typeof window !== 'undefined' && window.REGIONS) ? window.REGIONS.WA : null;
+    return (r && r.state_name) || 'Washington';
+}
+
+// WDFN returns GeoJSON: coordinates are [lon, lat] and the id carries a USGS- prefix.
+export function wdfnLocationsToStations(feats) {
+    const out = [];
+    (feats || []).forEach(function (f) {
+        const p = f.properties || {};
+        const coords = (f.geometry && f.geometry.coordinates) || [];
+        if (!p.id || coords.length < 2) return;
+        out.push({
+            id: String(p.id).replace('USGS-', ''),
+            name: p.monitoring_location_name || String(p.id),
+            lat: coords[1],
+            lon: coords[0]
+        });
+    });
+    return out;
+}
+
+export function presetButtonHtml(id, name, lat, lon) {
+    // USGS station text is third-party data: escape it for BOTH the HTML body and the
+    // JS string literal inside the onclick attribute (never interpolate it raw).
+    return '<button class="preset-btn" onclick="selectPreset(\'' + escapeJsString(id) + '\', ' +
+        Number(lat) + ', ' + Number(lon) + ', \'' + escapeJsString(name) + '\')" style="margin:5px 0;">' +
+        '<span>' + escapeHtml(name) + '</span> <span class="preset-id">' + escapeHtml(id) + '</span></button>';
+}
+
+export function searchErrorHtml(msg) {
+    return '<div style="color:var(--accent-red); font-weight:bold; padding:8px;">\u274c ' + msg + '</div>';
+}
+
+// G3 (Phase 2.4): when there is no network, WDFN search cannot work — disable the
+// input and point the angler at the static discovery pool. Re-enabled automatically.
+export function updateSearchAvailability() {
+    const input = document.getElementById('station-search');
+    if (!input) return;
+    const offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    input.disabled = offline;
+    input.placeholder = offline ? 'Search unavailable offline — use the quick picker below' : 'Search by USGS station ID or river name';
+    const results = document.getElementById('search-results');
+    if (offline && results) {
+        results.style.display = 'block';
+        results.innerHTML = searchErrorHtml('Search is unavailable offline. Use the station presets or GPS lookup below.');
+    }
+}
+if (typeof window !== 'undefined') {
+    if (window.addEventListener) {
+        window.addEventListener('online', updateSearchAvailability);
+        window.addEventListener('offline', updateSearchAvailability);
+    }
+    updateSearchAvailability();
+}
+
+export async function searchStation() {
+    // G3 (Phase 2.4): hard guard even if the input was somehow still enabled.
+    const offlineNow = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    if (offlineNow) {
+        const rb = document.getElementById('search-results');
+        if (rb) {
+            rb.style.display = 'block';
+            rb.innerHTML = searchErrorHtml('Search is unavailable offline. Use the station presets or GPS lookup below.');
+        }
+        return;
+    }
+    const term = document.getElementById('station-search').value.trim();
+    const resultsBox = document.getElementById('search-results');
+
+    if (!term) return;
+    resultsBox.style.display = 'block';
+    resultsBox.innerHTML = '<div style="color:var(--accent-yellow); font-weight:bold; padding:8px;">Searching...</div>';
+
+    // 1. Exact 8-digit gauge id -> one monitoring-locations record (name + coords).
+    if (term.match(/^\d{8}$/)) {
+        resultsBox.innerHTML = '<div style="color:var(--accent-yellow); font-weight:bold; padding:8px;">Fetching metadata...</div>';
+        try {
+            const res = await fetch(WDFN_LOCATIONS + '?id=USGS-' + encodeURIComponent(term) + '&limit=1');
+            const data = await res.json();
+            const hits = wdfnLocationsToStations(data && data.features);
+            resultsBox.innerHTML = hits.length
+                ? presetButtonHtml(hits[0].id, hits[0].name, hits[0].lat, hits[0].lon)
+                : searchErrorHtml('USGS Station ID not found.');
+        } catch (e) {
+            resultsBox.innerHTML = searchErrorHtml('Search Error.');
+            logDebug('USGS Search error: ' + e.message, 'ERR');
+        }
+        return;
+    }
+
+    // 2. River-name search: CQL2 LIKE over the registry state's STREAM sites, then keep
+    //    only the ones reporting live discharge/gage (the old "active stations" filter).
+    const stateName = searchRegionStateName();
+    resultsBox.innerHTML = '<div style="color:var(--accent-yellow); font-weight:bold; padding:8px;">Searching ' + stateName + ' rivers...</div>';
+    try {
+        // NWIS names are uppercase; strip LIKE wildcards so the term is matched literally.
+        const safe = term.toUpperCase().replace(/[%_']/g, '');
+        const filter = "monitoring_location_name LIKE '%" + safe + "%'";
+        const lres = await fetch(WDFN_LOCATIONS + '?filter=' + encodeURIComponent(filter) + '&filter-lang=cql2-text'
+            + '&state_name=' + encodeURIComponent(stateName) + '&site_type_code=ST&limit=25');
+        const ldata = await lres.json();
+        const found = wdfnLocationsToStations(ldata && ldata.features);
+        if (!found.length) {
+            resultsBox.innerHTML = searchErrorHtml('No matching stations found.');
+            return;
+        }
+
+        // Second step: which of those gauges actually report live readings right now?
+        const liveIds = {};
+        const ids = found.map(function (s) { return 'USGS-' + s.id; }).join(',');
+        const vres = await fetch(WDFN_LATEST + '?monitoring_location_id=' + ids + '&parameter_code=00060,00065&limit=200');
+        const vdata = await vres.json();
+        ((vdata && vdata.features) || []).forEach(function (f) {
+            liveIds[String((f.properties || {}).monitoring_location_id).replace('USGS-', '')] = true;
+        });
+        const results = Object.keys(liveIds).length
+            ? found.filter(function (s) { return liveIds[s.id]; })
+            : found;   // if the live check failed, still offer the matches
+
+        resultsBox.innerHTML = '<div style="color:var(--text-muted); font-size:10px; padding:4px;">Showing top ' + Math.min(10, results.length) + ' matches:</div>';
+        results.slice(0, 10).forEach(function (s) {
+            resultsBox.innerHTML += presetButtonHtml(s.id, s.name, s.lat, s.lon);
+        });
+    } catch (e) {
+        resultsBox.innerHTML = searchErrorHtml('Search Error.');
+        logDebug('USGS search error: ' + e.message, 'ERR');
+    }
+}
+window.searchStation = searchStation;
+/**
+ * src/features/station/picker.js - station modal, GPS pick and presets.
+ * public: openStationModal(), closeStationModal(), selectPreset(),
+ *         calcDistance(), useGPS(), renderPresets(),
+ *         togglePresetFav(siteId), PRESET_FAV_KEY
+ * ES module.
+ */
+import { logDebug } from '../../shared/debug.js';
+import { loadWaterReport } from '../telemetry/report.js';
+import { loadFavoriteSpots } from '../map/spots.js';
+import { State } from '../../shared/state.js';
+import { escapeHtml, escapeJsString } from '../../shared/format.js';
+// --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
+export function openStationModal() {
+    document.getElementById('station-modal').style.display = 'block';
+    document.getElementById('gps-status').innerText = '';
+    // WS-5: paint the private saved-spot list (cache first, then the server if signed in).
+    if (typeof loadFavoriteSpots === 'function') loadFavoriteSpots();
+    // WS-6: render all 15 regional preset buttons from the registry.
+    renderPresets();
+}
+
+// ── Preset Favorites (localStorage) ────────────────────────────────────────────
+export var PRESET_FAV_KEY = 'preset_favorites';
+window.PRESET_FAV_KEY = PRESET_FAV_KEY;
+
+function loadFavs() {
+    try { var r = localStorage.getItem(PRESET_FAV_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; }
+}
+function saveFavs(arr) {
+    try { localStorage.setItem(PRESET_FAV_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+
+export function togglePresetFav(siteId) {
+    var arr = loadFavs();
+    var idx = arr.indexOf(siteId);
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(siteId);
+    saveFavs(arr);
+    renderPresets();
+}
+window.togglePresetFav = togglePresetFav;
+
+// ── Filter handler ──────────────────────────────────────────────────────────────
+export function onPresetFilter() {
+    renderPresets();
+}
+window.onPresetFilter = onPresetFilter;
+
+// ── Card-based river presets with search-as-you-type filter ─────────────────────
+// Renders a 2-column grid of cards. Each card has a river name header and inline
+// gauge rows. Multi-gauge rivers (Puyallup) show all options inline — no collapse.
+// Starred cards float to top.
+export function renderPresets() {
+    var list = document.getElementById('preset-list');
+    var filterEl = document.getElementById('preset-filter');
+    if (!list) return;
+    var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!pool || !pool.length) { list.innerHTML = ''; return; }
+
+    var filter = filterEl ? filterEl.value.trim().toLowerCase() : '';
+
+    // site_id → waterbody name
+    var siteToWb = {};
+    if (wbs) {
+        for (var i = 0; i < wbs.length; i++) {
+            var wb = wbs[i];
+            if (wb.gauge && wb.gauge.site_id) siteToWb[wb.gauge.site_id] = wb.name;
+            if (wb.related_gauges) {
+                for (var j = 0; j < wb.related_gauges.length; j++)
+                    siteToWb[wb.related_gauges[j].site_id] = wb.name;
+            }
+        }
+    }
+
+    var favs = loadFavs();
+
+    // Group pool entries by waterbody name
+    var groups = {};
+    for (var k = 0; k < pool.length; k++) {
+        var s = pool[k];
+        if (!s || !s.site_id || !s.coords) continue;
+        var wbName = siteToWb[s.site_id] || s.name.replace(/ at .*$/, '').replace(/ near .*$/, '');
+        if (!groups[wbName]) groups[wbName] = [];
+        groups[wbName].push(s);
+    }
+
+    // Filter groups by search query
+    var names = Object.keys(groups);
+    if (filter) {
+        names = names.filter(function (n) {
+            var match = n.toLowerCase().indexOf(filter) >= 0;
+            if (!match) {
+                // Also match gauge names within
+                for (var fi = 0; fi < groups[n].length; fi++) {
+                    if (groups[n][fi].name.toLowerCase().indexOf(filter) >= 0 ||
+                        groups[n][fi].site_id.indexOf(filter) >= 0) { match = true; break; }
+                }
+            }
+            return match;
+        });
+    }
+
+    // Sort: starred → rest, alphabetical within each
+    names.sort(function (a, b) {
+        var aFav = groups[a].some(function (s) { return favs.indexOf(s.site_id) >= 0; });
+        var bFav = groups[b].some(function (s) { return favs.indexOf(s.site_id) >= 0; });
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
+        return a.localeCompare(b);
+    });
+
+    if (!names.length) { list.innerHTML = '<div class="preset-empty">No rivers match &quot;' + escapeHtml(filterEl ? filterEl.value : '') + '&quot;</div>'; return; }
+
+    var html = '';
+    for (var gi = 0; gi < names.length; gi++) {
+        var name = names[gi];
+        var items = groups[name];
+        var anyFav = items.some(function (s) { return favs.indexOf(s.site_id) >= 0; });
+        var starClass = anyFav ? '' : '';
+
+        html += '<div class="preset-card">' +
+            '<div class="preset-card-header">' +
+            '<span class="preset-card-star" onclick="togglePresetFav(\'' +
+            escapeJsString(items[0].site_id) + '\')">' + (anyFav ? '\u2605' : '\u2606') + '</span> ' +
+            escapeHtml(name) + '</div>';
+
+        for (var si = 0; si < items.length; si++) {
+            var s = items[si];
+            var sfav = favs.indexOf(s.site_id) >= 0;
+            html += '<button class="preset-card-row" onclick="selectPreset(\'' +
+                escapeJsString(s.site_id) + '\', ' + Number(s.coords.lat) + ', ' +
+                Number(s.coords.lon) + ', \'' + escapeJsString(s.name) + '\')">' +
+                '<span class="preset-card-star-sm" onclick="event.stopPropagation();togglePresetFav(\'' +
+                escapeJsString(s.site_id) + '\')">' + (sfav ? '\u2605' : '\u2606') + '</span> ' +
+                escapeHtml(s.name) + ' <span class="preset-card-id">' +
+                escapeHtml(s.site_id) + '</span></button>';
+        }
+        html += '</div>';
+    }
+    list.innerHTML = html;
+}
+window.renderPresets = renderPresets;
+window.openStationModal = openStationModal;
+
+export function closeStationModal() {
+    document.getElementById('station-modal').style.display = 'none';
+}
+window.closeStationModal = closeStationModal;
+
+export function selectPreset(id, lat, lon, name, isGps) {
+    window.activeDateOffset = 0;
+    const station = { id: id, lat: lat, lon: lon, name: name, isGps: !!isGps };
+    localStorage.setItem('active_station', JSON.stringify(station));
+    logDebug("Selected Station: " + name + " (" + id + ")", "STATE");
+    closeStationModal();
+    loadWaterReport();
+}
+
+// Haversine distance in miles
+export function calcDistance(lat1, lon1, lat2, lon2) {
+    const R = 3958.8; // Radius of Earth in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// GPS pick. On ANY failure the modal stays OPEN with a retry hint - it is never
+// closed out from under the angler. The old auto-fallback straight to the Puyallup
+// default (selectPreset -> closeStationModal) is what made "nearest river" look like
+// it "failed and closed out of the menu". Retry = tap the same button again (useGPS
+// stays bound to it).
+export function useGPS() {
+    const status = document.getElementById('gps-status');
+    status.innerText = "Waiting for GPS (grant the location prompt)...";
+    if (!navigator.geolocation) {
+        status.innerText = "Geolocation is not supported on this device \u2014 pick a river below or search by name/ID.";
+        return;
+    }
+    let settled = false;
+    const watchdog = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        status.innerText = "GPS took too long. Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+        logDebug("GPS location timed out - modal left open for retry", "ERR");
+    }, 15000);
+    navigator.geolocation.getCurrentPosition(async function(pos) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(watchdog);
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        // Hold the fix privately: mapCenter() centres on it and logData() can enrich the
+        // private catch row. Never surfaced in the public feed or debug UI.
+        State.userGPSCoords = { lat: lat, lon: lon };
+        status.innerText = "Captured position. Searching nearby USGS gauges...";
+        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const fetchTimer = setTimeout(function () { if (controller) controller.abort(); }, 10000);
+        try {
+            // Same-origin server-side USGS lookup (reliable on mobile). Retry once if the
+            // first response is empty OR errors (a cold Cloudflare tunnel connection can
+            // return an aborted body on the very first request). The real status/body is
+            // logged so an upstream USGS outage is distinguishable from a code bug.
+            let timeSeries = null;
+            let lastErr = null;
+            for (let attempt = 0; attempt < 2; attempt++) {
+                const response = await fetch('/api/nearby_stations?lat=' + lat + '&lon=' + lon, { cache: "no-store", signal: controller ? controller.signal : undefined });
+                const bodyText = await response.text();
+                if (!response.ok) {
+                    lastErr = "HTTP " + response.status;
+                    logDebug("nearby_stations " + response.status + ": " + String(bodyText).slice(0, 200), "ERR");
+                } else {
+                    let data = null;
+                    try { data = JSON.parse(bodyText); } catch (pe) { lastErr = "bad JSON"; }
+                    timeSeries = (data && data.stations) ? data.stations : [];
+                    if (timeSeries.length > 0) break;
+                }
+                if (attempt === 0) await new Promise(function (r) { setTimeout(r, 700); });
+            }
+            if (!timeSeries || timeSeries.length === 0) {
+                status.innerText = "No USGS stations found nearby" + (lastErr ? " (" + lastErr + ")" : "") +
+                    ". Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+                logDebug("nearby_stations returned 0 stations" + (lastErr ? " (" + lastErr + ")" : ""), "ERR");
+                return;
+            }
+            const stationsMap = {};
+            timeSeries.forEach(function(ts) {
+                const sCode = ts.id;
+                const sName = ts.name;
+                const sLat = ts.lat;
+                const sLon = ts.lon;
+                const sDist = ts.distance_mi;
+                if (!stationsMap[sCode]) {
+                    stationsMap[sCode] = {
+                        id: sCode,
+                        name: sName,
+                        lat: sLat,
+                        lon: sLon,
+                        distance: (sDist !== undefined && sDist != null) ? sDist : calcDistance(lat, lon, sLat, sLon)
+                    };
+                }
+            });
+            const stationsList = Object.values(stationsMap);
+            stationsList.sort(function(a, b) { return a.distance - b.distance; });
+            if (stationsList.length > 0) {
+                const closest = stationsList[0];
+                status.innerText = "Found: " + closest.name + " (" + closest.distance.toFixed(1) + " mi)";
+                setTimeout(function() { selectPreset(closest.id, closest.lat, closest.lon, closest.name, true); }, 1500);
+            } else {
+                status.innerText = "No active gauge stations in range. Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+            }
+        } catch(e) {
+            status.innerText = "USGS search failed (" + e.message + "). Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+            logDebug("USGS GPS box error: " + e.message, "ERR");
+        } finally {
+            clearTimeout(fetchTimer);
+        }
+    }, function(err) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(watchdog);
+        const msg = (err && err.code === 3) ? "GPS timed out"
+            : (err && err.code === 1) ? "Location access was denied"
+            : "GPS is unavailable";
+        status.innerText = msg + ". Tap \u201CUse My GPS\u201D to retry, or pick a river below.";
+        logDebug("Geolocation error: " + (err ? err.message : "unknown"), "ERR");
+    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+}
+window.useGPS = useGPS;
+window.selectPreset = selectPreset;
+/**
+ * src/features/telemetry/report-render.js - water-report day-card rendering.
+ * Splintered from report.js. ES module.
+ */
+import { logDebug } from '../../shared/debug.js';
+import { provVal } from '../../shared/format.js';
+import { buildFishingHero, buildSpeciesCalendarHtml } from './hero.js';
+import { refreshZonePreview } from '../gear-sim/zone-core.js';
+import { activeDateOffset } from '../gear-sim/report-state.js';
+import { renderCfsTrend, refreshEscapement, refreshWdfwForecast, fetchCFSMomentum } from '../../services/water.js';
+import { formatTideRow } from './tide.js';
+
+/**
+ * Render the day cards, species calendar, tide, and environmental conditions.
+ * Extracted from loadWaterReport to keep files under 150 lines.
+ */
+export function renderReportDays(reports, station, rulesLoaded) {
+    if (!reports || !reports.length) {
+        logDebug('No river data to render', 'NET');
+        return rulesLoaded;
+    }
+    const first = reports[0];
+    const actId = first.site_id || station.id;
+
+    // Update station name from payload
+    if (first.site_name) {
+        document.getElementById('active-station-name').innerText = first.site_name.toUpperCase();
+    }
+    // Badge is now permanently "🗺️ Change River" — do not overwrite
+    // const badge = document.getElementById('active-station-badge');
+    // badge.innerText = (station.isGps ? "📍 GPS: " : "📌 USGS: ") + actId;
+
+    // Seasonal warning
+    let seasonalWarn = '';
+    if (first.seasonal_warning && first.seasonal_warning !== '') {
+        seasonalWarn = '<div class="seasonal-warning">' + provVal(first.seasonal_warning) + '</div>';
+    }
+
+    // Today's barometer / cloud / rain for the Gear Sim strike zone
+    if (typeof refreshZonePreview === 'function') refreshZonePreview();
+
+    let cardsHtml = '';
+    for (let i = 0; i < reports.length; i++) {
+        const rep = reports[i];
+        const dStyle = (i === activeDateOffset) ? "block" : "none";
+
+        // CFS + gage
+        const cfsVal = (provVal(rep.cfs) !== null) ? provVal(rep.cfs) + ' CFS' : '-- CFS';
+        const gageVal = (provVal(rep.gage) !== null) ? provVal(rep.gage) + ' ft Gauge Height' : '-- ft Gauge Height';
+
+        // Water quality
+        let waterQualityHtml = '';
+        const wt = provVal(rep.water_temp_f);
+        const tb = provVal(rep.turbidity_fnu);
+        if (wt !== null || tb !== null) {
+            const parts = [];
+            if (wt !== null) parts.push(Math.round(Number(wt)) + '°F');
+            if (tb !== null) parts.push(Number(tb).toFixed(0) + ' FNU');
+            waterQualityHtml = ' <span class="telemetry-sep">•</span> <span class="telemetry-water-quality">' + parts.join(' • ') + '</span>';
+        }
+
+                // Pressure trend for barometer and temp badges
+        const pressDelta = rep.press_delta;
+        let pressTrend = '\u2014';
+        let pressColor = '#ffffff';
+        if (pressDelta !== null && pressDelta !== undefined && pressDelta < -0.04) { pressTrend = '\u2193'; pressColor = 'var(--accent-red)'; }
+        else if (pressDelta !== null && pressDelta !== undefined && pressDelta > 0.04) { pressTrend = '\u2191'; pressColor = 'var(--accent-green)'; }
+cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dStyle + ';">' +
+            '<div class="card">' +
+            '<div class="sec-hdr">[ FISHING OUTLOOK ]</div>' +
+            buildFishingHero(rep) +
+            '<div class="sec-hdr">[ RIVER &amp; ENVIRONMENTAL CONDITIONS ]</div>' +
+            seasonalWarn +
+            '<div class="env-telemetry-row">' +
+              '<div class="telemetry-main">' +
+                '<span class="telemetry-val"><span class="cfs-val">' + cfsVal + '</span><span class="telemetry-sep">&bull;</span><span class="gage-val">' + gageVal + '</span></span>' +
+                waterQualityHtml +
+              '</div>' +
+              '<div class="telemetry-updated">' + (rep.updated_time || '') + '</div>' +
+            '</div>' +
+            (typeof formatTideRow === 'function' ? formatTideRow(rep.tide_chart, provVal(rep.tide_curve), provVal(rep.tide_points)) : '') +
+            '<div class="env-weather-solunar">' +
+              '<div class="env-stat-grid">' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'cloud_pct\')"><div class="env-badge-val">' + ((provVal(rep.weather_hour) && rep.weather_hour.cloud_pct != null) ? rep.weather_hour.cloud_pct : '--') + '%</div><div class="env-badge-lbl">Cloud Cover</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pop_pct\')"><div class="env-badge-val"><span class="precip-pop">--</span>%</div><div class="env-badge-lbl">Precip %</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'precip_in\')"><div class="env-badge-val"><span class="precip-vol">--</span>"</div><div class="env-badge-lbl">Precip Vol</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'pressure\')"><div class="env-badge-val" style="color:' + pressColor + ';">' + ((provVal(rep.weather_hour) && rep.weather_hour.pressure != null) ? rep.weather_hour.pressure : '--') + ' <span style="font-size:10px; font-weight:600;">inHg</span> ' + pressTrend + '</div><div class="env-badge-lbl">Barometer</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'air_temp_f\')"><div class="env-badge-val" style="color:' + pressColor + ';"><span class="air-temp">--</span>° ' + pressTrend + '</div><div class="env-badge-lbl">Temp</div></div>' +
+                '<div class="env-badge env-badge-tap" onclick="openHourlyPopup(\'wind_speed_mph\')"><div class="env-badge-val"><span class="wind-val">--</span></div><div class="env-badge-lbl">Wind</div></div>' +
+                '<div class="env-badge"><div class="env-badge-val solunar-split"><div class="solunar-half"><span class="solunar-val" style="color:#fbbf24;">' + (rep.sunrise || '--') + '</span><span class="solunar-sublbl">Sunrise</span></div><div class="solunar-half"><span class="solunar-val" style="color:#64d2ff;">' + (rep.sunset || '--') + '</span><span class="solunar-sublbl">Sunset</span></div></div><div class="env-badge-lbl">Sun / Set</div></div>' +
+                '<div class="env-badge"><div class="env-badge-val moon-pill">' + (rep.lunar_icon || '--') + '</div><div class="env-badge-lbl">Moon Phase</div></div>' +
+                '<div class="env-badge"><div class="env-badge-val solunar-split"><div class="solunar-half"><span class="solunar-val" style="color:#ffd60a;">' + (rep.moon_upper || '--') + '</span><span class="solunar-sublbl">Overhead</span></div><div class="solunar-half"><span class="solunar-val" style="color:#64d2ff;">' + (rep.moon_lower || '--') + '</span><span class="solunar-sublbl">Underfoot</span></div></div><div class="env-badge-lbl">Solunar</div></div>' +
+'</div>' +
+            '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
+            buildSpeciesCalendarHtml(provVal(rep.species_calendar), provVal(rep.esc_stocks)) +
+            '</div></div></div>';
+    }
+
+    // Render cards into DOM
+    const container = document.getElementById('water-report-cards');
+    if (container) container.innerHTML = cardsHtml;
+
+    // Rules
+    if (typeof renderCfsTrend === 'function' && actId) {
+        renderCfsTrend(actId, reports);
+    }
+
+    // Escapement + forecast
+    if (typeof refreshEscapement === 'function') {
+        refreshEscapement(actId);
+    }
+    if (typeof refreshWdfwForecast === 'function') {
+        refreshWdfwForecast(actId);
+    }
+    // CFS momentum
+    Promise.all([
+        typeof fetchCFSMomentum === 'function' ? fetchCFSMomentum(actId) : Promise.resolve()
+    ]).then(function () {
+        logDebug('Telemetry batch settled (CFS momentum)', 'NET');
+    });
+
+    return rulesLoaded;
+}

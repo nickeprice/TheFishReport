@@ -1,8 +1,26 @@
 # Fish Report — Active Plan
 
-## 🛠 UX Rework (Map-First Station Selector)
+## 🛠 Immediate Map Hotfixes & Polish
 
+- [ ] H1: Geolocate — trackUserLocation + showUserLocation
+      → map.js
+      [Detail → docs/PLAN_REFERENCE.md#hotfix-geolocate]
 
+- [ ] H2: Saved spots localStorage + star rendering on map
+      → spots.js, map.js
+      [Detail → docs/PLAN_REFERENCE.md#hotfix-spots]
+
+- [ ] H3: Name pill save/cancel wiring (no ghost pins)
+      → map.js
+      [Detail → docs/PLAN_REFERENCE.md#hotfix-pill]
+
+- [ ] H4: Glare-resistant pin popups (high-contrast flow cards)
+      → styles.css, map.js
+      [Detail → docs/PLAN_REFERENCE.md#hotfix-glare]
+
+- [ ] H5: Override sloppy USGS coords for Puyallup + Green
+      → washington.js
+      [Detail → docs/PLAN_REFERENCE.md#hotfix-coords]
 
 ## 🛠 Data Pipeline & Infrastructure
 

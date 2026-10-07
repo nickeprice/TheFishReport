@@ -119,7 +119,7 @@ export function renderFavoriteSpots() {
     addChip.className = 'spot-chip spot-chip-add';
     addChip.textContent = '+';
     addChip.title = 'Add a new spot from the map';
-    addChip.onclick = function () { if (typeof openMapModal === 'function') openMapModal(); };
+    addChip.onclick = function () { if (typeof window.openMapModal === 'function') window.openMapModal(); };
     chips.appendChild(addChip);
 }
 

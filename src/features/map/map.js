@@ -17,11 +17,8 @@ import { apiGetJson } from '../../shared/api.js';
 import { State } from '../../shared/state.js';
 import { escapeHtml, escapeJsString } from '../../shared/format.js';
 import { showToast } from '../../shared/ui.js';
-import { getStr } from '../gear-sim/inputs.js';
-import { setFieldValue } from '../../shared/forms.js';
-import { spotsState, SPOT_LABEL_MAX, spotsStatus, loadFavoriteSpots, saveSpotAt } from './spots.js';
+import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt } from './spots.js';
 import { savedSpotPopupHtml } from './spots-map.js';
-import { selectPreset } from '../station/picker.js';
 import { Map as MaplibreMap, Marker, GeolocateControl } from 'maplibre-gl';
 
 // ── Composite style: satellite base + road/label vector overlay ─────────────────

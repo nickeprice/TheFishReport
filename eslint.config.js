@@ -1,3 +1,5 @@
+import globals from 'globals';
+
 export default [
   {
     files: ['src/**/*.js'],
@@ -5,27 +7,10 @@ export default [
       sourceType: 'module',
       ecmaVersion: 'latest',
       globals: {
-        window: 'readonly',
-        document: 'readonly',
-        localStorage: 'readonly',
-        navigator: 'readonly',
-        fetch: 'readonly',
-        console: 'readonly',
-        prompt: 'readonly',
-        confirm: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        setInterval: 'readonly',
-        AbortController: 'readonly',
-        crypto: 'readonly',
-        URLSearchParams: 'readonly',
-        indexedDB: 'readonly',
-        require: 'readonly',
+        ...globals.browser,
+        ...globals.es2021,
         module: 'readonly',
-        isFinite: 'readonly',
-        isNaN: 'readonly',
-        decodeURIComponent: 'readonly',
-        EventSource: 'readonly',
+        require: 'readonly',
       },
     },
     rules: {

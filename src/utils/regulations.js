@@ -284,8 +284,8 @@ export function isDateInRange(targetDate, dateRangeStr) {
   if (parts.length < 2) return true;
 
   const y = targetDate.getFullYear();
-  let start = parseDateToken(parts[0], y);
-  let end = parseDateToken(parts[1], y);
+  const start = parseDateToken(parts[0], y);
+  const end = parseDateToken(parts[1], y);
 
   if (!start || !end) return true;
 
@@ -463,7 +463,7 @@ export function calculateSolarHours(date, lat = 47.1950, lon = -122.3020) {
 
     const H = isSunrise ? (360 - deg * Math.acos(cosH)) / 15 : (deg * Math.acos(cosH)) / 15;
     const T = H + RA - (0.06571 * t) - 6.622;
-    let UT = ((T - lngHour) % 24 + 24) % 24;
+    const UT = ((T - lngHour) % 24 + 24) % 24;
 
     // Timezone offset for America/Los_Angeles on given date
     const probe = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(UT), Math.round((UT % 1) * 60)));

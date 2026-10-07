@@ -73,8 +73,9 @@ export function mapCenter() {
         const c = _stationMap.getCenter();
         if (c) return [c.lat, c.lng];
     }
-    if (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null) {
-        return [State.userGPSCoords.lat, State.userGPSCoords.lon];
+    // State.userGPSCoords is stored as [lng, lat] array
+    if (State.userGPSCoords && State.userGPSCoords.length >= 2 && State.userGPSCoords[0] != null && State.userGPSCoords[1] != null) {
+        return [State.userGPSCoords[1], State.userGPSCoords[0]];  // return [lat, lng]
     }
     try {
         const stored = JSON.parse(localStorage.getItem('active_station') || 'null');
@@ -246,34 +247,33 @@ export async function openMapScreen() {
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
         // GeolocateControl for the familiar white icon — but we swap its
-        // click handler to use the app's known position (GPS fix, active
-        // station, or fallback default) instead of the browser Geolocation API
-        // which hangs on desktop/localhost.
+        // click handler to use a timed-out GPS call that falls back to mock
+        // coordinates on desktop so the button always works.
         const geolocateCtrl = new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: false },
             fitBoundsOptions: { padding: 100 }
         });
         _stationMap.addControl(geolocateCtrl);
-        // After the control renders, replace its button handler
+        // After the control renders, strip all MapLibre listeners via deep clone
+        // and attach our own handler that awaits getGPS() with fallback.
         requestAnimationFrame(function () {
             const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
-            if (geoBtn) {
-                const parent = geoBtn.parentElement;
-                if (parent) {
-                    const clone = document.createElement('button');
-                    clone.className = geoBtn.className;
-                    clone.title = 'Recenter map on your location';
-                    // Copy the geolocate crosshair icon from MapLibre's CSS
-                    const icon = document.createElement('div');
-                    icon.className = 'maplibregl-ctrl-icon';
-                    clone.appendChild(icon);
-                    clone.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        recenterMap();
-                    });
-                    parent.replaceChild(clone, geoBtn);
+            if (!geoBtn) return;
+            const parent = geoBtn.parentElement;
+            if (!parent) return;
+            // Deep-clone to drop all MapLibre event listeners
+            const clone = geoBtn.cloneNode(true);
+            clone.addEventListener('click', async function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                    var coords = await getGPS();  // returns [lng, lat] with 5s timeout + fallback
+                    _stationMap.jumpTo({ center: coords, zoom: MAP_START_ZOOM });
+                } catch (err) {
+                    alert('Could not determine your location.\n' + err.message);
                 }
-            }
+            });
+            parent.replaceChild(clone, geoBtn);
         });
     }
     if (loading) loading.style.display = 'none';

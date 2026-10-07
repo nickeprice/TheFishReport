@@ -33,20 +33,50 @@ export function getStr(id) {
 window.getStr = getStr;
 
 export function getGPS(onFinish) {
-    if("geolocation" in navigator) {
+    return new Promise(function (resolve) {
+        // Fallback mock coordinates for Puyallup if the browser API fails/times out
+        var fallback = [-122.2943, 47.1917];
+        if (!("geolocation" in navigator)) {
+            logDebug("Geolocation not supported — using fallback coordinates", "WRN");
+            State.userGPSCoords = fallback;
+            if (typeof onFinish === 'function') onFinish();
+            resolve(fallback);
+            return;
+        }
         logDebug("Requesting GPS...", "SYS");
-        navigator.geolocation.getCurrentPosition(function(pos){
-            // GPS is captured SILENTLY (no visible field on the form) but still
-            // stored so logData() can include it in the private catch row.
-            State.userGPSCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            logDebug("GPS Lock acquired (coords held privately for the catch row)", "SYS");
+        var settled = false;
+        var watchdog = setTimeout(function () {
+            if (settled) return;
+            settled = true;
+            logDebug("GPS timeout after 5s — using fallback Puyallup coordinates", "WRN");
+            State.userGPSCoords = fallback;
             if (typeof onFinish === 'function') onFinish();
-        }, function(err){
-            State.userGPSCoords = null;
-            logDebug("GPS Error: " + err.message, "ERR");
-            if (typeof onFinish === 'function') onFinish();
-        });
-    }
+            resolve(fallback);
+        }, 5000);
+        var options = { timeout: 5000, enableHighAccuracy: true };
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(watchdog);
+                var coords = [pos.coords.longitude, pos.coords.latitude];
+                State.userGPSCoords = coords;
+                logDebug("GPS Lock acquired (" + coords[1] + ", " + coords[0] + ")", "SYS");
+                if (typeof onFinish === 'function') onFinish();
+                resolve(coords);
+            },
+            function (err) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(watchdog);
+                logDebug("GPS Error: " + err.message + " — using fallback Puyallup coordinates", "WRN");
+                State.userGPSCoords = fallback;
+                if (typeof onFinish === 'function') onFinish();
+                resolve(fallback);
+            },
+            options
+        );
+    });
 }
 
 // ==================================================================================

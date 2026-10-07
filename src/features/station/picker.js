@@ -196,7 +196,7 @@ export function useGPS() {
         const lon = pos.coords.longitude;
         // Hold the fix privately: mapCenter() centres on it and logData() can enrich the
         // private catch row. Never surfaced in the public feed or debug UI.
-        State.userGPSCoords = { lat: lat, lon: lon };
+        State.userGPSCoords = [lon, lat];
         status.innerText = "Captured position. Searching nearby USGS gauges...";
         const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         const fetchTimer = setTimeout(function () { if (controller) controller.abort(); }, 10000);

@@ -77,8 +77,8 @@ export async function logData() {
         clientId: newUuid(),
         name: AuthState.name || 'Anonymous',
         time: getStr('log-datetime'),
-        gps: (State.userGPSCoords && State.userGPSCoords.lat != null && State.userGPSCoords.lon != null)
-            ? State.userGPSCoords.lat + ',' + State.userGPSCoords.lon
+        gps: (State.userGPSCoords && State.userGPSCoords.length >= 2 && State.userGPSCoords[0] != null && State.userGPSCoords[1] != null)
+            ? State.userGPSCoords[1] + ',' + State.userGPSCoords[0]
             : null,
         river: deriveRiverName(),
         flow: flowValue,

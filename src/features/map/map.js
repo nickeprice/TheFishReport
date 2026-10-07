@@ -245,15 +245,36 @@ export async function openMapScreen() {
         _stationMap.on('click', function (e) {
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
-        // Custom GPS recenter — uses app's known position (GPS fix, active station,
-        // or fallback default) instead of the browser Geolocation API which hangs
-        // on desktop/localhost.
-        const gpsBtn = document.createElement('button');
-        gpsBtn.className = 'map-gps-btn';
-        gpsBtn.textContent = '📍';
-        gpsBtn.title = 'Recenter map on your location';
-        gpsBtn.addEventListener('click', recenterMap);
-        screen.appendChild(gpsBtn);
+        // GeolocateControl for the familiar white icon — but we swap its
+        // click handler to use the app's known position (GPS fix, active
+        // station, or fallback default) instead of the browser Geolocation API
+        // which hangs on desktop/localhost.
+        const geolocateCtrl = new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: false },
+            fitBoundsOptions: { padding: 100 }
+        });
+        _stationMap.addControl(geolocateCtrl);
+        // After the control renders, replace its button handler
+        requestAnimationFrame(function () {
+            const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
+            if (geoBtn) {
+                const parent = geoBtn.parentElement;
+                if (parent) {
+                    const clone = document.createElement('button');
+                    clone.className = geoBtn.className;
+                    clone.title = 'Recenter map on your location';
+                    // Copy the geolocate crosshair icon from MapLibre's CSS
+                    const icon = document.createElement('div');
+                    icon.className = 'maplibregl-ctrl-icon';
+                    clone.appendChild(icon);
+                    clone.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        recenterMap();
+                    });
+                    parent.replaceChild(clone, geoBtn);
+                }
+            }
+        });
     }
     if (loading) loading.style.display = 'none';
 }

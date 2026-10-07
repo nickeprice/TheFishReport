@@ -23,9 +23,14 @@ import { Map as MaplibreMap, Marker, GeolocateControl, setWorkerUrl } from 'mapl
 // Disable off-thread rendering worker — Vite can't resolve MapLibre's worker URL
 setWorkerUrl('');
 
-// ── Map config ──────────────────────────────────────────────────────────────────
+// ── Map style: OSM raster tiles (proven tile server) ────────────────────────────
 var MAP_DEFAULT_CENTER = [-122.302, 47.195];  // [lng, lat]
 var MAP_START_ZOOM = 10;
+var MAP_STYLE = { version: 8, sources: {
+    osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '\u00a9 OpenStreetMap' }
+}, layers: [
+    { id: 'osm-base', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }
+] };
 
 var _stationMap = null;
 var _mapMarkers = [];
@@ -194,10 +199,9 @@ export async function openMapModal() {
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     var center = mapCenter();
     if (!_stationMap) {
-        // Use MapLibre built-in demo tiles to verify rendering works
         _stationMap = new MaplibreMap({
             container: box,
-            style: 'https://demotiles.maplibre.org/style.json',
+            style: MAP_STYLE,
             center: [center[1], center[0]],
             zoom: MAP_START_ZOOM,
             attribution: { compact: true }
@@ -219,13 +223,15 @@ window.openMapModal = openMapModal;
 
 export function closeMapModal() {
     var modal = document.getElementById('map-modal');
-    if (modal) {
-        modal.classList.add('map-modal-hidden');
-    }
+    if (modal) modal.classList.add('map-modal-hidden');
     // Reopen the station modal if it was open before the map
     if (_stationWasOpen) {
+        _stationWasOpen = false;
         var stationModal = document.getElementById('station-modal');
-        if (stationModal) stationModal.style.display = '';
+        // Must set 'block' — '' leaves CSS display:none in effect
+        if (stationModal) stationModal.style.display = 'block';
+        var gpsStatus = document.getElementById('gps-status');
+        if (gpsStatus) gpsStatus.innerText = '';
     }
     mapModalOpen = false;
 }

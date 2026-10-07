@@ -95,25 +95,7 @@ daynav.js, report.js, hero.js, and supabase.js.
 
 ---
 
-<a id="test-sanity"></a>
-## T3: Fix 8 Sanity Pass Failures
 
-**Current failures (all pre-existing, not from migration):**
-
-| # | Failure | Root cause hint | File(s) likely involved |
-|---|---------|----------------|-------------------------|
-| 1 | bead labels — Cheater float reads "Cheater 10" | Label logic in `tackle.js` or gear-options.js | `gear-options.js`, `tackle.js` |
-| 2 | escapement — missing `:updated_at` wiring | `water-escapement.js` formatting | `water-escapement.js` |
-| 3 | escapement — no `:updated_at` fallback wording | Same, fallback text | `water-escapement.js` |
-| 4 | water type guide — `loaded=false inWaterTypes=true` | `water-types.js` init | `water-types.js` |
-| 5 | hero — stale `hero-lbl` / fold label | `hero.js` section header | `hero.js` |
-| 6 | catch writes — missing `clientId` / `ignoreDuplicates` | `log.js` submission | `log.js` |
-| 7 | pending catches — badge, flush reset, or load order | `pending.js` | `pending.js` |
-| 8 | PLAN.md anchor → PLAN_REFERENCE.md | Orphaned anchors | `PLAN.md`, `PLAN_REFERENCE.md` |
-
-**Approach:** Fix each one in order, running `node sanity_pass.cjs --quiet` after each.
-
-**Files:** `sanity_pass.cjs`, plus the source files listed above.
 
 ---
 

@@ -49,11 +49,11 @@
       → chain-shooting.js, sim.js, solver.js, conftest.py, NEW test file
       [Detail → docs/PLAN_REFERENCE.md#test-playwright]
 
-- [ ] T2: Playwright water-report render test
+- [x] T2: Playwright water-report render test
       → daynav.js, report.js, report-render.js, conftest.py, NEW test file
       [Detail → docs/PLAN_REFERENCE.md#test-water]
 
-- [ ] T3: Fix 8 sanity_check failures
+- [x] T3: Fix 8 sanity_check failures
       → sanity_pass.cjs, various source files per failure
       [Detail → docs/PLAN_REFERENCE.md#test-sanity]
 

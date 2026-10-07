@@ -1,53 +1,6 @@
 # Fish Report — Active Plan
 
-## ⚡ Vite Migration — Foundation (DO FIRST)
-
-- [x] Phase V3: Entry Points (index.html + app.js)
-      → index.html, app.js
-      [Detail → docs/PLAN_REFERENCE.md#build-html]
-
-- [x] Phase V4: Test & CI Migration
-      → test_gear_sim_run.js, conftest.py, dev_server.py, ci-physics.yml, sanity.yml
-      [Detail → docs/PLAN_REFERENCE.md#build-tests]
-
-- [x] Phase V5: Tooling (sanity_pass, sw.js, docs, rules)
-      → sanity_pass.js, sw.js, vite.config.js (+plugin), SYMBOLS.md, .clinerules
-      [Detail → docs/PLAN_REFERENCE.md#build-tooling]
-
-- [x] Phase V6: Split Oversized Files (6/6 complete)
-      → water.js(→3), supabase.js(→3), chain.js(→3), tackle.js(→2), inputs.js(→2), report.js(→2)
-      [Detail → docs/PLAN_REFERENCE.md#build-split]
-
-- [x] Phase V7: Ship & Validate
-      → npm run build, full test suite, PWA offline, Vercel deploy
-      [Detail → docs/PLAN_REFERENCE.md#build-deploy]
-
-## 🛡 Pre-Validation: ESM Strict Mode & Tooling Stabilization
-
-- [x] PRE-1: Prevent Playwright HTTP 429 Rate Limit Timeouts
-      → src/app.js, src/mocks/
-      [Detail → docs/PLAN_REFERENCE.md#test-429-timeout]
-
-- [x] PRE-2: Enforce ESM Build-Time Safety (Flat Config)
-      → eslint.config.js, vite.config.js
-      [Detail → docs/PLAN_REFERENCE.md#test-esm-safety]
-
-- [x] PRE-3: Resolve Circular Dependencies (Batch 1: Catch Log)
-      → src/features/auth/auth.js, src/features/catch-log/*
-      [Detail → docs/PLAN_REFERENCE.md#test-catch-cycle]
-
-- [x] PRE-4: Resolve Circular Dependencies (Batch 2: Gear Sim)
-      → src/features/gear-sim/*
-      [Detail → docs/PLAN_REFERENCE.md#test-sim-cycle]
-
-- [x] PRE-5: Complete Global `no-undef` Sweep
-      → Remaining files in src/
-      [Detail → docs/PLAN_REFERENCE.md#test-undef-sweep]
 ## 🔬 Validation Suite
-
-- [x] T1: Playwright full-integration (gear sim)
-      → chain-shooting.js, sim.js, solver.js, conftest.py, NEW test file
-      [Detail → docs/PLAN_REFERENCE.md#test-playwright]
 
 - [ ] T6: HTML onclick handler audit
       → index.html, search for onclick= — verify each fn has window shim

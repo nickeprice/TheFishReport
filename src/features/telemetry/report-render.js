@@ -6,7 +6,7 @@ import { logDebug } from '../../shared/debug.js';
 import { provVal } from '../../shared/format.js';
 import { buildFishingHero, buildSpeciesCalendarHtml } from './hero.js';
 import { refreshZonePreview } from '../gear-sim/zone-core.js';
-import { activeDateOffset } from './daynav.js';
+import { activeDateOffset } from '../gear-sim/report-state.js';
 import { renderCfsTrend, refreshEscapement, refreshWdfwForecast, fetchCFSMomentum } from '../../services/water.js';
 import { formatTideRow } from './tide.js';
 
@@ -92,7 +92,7 @@ cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dSty
 '</div>' +
             '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
             buildSpeciesCalendarHtml(provVal(rep.species_calendar), provVal(rep.esc_stocks)) +
-            '</div></div>';
+            '</div></div></div>';
     }
 
     // Render cards into DOM

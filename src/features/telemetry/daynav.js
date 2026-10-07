@@ -10,11 +10,6 @@ import { refreshZonePreview } from '../gear-sim/zone-core.js';
 import { applyReportWeather } from '../../services/water.js';
 import { State } from '../../shared/state.js';
 import { checkRiverStatus } from '../../utils/regulations.js';
-// Re-export the OLD names from report-state.js for callers that still import them.
-// After Vite bundling, these are read-only live bindings. All state MUTATION
-// (setting reportsData / activeDateOffset) goes through window.* directly to
-// avoid Rollup minifier name collisions with Leaflet function names.
-export { reportsData, activeDateOffset } from '../gear-sim/report-state.js';
 
 export function stepDate(delta) {
     const ao = window.activeDateOffset || 0;
@@ -51,6 +46,7 @@ export function updateActiveDateUI() {
     // stale references after Vite bundling flattens module scopes.
     const ao = window.activeDateOffset || 0;
     const rd = window.reportsData || [];
+
     const d = new Date();
     d.setDate(d.getDate() + ao);
 

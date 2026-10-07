@@ -95,3 +95,8 @@ Let me know when you want to proceed to Phase [X+1]: [Name]."
 - Never run the same failing command more than twice; STOP and summarize.
 - No blocking foreground servers. Background + redirect to /tmp.
 - Do not write files via shell heredocs. Use the editor.
+
+# Local Testing Guardrails (CRITICAL)
+- When testing local servers, ALWAYS use `http://127.0.0.1` instead of `localhost` to bypass macOS IPv6 resolution delays.
+- NEVER pipe `curl` into `head` (e.g., `curl ... | head`) as it deadlocks keep-alive HTTP streams.
+- ALWAYS pass `--max-time 5` to `curl` commands to guarantee the process exits.

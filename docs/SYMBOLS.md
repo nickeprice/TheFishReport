@@ -194,10 +194,10 @@ pass fails.
   `resolveSpotStation(lat, lon, preferId)`, `spotGaugeText(spot)`, `selectSavedSpot(id)`,
   `deleteSavedSpot(id)` — a spot is a lat/lon YOU pick (weather at the point, flow from the
   resolved gauge), RLS-private, cached locally
-- **spots-map.js** — `savedSpotIcon()`, `savedSpotPopupHtml(spot)` — the saved-spot star
-  layer (Leaflet half, split out of spots.js)
+- **spots-map.js** — `savedSpotPopupHtml(spot)` — popup HTML for saved spots
 - **map.js** — `showStationMap()`, `loadLeaflet()`, `refreshStationMap(center)`,
-  `mapCenter()`, `startSpotPick()`, `onSpotPick(e)` — the "drop a point anywhere" picker
+  `mapCenter()`, `startSpotPick()`, `onSpotPick(e)` — MapLibre GL JS map with
+  raster tile layers, geolocate, and the "drop a point anywhere" spot picker
 
 ## src/app.js
 Bootstrap only — no public API. It wires `window.onload` to the globals above.

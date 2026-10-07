@@ -1,19 +1,4 @@
-<a id="ui-maplibre"></a>
-## Phase A6: MapLibre GL JS Upgrade (Satellite + Vector + Geolocate)
-
-**Change:** Replace Leaflet with MapLibre GL JS for smooth WebGL map rendering.
-Add tile layer toggle: vector street style + Esri satellite imagery.
-Add built-in GeolocateControl for the "you are here" marker.
-
-**Tiles (free, no API key):**
-- Street: OpenFreeMap Liberty (or VersaTiles)
-- Satellite: Esri World Imagery
-
-**Files:**
-- `src/features/map/map.js` — rewrite map init, marker/popup layer, station remapping for MapLibre
-- `package.json` — add `maplibre-gl` dependency
-
----
+<!-- Phase A6 complete — detail deleted per protocol -->
 
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper

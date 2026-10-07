@@ -2,9 +2,8 @@
 
 ## 🛠 Station Modal & Map
 
-- [ ] Phase A6: MapLibre GL JS upgrade (satellite + vector + geolocate)
+- [x] Phase A6: MapLibre GL JS upgrade (satellite + vector + geolocate)
       → map.js, package.json
-      [Detail → docs/PLAN_REFERENCE.md#ui-maplibre]
 
 ## 🛠 Data Pipeline & Infrastructure
 

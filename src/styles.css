@@ -553,14 +553,50 @@ td.empty-state { padding: 30px 10px; }
     border: 2px solid #0b0b0d;
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.85);
 }
-/* Leaflet chrome follows the app's dark palette instead of the default white. */
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+/* MapLibre GL JS: popup overlay, tile toggle, marker styling */
+.map-popup {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
     background: #1c1c1f;
     color: #e5e7eb;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #38383a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    max-width: 260px;
 }
-.leaflet-popup-content { font-size: 12px; line-height: 1.5; margin: 10px 12px; }
-.leaflet-popup-content a { color: var(--accent-blue); font-weight: bold; }
-.leaflet-container { background: #111; }
+.map-popup a { color: var(--accent-blue); font-weight: bold; }
+.map-popup[hidden] { display: none; }
+.map-tile-toggle-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+    background: #1c1c1f;
+    color: #e5e7eb;
+    border: 1px solid #38383a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    min-height: 36px;
+}
+.map-tile-toggle-btn:hover { background: #2c2c2e; }
+.map-tile-toggle-btn:active { background: #3a3a3c; }
+.map-centre-dot {
+    display: block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #38bdf8;
+    border: 2px solid #0b0b0d;
+    box-shadow: 0 0 6px rgba(56,189,248,0.5);
+}
+.station-pin { background: none; border: none; }
 
 /* --- WS-5 private saved spots (station modal; the data itself is RLS-protected) --- */
 .spot-status {

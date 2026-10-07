@@ -19,39 +19,13 @@ import { escapeHtml, escapeJsString } from '../../shared/format.js';
 import { showToast } from '../../shared/ui.js';
 import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt } from './spots.js';
 import { savedSpotPopupHtml } from './spots-map.js';
-import { Map as MaplibreMap, Marker, GeolocateControl } from 'maplibre-gl';
+import { Map as MaplibreMap, Marker, GeolocateControl, setWorkerUrl } from 'maplibre-gl';
+// Disable off-thread rendering worker — Vite can't resolve MapLibre's worker URL
+setWorkerUrl('');
 
-// ── Composite style: satellite base + road/label vector overlay ─────────────────
-var SATELLITE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg';
-var OVERLAY_URL = 'https://tiles.openfreemap.com/tiles/{z}/{x}/{y}.pbf';
+// ── Map config ──────────────────────────────────────────────────────────────────
 var MAP_DEFAULT_CENTER = [-122.302, 47.195];  // [lng, lat]
 var MAP_START_ZOOM = 10;
-
-// MapLibre style JSON: satellite raster + OpenFreeMap vector overlay for roads/labels
-var MAP_STYLE = { version: 8, sources: {
-    satellite: { type: 'raster', tiles: [SATELLITE_URL], tileSize: 256, attribution: '\u00a9 Esri' },
-    overlay: { type: 'vector', tiles: [OVERLAY_URL], minzoom: 0, maxzoom: 14, attribution: '\u00a9 OpenFreeMap' }
-}, layers: [
-    { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 19 },
-    // Roads
-    { id: 'road-highway', type: 'line', source: 'overlay', 'source-layer': 'road',
-      filter: ['in', 'class', 'motorway', 'trunk', 'primary'],
-      paint: { 'line-color': '#fff', 'line-opacity': 0.35, 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1, 14, 3] }, minzoom: 6 },
-    { id: 'road-secondary', type: 'line', source: 'overlay', 'source-layer': 'road',
-      filter: ['!in', 'class', 'motorway', 'trunk', 'primary'],
-      paint: { 'line-color': '#ddd', 'line-opacity': 0.2, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 14, 1.5] }, minzoom: 8 },
-    // Place labels (city/town names)
-    { id: 'place-label', type: 'symbol', source: 'overlay', 'source-layer': 'place',
-      filter: ['==', ['geometry-type'], 'Point'],
-      paint: { 'text-color': '#fff', 'text-halo-color': '#000', 'text-halo-width': 1.5,
-               'text-size': ['match', ['get', 'class'], 'city', 13, 'town', 10, 8],
-               'text-field': ['get', 'name'], 'text-max-width': 8 }, minzoom: 6 },
-    // Water labels (river names)
-    { id: 'water-label', type: 'symbol', source: 'overlay', 'source-layer': 'water_name',
-      paint: { 'text-color': '#b0d0f0', 'text-halo-color': '#000', 'text-halo-width': 1.2,
-               'text-size': 10, 'text-field': ['get', 'name'] },
-      placement: 'line-center', minzoom: 8 }
-] };
 
 var _stationMap = null;
 var _mapMarkers = [];
@@ -202,28 +176,24 @@ window.mapModalOpen = mapModalOpen;
 
 export async function openMapModal() {
     var modal = document.getElementById('map-modal');
-    var note = document.getElementById('station-map-note');
     if (!modal) return;
-    modal.removeAttribute('hidden');
-    modal.style.display = 'flex';
-    if (note) { note.removeAttribute('hidden'); note.textContent = 'Loading map\u2026'; }
+    modal.classList.remove('map-modal-hidden');
+    var box = document.getElementById('map-modal-container');
+    if (!box) return;
+    box.innerHTML = '<div class="map-loading">Loading the map\u2026</div>';
+    mapModalOpen = true;
     if (typeof loadFavoriteSpots === 'function') { try { await loadFavoriteSpots(); } catch (e) {} }
     var center = mapCenter();
     if (!_stationMap) {
-        var box = document.getElementById('map-modal-container');
-        if (!box) return;
+        // Use MapLibre built-in demo tiles to verify rendering works
         _stationMap = new MaplibreMap({
             container: box,
-            style: MAP_STYLE,
+            style: 'https://demotiles.maplibre.org/style.json',
             center: [center[1], center[0]],
             zoom: MAP_START_ZOOM,
             attribution: { compact: true }
         });
-        _stationMap.on('click', function (e) {
-            var p = document.getElementById('station-popup');
-            if (p) { p.style.display = 'none'; p.hidden = true; }
-            onMapClick(e);
-        });
+        _stationMap.on('click', function (e) { onMapClick(e); });
         _stationMap.addControl(new GeolocateControl({
             positionOptions: { enableHighAccuracy: false }, fitBoundsOptions: { padding: 100 }
         }));
@@ -232,28 +202,16 @@ export async function openMapModal() {
     }
     try {
         var out = await refreshStationMap(center);
-        if (note) {
-            var spotsN = (typeof spotsState !== 'undefined' && spotsState.rows.length)
-                ? ' \u00b7 ' + spotsState.rows.length + ' saved spot(s) (star).' : '';
-            if (out.error) note.textContent = 'Could not load nearby gauges (' + out.error + ')' +
-                ' \u2014 use the presets or GPS above.' + (out.spots ? ' Your saved spots (star) are still shown.' : '');
-            else if (out.note) note.textContent = out.note;
-            else if (out.count) note.textContent = out.count + ' nearest gauge(s) \u2014 grey = dormant, green = live.' + spotsN;
-            else note.textContent = 'No live gauges found nearby.' + spotsN;
-        }
     } catch (e) {
         logDebug('Station map feed failed: ' + e.message, 'MAP');
-        if (note) note.textContent = 'Could not load nearby gauges.';
     }
-    mapModalOpen = true;
 }
 window.openMapModal = openMapModal;
 
 export function closeMapModal() {
     var modal = document.getElementById('map-modal');
     if (modal) {
-        modal.setAttribute('hidden', '');
-        modal.style.display = '';
+        modal.classList.add('map-modal-hidden');
     }
     mapModalOpen = false;
 }

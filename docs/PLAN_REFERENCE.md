@@ -1,31 +1,3 @@
-<a id="fixing-map-cfs"></a>
-## F4: Fix Map CFS/Gauge Values + New Data Sources
-
-**Goal:** All gauge popups on the map show real-time CFS and gauge height, not "--". Add new data sources for forecasts, dam releases, and tides.**
-
-**Problem:** `/api/nearby_stations` returns station list but may not include `cfs`/`gage` fields.
-
-**Approach:**
-1. Inspect what the API actually returns (run a test fetch)
-2. If missing, fetch real-time USGS data for each gauge individually using `fetchCfsReadingsWdfn()` on the first marker render
-3. Cache the readings so the user doesn't wait for N API calls
-
-**New Data Sources to Integrate:**
-1. **NOAA NWRFC (Northwest River Forecast Center)** — 10-day deterministic flow forecasts. Tells your users when the Puyallup or Green will blow out and when it will drop back into fishable shape.
-   - API: `https://api.waterdata.usgs.gov/nwrfc/` (or directly via NWRFC REST)
-2. **USACE CWMS Data API (Army Corps of Engineers)** — Live release schedules and pool elevations for Howard Hanson Dam (Green River) and Mud Mountain Dam (White River). If the Corps opens the spillway, users need to know before the water reaches them.
-   - API: `https://cwms-data.usace.army.mil/cwms-data/`
-3. **NOAA CO-OPS API (Tides & Currents)** — Station-specific water level predictions for the lower Puyallup, Nisqually, and Green rivers. Salmon push in on the tides.
-   - API: `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter`
-
-**Future Data Sources (add as separate F-phases after core fixings):**
-4. **USGS 3DEP (3D Elevation Program)** — High-res DEMs for riverbed gradient and slope calculations (Phase D drift physics)
-5. **OpenWater API (EPA)** — Stream order and velocity estimations for hydraulic drag
-6. **Data.wa.gov Socrata API (WDFW)** — Hatchery escapement datasets via JSON for run timing cards
-
-**Files:** `map.js` (hydrate cfs/gage for map markers), `src/services/water-forecast.js` (new: NWRFC), `src/services/water-dam.js` (new: USACE CWMS), `src/services/water-tide-noaa.js` (new: CO-OPS endpoint)
-
----
 
 <a id="fixing-run-timing"></a>
 ## F5: Fix Run & Timing Section

@@ -2,7 +2,7 @@
 
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
-- [ ] F4: Fix map CFS/gauge values showing "--"
+- [x] F4: Fix map CFS/gauge values showing "--"
       → src/features/map/map.js, src/services/water-gauge.js
       [Detail → docs/PLAN_REFERENCE.md#fixing-map-cfs]
 

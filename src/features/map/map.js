@@ -380,21 +380,44 @@ export async function openMapScreen() {
                     var pinColor = (st.gauge_type === 'seasonal') ? '#eab308' : '#22c55e';
                     var el = document.createElement('div');
                     el.className = 'station-pin';
+                    el.dataset.siteId = st.site_id;
+                    el.dataset.siteName = st.name;
+                    el.dataset.lat = st.coords.lat;
+                    el.dataset.lon = st.coords.lon;
                     el.innerHTML = '<span class="station-pin-dot" style="background:' + pinColor + '"></span>';
-                    el.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        showStationPopup({ id: st.site_id, name: st.name, lat: st.coords.lat, lon: st.coords.lon });
-                    });
+                    // MapLibre handles marker clicks through its own event system.
+                    // Store marker data for the map click handler to resolve.
                     var m = new maplibregl.Marker({ element: el });
                     m.setLngLat([st.coords.lon, st.coords.lat]);
                     m.addTo(_stationMap);
-                    _mapMarkers.push({ el: m.getElement(), lng: st.coords.lon, lat: st.coords.lat });
+                    _mapMarkers.push({ el: m.getElement(), siteId: st.site_id, name: st.name, lat: st.coords.lat, lon: st.coords.lon });
                 });
             }
             plotSavedSpotStars();
         });
-        // Tap-to-pin click handler
+        // Tap-to-pin click handler — also handles marker clicks via data attributes
         _stationMap.on('click', function (e) {
+            // Check if a marker was clicked (MapLibre fires map click even on marker taps)
+            var pixel = _stationMap.project(e.lngLat);
+            var containerRect = _stationMap.getContainer().getBoundingClientRect();
+            var margin = 12;
+            for (var mi = 0; mi < _mapMarkers.length; mi++) {
+                var mk = _mapMarkers[mi];
+                if (!mk.el) continue;
+                var rect = mk.el.getBoundingClientRect();
+                if (rect) {
+                    // Convert marker's screen position to map-relative pixel coords
+                    var mx = rect.left + rect.width / 2 - containerRect.left;
+                    var my = rect.top + rect.height / 2 - containerRect.top;
+                    var dx = Math.abs(pixel.x - mx);
+                    var dy = Math.abs(pixel.y - my);
+                    if (dx < margin && dy < margin) {
+                        showStationPopup({ id: mk.siteId, name: mk.name, lat: mk.lat, lon: mk.lon });
+                        return;
+                    }
+                }
+            }
+            // No marker hit — standard map click behavior
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
         // GeolocateControl for the familiar white icon — but we strip its broken

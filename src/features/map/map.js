@@ -19,7 +19,6 @@ import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt, renderDrawer
 import { savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
 import { getGPS } from '../gear-sim/inputs.js';
-import { fetchCfsReadingsWdfn } from '../../services/water-gauge.js';
 
 const maplibregl = window.maplibregl;
 
@@ -95,23 +94,6 @@ export function mapPinColor(station) {
     // Green = permanent or off-season seasonal gauge with data
     if (mapPinHasReading(station)) return '#22c55e';
     // Grey = permanent gauge temporarily unreachable
-// Look up legal hours for a station from the local REGIONS registry as fallback.
-function lookupLocalLegalHours(siteId) {
-    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
-    if (!wbs || !siteId) return null;
-    for (var i = 0; i < wbs.length; i++) {
-        var wb = wbs[i];
-        if (wb.gauge && wb.gauge.site_id === siteId) return wb.legal_hours || null;
-        var rels = wb.related_gauges;
-        if (rels) {
-            for (var j = 0; j < rels.length; j++) {
-                if (rels[j].site_id === siteId) return wb.legal_hours || null;
-            }
-        }
-    }
-    return null;
-}
-window.lookupLocalLegalHours = lookupLocalLegalHours;
     return '#94a3b8';
 }
 
@@ -125,19 +107,12 @@ export function stationPopupHtml(s) {
     const cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
     const gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
     var legalBadge = '';
-    // Resolve legal hours: prefer API value, fall back to local REGIONS registry
-    var lh = s.legal_hours;
-    if (!lh || lh === 'unknown') {
-        lh = lookupLocalLegalHours(s.id);
-    }
-    if (lh === '24hr') {
+    if (s.legal_hours === '24hr') {
         legalBadge = '<span class="pin-popup-badge badge-open">OPEN</span>';
-    } else if (lh === 'daylight') {
+    } else if (s.legal_hours === 'daylight') {
         legalBadge = '<span class="pin-popup-badge badge-daylight">DAYLIGHT</span>';
-    } else if (lh === 'closed') {
-        legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
     } else {
-        legalBadge = '<span class="pin-popup-badge badge-closed">NOT VERIFIED</span>';
+        legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
     }
     // Gauge type badge
     var gType = mapPinGaugeType(s.id);
@@ -218,7 +193,6 @@ function removeAllMarkers() {
 
 // ── Popup overlay ─────────────────────────────────────────────────────────────────
 function showPopup(html) {
-    _popupShownAt = Date.now();
     const popup = document.getElementById('pin-popup');
     if (popup) {
         const body = document.getElementById('pin-popup-body');
@@ -226,50 +200,6 @@ function showPopup(html) {
         popup.hidden = false;
         popup.style.display = 'block';
     }
-}
-
-// Show a popup with live data — fetches USGS readings on the fly if the
-// station object has no cfs/gage values cached.
-export async function showStationPopup(station) {
-    if (!station) return;
-    // If no live data, try to fetch it from USGS first
-    if ((station.cfs === undefined || station.cfs === null) && station.id) {
-        try {
-            const readings = await fetchCfsReadingsWdfn(station.id, 24);
-            if (readings && readings.length) {
-                station.cfs = readings[readings.length - 1].v || null;
-                logDebug('Popup CFS fetched: ' + station.cfs + ' for ' + station.id, 'MAP');
-            } else {
-                logDebug('Popup CFS fetch returned empty for ' + station.id, 'MAP');
-            }
-            // Also try gage height
-            try {
-                const gageReadings = await _fetchGageReadings(station.id);
-                if (gageReadings && gageReadings.length) {
-                    station.gage = gageReadings[gageReadings.length - 1].v || null;
-                }
-            } catch (e) { logDebug('Gage fetch error: ' + e.message, 'MAP'); }
-        } catch (e) { logDebug('CFS fetch error: ' + e.message + ' for ' + station.id, 'MAP'); }
-    }
-    showPopup(stationPopupHtml(station));
-}
-
-// Fetch gage height (parameter 00065) from WDFN — 24h window for reliability
-async function _fetchGageReadings(siteId) {
-    const end = new Date();
-    const start = new Date(end.getTime() - 24 * 3600 * 1000);
-    const iso = function (d) { return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); };
-    const url = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items'
-        + '?monitoring_location_id=USGS-' + encodeURIComponent(siteId)
-        + '&parameter_code=00065&datetime=' + iso(start) + '/' + iso(end) + '&limit=10';
-    const res = await fetch(url);
-    const data = await res.json();
-    const feats = data && data.features;
-    if (!feats) return null;
-    return feats.map(function (f) {
-        const p = f.properties || {};
-        return { t: new Date(p.time).getTime(), v: parseFloat(p.value) };
-    }).filter(function (r) { return isFinite(r.t) && isFinite(r.v) && r.v > -900000; });
 }
 
 // ── Saved spot stars ──────────────────────────────────────────────────────────────
@@ -309,13 +239,11 @@ export async function refreshStationMap(center) {
             // Skip seasonal gauges that are currently out of season
             if (mapPinGaugeType(s.id) === 'seasonal' && !mapPinIsSeasonal(s.id)) return;
             const el = makePinEl(mapPinColor(s));
-            const marker = new maplibregl.Marker({ element: el });
-            marker.setLngLat([s.lon, s.lat]);
-            marker.getElement().addEventListener('click', function (e) {
-                showStationPopup(s);
+            el.addEventListener('click', function (e) {
+                e.stopPropagation();
+                showPopup(stationPopupHtml(s));
             });
-            marker.addTo(_stationMap);
-            _mapMarkers.push({ el: marker.getElement(), lng: s.lon, lat: s.lat });
+            addMarker(el, [s.lon, s.lat]);
         });
         out.count = stations.length;
         out.note = (res.data && res.data.note) || '';
@@ -368,35 +296,31 @@ export async function openMapScreen() {
         });
         // Render gauge pins on load with badge popups
         _stationMap.on('load', function () {
-            // Plot ALL registry gauges so every known gauge is visible on the map.
-            // Pin color: green = permanent, yellow = seasonal (in season).
-            // Live cfs/gage is fetched on-demand via showStationPopup when a pin is tapped.
             const stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
             if (stations) {
                 stations.forEach(function (st) {
                     if (!st.coords) return;
-                    // Skip seasonal gauges that are currently out of season
-                    if (st.gauge_type === 'seasonal' && !mapPinIsSeasonal(st.site_id)) return;
-                    var pinColor = (st.gauge_type === 'seasonal') ? '#eab308' : '#22c55e';
-                    var el = document.createElement('div');
+                    const el = document.createElement('div');
                     el.className = 'station-pin';
-                    el.innerHTML = '<span class="station-pin-dot" style="background:' + pinColor + '"></span>';
-                    // Use DOM click event (fire directly on the element)
+                    el.innerHTML = '<span class="station-pin-dot" style="background:' + mapPinColor({ id: st.site_id, cfs: null, gage: null }) + '"></span>';
                     el.addEventListener('click', function (e) {
-                        // Do NOT stop propagation — let map click also fire,
-                        // but the _popupShownAt guard prevents it from hiding
-                        // the popup that showStationPopup will open.
-                        showStationPopup({ id: st.site_id, name: st.name, lat: st.coords.lat, lon: st.coords.lon });
+                        e.stopPropagation();
+                        // Show the badge popup
+                        showPopup(stationPopupHtml({
+                            id: st.site_id,
+                            name: st.name,
+                            lat: st.coords.lat,
+                            lon: st.coords.lon
+                        }));
                     });
-                    var m = new maplibregl.Marker({ element: el });
+                    const m = new maplibregl.Marker({ element: el });
                     m.setLngLat([st.coords.lon, st.coords.lat]);
                     m.addTo(_stationMap);
-                    _mapMarkers.push({ el: m.getElement(), lng: st.coords.lon, lat: st.coords.lat });
                 });
             }
             plotSavedSpotStars();
         });
-        // Tap-to-pin click handler (fires for taps on the canvas background, not markers)
+        // Tap-to-pin click handler
         _stationMap.on('click', function (e) {
             onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
         });
@@ -435,7 +359,7 @@ export async function openMapScreen() {
         });
     }
     if (loading) loading.style.display = 'none';
-    }
+}
 window.openMapScreen = openMapScreen;
 
 // ── GPS recenter ──────────────────────────────────────────────────────────────
@@ -565,11 +489,7 @@ async function doSavePin(lat, lng, label) {
 }
 
 // ── Map click handler ─────────────────────────────────────────────────────────────
-var _popupShownAt = 0;
-
 export function onMapClick(e) {
-    // If a pin popup was just shown (within the last 200ms), don't hide it
-    if (Date.now() - _popupShownAt < 200) return;
     if (!e || e.lat == null || e.lng == null) {
         if (!e || !e.latlng) return;
     }

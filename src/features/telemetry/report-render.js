@@ -14,6 +14,81 @@ import { formatTideRow } from './tide.js';
  * Render the day cards, species calendar, tide, and environmental conditions.
  * Extracted from loadWaterReport to keep files under 150 lines.
  */
+// Build species calendar HTML — prefer API data, fall back to local REGIONS stocks
+function _buildCalendarFallback(rep) {
+    // Try API-provided calendar first
+    var cal = provVal(rep.species_calendar);
+    if (cal && cal.length) {
+        return buildSpeciesCalendarHtml(cal, provVal(rep.esc_stocks));
+    }
+    // Fallback: build from local REGIONS waterbody stocks
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!wbs || !rep.site_id) return '';
+    var wb = null;
+    for (var wi = 0; wi < wbs.length; wi++) {
+        var w = wbs[wi];
+        if (w.gauge && w.gauge.site_id === rep.site_id) { wb = w; break; }
+        var rels = w.related_gauges;
+        if (rels) {
+            for (var ri = 0; ri < rels.length; ri++) {
+                if (rels[ri].site_id === rep.site_id) { wb = w; break; }
+            }
+            if (wb) break;
+        }
+    }
+    if (!wb || !wb.stocks || !wb.stocks.length) return '';
+    // Build calendar entries matching backend format
+    var now = rep.date ? new Date(rep.date) : new Date();
+    if (isNaN(now.getTime())) now = new Date();
+    var oddYear = (now.getFullYear() % 2) === 1;
+    var calEntries = [];
+    for (var si = 0; si < wb.stocks.length; si++) {
+        var s = wb.stocks[si];
+        if (s.species === 'Pink' && !oddYear) continue;
+        var pw = s.peak_window;
+        if (!pw || pw.length < 4) continue;
+        var sm = pw[0], sd = pw[1], em = pw[2], ed = pw[3];
+        var pd = s.peak_date;
+        if (!pd) continue;
+        var pParts = pd.split('-');
+        if (pParts.length < 2) continue;
+        var pm = parseInt(pParts[0], 10), pPd = parseInt(pParts[1], 10);
+        var start = new Date(now.getFullYear(), sm - 1, sd);
+        var end = new Date(now.getFullYear(), em - 1, ed);
+        var peak = new Date(now.getFullYear(), pm - 1, pPd);
+        var inWindow = now >= start && now <= end;
+        var daysToPeak = Math.round((peak - now) / 86400000);
+        var position = 'off';
+        var statusText = now < start ? 'SEASON AHEAD' : (now > end ? 'SEASON OVER' : 'SEASON AHEAD');
+        if (inWindow) {
+            if (daysToPeak === 0) { position = 'peak'; statusText = 'AT PEAK'; }
+            else if (daysToPeak < 0) { position = 'post'; statusText = daysToPeak < -14 ? 'PAST PEAK' : 'TAPERING'; }
+            else { position = 'pre'; statusText = daysToPeak > 14 ? 'BUILDING' : 'APPROACHING'; }
+        }
+        var progress = 0;
+        if (start < end && now >= start && now <= end) {
+            progress = (now - start) / (end - start);
+        }
+        var peakFrac = 0.5;
+        if (start < end && peak >= start && peak <= end) {
+            peakFrac = (peak - start) / (end - start);
+        }
+        calEntries.push({
+            species: s.species,
+            window_start: (start.getMonth() + 1) + '/' + start.getDate(),
+            window_end: (end.getMonth() + 1) + '/' + end.getDate(),
+            peak_date: (peak.getMonth() + 1) + '/' + peak.getDate(),
+            position: position,
+            status_text: statusText,
+            progress: progress,
+            peak_frac: peakFrac,
+            days_until_peak: daysToPeak
+        });
+    }
+    return buildSpeciesCalendarHtml(calEntries, provVal(rep.esc_stocks));
+}
+
+/**
 export function renderReportDays(reports, station, rulesLoaded) {
     if (!reports || !reports.length) {
         logDebug('No river data to render', 'NET');
@@ -101,7 +176,7 @@ cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dSty
                 '<div class="env-badge"><div class="env-badge-val solunar-split"><div class="solunar-half"><span class="solunar-val" style="color:#ffd60a;">' + (rep.moon_upper || '--') + '</span><span class="solunar-sublbl">Overhead</span></div><div class="solunar-half"><span class="solunar-val" style="color:#64d2ff;">' + (rep.moon_lower || '--') + '</span><span class="solunar-sublbl">Underfoot</span></div></div><div class="env-badge-lbl">Solunar</div></div>' +
 '</div>' +
             '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
-            buildSpeciesCalendarHtml(provVal(rep.species_calendar), provVal(rep.esc_stocks)) +
+            _buildCalendarFallback(rep) +
             '</div></div></div>';
     }
 

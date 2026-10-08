@@ -1,5 +1,27 @@
 # Fish Report — Active Plan
 
+## 🔧 FIXINGS: Data Integrity & UI Quality
+
+- [ ] F2: Map color coding — green/yellow/red markers, seasonal hide/show
+      → src/features/map/map.js, src/styles.css
+      [Detail → docs/PLAN_REFERENCE.md#fixing-map-colors]
+
+- [ ] F3: Legal hours data — per-river records, eliminate "not verified"
+      → public/src/data/regions/washington.js, src/features/telemetry/daynav.js, src/utils/regulations.js
+      [Detail → docs/PLAN_REFERENCE.md#fixing-legal-hours]
+
+- [ ] F4: Fix map CFS/gauge values showing "--"
+      → src/features/map/map.js, src/services/water-gauge.js
+      [Detail → docs/PLAN_REFERENCE.md#fixing-map-cfs]
+
+- [ ] F5: Fix Run & Timing section rendering
+      → src/features/telemetry/report-render.js, src/features/telemetry/hero.js
+      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing]
+
+- [ ] F6: Fix bottom tab bar + remove refresh/bug buttons
+      → index.html, src/styles.css
+      [Detail → docs/PLAN_REFERENCE.md#fixing-ui-buttons]
+
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 
 - [x] Phase D1: Fix HUD messaging

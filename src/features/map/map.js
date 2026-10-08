@@ -6,7 +6,7 @@
  * Uses MapLibre GL JS v4.7.1 loaded from CDN (unpkg). Satellite imagery base
  * with gauge pins, saved spot stars, and tap-to-pin drop via FAB.
  *
- * Pin colour: green = live, grey = dormant.
+ * Pin colour: green = permanent with data, yellow = seasonal (in season), red = error state, grey = offline.
  *
  * ES module.
  */
@@ -47,8 +47,54 @@ export function mapPinHasReading(station) {
         (station.gage !== undefined && station.gage !== null);
 }
 
+function _mapPoolEntry(siteId) {
+    // Look up gauge_type from the region registry (loaded as window.REGIONS)
+    var pool = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    if (!pool || !siteId) return null;
+    for (var i = 0; i < pool.length; i++) {
+        if (pool[i].site_id === siteId) return pool[i];
+    }
+    return null;
+}
+
+export function mapPinGaugeType(siteId) {
+    var entry = _mapPoolEntry(siteId);
+    return entry ? (entry.gauge_type || 'permanent') : 'permanent';
+}
+
+export function mapPinIsSeasonal(siteId) {
+    var entry = _mapPoolEntry(siteId);
+    if (!entry || entry.gauge_type !== 'seasonal') return false;
+    // Check current date against season window
+    var now = new Date();
+    var today = (now.getMonth() + 1) * 100 + now.getDate(); // MMDD
+    var start = entry.season_start ? parseInt(entry.season_start.replace('-',''), 10) : 0;
+    var end = entry.season_end ? parseInt(entry.season_end.replace('-',''), 10) : 0;
+    if (start === 0 || end === 0) return false;
+    // Handle wrap-around (season crossing Dec 31)
+    if (start <= end) return today >= start && today <= end;
+    return today >= start || today <= end;
+}
+
+export function mapPinHasError(station) {
+    if (!station) return false;
+    var gType = mapPinGaugeType(station.id);
+    if (gType === 'seasonal' && !mapPinIsSeasonal(station.id)) return false;
+    // Permanent or seasonal-in-season: should have data
+    return !mapPinHasReading(station);
+}
+
 export function mapPinColor(station) {
-    return mapPinHasReading(station) ? '#22c55e' : '#94a3b8';
+    if (!station) return '#94a3b8';
+    // Red = gauge expected to report but missing data (permanent or in-season seasonal)
+    if (mapPinHasError(station)) return '#ef4444';
+    var gType = mapPinGaugeType(station.id);
+    // Yellow = seasonal gauge currently in its operational window
+    if (gType === 'seasonal' && mapPinIsSeasonal(station.id)) return '#eab308';
+    // Green = permanent or off-season seasonal gauge with data
+    if (mapPinHasReading(station)) return '#22c55e';
+    // Grey = permanent gauge temporarily unreachable
+    return '#94a3b8';
 }
 
 export function mapLegalText(rule) {
@@ -68,10 +114,28 @@ export function stationPopupHtml(s) {
     } else {
         legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
     }
+    // Gauge type badge
+    var gType = mapPinGaugeType(s.id);
+    var typeBadge = '';
+    if (gType === 'seasonal') {
+        var entry = _mapPoolEntry(s.id);
+        var sw = entry && entry.season_start ? entry.season_start : '??';
+        var ew = entry && entry.season_end ? entry.season_end : '??';
+        typeBadge = '<span class="pin-popup-badge badge-seasonal">SEASONAL (' + sw + ' - ' + ew + ')</span>';
+    } else {
+        typeBadge = '<span class="pin-popup-badge badge-permanent">PERMANENT</span>';
+    }
+    // Error badge for gauges expected to report but missing data
+    var errorBadge = '';
+    if (mapPinHasError(s)) {
+        errorBadge = '<span class="pin-popup-badge badge-error">&#9888; NO DATA</span>';
+    }
     const safeId = escapeJsString(s.id || '');
     const safeName = escapeJsString(s.name || s.id);
     return '<span class="pin-popup-title">' + escapeHtml(s.name || s.id) + '</span>' +
         '<span class="pin-popup-meta">USGS ' + escapeHtml(s.id || '') + '</span>' +
+        typeBadge +
+        errorBadge +
         '<span class="pin-popup-cfs">' + escapeHtml(String(cfs)) + ' <span class="pin-popup-cfs-label">CFS</span> \u00b7 ' + escapeHtml(String(gage)) + ' <span class="pin-popup-cfs-label">ft</span></span>' +
         legalBadge +
         '<button class="pin-popup-btn" onclick="selectPreset(\'' + safeId + '\',' +
@@ -172,6 +236,8 @@ export async function refreshStationMap(center) {
         addMarker(dotEl, [center[1], center[0]]);
         stations.forEach(function (s) {
             if (s.lat == null || s.lon == null) return;
+            // Skip seasonal gauges that are currently out of season
+            if (mapPinGaugeType(s.id) === 'seasonal' && !mapPinIsSeasonal(s.id)) return;
             const el = makePinEl(mapPinColor(s));
             el.addEventListener('click', function (e) {
                 e.stopPropagation();

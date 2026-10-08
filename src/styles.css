@@ -959,6 +959,9 @@ td.empty-state { padding: 30px 10px; }
 .badge-open { background: #22c55e; color: #000; }
 .badge-daylight { background: #f5c842; color: #000; }
 .badge-closed { background: #f87171; color: #fff; }
+.badge-permanent { background: #22c55e; color: #000; }
+.badge-seasonal { background: #eab308; color: #000; }
+.badge-error { background: #ef4444; color: #fff; font-weight: 800; }
 /* Floating action button — add a spot */
 .map-fab {
     position: absolute;

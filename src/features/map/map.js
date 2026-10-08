@@ -210,7 +210,7 @@ export async function showStationPopup(station) {
     // If no live data, try to fetch it from USGS first
     if ((station.cfs === undefined || station.cfs === null) && station.id) {
         try {
-            const readings = await fetchCfsReadingsWdfn(station.id);
+            const readings = await fetchCfsReadingsWdfn(station.id, 24);
             if (readings && readings.length) {
                 station.cfs = readings[readings.length - 1].v || null;
             }
@@ -226,10 +226,10 @@ export async function showStationPopup(station) {
     showPopup(stationPopupHtml(station));
 }
 
-// Fetch gage height (parameter 00065) from WDFN
+// Fetch gage height (parameter 00065) from WDFN — 24h window for reliability
 async function _fetchGageReadings(siteId) {
     const end = new Date();
-    const start = new Date(end.getTime() - 4 * 3600 * 1000);
+    const start = new Date(end.getTime() - 24 * 3600 * 1000);
     const iso = function (d) { return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); };
     const url = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items'
         + '?monitoring_location_id=USGS-' + encodeURIComponent(siteId)

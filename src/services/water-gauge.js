@@ -8,10 +8,11 @@ import { State } from '../shared/state.js';
 // is source-agnostic.
 const WDFN_CONTINUOUS = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items';
 
-export async function fetchCfsReadingsWdfn(siteId) {
+export async function fetchCfsReadingsWdfn(siteId, lookbackHours) {
     // Same 4-hour lookback the legacy `period=PT4H` gave, so the delta is comparable.
+    // Pass lookbackHours for a wider window (e.g. map popup fallback needs 24h).
     const end = new Date();
-    const start = new Date(end.getTime() - 4 * 3600 * 1000);
+    const start = new Date(end.getTime() - (lookbackHours || 4) * 3600 * 1000);
     const iso = function (d) { return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); };
     const url = WDFN_CONTINUOUS
         + '?monitoring_location_id=USGS-' + encodeURIComponent(siteId)

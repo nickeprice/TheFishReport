@@ -19,6 +19,7 @@ import { spotsState, SPOT_LABEL_MAX, loadFavoriteSpots, saveSpotAt, renderDrawer
 import { savedSpotPopupHtml } from './spots-map.js';
 import { selectPreset } from '../station/picker.js';
 import { getGPS } from '../gear-sim/inputs.js';
+import { fetchCfsReadingsWdfn } from '../../services/water-gauge.js';
 
 const maplibregl = window.maplibregl;
 
@@ -202,6 +203,47 @@ function showPopup(html) {
     }
 }
 
+// Show a popup with live data — fetches USGS readings on the fly if the
+// station object has no cfs/gage values cached.
+export async function showStationPopup(station) {
+    if (!station) return;
+    // If no live data, try to fetch it from USGS first
+    if ((station.cfs === undefined || station.cfs === null) && station.id) {
+        try {
+            const readings = await fetchCfsReadingsWdfn(station.id);
+            if (readings && readings.length) {
+                station.cfs = readings[readings.length - 1].v || null;
+            }
+            // Also try gage height
+            try {
+                const gageReadings = await _fetchGageReadings(station.id);
+                if (gageReadings && gageReadings.length) {
+                    station.gage = gageReadings[gageReadings.length - 1].v || null;
+                }
+            } catch (e) { /* gage fetch is best-effort */ }
+        } catch (e) { /* silent fallback — show what we have */ }
+    }
+    showPopup(stationPopupHtml(station));
+}
+
+// Fetch gage height (parameter 00065) from WDFN
+async function _fetchGageReadings(siteId) {
+    const end = new Date();
+    const start = new Date(end.getTime() - 4 * 3600 * 1000);
+    const iso = function (d) { return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); };
+    const url = 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items'
+        + '?monitoring_location_id=USGS-' + encodeURIComponent(siteId)
+        + '&parameter_code=00065&datetime=' + iso(start) + '/' + iso(end) + '&limit=10';
+    const res = await fetch(url);
+    const data = await res.json();
+    const feats = data && data.features;
+    if (!feats) return null;
+    return feats.map(function (f) {
+        const p = f.properties || {};
+        return { t: new Date(p.time).getTime(), v: parseFloat(p.value) };
+    }).filter(function (r) { return isFinite(r.t) && isFinite(r.v) && r.v > -900000; });
+}
+
 // ── Saved spot stars ──────────────────────────────────────────────────────────────
 export function plotSavedSpotStars() {
     if (typeof spotsState === 'undefined' || !spotsState.rows.length) return 0;
@@ -241,7 +283,7 @@ export async function refreshStationMap(center) {
             const el = makePinEl(mapPinColor(s));
             el.addEventListener('click', function (e) {
                 e.stopPropagation();
-                showPopup(stationPopupHtml(s));
+                showStationPopup(s);
             });
             addMarker(el, [s.lon, s.lat]);
         });
@@ -305,13 +347,13 @@ export async function openMapScreen() {
                     el.innerHTML = '<span class="station-pin-dot" style="background:' + mapPinColor({ id: st.site_id, cfs: null, gage: null }) + '"></span>';
                     el.addEventListener('click', function (e) {
                         e.stopPropagation();
-                        // Show the badge popup
-                        showPopup(stationPopupHtml({
+                        // Show popup with live data fetch
+                        showStationPopup({
                             id: st.site_id,
                             name: st.name,
                             lat: st.coords.lat,
                             lon: st.coords.lon
-                        }));
+                        });
                     });
                     const m = new maplibregl.Marker({ element: el });
                     m.setLngLat([st.coords.lon, st.coords.lat]);
@@ -359,6 +401,8 @@ export async function openMapScreen() {
         });
     }
     if (loading) loading.style.display = 'none';
+    // Refresh stations with live data from the API
+    try { await refreshStationMap(initialCenter || mapCenter()); } catch (e) { logDebug('Station refresh failed: ' + e.message, 'ERR'); }
 }
 window.openMapScreen = openMapScreen;
 

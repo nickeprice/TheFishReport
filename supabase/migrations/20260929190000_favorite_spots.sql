@@ -9,7 +9,7 @@
 -- exists with no catch attached, and it is reused across many trips, so it cannot
 -- hang off a catch row. It also must never be reachable by the public board.
 --
--- PRIVACY CONTRACT (AGENTS.md: GPS + auth ids never public):
+-- PRIVACY CONTRACT (AI/LLM INSTRUCTIONS: GPS + auth IDs never public):
 --   * RLS is enabled in the SAME transaction as the CREATE TABLE. Without it the
 --     table would be world-readable through the Data API, because anon/authenticated
 --     hold the grants below — RLS is the ONLY thing protecting these coordinates.

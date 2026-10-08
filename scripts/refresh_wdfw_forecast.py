@@ -13,7 +13,7 @@ Usage:
     python3 scripts/refresh_wdfw_forecast.py            # resolve + print, no write
     python3 scripts/refresh_wdfw_forecast.py --confirm  # write only CONFIRMED numbers
 
-Contract (AGENTS.md no-fabricate):
+AI/LLM INSTRUCTIONS (no-fabricate):
   - `--confirm` writes a number ONLY when the human has verified it and passes
     it via --chinook=NNNN / --coho=NNNN (or edits the JSON by hand). The scraper
     never invents a figure from PDF geometry.

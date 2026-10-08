@@ -51,7 +51,7 @@ Verify against live output with `scripts/smoke.sh`.
 | `site_name`/`site_id` | string | station identity | header + GPS flow |
 
 ## Removed (do not resurrect)
-- `active_fish` — fake Gaussian count; deleted in 2.1a. NEVER re-add (AGENTS.md no-fabricate).
+- `active_fish` — fake Gaussian count; deleted in 2.1a. NEVER re-add (AI/LLM INSTRUCTIONS: no-fabricate).
 - `push_status` — macro-env string, never a fish-moving label. Shipped for back-compat, but
   had **zero** consumers; removed 2026-09-28.
 - `angler_desc` — "High (Weekend)" / "Low (Weekday)" label. Never consumed; removed 2026-09-28.

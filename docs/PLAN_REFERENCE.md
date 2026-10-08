@@ -116,23 +116,6 @@ rows with full-width buttons.
 
 <!-- H5 complete — detail deleted per protocol -->
 
-<a id="data-forecast-pymupdf"></a>
-## Phase A3: Add PyMuPDF to Forecast Scraper
-
-**Change:** Add real PDF table extraction to `refresh_wdfw_forecast.py` via 
-PyMuPDF (`pip install PyMuPDF`), replacing the broken stdlib zlib approach.
-
-**Guardrails:**
-- Extract **combined totals only** (hatchery + wild, never split)
-- Fuzzy-match river names against `REGIONS.WA.waterbodies[].name`
-- `--confirm` gate stays — script resolves + prints, human confirms before write
-- Ambiguous extractions → leave `forecast: null`
-
-**Files:**
-- `scripts/refresh_wdfw_forecast.py` — add PyMuPDF extraction
-
----
-
 <a id="data-hatchery"></a>
 ## Phase B: Hatchery Escapement — Map WDFW Facilities for All 15 Rivers
 

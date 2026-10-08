@@ -64,7 +64,7 @@ def stocks_for_site(site_id):
     """Species -> baseline meta for the waterbody that owns `site_id`.
 
     Empty when that waterbody has no verified baselines, so an off-basin river can
-    never inherit another river's run numbers (AGENTS.md: never fabricate)."""
+    never inherit another river's run numbers (AI/LLM INSTRUCTIONS: never fabricate)."""
     _wb = _WB_BY_SITE.get(str(site_id))
     if not _wb or not _wb.get("stocks"):
         return {}
@@ -1052,11 +1052,10 @@ def fetch_meteorological_data(lat=LAT, lon=LON):
 def calculate_stock_base_score(target_date, site_id=None):
     """Baseline (0-25ish) that the dynamic timeline adds to per-minute scores.
 
-    The old version fabricated a fake "~N entering today" Gaussian count
-    (`avg_run * curve_mult * 0.04`) and shipped it as `active_fish`. That number
-    was invented — REMOVED permanently (AGENTS.md: never fabricate). The honest
-    run anchor is the WDFW forecast (Commit 2.1d) + real trap counts. We keep
-    only the structure: how far today sits inside each stock's real peak window.
+    REMOVED: old `active_fish` was a fake Gaussian count — invented data
+    (AI/LLM INSTRUCTIONS: never fabricate). The honest run anchor is the
+    WDFW forecast (Commit 2.1d) + real trap counts. We keep only the
+    structure: how far today sits inside each stock's real peak window.
     """
     base_score = 10.0
     # Baselines come from the waterbody that owns this site (empty off-basin,

@@ -5,6 +5,7 @@
 
 # Icebox Rule (CRITICAL)
 - `docs/ROADMAP.md` is the **single icebox** — all future ideas go there.
+- **NEVER read `docs/ROADMAP.md` unless the user explicitly references it by name or commands you to act on a task from it.** It is not needed for any active work.
 - You are FORBIDDEN from adding tasks from `ROADMAP.md` into `PLAN.md` unless the user explicitly commands you to do so.
 - If the user proposes a new future idea, append it to `docs/ROADMAP.md` and immediately return to the active tasks in `PLAN.md`.
 

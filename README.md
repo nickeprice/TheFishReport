@@ -104,15 +104,13 @@ depends on being fully defined first. `sanity_pass.js` derives this list from
 
 | Where | What |
 | --- | --- |
-| `AGENTS.md` + `.clinerules` | working rules and the plan/act workflow |
+| `.clinerules` | working rules and the plan/act workflow |
 | `docs/SYMBOLS.md` | file → public API index (find a function without opening files) |
 | `docs/CONTRACT*.md` | API, region, technique, tackle and catch contracts |
-| `docs/ARCHITECTURE.md` | tiered data architecture & fallback pattern |
-| `docs/CHAIN_SOLVER.md` | unified chain-solver physics design & governing equations |
-| `docs/MEASUREMENT_PROTOCOL.md` | tackle measurement protocols & CSV spec |
 | `docs/LITERATURE.md` | the studies behind the environment model — thresholds + provenance |
-| `docs/ROADMAP.md` | forward plan (Update 4.0) |
-| `docs/ARCHIVE_UPDATE_3.0.md`, `docs/ARCHIVE.md`, `docs/CHANGELOG.md` | how the current code got here |
+| `docs/ROADMAP.md` | icebox (do not read unless user references it) |
+| `docs/PLAN_REFERENCE.md` | active plan detail — implementation checklist |
+| `docs/archive/` | historical design docs, changelogs, completed-phase summaries |
 
 
 ## Backend

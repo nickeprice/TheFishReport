@@ -2,7 +2,7 @@
 
 ## 🛠 Data Pipeline & Infrastructure
 
-- [ ] Phase A3: Add PyMuPDF to forecast scraper
+- [x] Phase A3: Add PyMuPDF to forecast scraper
       → refresh_wdfw_forecast.py
       [Detail → docs/PLAN_REFERENCE.md#data-forecast-pymupdf]
 

@@ -15,8 +15,8 @@
  * `error` and the server's own `serverMessage` say which one it was.
  *
  * The status plus a SANITISED slice of the body go to the debug trail, so a 502 tunnel page
- * is distinguishable from a code bug. The query string is NEVER logged - it carries the
- * angler's coordinates (AGENTS.md GPS hygiene) - and the body is escaped because
+ * is distinguishable from a code bug. The query string is NEVER logged — it carries the
+ * angler's coordinates (AI/LLM INSTRUCTIONS: GPS hygiene) — and the body is escaped because
  * logDebug() writes with innerHTML.
  *
  * Classic script (global scope). Loaded AFTER src/shared/format.js (uses escapeHtml).

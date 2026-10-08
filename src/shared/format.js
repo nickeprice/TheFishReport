@@ -31,8 +31,8 @@ window.newUuid = newUuid;
         return v.toString(16);
     });
 }
-// Third-party text (USGS station names, WDFW strings) must never be interpolated into
-// an HTML string raw — AGENTS.md forbids unsanitised HTML interpolation.
+// Never interpolate third-party text (USGS station names, WDFW strings) into raw HTML
+// (AI/LLM INSTRUCTIONS: forbid unsanitised HTML interpolation).
 export function escapeHtml(value) {
     return String(value === null || value === undefined ? '' : value)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

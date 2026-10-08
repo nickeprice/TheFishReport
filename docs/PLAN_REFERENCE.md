@@ -1,40 +1,6 @@
 
 
 
-<a id="fixing-legal-hours"></a>
-## F3: Legal Hours Data — Per-River Records
-
-**Goal:** Every tracked river has a verified `legal_hours` so "not verified" never appears.
-
-**WDFW salmon/steelhead hours for Puget Sound rivers:**
-| River | Legal Hours |
-|---|---|
-| Puyallup | daylight |
-| Carbon | daylight |
-| White | daylight |
-| Green | daylight |
-| Nisqually | daylight |
-| Skagit | daylight |
-| Snoqualmie | daylight |
-| Skykomish | daylight |
-| Snohomish | daylight |
-| Stillaguamish | daylight |
-| Cowlitz | daylight |
-| Toutle | daylight |
-| Lewis | daylight |
-| Kalama | daylight |
-| Cedar | closed (Seattle watershed — no fishing) |
-
-**Changes to `washington.js`:** Set `legal_hours: "daylight"` for all rivers except Cedar (`"closed"`).
-
-**Changes to `daynav.js`:**
-- Handle `"closed"` rule → `"Legal Hours: River closed — no fishing"`
-- Ensure `legalHoursLabel()` receives the correct rule from the waterbody registry
-
-**Changes to `regulations.js`:**
-- In `checkRiverStatus()`, pass the waterbody's `legal_hours` through so the daynav renders the correct label instead of "not verified"
-
----
 
 <a id="fixing-map-cfs"></a>
 ## F4: Fix Map CFS/Gauge Values + New Data Sources

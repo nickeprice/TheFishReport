@@ -2,7 +2,7 @@
 
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
-- [ ] F3: Legal hours data — per-river records, eliminate "not verified"
+- [ ] F4: Fix map CFS/gauge values showing "--"
       → src/features/map/map.js, src/styles.css
       [Detail → docs/PLAN_REFERENCE.md#fixing-map-colors]
 

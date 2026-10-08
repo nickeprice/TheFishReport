@@ -39,6 +39,7 @@ window.REGIONS.WA = {
         { "site_id": "12094000", "name": "Carbon River near Fairfax", "coords": { "lat": 47.0177, "lon": -122.0197 }, "gauge_type": "permanent" },
         { "site_id": "12097850", "name": "White River below Clearwater nr Buckley", "coords": { "lat": 47.1639, "lon": -121.8498 }, "gauge_type": "permanent" },
         { "site_id": "12100490", "name": "White River at R Street near Auburn", "coords": { "lat": 47.3672, "lon": -122.1471 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
+        { "site_id": "12101100", "name": "Lake Tapps Diversion at Dieringer", "coords": { "lat": 47.3492, "lon": -122.1954 }, "gauge_type": "permanent" },
         { "site_id": "12113000", "name": "Green River near Auburn", "coords": { "lat": 47.3125, "lon": -122.2027 }, "gauge_type": "permanent" },
         { "site_id": "12108800", "name": "Green River below Crisp Creek nr Black Diamond", "coords": { "lat": 47.4283, "lon": -122.0267 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
         { "site_id": "12113150", "name": "Green River above S 277th St at Kent", "coords": { "lat": 47.4456, "lon": -122.2320 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
@@ -105,7 +106,8 @@ window.REGIONS.WA = {
             "waterbody_type": "river",
             "gauge": { "site_id": "12097850", "param": "00060" },
             "related_gauges": [
-                { "site_id": "12100490", "name": "White River at R Street near Auburn", "role": "lower" }
+                { "site_id": "12100490", "name": "White River at R Street near Auburn", "role": "lower" },
+                { "site_id": "12101100", "name": "Lake Tapps Diversion at Dieringer", "role": "diversion" }
             ],
             "coords": { "lat": 47.1639, "lon": -121.8498 },
             "legal_hours": "daylight",

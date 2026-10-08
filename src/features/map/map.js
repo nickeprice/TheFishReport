@@ -302,7 +302,7 @@ export async function openMapScreen() {
                     if (!st.coords) return;
                     const el = document.createElement('div');
                     el.className = 'station-pin';
-                    el.innerHTML = '<span class="station-pin-dot" style="background:#22c55e"></span>';
+                    el.innerHTML = '<span class="station-pin-dot" style="background:' + mapPinColor({ id: st.site_id, cfs: null, gage: null }) + '"></span>';
                     el.addEventListener('click', function (e) {
                         e.stopPropagation();
                         // Show the badge popup

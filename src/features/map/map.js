@@ -111,6 +111,7 @@ function lookupLocalLegalHours(siteId) {
     }
     return null;
 }
+window.lookupLocalLegalHours = lookupLocalLegalHours;
     return '#94a3b8';
 }
 

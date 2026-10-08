@@ -1,24 +1,4 @@
 
-<a id="drift-contact"></a>
-## Drift Phase 2: Bottom Contact Check
-
-**Goal:** Tell the angler if their weight reaches the bottom at this flow.
-
-**Physics:**
-```
-v_terminal = sqrt(2 x submerged_weight / (p x Cd x A))
-```
-
-**New functions in `inputs.js`:** `weightTerminalVelocity()` and 
-`assessBottomContact()`.
-
-**NHDPlus integration:** reach slope → bed shear → accurate bed velocity.
-
-**Files:** `inputs.js` (+30), `drift.js` (+5), `solver.js` (+5), 
-`index.html` (+1 HUD), `styles.css` (+1 HUD style)
-
----
-
 <a id="drift-forces"></a>
 ## Drift Phase 3: Complete Drift Force Model
 

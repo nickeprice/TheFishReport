@@ -6,7 +6,7 @@
       → solver.js, styles.css
       [Detail → docs/PLAN_REFERENCE.md#drift-hud]
 
-- [ ] Phase D2: Bottom Contact Check
+- [x] Phase D2: Bottom Contact Check
       → inputs.js, drift.js, solver.js, index.html, styles.css
       [Detail → docs/PLAN_REFERENCE.md#drift-contact]
 

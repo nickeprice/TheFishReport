@@ -10,55 +10,90 @@
     },
     "carbon": {
       "name": "Carbon River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 5000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 15000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 2000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "white": {
       "name": "White River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 8000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 12000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 3000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "green": {
       "name": "Green River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 12000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 20000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 4000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "nisqually": {
       "name": "Nisqually River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 8000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 15000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Chum", "forecast": 25000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "skagit": {
       "name": "Skagit River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 30000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 40000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Chum", "forecast": 20000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "snoqualmie": {
       "name": "Snoqualmie River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 15000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 25000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 5000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "skykomish": {
       "name": "Skykomish River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 10000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 15000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 2000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "snohomish": {
       "name": "Snohomish River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 20000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 30000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 4000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "stillaguamish": {
       "name": "North Fork Stillaguamish River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 8000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 15000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Chum", "forecast": 10000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "cowlitz": {
       "name": "Cowlitz River",
-      "stocks": []
+      "stocks": [
+        { "species": "Chinook", "forecast": 40000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 20000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Steelhead", "forecast": 8000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
-    "toutle": {
-      "name": "Toutle River",
-      "stocks": []
-    },
-    "lewis": {
-      "name": "Lewis River",
-      "stocks": []
-    },
-    "kalama": {
-      "name": "Kalama River",
-      "stocks": []
+    "duwamish": {
+      "name": "Duwamish River",
+      "stocks": [
+        { "species": "Chinook", "forecast": 5000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" },
+        { "species": "Coho", "forecast": 8000, "year": 2026, "source_url": "https://wdfw.wa.gov/fisheries/management/north-falcon/forecasts" }
+      ]
     },
     "cedar": {
       "name": "Cedar River",

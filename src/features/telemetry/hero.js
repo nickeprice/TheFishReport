@@ -118,8 +118,17 @@ export function buildSpeciesCalendarHtml(calendar, escStocks) {
         const escKey = String(s.species || '').toLowerCase();
         let esc = null;
         if (escStocks && escStocks.stocks) {
+            const escBase = escKey.replace(/^(fall|spring|summer|winter-late|winter)\s+/i, '');
+            // Pass 1: exact match first
             for (let e = 0; e < escStocks.stocks.length; e++) {
                 if (String(escStocks.stocks[e].name || '').toLowerCase() === escKey) { esc = escStocks.stocks[e]; break; }
+            }
+            // Pass 2: base-species fallback
+            if (!esc) {
+                for (let e = 0; e < escStocks.stocks.length; e++) {
+                    const stBase = String(escStocks.stocks[e].name || '').toLowerCase().replace(/^(fall|spring|summer|winter-late|winter)\s+/i, '');
+                    if (stBase === escBase) { esc = escStocks.stocks[e]; break; }
+                }
             }
         }
         const wdfwForecast = null; // filled by 2.1d from src/data/wdfw_forecasts.json

@@ -17,8 +17,15 @@ export function escNum(v) {
 // jack_count column.
 export function escBucketName(species, run) {
     const sp = String(species || '').trim();
-    // Chinook (any run) -> 'Chinook'. Legacy 'Fall Chinook' rows map here too.
-    if (sp.toLowerCase().indexOf('chinook') !== -1 || sp.toLowerCase() === 'king') return 'Chinook';
+    const lo = sp.toLowerCase();
+    const rn = String(run || '').trim();
+    // If there's a meaningful run qualifier, pair it with the species name
+    // so we can split Spring Chinook / Fall Chinook / Winter Steelhead.
+    if (rn && rn !== 'Unknown' && rn !== '' && rn !== 'NA') {
+        if (lo.indexOf('chinook') !== -1) return rn + ' Chinook';
+        if (lo === 'steelhead') return rn + ' Steelhead';
+    }
+    if (lo.indexOf('chinook') !== -1 || lo === 'king') return 'Chinook';
     return sp || 'Unknown';
 }
 
@@ -181,11 +188,20 @@ export async function loadEscapementData(siteId) {
     if (live && live.stocks) {
         rec.stocks.forEach(function(st) {
             const want = String(st.name).toLowerCase();
-            const base = want.replace(/^(fall|spring|summer|winter)\s+/, '');
+            const base = want.replace(/^(fall|spring|summer|winter-late|winter)\s+/i, '');
             let hit = null;
             Object.keys(live.stocks).forEach(function(sp) {
-                const l = sp.toLowerCase().replace(/^(fall|spring|summer|winter)\s+/, '');
-                if (!hit && (sp.toLowerCase() === want || l === base)) hit = live.stocks[sp];
+                const l = sp.toLowerCase().replace(/^(fall|spring|summer|winter-late|winter)\s+/i, '');
+                if (sp.toLowerCase() === want || l === base) {
+                    // Sum all matching live buckets (e.g. Spring Chinook + Fall Chinook
+                    // both match a registry "Chinook" entry). Use the first trap count
+                    // and 5-yr avg as-is (they're per-run already).
+                    if (!hit) hit = { totalReturn: 0, trapCount: 0, fiveYrAvg: null, wow: null };
+                    hit.totalReturn += (live.stocks[sp].totalReturn || 0);
+                    hit.trapCount = Math.max(hit.trapCount, live.stocks[sp].trapCount || 0);
+                    if (hit.fiveYrAvg === null) hit.fiveYrAvg = live.stocks[sp].fiveYrAvg;
+                    if (hit.wow === null) hit.wow = live.stocks[sp].wow;
+                }
             });
             if (hit) {
                 st.totalReturn = hit.totalReturn;
@@ -277,8 +293,17 @@ export async function refreshEscapement(siteId) {
         const sp = card.getAttribute('data-species');
         if (!sp) return;
         let hit = null;
+        const spBase = sp.replace(/^(fall|spring|summer|winter-late|winter)\s+/i, '');
+        // Pass 1: exact match first
         for (let i = 0; i < rec.stocks.length; i++) {
             if (String(rec.stocks[i].name || '').toLowerCase() === sp) { hit = rec.stocks[i]; break; }
+        }
+        // Pass 2: if no exact match, use first base-species match
+        if (!hit) {
+            for (let i = 0; i < rec.stocks.length; i++) {
+                const stBase = String(rec.stocks[i].name || '').toLowerCase().replace(/^(fall|spring|summer|winter-late|winter)\s+/i, '');
+                if (stBase === spBase) { hit = rec.stocks[i]; break; }
+            }
         }
         if (!hit) return;
         const set = function(countKey, val) {

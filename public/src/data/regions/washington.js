@@ -22,67 +22,424 @@ window.REGIONS.WA = {
     "state": "WA",
     "state_name": "Washington",
     "timezone": "America/Los_Angeles",
-    "units": { "flow": "cfs", "gage": "ft", "temp": "F" },
+    "units": {
+        "flow": "cfs",
+        "gage": "ft",
+        "temp": "F"
+    },
     "forecast_days": 4,
     "default_site": "12101500",
-    "default_coords": { "lat": 47.2028, "lon": -122.2965 },
+    "default_coords": {
+        "lat": 47.2028,
+        "lon": -122.2965
+    },
     "default_tide_station": "9446484",
-    "default_species": ["Chinook", "Coho", "Pink", "Chum", "Steelhead"],
-    "netting_days": [6, 0, 1],
+    "default_species": [
+        "Chinook",
+        "Coho",
+        "Pink",
+        "Chum",
+        "Steelhead"
+    ],
+    "netting_days": [
+        6,
+        0,
+        1
+    ],
     "discovery_pool": [
-        { "site_id": "12101500", "name": "Puyallup River at Puyallup", "coords": { "lat": 47.20843, "lon": -122.3271 }, "gauge_type": "permanent" },
-        { "site_id": "12093500", "name": "Puyallup River near Orting", "coords": { "lat": 47.1005, "lon": -122.2133 }, "gauge_type": "permanent" },
-        { "site_id": "12096500", "name": "Puyallup River at Alderton", "coords": { "lat": 47.1851, "lon": -122.2296 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12101470", "name": "Puyallup River at 5th St Bridge", "coords": { "lat": 47.1987, "lon": -122.2873 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12096505", "name": "Puyallup River at E Main Bridge", "coords": { "lat": 47.1967, "lon": -122.2509 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12092000", "name": "Puyallup River near Electron", "coords": { "lat": 47.1398, "lon": -122.0796 }, "gauge_type": "permanent" },
-        { "site_id": "12094000", "name": "Carbon River near Fairfax", "coords": { "lat": 47.0177, "lon": -122.0197 }, "gauge_type": "permanent" },
-        { "site_id": "12097850", "name": "White River below Clearwater nr Buckley", "coords": { "lat": 47.1639, "lon": -121.8498 }, "gauge_type": "permanent" },
-        { "site_id": "12100490", "name": "White River at R Street near Auburn", "coords": { "lat": 47.3672, "lon": -122.1471 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12101100", "name": "Lake Tapps Diversion at Dieringer", "coords": { "lat": 47.3492, "lon": -122.1954 }, "gauge_type": "permanent" },
-        { "site_id": "12113000", "name": "Green River near Auburn", "coords": { "lat": 47.3125, "lon": -122.2027 }, "gauge_type": "permanent" },
-        { "site_id": "12108800", "name": "Green River below Crisp Creek nr Black Diamond", "coords": { "lat": 47.4283, "lon": -122.0267 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12113150", "name": "Green River above S 277th St at Kent", "coords": { "lat": 47.4456, "lon": -122.2320 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12113310", "name": "Green River below Meeker St at Kent", "coords": { "lat": 47.4648, "lon": -122.2478 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12113340", "name": "Green River at 212 St near Kent", "coords": { "lat": 47.4742, "lon": -122.2538 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12113350", "name": "Green River at Tukwila", "coords": { "lat": 47.5008, "lon": -122.2615 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12113390", "name": "Duwamish River at Golf Course at Tukwila", "coords": { "lat": 47.5109, "lon": -122.2636 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "12112600", "name": "Big Soos Creek above Hatchery near Auburn", "coords": { "lat": 47.4534, "lon": -122.1739 }, "gauge_type": "permanent" },
-        { "site_id": "12113347", "name": "Mill Creek at Earthworks Park at Kent", "coords": { "lat": 47.4690, "lon": -122.2584 }, "gauge_type": "permanent" },
-        { "site_id": "12089500", "name": "Nisqually River at McKenna", "coords": { "lat": 46.9365, "lon": -122.5483 }, "gauge_type": "permanent" },
-        { "site_id": "12200500", "name": "Skagit River near Mount Vernon", "coords": { "lat": 48.4448, "lon": -122.3354 }, "gauge_type": "permanent" },
-        { "site_id": "12194000", "name": "Skagit River near Concrete", "coords": { "lat": 48.5307, "lon": -121.8671 }, "gauge_type": "permanent" },
-        { "site_id": "12144500", "name": "Snoqualmie River near Snoqualmie", "coords": { "lat": 47.6805, "lon": -121.7904 }, "gauge_type": "permanent" },
-        { "site_id": "12149000", "name": "Snoqualmie River near Carnation", "coords": { "lat": 47.6844, "lon": -121.9457 }, "gauge_type": "permanent" },
-        { "site_id": "12134500", "name": "Skykomish River near Gold Bar", "coords": { "lat": 47.8373, "lon": -121.6668 }, "gauge_type": "permanent" },
-        { "site_id": "12150800", "name": "Snohomish River near Monroe", "coords": { "lat": 47.8309, "lon": -122.0485 }, "gauge_type": "permanent" },
-        { "site_id": "12167000", "name": "North Fork Stillaguamish near Arlington", "coords": { "lat": 48.2615, "lon": -122.0476 }, "gauge_type": "permanent" },
-        { "site_id": "14243000", "name": "Cowlitz River at Castle Rock", "coords": { "lat": 46.2837, "lon": -122.8254 }, "gauge_type": "permanent" },
-        { "site_id": "14238000", "name": "Cowlitz River below Mayfield Dam", "coords": { "lat": 46.5107, "lon": -122.6189 }, "gauge_type": "permanent" },
-        { "site_id": "14233500", "name": "Cowlitz River near Kosmos", "coords": { "lat": 46.4266, "lon": -122.3693 }, "gauge_type": "seasonal", "season_start": "05-01", "season_end": "11-30" },
-        { "site_id": "14240525", "name": "NF Toutle River below SRS near Kid Valley", "coords": { "lat": 46.3849, "lon": -122.4401 }, "gauge_type": "permanent" },
-        { "site_id": "12119000", "name": "Cedar River at Renton", "coords": { "lat": 47.5121, "lon": -122.1905 }, "gauge_type": "permanent" }
+        {
+            "site_id": "12101500",
+            "name": "Puyallup River at Puyallup",
+            "coords": {
+                "lat": 47.20843,
+                "lon": -122.3271
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12093500",
+            "name": "Puyallup River near Orting",
+            "coords": {
+                "lat": 47.1005,
+                "lon": -122.2133
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12096500",
+            "name": "Puyallup River at Alderton",
+            "coords": {
+                "lat": 47.1851,
+                "lon": -122.2296
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12101470",
+            "name": "Puyallup River at 5th St Bridge",
+            "coords": {
+                "lat": 47.1987,
+                "lon": -122.2873
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12096505",
+            "name": "Puyallup River at E Main Bridge",
+            "coords": {
+                "lat": 47.1967,
+                "lon": -122.2509
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12092000",
+            "name": "Puyallup River near Electron",
+            "coords": {
+                "lat": 47.1398,
+                "lon": -122.0796
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12094000",
+            "name": "Carbon River near Fairfax",
+            "coords": {
+                "lat": 47.0177,
+                "lon": -122.0197
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12097850",
+            "name": "White River below Clearwater nr Buckley",
+            "coords": {
+                "lat": 47.1639,
+                "lon": -121.8498
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12100490",
+            "name": "White River at R Street near Auburn",
+            "coords": {
+                "lat": 47.3672,
+                "lon": -122.1471
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12101100",
+            "name": "Lake Tapps Diversion at Dieringer",
+            "coords": {
+                "lat": 47.3492,
+                "lon": -122.1954
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12113000",
+            "name": "Green River near Auburn",
+            "coords": {
+                "lat": 47.3125,
+                "lon": -122.2027
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12108800",
+            "name": "Green River below Crisp Creek nr Black Diamond",
+            "coords": {
+                "lat": 47.4283,
+                "lon": -122.0267
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12113150",
+            "name": "Green River above S 277th St at Kent",
+            "coords": {
+                "lat": 47.4456,
+                "lon": -122.232
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12113310",
+            "name": "Green River below Meeker St at Kent",
+            "coords": {
+                "lat": 47.4648,
+                "lon": -122.2478
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12113340",
+            "name": "Green River at 212 St near Kent",
+            "coords": {
+                "lat": 47.4742,
+                "lon": -122.2538
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12113350",
+            "name": "Green River at Tukwila",
+            "coords": {
+                "lat": 47.5008,
+                "lon": -122.2615
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12113390",
+            "name": "Duwamish River at Golf Course at Tukwila",
+            "coords": {
+                "lat": 47.5109,
+                "lon": -122.2636
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "12112600",
+            "name": "Big Soos Creek above Hatchery near Auburn",
+            "coords": {
+                "lat": 47.4534,
+                "lon": -122.1739
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12113347",
+            "name": "Mill Creek at Earthworks Park at Kent",
+            "coords": {
+                "lat": 47.469,
+                "lon": -122.2584
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12089500",
+            "name": "Nisqually River at McKenna",
+            "coords": {
+                "lat": 46.9365,
+                "lon": -122.5483
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12200500",
+            "name": "Skagit River near Mount Vernon",
+            "coords": {
+                "lat": 48.4448,
+                "lon": -122.3354
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12194000",
+            "name": "Skagit River near Concrete",
+            "coords": {
+                "lat": 48.5307,
+                "lon": -121.8671
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12144500",
+            "name": "Snoqualmie River near Snoqualmie",
+            "coords": {
+                "lat": 47.6805,
+                "lon": -121.7904
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12149000",
+            "name": "Snoqualmie River near Carnation",
+            "coords": {
+                "lat": 47.6844,
+                "lon": -121.9457
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12134500",
+            "name": "Skykomish River near Gold Bar",
+            "coords": {
+                "lat": 47.8373,
+                "lon": -121.6668
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12150800",
+            "name": "Snohomish River near Monroe",
+            "coords": {
+                "lat": 47.8309,
+                "lon": -122.0485
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12167000",
+            "name": "North Fork Stillaguamish near Arlington",
+            "coords": {
+                "lat": 48.2615,
+                "lon": -122.0476
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "14243000",
+            "name": "Cowlitz River at Castle Rock",
+            "coords": {
+                "lat": 46.2837,
+                "lon": -122.8254
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "14238000",
+            "name": "Cowlitz River below Mayfield Dam",
+            "coords": {
+                "lat": 46.5107,
+                "lon": -122.6189
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "14233500",
+            "name": "Cowlitz River near Kosmos",
+            "coords": {
+                "lat": 46.4266,
+                "lon": -122.3693
+            },
+            "gauge_type": "seasonal",
+            "season_start": "05-01",
+            "season_end": "11-30"
+        },
+        {
+            "site_id": "14240525",
+            "name": "NF Toutle River below SRS near Kid Valley",
+            "coords": {
+                "lat": 46.3849,
+                "lon": -122.4401
+            },
+            "gauge_type": "permanent"
+        },
+        {
+            "site_id": "12119000",
+            "name": "Cedar River at Renton",
+            "coords": {
+                "lat": 47.5121,
+                "lon": -122.1905
+            },
+            "gauge_type": "permanent"
+        }
     ],
     "waterbodies": [
         {
             "id": "puyallup",
             "name": "Puyallup River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12101500", "param": "00060" },
+            "gauge": {
+                "site_id": "12101500",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "12093500", "name": "Puyallup River near Orting", "role": "upstream" },
-                { "site_id": "12096500", "name": "Puyallup River at Alderton", "role": "midstream" },
-                { "site_id": "12101470", "name": "Puyallup River at 5th St Bridge", "role": "midstream" },
-                { "site_id": "12096505", "name": "Puyallup River at E Main Bridge", "role": "midstream" },
-                { "site_id": "12092000", "name": "Puyallup River near Electron", "role": "upstream" }
+                {
+                    "site_id": "12093500",
+                    "name": "Puyallup River near Orting",
+                    "role": "upstream"
+                },
+                {
+                    "site_id": "12096500",
+                    "name": "Puyallup River at Alderton",
+                    "role": "midstream"
+                },
+                {
+                    "site_id": "12101470",
+                    "name": "Puyallup River at 5th St Bridge",
+                    "role": "midstream"
+                },
+                {
+                    "site_id": "12096505",
+                    "name": "Puyallup River at E Main Bridge",
+                    "role": "midstream"
+                },
+                {
+                    "site_id": "12092000",
+                    "name": "Puyallup River near Electron",
+                    "role": "upstream"
+                }
             ],
-            "coords": { "lat": 47.2028, "lon": -122.2965 },
+            "coords": {
+                "lat": 47.2028,
+                "lon": -122.2965
+            },
             "legal_hours": "daylight",
-            "netting_sites": ["12101500", "12093500"],
+            "netting_sites": [
+                "12101500",
+                "12093500"
+            ],
             "stocks": [
-                { "species": "Chinook", "peak_window": [8, 1, 9, 30], "peak_date": "09-10", "avg_run": 34000, "present": true },
-                { "species": "Coho", "peak_window": [8, 25, 11, 15], "peak_date": "10-05", "avg_run": 48000, "present": true },
-                { "species": "Pink", "peak_window": [8, 1, 9, 15], "peak_date": "08-20", "avg_run": 150000, "present": false }
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        30
+                    ],
+                    "peak_date": "09-10",
+                    "avg_run": 34000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        8,
+                        25,
+                        11,
+                        15
+                    ],
+                    "peak_date": "10-05",
+                    "avg_run": 48000,
+                    "present": true
+                },
+                {
+                    "species": "Pink",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        15
+                    ],
+                    "peak_date": "08-20",
+                    "avg_run": 150000,
+                    "present": false
+                }
             ],
             "capabilities": {},
             "no_telemetry": false
@@ -91,12 +448,69 @@ window.REGIONS.WA = {
             "id": "carbon",
             "name": "Carbon River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12094000", "param": "00060" },
+            "gauge": {
+                "site_id": "12094000",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 47.0177, "lon": -122.0197 },
+            "coords": {
+                "lat": 47.0177,
+                "lon": -122.0197
+            },
             "legal_hours": "daylight",
-            "netting_sites": ["12094000"],
-            "stocks": null,
+            "netting_sites": [
+                "12094000"
+            ],
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        8,
+                        15,
+                        9,
+                        30
+                    ],
+                    "peak_date": "09-10",
+                    "avg_run": 5000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 15000,
+                    "present": true
+                },
+                {
+                    "species": "Pink",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        30
+                    ],
+                    "peak_date": "09-01",
+                    "avg_run": 30000,
+                    "present": false
+                },
+                {
+                    "species": "Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        2,
+                        28
+                    ],
+                    "peak_date": "01-15",
+                    "avg_run": 2000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -104,34 +518,162 @@ window.REGIONS.WA = {
             "id": "white",
             "name": "White River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12097850", "param": "00060" },
+            "gauge": {
+                "site_id": "12097850",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "12100490", "name": "White River at R Street near Auburn", "role": "lower" },
-                { "site_id": "12101100", "name": "Lake Tapps Diversion at Dieringer", "role": "diversion" }
+                {
+                    "site_id": "12100490",
+                    "name": "White River at R Street near Auburn",
+                    "role": "lower"
+                },
+                {
+                    "site_id": "12101100",
+                    "name": "Lake Tapps Diversion at Dieringer",
+                    "role": "diversion"
+                }
             ],
-            "coords": { "lat": 47.1639, "lon": -121.8498 },
+            "coords": {
+                "lat": 47.1639,
+                "lon": -121.8498
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
-            "capabilities": { "dam_clarity": true },
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        8,
+                        15,
+                        9,
+                        30
+                    ],
+                    "peak_date": "09-15",
+                    "avg_run": 8000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 12000,
+                    "present": true
+                },
+                {
+                    "species": "Pink",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        15
+                    ],
+                    "peak_date": "08-20",
+                    "avg_run": 40000,
+                    "present": false
+                },
+                {
+                    "species": "Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        2,
+                        28
+                    ],
+                    "peak_date": "01-15",
+                    "avg_run": 3000,
+                    "present": true
+                }
+            ],
+            "capabilities": {
+                "dam_clarity": true
+            },
             "no_telemetry": false
         },
         {
             "id": "green",
             "name": "Green River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12113000", "param": "00060" },
+            "gauge": {
+                "site_id": "12113000",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "12108800", "name": "Green River below Crisp Creek nr Black Diamond", "role": "upstream" },
-                { "site_id": "12113150", "name": "Green River above S 277th St at Kent", "role": "midstream" },
-                { "site_id": "12113310", "name": "Green River below Meeker St at Kent", "role": "midstream" },
-                { "site_id": "12113340", "name": "Green River at 212 St near Kent", "role": "midstream" },
-                { "site_id": "12113350", "name": "Green River at Tukwila", "role": "downstream" }
+                {
+                    "site_id": "12108800",
+                    "name": "Green River below Crisp Creek nr Black Diamond",
+                    "role": "upstream"
+                },
+                {
+                    "site_id": "12113150",
+                    "name": "Green River above S 277th St at Kent",
+                    "role": "midstream"
+                },
+                {
+                    "site_id": "12113310",
+                    "name": "Green River below Meeker St at Kent",
+                    "role": "midstream"
+                },
+                {
+                    "site_id": "12113340",
+                    "name": "Green River at 212 St near Kent",
+                    "role": "midstream"
+                },
+                {
+                    "site_id": "12113350",
+                    "name": "Green River at Tukwila",
+                    "role": "downstream"
+                }
             ],
-            "coords": { "lat": 47.3125, "lon": -122.2027 },
+            "coords": {
+                "lat": 47.3125,
+                "lon": -122.2027
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 12000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 20000,
+                    "present": true
+                },
+                {
+                    "species": "Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        3,
+                        15
+                    ],
+                    "peak_date": "01-15",
+                    "avg_run": 4000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -139,12 +681,67 @@ window.REGIONS.WA = {
             "id": "nisqually",
             "name": "Nisqually River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12089500", "param": "00060" },
+            "gauge": {
+                "site_id": "12089500",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 46.9365, "lon": -122.5483 },
+            "coords": {
+                "lat": 46.9365,
+                "lon": -122.5483
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        9,
+                        30
+                    ],
+                    "peak_date": "09-15",
+                    "avg_run": 8000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        9,
+                        15,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-15",
+                    "avg_run": 15000,
+                    "present": true
+                },
+                {
+                    "species": "Chum",
+                    "peak_window": [
+                        11,
+                        1,
+                        12,
+                        31
+                    ],
+                    "peak_date": "12-01",
+                    "avg_run": 25000,
+                    "present": true
+                },
+                {
+                    "species": "Pink",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        30
+                    ],
+                    "peak_date": "09-01",
+                    "avg_run": 30000,
+                    "present": false
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -152,14 +749,73 @@ window.REGIONS.WA = {
             "id": "skagit",
             "name": "Skagit River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12200500", "param": "00060" },
+            "gauge": {
+                "site_id": "12200500",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "12194000", "name": "Skagit River near Concrete", "role": "upstream" }
+                {
+                    "site_id": "12194000",
+                    "name": "Skagit River near Concrete",
+                    "role": "upstream"
+                }
             ],
-            "coords": { "lat": 48.444828, "lon": -122.335437 },
+            "coords": {
+                "lat": 48.444828,
+                "lon": -122.335437
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        7,
+                        1,
+                        9,
+                        30
+                    ],
+                    "peak_date": "08-15",
+                    "avg_run": 30000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        9,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "10-15",
+                    "avg_run": 40000,
+                    "present": true
+                },
+                {
+                    "species": "Pink",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        15
+                    ],
+                    "peak_date": "08-20",
+                    "avg_run": 100000,
+                    "present": false
+                },
+                {
+                    "species": "Chum",
+                    "peak_window": [
+                        10,
+                        1,
+                        12,
+                        15
+                    ],
+                    "peak_date": "11-15",
+                    "avg_run": 20000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -167,14 +823,73 @@ window.REGIONS.WA = {
             "id": "snoqualmie",
             "name": "Snoqualmie River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12144500", "param": "00060" },
+            "gauge": {
+                "site_id": "12144500",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "12149000", "name": "Snoqualmie River near Carnation", "role": "downstream" }
+                {
+                    "site_id": "12149000",
+                    "name": "Snoqualmie River near Carnation",
+                    "role": "downstream"
+                }
             ],
-            "coords": { "lat": 47.6805, "lon": -121.7904 },
+            "coords": {
+                "lat": 47.6805,
+                "lon": -121.7904
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 15000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 25000,
+                    "present": true
+                },
+                {
+                    "species": "Pink",
+                    "peak_window": [
+                        8,
+                        1,
+                        9,
+                        15
+                    ],
+                    "peak_date": "09-01",
+                    "avg_run": 50000,
+                    "present": false
+                },
+                {
+                    "species": "Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        2,
+                        28
+                    ],
+                    "peak_date": "01-15",
+                    "avg_run": 3000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -182,12 +897,55 @@ window.REGIONS.WA = {
             "id": "skykomish",
             "name": "Skykomish River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12134500", "param": "00060" },
+            "gauge": {
+                "site_id": "12134500",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 47.837325, "lon": -121.666781 },
+            "coords": {
+                "lat": 47.837325,
+                "lon": -121.666781
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 10000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 15000,
+                    "present": true
+                },
+                {
+                    "species": "Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        2,
+                        28
+                    ],
+                    "peak_date": "01-15",
+                    "avg_run": 2000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -195,12 +953,55 @@ window.REGIONS.WA = {
             "id": "snohomish",
             "name": "Snohomish River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12150800", "param": "00060" },
+            "gauge": {
+                "site_id": "12150800",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 47.8309, "lon": -122.0485 },
+            "coords": {
+                "lat": 47.8309,
+                "lon": -122.0485
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 20000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 30000,
+                    "present": true
+                },
+                {
+                    "species": "Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        2,
+                        28
+                    ],
+                    "peak_date": "01-15",
+                    "avg_run": 4000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -208,12 +1009,55 @@ window.REGIONS.WA = {
             "id": "stillaguamish",
             "name": "North Fork Stillaguamish River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12167000", "param": "00060" },
+            "gauge": {
+                "site_id": "12167000",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 48.261464, "lon": -122.047617 },
+            "coords": {
+                "lat": 48.261464,
+                "lon": -122.047617
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 8000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 15000,
+                    "present": true
+                },
+                {
+                    "species": "Chum",
+                    "peak_window": [
+                        11,
+                        1,
+                        12,
+                        31
+                    ],
+                    "peak_date": "12-01",
+                    "avg_run": 10000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -221,15 +1065,78 @@ window.REGIONS.WA = {
             "id": "cowlitz",
             "name": "Cowlitz River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "14243000", "param": "00060" },
+            "gauge": {
+                "site_id": "14243000",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "14238000", "name": "Cowlitz River below Mayfield Dam", "role": "upstream" },
-                { "site_id": "14233500", "name": "Cowlitz River near Kosmos", "role": "upstream" }
+                {
+                    "site_id": "14238000",
+                    "name": "Cowlitz River below Mayfield Dam",
+                    "role": "upstream"
+                },
+                {
+                    "site_id": "14233500",
+                    "name": "Cowlitz River near Kosmos",
+                    "role": "upstream"
+                }
             ],
-            "coords": { "lat": 46.2837, "lon": -122.8254 },
+            "coords": {
+                "lat": 46.2837,
+                "lon": -122.8254
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Spring Chinook",
+                    "peak_window": [
+                        4,
+                        1,
+                        5,
+                        31
+                    ],
+                    "peak_date": "05-01",
+                    "avg_run": 15000,
+                    "present": true
+                },
+                {
+                    "species": "Fall Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 25000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 20000,
+                    "present": true
+                },
+                {
+                    "species": "Winter Steelhead",
+                    "peak_window": [
+                        12,
+                        1,
+                        3,
+                        31
+                    ],
+                    "peak_date": "02-01",
+                    "avg_run": 8000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -237,12 +1144,43 @@ window.REGIONS.WA = {
             "id": "duwamish",
             "name": "Duwamish River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12113390", "param": "00060" },
+            "gauge": {
+                "site_id": "12113390",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 47.5109, "lon": -122.2636 },
+            "coords": {
+                "lat": 47.5109,
+                "lon": -122.2636
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
-            "stocks": null,
+            "stocks": [
+                {
+                    "species": "Chinook",
+                    "peak_window": [
+                        9,
+                        1,
+                        10,
+                        31
+                    ],
+                    "peak_date": "10-01",
+                    "avg_run": 5000,
+                    "present": true
+                },
+                {
+                    "species": "Coho",
+                    "peak_window": [
+                        10,
+                        1,
+                        11,
+                        30
+                    ],
+                    "peak_date": "11-01",
+                    "avg_run": 8000,
+                    "present": true
+                }
+            ],
             "capabilities": {},
             "no_telemetry": false
         },
@@ -250,9 +1188,15 @@ window.REGIONS.WA = {
             "id": "big-soos",
             "name": "Big Soos Creek",
             "waterbody_type": "creek",
-            "gauge": { "site_id": "12112600", "param": "00060" },
+            "gauge": {
+                "site_id": "12112600",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 47.4534, "lon": -122.1739 },
+            "coords": {
+                "lat": 47.4534,
+                "lon": -122.1739
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
             "stocks": null,
@@ -263,9 +1207,15 @@ window.REGIONS.WA = {
             "id": "mill-creek",
             "name": "Mill Creek (Green River tributary)",
             "waterbody_type": "creek",
-            "gauge": { "site_id": "12113347", "param": "00060" },
+            "gauge": {
+                "site_id": "12113347",
+                "param": "00060"
+            },
             "related_gauges": null,
-            "coords": { "lat": 47.4690, "lon": -122.2584 },
+            "coords": {
+                "lat": 47.469,
+                "lon": -122.2584
+            },
             "legal_hours": "daylight",
             "netting_sites": null,
             "stocks": null,
@@ -276,11 +1226,21 @@ window.REGIONS.WA = {
             "id": "cedar",
             "name": "Cedar River",
             "waterbody_type": "river",
-            "gauge": { "site_id": "12119000", "param": "00060" },
+            "gauge": {
+                "site_id": "12119000",
+                "param": "00060"
+            },
             "related_gauges": [
-                { "site_id": "12115000", "name": "Cedar River near Cedar Falls", "role": "upstream" }
+                {
+                    "site_id": "12115000",
+                    "name": "Cedar River near Cedar Falls",
+                    "role": "upstream"
+                }
             ],
-            "coords": { "lat": 47.5121, "lon": -122.1905 },
+            "coords": {
+                "lat": 47.5121,
+                "lon": -122.1905
+            },
             "legal_hours": "closed",
             "netting_sites": null,
             "stocks": null,

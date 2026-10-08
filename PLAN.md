@@ -2,9 +2,7 @@
 
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
-- [ ] F6: Fix bottom tab bar (Water Report / Gear Sim / Catch Log) not showing
-      → index.html, src/styles.css
-      [Detail → docs/PLAN_REFERENCE.md#fixing-bottom-bar]
+- [x] F6: Fix bottom tab bar (Water Report / Gear Sim / Catch Log) not showing
       → index.html, src/styles.css
       [Detail → docs/PLAN_REFERENCE.md#fixing-bottom-bar]
 

@@ -160,7 +160,7 @@ export function paintSimHud(rig, out, stats) {
             ' \u00b1' + Math.round(spotDepth.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
         '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
-        (out.hookDepthM ? '; hook depth ' + out.hookDepthM.toFixed(2) + ' m' : '; hook depth (chain not converged)') +
+        (out.hookDepthM && out.chainResult && out.chainResult.converged ? '; hook depth ' + (out.hookDepthM * 39.37).toFixed(1) + '"' : '; hook height ~' + hgt.toFixed(1) + '" (drift model)') +
         (out.interceptionProb ? '; P(intercept)=' + out.interceptionProb.toFixed(3) : '; P(intercept)=0') +
         (out.sweepQuality ? '; sweepQ=' + out.sweepQuality.toFixed(2) : '') +
         // Chain solver detail

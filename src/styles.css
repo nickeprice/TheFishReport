@@ -63,6 +63,8 @@ h2, h3 { font-size: 1.1rem; color: var(--accent-blue); margin: 22px 0 10px 0; pa
     color: #d1d5db;
     text-align: left;
 }
+/* Drift model note in HUD when chain solver hasn't converged */
+.hud-drift-note { color: var(--text-muted); font-style: italic; font-size: 0.75rem; }
 /* Off-target gear changes only. Bulleted, one row per change. */
 .hud-changes { margin: 6px 0 0 0; padding: 0; text-align: left; list-style-position: inside; }
 .hud-changes li { font-size: 0.72rem; color: var(--accent-yellow); line-height: 1.4; margin-bottom: 3px; }

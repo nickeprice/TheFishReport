@@ -96,7 +96,7 @@ export function mapPinColor(station) {
     if (mapPinHasReading(station)) return '#22c55e';
     // Grey = permanent gauge temporarily unreachable
 // Look up legal hours for a station from the local REGIONS registry as fallback.
-function _lookupLocalLegalHours(siteId) {
+function lookupLocalLegalHours(siteId) {
     var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
     if (!wbs || !siteId) return null;
     for (var i = 0; i < wbs.length; i++) {
@@ -127,7 +127,7 @@ export function stationPopupHtml(s) {
     // Resolve legal hours: prefer API value, fall back to local REGIONS registry
     var lh = s.legal_hours;
     if (!lh || lh === 'unknown') {
-        lh = _lookupLocalLegalHours(s.id);
+        lh = lookupLocalLegalHours(s.id);
     }
     if (lh === '24hr') {
         legalBadge = '<span class="pin-popup-badge badge-open">OPEN</span>';

@@ -19,7 +19,7 @@ html, body { background-color: var(--bg-main); color: var(--text-main); font-fam
 body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); font-size: 14px; line-height: 1.35; }
 
 /* NAV BAR (station selector + refresh; tabs live in the bottom bar) */
-#top-nav { position: sticky; top: 0; background-color: #1a1a1a; z-index: 2000; padding: 12px 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+#top-nav { position: sticky; top: 0; background-color: #1a1a1a; z-index: 2000; padding: 12px 10px; border-bottom: 1px solid #333; display: flex; justify-content: center; align-items: center; }
 .nav-refresh { background: none; border: 1px solid #4a4a4c; border-radius: 8px; color: #fff; font-size: 20px; width: 40px; height: 40px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 .nav-refresh:active { background-color: #2c2c2e; }
 

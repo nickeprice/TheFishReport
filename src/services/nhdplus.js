@@ -59,7 +59,7 @@ export async function fetchNhdPlus(lat, lon) {
         if (!features.length) return null;
 
         // Pick closest reach by center-point distance
-        let best = null, bestDist = Infinity;
+        let best = null; const bestDist = Infinity;
         for (const feat of features) {
             const a = feat.attributes;
             if (!a) continue;

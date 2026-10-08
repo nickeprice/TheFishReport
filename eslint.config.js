@@ -11,6 +11,7 @@ export default [
         ...globals.es2021,
         module: 'readonly',
         require: 'readonly',
+        State: 'readonly',
       },
     },
     rules: {

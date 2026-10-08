@@ -2,7 +2,7 @@
 
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 
-- [ ] Phase D1: Fix HUD messaging
+- [x] Phase D1: Fix HUD messaging
       → solver.js, styles.css
       [Detail → docs/PLAN_REFERENCE.md#drift-hud]
 

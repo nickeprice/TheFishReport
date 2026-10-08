@@ -1,22 +1,4 @@
 
-<a id="drift-hud"></a>
-## Drift Phase 1: Fix HUD Messaging
-
-**Goal:** Replace "hook depth (chain not converged)" with honest drift label.
-
-**Edit `solver.js` line ~157:**
-```
-(out.hookDepthM && out.chainResult && out.chainResult.converged
-    ? '; hook depth ' + (out.hookDepthM * 39.37).toFixed(1) + '"'
-    : '; hook height ~' + hgt.toFixed(1) + '" (drift model)')
-```
-
-**Edit `styles.css`:** `.hud-drift-note { color: var(--text-muted); font-style: italic; font-size: 0.75rem; }`
-
-**Files:** `solver.js` (~3 lines), `styles.css` (+3 lines)
-
----
-
 <a id="drift-contact"></a>
 ## Drift Phase 2: Bottom Contact Check
 

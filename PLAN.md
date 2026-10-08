@@ -1,11 +1,5 @@
 # Fish Report — Active Plan
 
-## 🔧 FIXINGS: Data Integrity & UI Quality
-
-- [x] F6: Fix bottom tab bar (Water Report / Gear Sim / Catch Log) not showing
-      → index.html, src/styles.css
-      [Detail → docs/PLAN_REFERENCE.md#fixing-bottom-bar]
-
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 
 - [ ] Phase D3: Complete drift force model

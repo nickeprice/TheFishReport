@@ -17,6 +17,23 @@
 ---
 
 
+<a id="fixing-bottom-bar"></a>
+## F6: Fix Bottom Tab Bar Not Showing
+
+**Goal:** The persistent bottom tab bar (Water Report / Gear Sim / Catch Log) renders and stays visible.
+
+**Root cause:** The bar is `position: fixed; bottom: 0; z-index: 2500`. Possible causes of invisibility:
+1. CSS conflict — `z-index` too low, or another element overrides it
+2. Body padding — `body { padding-bottom: calc(56px + env(safe-area-inset-bottom)) }` might push content over it
+3. JS error — A JS error before the bottom bar renders prevents it from appearing
+4. The bar is inside `.tab-content` which might be hidden
+
+**Fix:** Check rendering by inspecting the DOM. Ensure the `<nav id="bottom-tab-bar">` is outside all `.tab-content` divs. Verify z-index stacking relative to other fixed elements.
+
+**Files:** `index.html`, `src/styles.css`
+
+---
+
 <a id="drift-forces"></a>
 ## Drift Phase 3: Complete Drift Force Model
 

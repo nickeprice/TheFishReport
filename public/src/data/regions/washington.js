@@ -57,6 +57,9 @@ window.REGIONS.WA = {
         { "site_id": "12150800", "name": "Snohomish River near Monroe", "coords": { "lat": 47.8309, "lon": -122.0485 }, "gauge_type": "permanent" },
         { "site_id": "12167000", "name": "North Fork Stillaguamish near Arlington", "coords": { "lat": 48.2615, "lon": -122.0476 }, "gauge_type": "permanent" },
         { "site_id": "14243000", "name": "Cowlitz River at Castle Rock", "coords": { "lat": 46.2837, "lon": -122.8254 }, "gauge_type": "permanent" },
+        { "site_id": "14238000", "name": "Cowlitz River below Mayfield Dam", "coords": { "lat": 46.5107, "lon": -122.6189 }, "gauge_type": "permanent" },
+        { "site_id": "14233500", "name": "Cowlitz River near Kosmos", "coords": { "lat": 46.4266, "lon": -122.3693 }, "gauge_type": "permanent" },
+        { "site_id": "14240525", "name": "NF Toutle River below SRS near Kid Valley", "coords": { "lat": 46.3849, "lon": -122.4401 }, "gauge_type": "permanent" },
         { "site_id": "12119000", "name": "Cedar River at Renton", "coords": { "lat": 47.5121, "lon": -122.1905 }, "gauge_type": "permanent" }
     ],
     "waterbodies": [
@@ -217,7 +220,10 @@ window.REGIONS.WA = {
             "name": "Cowlitz River",
             "waterbody_type": "river",
             "gauge": { "site_id": "14243000", "param": "00060" },
-            "related_gauges": null,
+            "related_gauges": [
+                { "site_id": "14238000", "name": "Cowlitz River below Mayfield Dam", "role": "upstream" },
+                { "site_id": "14233500", "name": "Cowlitz River near Kosmos", "role": "upstream" }
+            ],
             "coords": { "lat": 46.2837, "lon": -122.8254 },
             "legal_hours": "daylight",
             "netting_sites": null,

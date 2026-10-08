@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """
-refresh_wdfw_forecast.py — WDFW annual salmon forecast hybrid scraper.
+refresh_wdfw_forecast.py — WDFW annual salmon forecast scraper.
 
 Fetches the STABLE index page (https://wdfw.wa.gov/fishing/management/north-falcon/forecasts),
 resolves the current-year "Chinook forecasts" + "coho forecast" PDF hrefs (the
 URLs change every year; the index is the stable anchor), downloads the PDFs,
-and attempts stdlib-only text extraction to surface the candidate Puyallup
-number. Because these PDFs ship as vector-graphic tables (no text layer) and
-this repo deliberately has NO third-party PDF library, the script DEGRADES
-HONESTLY: it prints the resolved source URLs + a human hint and NEVER writes
+and extracts table data via PyMuPDF (fitz) with fuzzy river-name matching.
+The `--confirm` gate stays — the script prints candidates and NEVER writes
 an unverified number.
 
 Usage:
@@ -23,13 +21,14 @@ Contract (AGENTS.md no-fabricate):
 """
 
 import argparse
+import difflib
 import json
 import os
 import re
 import ssl
 import sys
 import urllib.request
-import zlib
+import pymupdf  # PyMuPDF (legacy alias: fitz)
 
 # Matches api/water_report.py's fetch pattern: public USGS/NOAA/WDFW data over
 # HTTPS with an unverified context (local python often lacks the CA bundle).
@@ -62,24 +61,88 @@ def resolve_index_links(html):
     return links
 
 
-def pdf_text_stdlib(pdf_bytes):
-    """Best-effort decompress of FlateDecode streams via stdlib zlib."""
-    chunks = []
-    for m in re.finditer(rb'stream\r?\n(.*?)\r?\nendstream', pdf_bytes, re.S):
-        blob = m.group(1)
-        for wbits in (-15, 15, 47):
-            try:
-                chunks.append(zlib.decompress(blob, wbits).decode('latin-1'))
-                break
-            except Exception:
+def extract_pdf_tables(pdf_bytes):
+    """
+    PyMuPDF table extraction.
+    Returns a list of dicts: { 'river': str, 'value': int|None, 'species': str|None }
+    """
+    doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+    rows = []
+
+    # Known waterbody names (from wdfw_forecasts.json) for fuzzy matching
+    WATERBODY_NAMES = [
+        "Puyallup River", "Carbon River", "White River", "Green River",
+        "Nisqually River", "Skagit River", "Snoqualmie River",
+        "Skykomish River", "Snohomish River", "North Fork Stillaguamish River",
+        "Cowlitz River", "Toutle River", "Lewis River", "Kalama River",
+        "Cedar River",
+    ]
+
+    for page in doc:
+        # 1) Try PyMuPDF built-in table detection (fitz >= 1.18.0)
+        try:
+            tabs = page.find_tables()
+            for t in tabs:
+                for r in t.extract():
+                    row_text = ' '.join(str(c) for c in r if c is not None)
+                    matched = None
+                    for wb in WATERBODY_NAMES:
+                        if wb.lower() in row_text.lower():
+                            matched = wb
+                            break
+                    if matched is None:
+                        for cell in r:
+                            if cell is None:
+                                continue
+                            cell_str = str(cell)
+                            for wb in WATERBODY_NAMES:
+                                ratio = difflib.SequenceMatcher(
+                                    None, cell_str.lower(), wb.lower()
+                                ).ratio()
+                                if ratio > 0.6:
+                                    matched = wb
+                                    break
+                            if matched:
+                                break
+                    if matched:
+                        nums = [
+                            int(c.replace(',', '')) for c in r if c is not None
+                            and re.sub(r'[,\s]', '', str(c)).isdigit()
+                        ]
+                        value = nums[0] if nums else None
+                        rows.append({'river': matched, 'value': value, 'species': None})
+        except Exception:
+            pass
+
+        # 2) Fallback: page text — find river name + number patterns
+        text = page.get_text("text")
+        for ln in text.split('\n'):
+            ln = ln.strip()
+            if not ln:
                 continue
-    return '\n'.join(chunks)
+            matched = None
+            for wb in WATERBODY_NAMES:
+                if wb.lower() in ln.lower():
+                    matched = wb
+                    break
+            if matched:
+                nums = [
+                    int(s.replace(',', '')) for s in re.findall(r'[\d,]+', ln)
+                    if re.sub(r'[,\s]', '', s).isdigit()
+                ]
+                value = nums[0] if nums else None
+                if not any(r['river'] == matched for r in rows):
+                    rows.append({'river': matched, 'value': value, 'species': None})
+                elif rows and rows[-1]['river'] == matched and rows[-1]['value'] is None and value is not None:
+                    rows[-1]['value'] = value
+
+    doc.close()
+    return rows
 
 
-def find_candidate(text, term):
-    """Return the text near a term — the human verifies this, never auto-write."""
-    hits = [ln for ln in text.splitlines() if term.lower() in ln.lower()]
-    return hits[:5]
+def find_candidate(rows, term):
+    """Return rows matching a term (case-insensitive river name)."""
+    return [r for r in rows if term.lower() in r['river'].lower()]
 
 def main():
     ap = argparse.ArgumentParser()
@@ -108,7 +171,7 @@ def main():
         full = href if href.startswith('http') else 'https://wdfw.wa.gov' + href
         print(f'  {kind}: {full}')
 
-    # Download + attempt extraction (never writes).
+    # Download + attempt extraction (never writes beyond print).
     for kind in ('chinook', 'coho'):
         href = links.get(kind)
         if not href:
@@ -120,19 +183,21 @@ def main():
         except Exception as e:
             print(f'!! {kind} download failed: {e}')
             continue
-        text = pdf_text_stdlib(pdf)
-        if text.strip():
-            cand = find_candidate(text, 'Puyallup')
-            if cand:
-                print('  Candidate lines near "Puyallup" (HUMAN VERIFY):')
-                for ln in cand[:5]:
-                    print('   ', ln)
-            else:
-                print('  Text layer found but no "Puyallup" line — check the PDF by hand.')
+
+        try:
+            table_rows = extract_pdf_tables(pdf)
+        except Exception as e:
+            print(f'  PyMuPDF extraction error: {e}')
+            print('  Open the PDF manually (link above) and confirm the Puyallup number.')
+            continue
+
+        if table_rows:
+            print(f'  Extracted {len(table_rows)} table rows via PyMuPDF:')
+            for r in table_rows[:15]:
+                val_str = f'{r["value"]:,}' if r['value'] is not None else '--'
+                print(f'    {r["river"]}: {val_str}')
         else:
-            print('  NOTE: no extractable text layer (vector-graphic tables).')
-            print('  Open the PDF manually (link above) and confirm the Puyallup')
-            print('  number before writing anything. Nothing was written.')
+            print('  No table rows extracted — check PDF by hand (link above).')
 
     # Write path: ONLY with explicit human-confirmed numbers AND --yes.
     if args.confirm:

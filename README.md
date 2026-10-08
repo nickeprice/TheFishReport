@@ -244,3 +244,11 @@ Two GitHub Actions workflows run on push/PR to `main`:
 |---|---|---|
 | **sanity.yml** | Full test suite + static sanity pass + dev-server leak check | All changes |
 | **ci-physics.yml** | Physics validation + chain-solver fuzzing | `tests/**`, `requirements-dev.txt`, `.github/workflows/ci-physics.yml` |
+
+## Debug Console
+
+Open the debug log by appending `?debug=1` to the URL:
+```text
+https://thefishreport.vercel.app/?debug=1
+```
+The debug console opens at the bottom of the page showing real-time log messages. Remove `?debug=1` and reload to close it.

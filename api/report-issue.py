@@ -1,6 +1,6 @@
 """Vercel entry point for ``/api/report-issue``.
 
-POST a debug log to create a GitHub issue.
+POST a debug log to create a GitHub issue, or store in Supabase as fallback.
 
 Usage::
 
@@ -8,13 +8,14 @@ Usage::
     {"log": "...debug log text...", "description": "optional description", "page": "the page URL"}
 
 Requires ``GITHUB_TOKEN`` environment variable (a GitHub personal access token
-with ``public_repo`` scope). When the token is missing, the report is logged
-to stderr instead.
+with ``public_repo`` scope). When the token is missing, falls back to
+``SUPABASE_URL`` + ``SUPABASE_ANON_KEY`` env vars to INSERT into
+``public.debug_reports``.
 
 Returns::
 
     {"ok": true, "issue_url": "https://github.com/nprice/TheFishReport/issues/123"}
-    {"ok": true, "stored": true, "note": "GITHUB_TOKEN not set — reported to stderr"}
+    {"ok": true, "stored": true, "note": "stored in Supabase debug_reports"}
 """
 
 import json
@@ -25,6 +26,8 @@ import urllib.request
 
 GITHUB_API = "https://api.github.com/repos/nprice/TheFishReport/issues"
 TOKEN = os.environ.get("GITHUB_TOKEN", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 
 def _respond(handler, status, data):
@@ -104,13 +107,37 @@ class handler(BaseHTTPRequestHandler):
                     "error": "GitHub API error: " + str(e),
                 })
         else:
-            # No token — log to stderr
-            import sys
-            print("[report-issue] NO GITHUB_TOKEN set. Report:",
-                  file=sys.stderr)
-            print(issue_body, file=sys.stderr)
-            return _respond(self, 200, {
-                "ok": True,
-                "stored": True,
-                "note": "GITHUB_TOKEN not set — reported to stderr",
-            })
+            # No GitHub token — try Supabase debug_reports table
+            if SUPABASE_URL and SUPABASE_ANON_KEY:
+                try:
+                    supa_data = json.dumps({
+                        "log_text": log_text,
+                        "page_url": page,
+                        "description": description,
+                    }).encode("utf-8")
+                    supa_headers = {
+                        "Content-Type": "application/json",
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                    }
+                    supa_req = urllib.request.Request(
+                        SUPABASE_URL + "/rest/v1/debug_reports",
+                        data=supa_data, headers=supa_headers, method="POST"
+                    )
+                    with urllib.request.urlopen(supa_req, timeout=10) as resp:
+                        return _respond(self, 200, {
+                            "ok": True,
+                            "stored": True,
+                            "note": "stored in Supabase debug_reports",
+                        })
+                except Exception as e:
+                    return _respond(self, 500, {
+                        "ok": False,
+                        "error": "Supabase error: " + str(e),
+                    })
+            else:
+                return _respond(self, 200, {
+                    "ok": True,
+                    "stored": True,
+                    "note": "no GITHUB_TOKEN or SUPABASE vars — report accepted but not persisted",
+                })

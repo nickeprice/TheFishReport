@@ -82,7 +82,7 @@ export function reportDebugIssue() {
             logDebug('Issue created: ' + data.issue_url, 'SYNC');
             window.open(data.issue_url, '_blank');
         } else if (data.stored) {
-            logDebug('Report stored (no GitHub token). Log saved server-side.', 'SYS');
+            logDebug('Report stored: ' + (data.note || 'server-side'), 'SYS');
         } else if (data.error) {
             logDebug('Report failed: ' + data.error, 'ERR');
         }

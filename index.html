@@ -463,7 +463,11 @@
     </div>
 </div>
 
-<div id="debug-console"><button onclick="if(typeof copyDebugLog==='function')copyDebugLog()" style="position:sticky;top:0;background:#333;color:#0f0;border:1px solid #0f0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">📋 Copy All</button> <button onclick="if(typeof reportDebugIssue==='function')reportDebugIssue()" style="position:sticky;top:0;background:#333;color:#ff0;border:1px solid #ff0;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;z-index:3001;">🐛 Report Issue</button></div>
+<div id="debug-console">
+    <div class="debug-toolbar">
+        <button class="debug-btn-copy" onclick="if(typeof copyDebugLog==='function')copyDebugLog()">📋 Copy All</button>
+        <button class="debug-btn-report" onclick="if(typeof reportDebugIssue==='function')reportDebugIssue()">🐛 Report Issue</button>
+    </div>
 
 <!-- PERSISTENT BOTTOM TAB BAR (Water Report / Gear Sim / Catch Log) -->
 <nav id="bottom-tab-bar" class="bottom-tab-bar" role="tablist" aria-label="Primary navigation">

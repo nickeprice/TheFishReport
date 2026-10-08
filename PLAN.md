@@ -6,10 +6,6 @@
       → src/features/telemetry/report-render.js, src/features/telemetry/hero.js
       [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing]
 
-- [ ] F6: Fix bottom tab bar + remove refresh/bug buttons
-      → index.html, src/styles.css
-      [Detail → docs/PLAN_REFERENCE.md#fixing-ui-buttons]
-
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 
 - [ ] Phase D3: Complete drift force model

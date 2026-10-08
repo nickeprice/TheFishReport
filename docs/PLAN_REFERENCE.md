@@ -16,22 +16,6 @@
 
 ---
 
-<a id="fixing-ui-buttons"></a>
-## F6: Fix Bottom Tab Bar + Remove Refresh/Bug Buttons
-
-**Goal:** Bottom tab bar renders; refresh ⟳ and bug 🐛 buttons removed from top nav.
-
-**Remove from `index.html` lines 33-34:**
-```html
-<!-- DELETE both buttons from #top-nav -->
-```
-
-**Bottom tab bar debug:**
-1. Check for JS errors that prevent the HTML from rendering
-2. The bar is `position: fixed; bottom: 0` with `z-index: 2500` — ensure no other element masks it
-3. Verify `body { padding-bottom: calc(56px + ...) }` doesn't push content too far
-
----
 
 <a id="drift-forces"></a>
 ## Drift Phase 3: Complete Drift Force Model

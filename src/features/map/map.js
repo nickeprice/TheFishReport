@@ -112,7 +112,6 @@ export function stationPopupHtml(s) {
         legalBadge = '<span class="pin-popup-badge badge-open">OPEN</span>';
     } else if (s.legal_hours === 'daylight') {
         legalBadge = '<span class="pin-popup-badge badge-daylight">DAYLIGHT</span>';
-    } else {
     } else if (s.legal_hours === 'closed') {
         legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
     } else {

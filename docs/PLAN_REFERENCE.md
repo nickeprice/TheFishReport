@@ -1,28 +1,5 @@
 
 
-<a id="fixing-map-colors"></a>
-## F2: Map Gauge Color Coding + Seasonal Logic
-
-**Goal:** Green = permanent, Yellow = seasonal (in season), Red = error state.
-
-**New pin colors in `mapPinColor()`:**
-- `#22c55e` green — permanent gauge with valid data
-- `#eab308` yellow — seasonal gauge, currently in operational window
-- `#ef4444` red — gauge that should have data (permanent or in-season seasonal) but reading is null
-
-**New helper `mapPinIsSeasonal(site)`:** checks gauge_type + date vs season_start/season_end.
-
-**New helper `mapPinHasError(station)`:** returns true when a gauge is expected to report but `cfs === null && gage === null`.
-
-**Update `refreshStationMap()`:**
-- After fetching stations, filter out seasonal gauges whose window doesn't include today
-- Call `mapPinColor()` on each remaining station
-
-**Update `stationPopupHtml()`:**
-- Show gauge type badge: "PERMANENT" / "SEASONAL (MM/DD – MM/DD)"
-- Show error badge when `mapPinHasError()` is true
-
----
 
 <a id="fixing-legal-hours"></a>
 ## F3: Legal Hours Data — Per-River Records

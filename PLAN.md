@@ -2,7 +2,7 @@
 
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
-- [ ] F2: Map color coding — green/yellow/red markers, seasonal hide/show
+- [ ] F3: Legal hours data — per-river records, eliminate "not verified"
       → src/features/map/map.js, src/styles.css
       [Detail → docs/PLAN_REFERENCE.md#fixing-map-colors]
 

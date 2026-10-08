@@ -6,7 +6,7 @@
       → refresh_wdfw_forecast.py
       [Detail → docs/PLAN_REFERENCE.md#data-forecast-pymupdf]
 
-- [ ] Phase B: Hatchery escapement — map WDFW facilities for all 15 rivers
+- [x] Phase B: Hatchery escapement — map WDFW facilities for all 15 rivers
       → water.js
       [Detail → docs/PLAN_REFERENCE.md#data-hatchery]
 

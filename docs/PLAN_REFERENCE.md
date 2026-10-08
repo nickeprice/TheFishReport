@@ -116,35 +116,6 @@ rows with full-width buttons.
 
 <!-- H5 complete — detail deleted per protocol -->
 
-<a id="data-hatchery"></a>
-## Phase B: Hatchery Escapement — Map WDFW Facilities for All 15 Rivers
-
-**Current:** Only 5 of 15 gauges mapped in `escapementFacilities` / 
-`hatcheryEscapement`. The Socrata live feed (`data.wa.gov`) already works — 
-just needs facility names.
-
-**Currently mapped:**
-- Puyallup basin: `12101500`, `12093500`, `12094000` (VOIGHTS CR, PUYALLUP, 
-  CLARKS CR, WHITE RIVER, BUCKLEY TRAP, DIRU CREEK)
-- Green: `12113000` (SOOS CREEK HATCHERY)
-- Skagit: `12200500` (MARBLEMOUNT HATCHERY)
-
-**Missing** (need WDFW facility name research):
-- `12089500` — Nisqually River
-- `12098500` — White River
-- `12150800` — Snoqualmie River
-- `12134500` — Skykomish River
-- `12155300` — Snohomish River
-- `12167000` — Stillaguamish River
-- `14242500` — Cowlitz River
-- `14240500` — Toutle River
-- `14236000` — Lewis River
-- `14241000` — Kalama River
-- `12115000` — Cedar River
-
-**Files:** `src/services/water.js`
----
-
 <a id="ui-debug"></a>
 ## Phase C: Debug Pipeline → Supabase + Button Styling
 

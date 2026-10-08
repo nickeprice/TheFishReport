@@ -213,6 +213,9 @@ export async function showStationPopup(station) {
             const readings = await fetchCfsReadingsWdfn(station.id, 24);
             if (readings && readings.length) {
                 station.cfs = readings[readings.length - 1].v || null;
+                logDebug('Popup CFS fetched: ' + station.cfs + ' for ' + station.id, 'MAP');
+            } else {
+                logDebug('Popup CFS fetch returned empty for ' + station.id, 'MAP');
             }
             // Also try gage height
             try {
@@ -220,8 +223,8 @@ export async function showStationPopup(station) {
                 if (gageReadings && gageReadings.length) {
                     station.gage = gageReadings[gageReadings.length - 1].v || null;
                 }
-            } catch (e) { /* gage fetch is best-effort */ }
-        } catch (e) { /* silent fallback — show what we have */ }
+            } catch (e) { logDebug('Gage fetch error: ' + e.message, 'MAP'); }
+        } catch (e) { logDebug('CFS fetch error: ' + e.message + ' for ' + station.id, 'MAP'); }
     }
     showPopup(stationPopupHtml(station));
 }

@@ -2,30 +2,6 @@
 
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
-- [ ] F5a: Research Socrata — fetch distinct facility names, species, events
-      → src/services/water-weather.js
-      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing-s1]
-
-- [ ] F5b: Update escapementFacilities — map all 32 gauge IDs
-      → src/services/water-weather.js
-      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing-s2]
-
-- [ ] F5c: Update hatcheryEscapement — add entries for all 32 gauge IDs
-      → src/services/water-weather.js
-      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing-s3]
-
-- [ ] F5d: Fill wdfw_forecasts.json — per-waterbody forecast numbers
-      → src/data/wdfw_forecasts.json
-      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing-s4]
-
-- [ ] F5e: Fix species name mapping — align Socrata species to calendar species
-      → src/services/water-escapement.js, src/features/telemetry/hero.js
-      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing-s5]
-
-- [ ] F5f: Verify — run sanity + test
-      → (all files above)
-      [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing-s6]
-
 - [ ] F6: Fix bottom tab bar (Water Report / Gear Sim / Catch Log) not showing
       → index.html, src/styles.css
       [Detail → docs/PLAN_REFERENCE.md#fixing-bottom-bar]

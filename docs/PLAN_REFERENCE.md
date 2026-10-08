@@ -1,125 +1,16 @@
 
 <a id="fixing-run-timing-s1"></a>
-## F5a: Research Socrata — fetch distinct facility names, species, events
+## F5a-F5f: Hatchery escapement pipeline — COMPLETE
 
-**Query to run:**
-```bash
-curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct facility&$where=event='Trap Estimate'"
-curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct species&$where=event='Trap Estimate'"
-curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct event&$where=facility='VOIGHTS CR HATCHERY'"
-```
+**Commit:** `f3a9862`
 
-**Purpose:** Verify that facility names we plan to use actually exist in the Socrata dataset. Discover actual species naming conventions. Confirm which event types each facility uses.
-
-**Output:** A verified list of facility names, species names, and event types that will drive S2-S5.
+**What was done:**
+- F5a-F5b: Researched Socrata, updated escapementFacilities (28/32 gauge IDs)
+- F5c-F5d: Updated hatcheryEscapement (28 run-specific entries), filled wdfw_forecasts.json
+- F5e: Species by run — bucketName preserves run, two-pass matching in refreshEscapement/hero.js
+- F5f: Verification — sanity 43/43, build OK, 32 tests passed
 
 ---
-
-<a id="fixing-run-timing-s2"></a>
-## F5b: Update escapementFacilities — map all 32 gauge IDs
-
-**File:** `src/services/water-weather.js` lines 131-146
-
-**Changes:**
-- Add entries for every gauge ID in our `discovery_pool`
-- Seasonal gauges mirror the same facility pool as the main river gauge
-- Remove dead IDs (14242500, 14240500, 14236000, 14241000, 12115000, 12155300)
-- Leave unmapped: Nisqually, Duwamish, Big Soos, Mill Creek (honest "--")
-
-**Facility mapping (from S1 research):**
-| Waterbody | Facility Names | Gauge IDs |
-|---|---|---|
-| Puyallup | VOIGHTS CR HATCHERY etc. | 12101500, 12093500, 12096500, 12101470, 12096505, 12092000 |
-| Carbon | same Puyallup basin | 12094000 |
-| White | same Puyallup basin | 12097850, 12100490, 12101100 |
-| Green | SOOS CREEK HATCHERY | 12113000, 12108800, 12113150, 12113310, 12113340, 12113350, 12112600, 12113347 |
-| Nisqually | — (unmapped) | 12089500 |
-| Skagit | MARBLEMOUNT HATCHERY | 12200500, 12194000 |
-| Snoqualmie | FALLERT CR HATCHERY | 12144500, 12149000 |
-| Skykomish | REITER PONDS | 12134500 |
-| Snohomish | WALLACE RIVER HATCHERY | 12150800 |
-| Stillaguamish | SAMISH HATCHERY, HARVEY CREEK HATCHERY | 12167000 |
-| Cowlitz | COWLITZ SALMON HATCHERY, COWLITZ TROUT HATCHERY | 14243000, 14238000, 14233500, 14240525 |
-| Duwamish | — (unmapped) | 12113390 |
-| Cedar | ISSAQUAH HATCHERY | 12119000, 12115000 |
-
-**Risk:** Facility names must match Socrata `facility` field exactly (from S1 research). If a name doesn't match, the Socrata IN clause won't find it and the count stays "--".
-
----
-
-<a id="fixing-run-timing-s3"></a>
-## F5c: Update hatcheryEscapement — add entries for all 32 gauge IDs
-
-**File:** `src/services/water-weather.js` lines 44-108
-
-**Changes:**
-- Each entry's `stocks[].name` matches the `species` field in `washington.js` stocks
-- Remove entries for dead gauge IDs
-- `totalReturn/trapCount/fiveYrAvg` stay `null` (Socrata provides live numbers)
-
-**Template for each entry:**
-```js
-'12144500': { system: 'Snoqualmie River', source: 'WDFW Fallert Creek Hatchery', stocks: [
-    { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
-    { name: 'Coho', totalReturn: null, trapCount: null, fiveYrAvg: null },
-    { name: 'Pink', totalReturn: null, trapCount: null, fiveYrAvg: null },
-    { name: 'Steelhead', totalReturn: null, trapCount: null, fiveYrAvg: null }
-]},
-```
-
-**Risk:** Species names must exactly match `washington.js` `stocks[].species` (case-insensitive match in hero.js:121).
-
----
-
-<a id="fixing-run-timing-s4"></a>
-## F5d: Fill wdfw_forecasts.json
-
-**Files:** `public/src/data/wdfw_forecasts.json`, `src/data/wdfw_forecasts.json`
-
-**Structure:**
-```json
-{ "waterbodies": { "puyallup": { "Chinook": 34000, "Coho": 48000 }, ... } }
-```
-
-**Changes:**
-- Read existing file first to confirm structure
-- Add entries for all waterbodies with WDFW preseason forecasts
-- Waterbody IDs must match `[wb].id` from `washington.js`
-- Species names must match calendar species names
-- Omit waterbodies without WDFW forecasts (honest "--")
-
-**Risk:** `refreshWdfwForecast()` in `water-escapement.js` matches waterbody ID from `washington.js`. The JSON keys must match exactly.
-
----
-
-<a id="fixing-run-timing-s5"></a>
-## F5e: Fix species name mapping — align Socrata species to calendar species
-
-**Files:** `src/features/telemetry/hero.js` (line 121), `src/services/water-escapement.js` (lines 276-291)
-
-**Changes:**
-- If S1 research shows Socrata species names differ from our calendar names, add a mapping table in `refreshEscapement()`:
-```js
-var speciesMap = { 'Chinook Salmon': 'Chinook', 'Coho Salmon': 'Coho' };
-```
-- For Cowlitz River (Spring Chinook + Fall Chinook), map the Socrata `run` field to separate calendar species
-- Unexpected species (Sockeye, Cutthroat) are filtered out automatically by species name comparison
-
-**Risk:** If Socrata species already match our calendar species (which is likely), no mapping needed. S1 research determines this.
-
----
-
-<a id="fixing-run-timing-s6"></a>
-## F5f: Verify — run sanity + test
-
-1. `node sanity_pass.cjs --quiet` — must pass 43/43
-2. Start dev server, inspect `[ RUN & TIMING ]` cards
-3. Verify `[data-count]` elements populated with numbers after Socrata fetch
-4. Cross-check WDFW preseason forecast numbers for accuracy
-5. Verify unmapped rivers (Nisqually, Duwamish, Big Soos, Mill Creek) show honest "--"
-
----
-
 
 <a id="fixing-bottom-bar"></a>
 ## F6: Fix Bottom Tab Bar Not Showing

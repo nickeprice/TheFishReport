@@ -1,11 +1,5 @@
 # Fish Report — Active Plan
 
-## 🛠 Immediate Map Hotfixes & Polish
-
-- [ ] H5: Override sloppy USGS coords for Puyallup + Green
-      → washington.js
-      [Detail → docs/PLAN_REFERENCE.md#hotfix-coords]
-
 ## 🛠 Data Pipeline & Infrastructure
 
 - [ ] Phase A3: Add PyMuPDF to forecast scraper

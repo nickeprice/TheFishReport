@@ -114,20 +114,7 @@ rows with full-width buttons.
 <!-- H3 complete — detail deleted per protocol -->
 <!-- H4 complete — detail deleted per protocol -->
 
-<a id="hotfix-coords"></a>
-## H5: Override Sloppy USGS Coords for Puyallup + Green
-
-**Change:** Manually override two primary river gauge coordinates in `washington.js`.
-
-**New coords:**
-- Puyallup 12101500: `lat: 47.2028, lon: -122.2965`
-- Green 12113000: `lat: 47.3125, lon: -122.2027`
-
-Update the corresponding `waterbodies[].coords` entries too.
-
-**NLDI note (future):** Use `https://labs.waterdata.usgs.gov/api/nldi/linked-data/nwissite/USGS-{site_id}` to fetch precise snapped river centerline coords for all 15 stations. Write a Python script to hit this endpoint and overwrite `coords` objects in `washington.js` programmatically.
-
----
+<!-- H5 complete — detail deleted per protocol -->
 
 <a id="data-forecast-pymupdf"></a>
 ## Phase A3: Add PyMuPDF to Forecast Scraper

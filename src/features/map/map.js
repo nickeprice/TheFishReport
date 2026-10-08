@@ -95,6 +95,22 @@ export function mapPinColor(station) {
     // Green = permanent or off-season seasonal gauge with data
     if (mapPinHasReading(station)) return '#22c55e';
     // Grey = permanent gauge temporarily unreachable
+// Look up legal hours for a station from the local REGIONS registry as fallback.
+function _lookupLocalLegalHours(siteId) {
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!wbs || !siteId) return null;
+    for (var i = 0; i < wbs.length; i++) {
+        var wb = wbs[i];
+        if (wb.gauge && wb.gauge.site_id === siteId) return wb.legal_hours || null;
+        var rels = wb.related_gauges;
+        if (rels) {
+            for (var j = 0; j < rels.length; j++) {
+                if (rels[j].site_id === siteId) return wb.legal_hours || null;
+            }
+        }
+    }
+    return null;
+}
     return '#94a3b8';
 }
 
@@ -108,11 +124,16 @@ export function stationPopupHtml(s) {
     const cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
     const gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
     var legalBadge = '';
-    if (s.legal_hours === '24hr') {
+    // Resolve legal hours: prefer API value, fall back to local REGIONS registry
+    var lh = s.legal_hours;
+    if (!lh || lh === 'unknown') {
+        lh = _lookupLocalLegalHours(s.id);
+    }
+    if (lh === '24hr') {
         legalBadge = '<span class="pin-popup-badge badge-open">OPEN</span>';
-    } else if (s.legal_hours === 'daylight') {
+    } else if (lh === 'daylight') {
         legalBadge = '<span class="pin-popup-badge badge-daylight">DAYLIGHT</span>';
-    } else if (s.legal_hours === 'closed') {
+    } else if (lh === 'closed') {
         legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
     } else {
         legalBadge = '<span class="pin-popup-badge badge-closed">NOT VERIFIED</span>';

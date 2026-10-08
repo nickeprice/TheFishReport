@@ -226,11 +226,52 @@ window.REGIONS.WA = {
             "no_telemetry": false
         },
         {
+            "id": "duwamish",
+            "name": "Duwamish River",
+            "waterbody_type": "river",
+            "gauge": { "site_id": "12113390", "param": "00060" },
+            "related_gauges": null,
+            "coords": { "lat": 47.5109, "lon": -122.2636 },
+            "legal_hours": "daylight",
+            "netting_sites": null,
+            "stocks": null,
+            "capabilities": {},
+            "no_telemetry": false
+        },
+        {
+            "id": "big-soos",
+            "name": "Big Soos Creek",
+            "waterbody_type": "creek",
+            "gauge": { "site_id": "12112600", "param": "00060" },
+            "related_gauges": null,
+            "coords": { "lat": 47.4534, "lon": -122.1739 },
+            "legal_hours": "daylight",
+            "netting_sites": null,
+            "stocks": null,
+            "capabilities": {},
+            "no_telemetry": false
+        },
+        {
+            "id": "mill-creek",
+            "name": "Mill Creek (Green River tributary)",
+            "waterbody_type": "creek",
+            "gauge": { "site_id": "12113347", "param": "00060" },
+            "related_gauges": null,
+            "coords": { "lat": 47.4690, "lon": -122.2584 },
+            "legal_hours": "daylight",
+            "netting_sites": null,
+            "stocks": null,
+            "capabilities": {},
+            "no_telemetry": false
+        },
+        {
             "id": "cedar",
             "name": "Cedar River",
             "waterbody_type": "river",
             "gauge": { "site_id": "12119000", "param": "00060" },
-            "related_gauges": null,
+            "related_gauges": [
+                { "site_id": "12115000", "name": "Cedar River near Cedar Falls", "role": "upstream" }
+            ],
             "coords": { "lat": 47.5121, "lon": -122.1905 },
             "legal_hours": "daylight",
             "netting_sites": null,

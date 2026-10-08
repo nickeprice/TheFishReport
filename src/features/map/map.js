@@ -361,6 +361,10 @@ export async function openMapScreen() {
                 });
             }
             plotSavedSpotStars();
+            // Refresh stations with live data after initial pins are plotted
+            setTimeout(async function () {
+                try { await refreshStationMap(initialCenter || mapCenter()); } catch (e) { logDebug('Station refresh failed: ' + e.message, 'ERR'); }
+            }, 100);
         });
         // Tap-to-pin click handler
         _stationMap.on('click', function (e) {
@@ -401,9 +405,7 @@ export async function openMapScreen() {
         });
     }
     if (loading) loading.style.display = 'none';
-    // Refresh stations with live data from the API
-    try { await refreshStationMap(initialCenter || mapCenter()); } catch (e) { logDebug('Station refresh failed: ' + e.message, 'ERR'); }
-}
+    }
 window.openMapScreen = openMapScreen;
 
 // ── GPS recenter ──────────────────────────────────────────────────────────────

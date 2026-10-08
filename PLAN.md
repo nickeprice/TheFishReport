@@ -3,14 +3,6 @@
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
 - [ ] F4: Fix map CFS/gauge values showing "--"
-      → src/features/map/map.js, src/styles.css
-      [Detail → docs/PLAN_REFERENCE.md#fixing-map-colors]
-
-- [ ] F3: Legal hours data — per-river records, eliminate "not verified"
-      → public/src/data/regions/washington.js, src/features/telemetry/daynav.js, src/utils/regulations.js
-      [Detail → docs/PLAN_REFERENCE.md#fixing-legal-hours]
-
-- [ ] F4: Fix map CFS/gauge values showing "--"
       → src/features/map/map.js, src/services/water-gauge.js
       [Detail → docs/PLAN_REFERENCE.md#fixing-map-cfs]
 

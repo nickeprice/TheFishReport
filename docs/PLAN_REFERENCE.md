@@ -1,7 +1,3 @@
-
-
-
-
 <a id="fixing-map-cfs"></a>
 ## F4: Fix Map CFS/Gauge Values + New Data Sources
 

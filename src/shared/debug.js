@@ -3,28 +3,12 @@
  * public: logDebug(msg, source), toggleDebug(), copyDebugLog(), reportDebugIssue()
  * ES module.
  */
-// --- DEBUG TOGGLE (5 rapid taps on station name) ---
-var _tapCount = 0;
-var _tapTimer = null;
+// --- DEBUG TOGGLE (tap "···" next to station name) ---
 export function toggleDebug() {
     const con = document.getElementById('debug-console');
     con.classList.toggle('open');
     logDebug(con.classList.contains('open') ? 'Debug Matrix Opened' : 'Debug Matrix Closed', "SYS");
 }
-(function () {
-    var el = document.getElementById('active-station-name');
-    if (!el) return;
-    el.addEventListener('click', function () {
-        _tapCount++;
-        if (_tapTimer) clearTimeout(_tapTimer);
-        _tapTimer = setTimeout(function () { _tapCount = 0; }, 1500);
-        if (_tapCount >= 5) {
-            _tapCount = 0;
-            toggleDebug();
-        }
-    });
-})();
-// Expose toggleDebug globally so any button can call it
 window.toggleDebug = toggleDebug;
 
 export function logDebug(msg, source) {

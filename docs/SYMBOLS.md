@@ -104,7 +104,8 @@ pass fails.
   `FOAM_TABLE`, `parseFoam`/`hookLabel`/`hookSink`, `hydraulicVelocity(flow, siteId)`,
   `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`,
   `WATER_TYPES` (pool/riffle/run/glide depth/vel multipliers),
-  `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a)
+  `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a);
+  `weightTerminalVelocity(weightOz, weightShape)`, `assessBottomContact(rig, velocity)` — bottom contact check
 - **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
   `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (Manning-adjusted when
   SPOT_WIDTHS data is available, same-reach estimate ±20% otherwise);

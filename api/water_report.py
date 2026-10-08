@@ -407,7 +407,7 @@ def fetch_usgs_telemetry_wdfn(site_id):
             continue
         if reading_dt.tzinfo is None:
             reading_dt = reading_dt.replace(tzinfo=timezone.utc)
-        if (now_aware - reading_dt).total_seconds() > 24 * 3600:
+        if (now_aware - reading_dt).total_seconds() > 72 * 3600:
             continue                      # stale (>24h) -> never reported as current
         if code not in latest_for or reading_dt > latest_for[code][0]:
             latest_for[code] = (reading_dt, val)
@@ -522,7 +522,7 @@ def fetch_usgs_telemetry_legacy(site_id=USGS_SITE):
                     now_aware = datetime.now(timezone.utc)
                     age_seconds = (now_aware - reading_dt).total_seconds()
                     
-                    if age_seconds <= 24 * 3600:
+                    if age_seconds <= 72 * 3600:
                         if param_code in ["00060", "00065"]:
                             has_fresh_discharge_or_gage = True
                         if latest_time is None or reading_dt > latest_time:
@@ -837,7 +837,7 @@ def _nearby_from_wdfn(lat_f, lon_f):
             reading_dt = datetime.fromisoformat(str(p.get("time")))
             if reading_dt.tzinfo is None:
                 reading_dt = reading_dt.replace(tzinfo=timezone.utc)
-            if (now_aware - reading_dt).total_seconds() > 24 * 3600:
+            if (now_aware - reading_dt).total_seconds() > 72 * 3600:
                 continue
             # Prefer the discovery coordinates (basin-correct); else the feature's own.
             s_lat, s_lon = cand.get("lat"), cand.get("lon")
@@ -891,7 +891,7 @@ def _nearby_from_legacy(lat_f, lon_f):
                 continue
             try:
                 reading_dt = datetime.fromisoformat(latest['dateTime'])
-                if (now_aware - reading_dt).total_seconds() > 24 * 3600:
+                if (now_aware - reading_dt).total_seconds() > 72 * 3600:
                     continue
             except Exception:
                 pass

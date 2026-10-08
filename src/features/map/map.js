@@ -340,34 +340,32 @@ export async function openMapScreen() {
             zoom: MAP_START_ZOOM
         });
         // Render gauge pins on load with badge popups
-        _stationMap.on('load', function () {
-            const stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
-            if (stations) {
-                stations.forEach(function (st) {
-                    if (!st.coords) return;
-                    const el = document.createElement('div');
-                    el.className = 'station-pin';
-                    el.innerHTML = '<span class="station-pin-dot" style="background:' + mapPinColor({ id: st.site_id, cfs: null, gage: null }) + '"></span>';
-                    el.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        // Show popup with live data fetch
-                        showStationPopup({
-                            id: st.site_id,
-                            name: st.name,
-                            lat: st.coords.lat,
-                            lon: st.coords.lon
-                        });
-                    });
-                    const m = new maplibregl.Marker({ element: el });
-                    m.setLngLat([st.coords.lon, st.coords.lat]);
-                    m.addTo(_stationMap);
-                });
-            }
+        _stationMap.on('load', async function () {
+            // Skip the initial registry pin layer — it has no live cfs/gage data.
+            // Instead, fetch stations from the API which returns live values.
             plotSavedSpotStars();
-            // Refresh stations with live data after initial pins are plotted
-            setTimeout(async function () {
-                try { await refreshStationMap(initialCenter || mapCenter()); } catch (e) { logDebug('Station refresh failed: ' + e.message, 'ERR'); }
-            }, 100);
+            try {
+                await refreshStationMap(initialCenter || mapCenter());
+            } catch (e) {
+                logDebug('Station refresh failed: ' + e.message, 'ERR');
+                // Fallback: plot registry pins so at least something shows
+                const stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+                if (stations) {
+                    stations.forEach(function (st) {
+                        if (!st.coords) return;
+                        const el = document.createElement('div');
+                        el.className = 'station-pin';
+                        el.innerHTML = '<span class="station-pin-dot" style="background:' + mapPinColor({ id: st.site_id, cfs: null, gage: null }) + '"></span>';
+                        el.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            showStationPopup({ id: st.site_id, name: st.name, lat: st.coords.lat, lon: st.coords.lon });
+                        });
+                        const m = new maplibregl.Marker({ element: el });
+                        m.setLngLat([st.coords.lon, st.coords.lat]);
+                        m.addTo(_stationMap);
+                    });
+                }
+            }
         });
         // Tap-to-pin click handler
         _stationMap.on('click', function (e) {

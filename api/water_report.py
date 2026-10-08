@@ -1092,20 +1092,29 @@ def build_species_calendar(target_date, site_id=None):
       - status_text for the UI
     """
     out = []
-    # Pink salmon run on ODD years only in Puget Sound. On even years (2026,
-    # 2028, ...) there is no pink run, so do NOT show a pink card at all —
-    # honest data, no stale "NO PEAK PERIOD" entry.
     odd_year = (target_date.year % 2) == 1
     for species, meta in stocks_for_site(site_id or USGS_SITE).items():
         if species == "Pink" and not odd_year:
             continue
         sm, sd, em, ed = meta["peak_window"]
         pm, pd = map(int, meta["peak_date"].split("-"))
-        start = datetime(target_date.year, sm, sd)
-        end = datetime(target_date.year, em, ed)
-        peak = datetime(target_date.year, pm, pd)
+
+        start_year = target_date.year
+        end_year = target_date.year + 1 if em < sm else target_date.year
+        peak_year = target_date.year + 1 if pm < sm else target_date.year
+
+        start = datetime(start_year, sm, sd)
+        end = datetime(end_year, em, ed)
+
+        if em < sm and target_date < start and target_date <= datetime(target_date.year, em, ed):
+            start = datetime(target_date.year - 1, sm, sd)
+            end = datetime(target_date.year, em, ed)
+            peak_year = target_date.year if pm < sm else target_date.year - 1
+
+        peak = datetime(peak_year, pm, pd)
         in_window = start <= target_date <= end
         days_until_peak = (peak - target_date).days
+
         if in_window:
             if days_until_peak == 0:
                 position, status_text = "peak", "AT PEAK"
@@ -1117,11 +1126,12 @@ def build_species_calendar(target_date, site_id=None):
                 status_text = "BUILDING" if days_until_peak > 14 else "APPROACHING"
         else:
             position = "off"
-            status_text = "NO PEAK PERIOD"
-            if target_date < start:
-                status_text = "SEASON AHEAD"
-            elif target_date > end:
-                status_text = "SEASON OVER"
+            status_text = "SEASON AHEAD" if target_date < start else "SEASON OVER"
+
+        total_days = max(1.0, float((end - start).days))
+        progress = round(max(0.0, min(1.0, (target_date - start).days / total_days)), 3) if in_window else 0.0
+        peak_frac = round(max(0.0, min(1.0, (peak - start).days / total_days)), 3)
+
         out.append({
             "species": species,
             "window_start": start.strftime("%b %-d"),
@@ -1130,10 +1140,8 @@ def build_species_calendar(target_date, site_id=None):
             "days_until_peak": days_until_peak,
             "position": position,
             "status_text": status_text,
-            # Run-progress bar data (0..1): how far "today" is across the window,
-            # and where the peak sits — the client draws these without parsing text.
-            "progress": round(max(0.0, min(1.0, (target_date - start).days / float(max(1, (end - start).days)))), 3),
-            "peak_frac": round(max(0.0, min(1.0, (peak - start).days / float(max(1, (end - start).days)))), 3)
+            "progress": progress,
+            "peak_frac": peak_frac
         })
     return out
 

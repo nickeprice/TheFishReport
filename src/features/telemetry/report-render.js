@@ -15,13 +15,12 @@ import { formatTideRow } from './tide.js';
  * Extracted from loadWaterReport to keep files under 150 lines.
  */
 // Build species calendar HTML — prefer API data, fall back to local REGIONS stocks
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 function _buildCalendarFallback(rep) {
-    // Try API-provided calendar first
     var cal = provVal(rep.species_calendar);
-    if (cal && cal.length) {
-        return buildSpeciesCalendarHtml(cal, provVal(rep.esc_stocks));
-    }
-    // Fallback: build from local REGIONS waterbody stocks
+    if (cal && cal.length) return buildSpeciesCalendarHtml(cal, provVal(rep.esc_stocks));
+
     var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
     if (!wbs || !rep.site_id) return '';
     var wb = null;
@@ -37,14 +36,17 @@ function _buildCalendarFallback(rep) {
         }
     }
     if (!wb || !wb.stocks || !wb.stocks.length) return '';
-    // Build calendar entries matching backend format
+
     var now = rep.date ? new Date(rep.date) : new Date();
     if (isNaN(now.getTime())) now = new Date();
-    var oddYear = (now.getFullYear() % 2) === 1;
+    var curYear = now.getFullYear();
+    var oddYear = (curYear % 2) === 1;
     var calEntries = [];
+
     for (var si = 0; si < wb.stocks.length; si++) {
         var s = wb.stocks[si];
         if (s.species === 'Pink' && !oddYear) continue;
+
         var pw = s.peak_window;
         if (!pw || pw.length < 4) continue;
         var sm = pw[0], sd = pw[1], em = pw[2], ed = pw[3];
@@ -53,31 +55,43 @@ function _buildCalendarFallback(rep) {
         var pParts = pd.split('-');
         if (pParts.length < 2) continue;
         var pm = parseInt(pParts[0], 10), pPd = parseInt(pParts[1], 10);
-        var start = new Date(now.getFullYear(), sm - 1, sd);
-        var end = new Date(now.getFullYear(), em - 1, ed);
-        var peak = new Date(now.getFullYear(), pm - 1, pPd);
+
+        var startYear = curYear;
+        var endYear = (em < sm) ? curYear + 1 : curYear;
+        var peakYear = (pm < sm) ? curYear + 1 : curYear;
+
+        var start = new Date(startYear, sm - 1, sd);
+        var end = new Date(endYear, em - 1, ed);
+        if (em < sm && now < start && now <= new Date(curYear, em - 1, ed)) {
+            start = new Date(curYear - 1, sm - 1, sd);
+            end = new Date(curYear, em - 1, ed);
+            peakYear = (pm < sm) ? curYear : curYear - 1;
+        }
+        var peak = new Date(peakYear, pm - 1, pPd);
+
         var inWindow = now >= start && now <= end;
         var daysToPeak = Math.round((peak - now) / 86400000);
         var position = 'off';
         var statusText = now < start ? 'SEASON AHEAD' : (now > end ? 'SEASON OVER' : 'SEASON AHEAD');
+
         if (inWindow) {
             if (daysToPeak === 0) { position = 'peak'; statusText = 'AT PEAK'; }
             else if (daysToPeak < 0) { position = 'post'; statusText = daysToPeak < -14 ? 'PAST PEAK' : 'TAPERING'; }
             else { position = 'pre'; statusText = daysToPeak > 14 ? 'BUILDING' : 'APPROACHING'; }
         }
+
         var progress = 0;
-        if (start < end && now >= start && now <= end) {
-            progress = (now - start) / (end - start);
-        }
+        var totalSpan = end.getTime() - start.getTime();
+        if (totalSpan > 0 && inWindow) progress = Math.max(0, Math.min(1, (now.getTime() - start.getTime()) / totalSpan));
+
         var peakFrac = 0.5;
-        if (start < end && peak >= start && peak <= end) {
-            peakFrac = (peak - start) / (end - start);
-        }
+        if (totalSpan > 0 && peak >= start && peak <= end) peakFrac = Math.max(0, Math.min(1, (peak.getTime() - start.getTime()) / totalSpan));
+
         calEntries.push({
             species: s.species,
-            window_start: (start.getMonth() + 1) + '/' + start.getDate(),
-            window_end: (end.getMonth() + 1) + '/' + end.getDate(),
-            peak_date: (peak.getMonth() + 1) + '/' + peak.getDate(),
+            window_start: MONTH_NAMES[start.getMonth()] + ' ' + start.getDate(),
+            window_end: MONTH_NAMES[end.getMonth()] + ' ' + end.getDate(),
+            peak_date: MONTH_NAMES[peak.getMonth()] + ' ' + peak.getDate(),
             position: position,
             status_text: statusText,
             progress: progress,
@@ -88,7 +102,6 @@ function _buildCalendarFallback(rep) {
     return buildSpeciesCalendarHtml(calEntries, provVal(rep.esc_stocks));
 }
 
-/**
 export function renderReportDays(reports, station, rulesLoaded) {
     if (!reports || !reports.length) {
         logDebug('No river data to render', 'NET');
@@ -149,6 +162,8 @@ export function renderReportDays(reports, station, rulesLoaded) {
         let pressColor = '#ffffff';
         if (pressDelta !== null && pressDelta !== undefined && pressDelta < -0.04) { pressTrend = '\u2193'; pressColor = 'var(--accent-red)'; }
         else if (pressDelta !== null && pressDelta !== undefined && pressDelta > 0.04) { pressTrend = '\u2191'; pressColor = 'var(--accent-green)'; }
+        const runTimingHtml = _buildCalendarFallback(rep);
+        const runTimingSection = runTimingHtml ? ('<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' + runTimingHtml) : '';
 cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dStyle + ';">' +
             '<div class="card">' +
             '<div class="sec-hdr">[ FISHING OUTLOOK ]</div>' +
@@ -175,8 +190,7 @@ cardsHtml += '<div id="' + rep.id + '" class="day-card" style="display: ' + dSty
                 '<div class="env-badge"><div class="env-badge-val moon-pill">' + (rep.lunar_icon || '--') + '</div><div class="env-badge-lbl">Moon Phase</div></div>' +
                 '<div class="env-badge"><div class="env-badge-val solunar-split"><div class="solunar-half"><span class="solunar-val" style="color:#ffd60a;">' + (rep.moon_upper || '--') + '</span><span class="solunar-sublbl">Overhead</span></div><div class="solunar-half"><span class="solunar-val" style="color:#64d2ff;">' + (rep.moon_lower || '--') + '</span><span class="solunar-sublbl">Underfoot</span></div></div><div class="env-badge-lbl">Solunar</div></div>' +
 '</div>' +
-            '<div class="sec-hdr">[ RUN &amp; TIMING ]</div>' +
-            _buildCalendarFallback(rep) +
+            runTimingSection +
             '</div></div></div>';
     }
 

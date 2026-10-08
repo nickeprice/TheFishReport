@@ -2,8 +2,8 @@
 
 ## 🔧 FIXINGS: Data Integrity & UI Quality
 
-- [ ] F5: Fix Run & Timing section rendering
-      → src/features/telemetry/report-render.js, src/features/telemetry/hero.js
+- [ ] F5: Hatchery counts + forecast — update escapementFacilities, hatcheryEscapement, wdfw_forecasts.json, species mapping
+      → src/services/water-weather.js, src/services/water-escapement.js, src/data/wdfw_forecasts.json
       [Detail → docs/PLAN_REFERENCE.md#fixing-run-timing]
 
 - [ ] F6: Fix bottom tab bar (Water Report / Gear Sim / Catch Log) not showing

@@ -16,9 +16,7 @@
 
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 
-- [ ] Phase D0: NHDPlus API Integration
-      → nhdplus.js (NEW), app.js, water.js, sw.js, SYMBOLS.md
-      [Detail → docs/PLAN_REFERENCE.md#drift-nhdplus]
+
 
 - [ ] Phase D1: Fix HUD messaging
       → solver.js, styles.css

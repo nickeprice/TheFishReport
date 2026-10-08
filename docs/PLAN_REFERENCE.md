@@ -116,38 +116,6 @@ rows with full-width buttons.
 
 <!-- H5 complete — detail deleted per protocol -->
 
-<a id="drift-nhdplus"></a>
-## Drift Phase 0: NHDPlus API Integration
-
-**Goal:** One fetch per report load gets reach-level attributes at the user's
-GPS location. Feeds ALL subsequent phases.
-
-**New file:** `src/services/nhdplus.js` (~50 lines)
-
-```
-public: fetchNhdPlus(lat, lon), NHDPLUS_CACHE_KEY
-function fetchNhdPlus(lat, lon):
-  1. Check localStorage cache — if cached point within 500m, return it
-  2. Query EPA WATERS API (Network Flowline, buffer 500m)
-     Fields: comid,gnis_name,streamorder,slope,lengthkm,totdasqkm,qb,
-             va_MA,qa_MA,va_01–va_12,qa_01–qa_12
-  3. Pick closest reach from results
-  4. Cache in localStorage with GPS stamp
-  5. Return object or null on failure (offline fallback)
-```
-
-**Integration:** `src/app.js` — call after GPS lock. Include `nhdData` in 
-water report payload from `water.js`.
-
-**Files:**
-- `src/services/nhdplus.js` — NEW
-- `src/app.js` — fetchNhdPlus() after GPS lock
-- `src/services/water.js` — pass nhdData
-- `sw.js` — add to SHELL_FILES, bump VERSION
-- `docs/SYMBOLS.md` — entry
-
----
-
 <a id="drift-hud"></a>
 ## Drift Phase 1: Fix HUD Messaging
 

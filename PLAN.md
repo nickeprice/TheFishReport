@@ -1,19 +1,5 @@
 # Fish Report — Active Plan
 
-## 🛠 Data Pipeline & Infrastructure
-
-- [x] Phase A3: Add PyMuPDF to forecast scraper
-      → refresh_wdfw_forecast.py
-      [Detail → docs/PLAN_REFERENCE.md#data-forecast-pymupdf]
-
-- [x] Phase B: Hatchery escapement — map WDFW facilities for all 15 rivers
-      → water.js
-      [Detail → docs/PLAN_REFERENCE.md#data-hatchery]
-
-- [x] Phase C: Debug pipeline → Supabase + button styling
-      → api/report-issue.py, migration, debug.js, index.html, styles.css
-      [Detail → docs/PLAN_REFERENCE.md#ui-debug]
-
 ## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
 
 - [ ] Phase D1: Fix HUD messaging

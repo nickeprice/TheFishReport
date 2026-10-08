@@ -1,57 +1,63 @@
 
-<a id="fixing-run-timing"></a>
-## F5: Hatchery Counts + Forecast Data
+<a id="fixing-run-timing-s1"></a>
+## F5a: Research Socrata — fetch distinct facility names, species, events
 
-**Goal:** All four count fields (Forecast, Returned, Trapped, 5-Yr Avg) in the `[ RUN & TIMING ]` cards show real WDFW numbers instead of "--".
-
-**Root causes:**
-1. `escapementFacilities` in `water-weather.js` uses dead gauge IDs removed in F1 (14242500, etc.)
-2. `hatcheryEscapement` entries have all `totalReturn/trapCount/fiveYrAvg` set to `null`
-3. New gauge IDs (12097850, 12144500, 14243000) have no hatchery entries at all
-4. `wdfwForecast` in `hero.js` is hardcoded to `null` — forecast source never wired up
-5. Species name mismatches between Socrata (`species` field) and calendar species (`washington.js` stocks)
-
-### Execution steps
-
-### S1: Research — query Socrata for exact facility names, species, and event types
+**Query to run:**
 ```bash
 curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct facility&$where=event='Trap Estimate'"
 curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct species&$where=event='Trap Estimate'"
 curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct event&$where=facility='VOIGHTS CR HATCHERY'"
 ```
-**Purpose:** Verify facility names, discover actual species values, confirm event filters.
 
-### S2: Update `escapementFacilities` — map all 32 gauge IDs
+**Purpose:** Verify that facility names we plan to use actually exist in the Socrata dataset. Discover actual species naming conventions. Confirm which event types each facility uses.
+
+**Output:** A verified list of facility names, species names, and event types that will drive S2-S5.
+
+---
+
+<a id="fixing-run-timing-s2"></a>
+## F5b: Update escapementFacilities — map all 32 gauge IDs
+
 **File:** `src/services/water-weather.js` lines 131-146
+
+**Changes:**
 - Add entries for every gauge ID in our `discovery_pool`
 - Seasonal gauges mirror the same facility pool as the main river gauge
 - Remove dead IDs (14242500, 14240500, 14236000, 14241000, 12115000, 12155300)
-- Leave unmapped: Nisqually, Duwamish, Big Soos, Mill Creek (no WDFW hatchery data → honest "--")
+- Leave unmapped: Nisqually, Duwamish, Big Soos, Mill Creek (honest "--")
 
+**Facility mapping (from S1 research):**
 | Waterbody | Facility Names | Gauge IDs |
 |---|---|---|
-| Puyallup | VOIGHTS CR HATCHERY, PUYALLUP HATCHERY, CLARKS CR HATCHERY, WHITE RIVER HATCHERY, BUCKLEY TRAP, DIRU CREEK | 12101500, 12093500, 12096500, 12101470, 12096505, 12092000 |
-| Carbon | (same Puyallup basin) | 12094000 |
-| White | (same Puyallup basin) | 12097850, 12100490, 12101100 |
+| Puyallup | VOIGHTS CR HATCHERY etc. | 12101500, 12093500, 12096500, 12101470, 12096505, 12092000 |
+| Carbon | same Puyallup basin | 12094000 |
+| White | same Puyallup basin | 12097850, 12100490, 12101100 |
 | Green | SOOS CREEK HATCHERY | 12113000, 12108800, 12113150, 12113310, 12113340, 12113350, 12112600, 12113347 |
 | Nisqually | — (unmapped) | 12089500 |
 | Skagit | MARBLEMOUNT HATCHERY | 12200500, 12194000 |
 | Snoqualmie | FALLERT CR HATCHERY | 12144500, 12149000 |
 | Skykomish | REITER PONDS | 12134500 |
-| Snohomish | WALLACE RIVER HATCHERY (research needed) | 12150800 |
+| Snohomish | WALLACE RIVER HATCHERY | 12150800 |
 | Stillaguamish | SAMISH HATCHERY, HARVEY CREEK HATCHERY | 12167000 |
 | Cowlitz | COWLITZ SALMON HATCHERY, COWLITZ TROUT HATCHERY | 14243000, 14238000, 14233500, 14240525 |
 | Duwamish | — (unmapped) | 12113390 |
 | Cedar | ISSAQUAH HATCHERY | 12119000, 12115000 |
 
-**Risk mitigation:** All facility names must match Socrata `facility` field exactly (from S1 research).
+**Risk:** Facility names must match Socrata `facility` field exactly (from S1 research). If a name doesn't match, the Socrata IN clause won't find it and the count stays "--".
 
-### S3: Update `hatcheryEscapement` — add entries for all 32 current gauge IDs
+---
+
+<a id="fixing-run-timing-s3"></a>
+## F5c: Update hatcheryEscapement — add entries for all 32 gauge IDs
+
 **File:** `src/services/water-weather.js` lines 44-108
-- Each entry's `stocks[].name` must match the `species` field in `washington.js` stocks
+
+**Changes:**
+- Each entry's `stocks[].name` matches the `species` field in `washington.js` stocks
 - Remove entries for dead gauge IDs
 - `totalReturn/trapCount/fiveYrAvg` stay `null` (Socrata provides live numbers)
 
+**Template for each entry:**
 ```js
 '12144500': { system: 'Snoqualmie River', source: 'WDFW Fallert Creek Hatchery', stocks: [
     { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
@@ -61,53 +67,56 @@ curl "https://data.wa.gov/resource/9q4e-xhag.json?$select=distinct event&$where=
 ]},
 ```
 
-**Risk mitigation:** Species names are copied directly from `washington.js` — no mismatches.
+**Risk:** Species names must exactly match `washington.js` `stocks[].species` (case-insensitive match in hero.js:121).
 
-### S4: Fill `wdfw_forecasts.json`
+---
+
+<a id="fixing-run-timing-s4"></a>
+## F5d: Fill wdfw_forecasts.json
+
 **Files:** `public/src/data/wdfw_forecasts.json`, `src/data/wdfw_forecasts.json`
 
-Current structure (read to confirm):
+**Structure:**
 ```json
 { "waterbodies": { "puyallup": { "Chinook": 34000, "Coho": 48000 }, ... } }
 ```
 
+**Changes:**
+- Read existing file first to confirm structure
+- Add entries for all waterbodies with WDFW preseason forecasts
 - Waterbody IDs must match `[wb].id` from `washington.js`
-- Species names must match the calendar species from `washington.js` stocks
+- Species names must match calendar species names
 - Omit waterbodies without WDFW forecasts (honest "--")
 
-**Risk mitigation:** Read the existing file first, add missing waterbody entries, cross-reference species names.
+**Risk:** `refreshWdfwForecast()` in `water-escapement.js` matches waterbody ID from `washington.js`. The JSON keys must match exactly.
 
-### S5: Fix species name matching chain
-**Files:** `src/features/telemetry/hero.js` (line 121), `src/services/water-escapement.js` (line 276-291)
+---
 
-- Socrata `species` field may differ from our calendar species
-- If S1 research shows mismatches, add a mapping in `refreshEscapement()`:
-  ```js
-  var speciesMap = { 'Chinook Salmon': 'Chinook', 'Coho Salmon': 'Coho' };
-  ```
-- Cowlitz River has `Spring Chinook` + `Fall Chinook` — map Socrata `run` field to distinguish
-- Unexpected species (Sockeye, Cutthroat) are filtered out by species name comparison
+<a id="fixing-run-timing-s5"></a>
+## F5e: Fix species name mapping — align Socrata species to calendar species
 
-**Risk mitigation:** Research in S1 determines if mapping is needed. If Socrata species match our calendar species exactly, no mapping needed.
+**Files:** `src/features/telemetry/hero.js` (line 121), `src/services/water-escapement.js` (lines 276-291)
 
-### S6: Verify — run sanity + test
+**Changes:**
+- If S1 research shows Socrata species names differ from our calendar names, add a mapping table in `refreshEscapement()`:
+```js
+var speciesMap = { 'Chinook Salmon': 'Chinook', 'Coho Salmon': 'Coho' };
+```
+- For Cowlitz River (Spring Chinook + Fall Chinook), map the Socrata `run` field to separate calendar species
+- Unexpected species (Sockeye, Cutthroat) are filtered out automatically by species name comparison
 
-1. `node sanity_pass.cjs --quiet` — must pass
+**Risk:** If Socrata species already match our calendar species (which is likely), no mapping needed. S1 research determines this.
+
+---
+
+<a id="fixing-run-timing-s6"></a>
+## F5f: Verify — run sanity + test
+
+1. `node sanity_pass.cjs --quiet` — must pass 43/43
 2. Start dev server, inspect `[ RUN & TIMING ]` cards
-3. Check `[data-count]` elements populated with numbers after Socrata fetch completes
+3. Verify `[data-count]` elements populated with numbers after Socrata fetch
 4. Cross-check WDFW preseason forecast numbers for accuracy
-
-### Rivers excluded from hatchery tracking (honest "--"):
-- Nisqually — Tribal hatchery, not in WDFW Socrata dataset
-- Duwamish — no dedicated hatchery facility
-- Big Soos Creek — tributary of Green, counted under Soos Creek Hatchery
-- Mill Creek — no dedicated hatchery facility
-
-### Files affected:
-- `src/services/water-weather.js` — `escapementFacilities`, `hatcheryEscapement`
-- `src/services/water-escapement.js` — `fetchEscapementLive`, `refreshEscapement`
-- `src/data/wdfw_forecasts.json` — forecast numbers per waterbody
-- `public/src/data/wdfw_forecasts.json` — duplicate for Vite build output
+5. Verify unmapped rivers (Nisqually, Duwamish, Big Soos, Mill Creek) show honest "--"
 
 ---
 

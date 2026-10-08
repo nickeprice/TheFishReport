@@ -113,7 +113,10 @@ export function stationPopupHtml(s) {
     } else if (s.legal_hours === 'daylight') {
         legalBadge = '<span class="pin-popup-badge badge-daylight">DAYLIGHT</span>';
     } else {
+    } else if (s.legal_hours === 'closed') {
         legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
+    } else {
+        legalBadge = '<span class="pin-popup-badge badge-closed">NOT VERIFIED</span>';
     }
     // Gauge type badge
     var gType = mapPinGaugeType(s.id);

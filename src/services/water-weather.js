@@ -66,6 +66,44 @@ export var hatcheryEscapement = {
         { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
         { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
         { name: 'Chum',    totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '12150800': { system: 'Snoqualmie River', source: 'WDFW Fallert Creek Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Steelhead', totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '12134500': { system: 'Skykomish River', source: 'WDFW Reiter Ponds', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Steelhead', totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '12167000': { system: 'Stillaguamish River', source: 'WDFW Samish Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Chum',    totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '14242500': { system: 'Cowlitz River', source: 'WDFW Cowlitz Salmon Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Steelhead', totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '14240500': { system: 'Toutle River', source: 'WDFW North Toutle Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '14236000': { system: 'Lewis River', source: 'WDFW Lewis River Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Steelhead', totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '14241000': { system: 'Kalama River', source: 'WDFW Kalama Falls Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null }
+    ]},
+    '12115000': { system: 'Cedar River', source: 'WDFW Cedar River Hatchery', stocks: [
+        { name: 'Chinook', totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Coho',    totalReturn: null, trapCount: null, fiveYrAvg: null },
+        { name: 'Steelhead', totalReturn: null, trapCount: null, fiveYrAvg: null }
     ]}
 };
 
@@ -94,8 +132,17 @@ export var escapementFacilities = {
     '12101500': PUYALLUP_BASIN_FACILITIES, // Puyallup River at Puyallup
     '12093500': PUYALLUP_BASIN_FACILITIES, // Puyallup River near Orting
     '12094000': PUYALLUP_BASIN_FACILITIES, // Carbon River (Puyallup system)
+    '12098500': PUYALLUP_BASIN_FACILITIES, // White River (Puyallup system)
     '12113000': ['SOOS CREEK HATCHERY'],   // Green River at Auburn
-    '12200500': ['MARBLEMOUNT HATCHERY']   // Skagit River
+    '12200500': ['MARBLEMOUNT HATCHERY'],  // Skagit River
+    '12150800': ['FALLERT CR HATCHERY'],   // Snoqualmie River
+    '12134500': ['REITER PONDS'],           // Skykomish River
+    '12167000': ['SAMISH HATCHERY'],        // Stillaguamish River
+    '14242500': ['COWLITZ SALMON HATCHERY', 'COWLITZ TROUT HATCHERY'], // Cowlitz River
+    '14240500': ['NORTH TOUTLE HATCHERY'],  // Toutle River
+    '14236000': ['LEWIS RIVER HATCHERY'],   // Lewis River
+    '14241000': ['KALAMA FALLS HATCHERY'],  // Kalama River
+    '12115000': ['CEDAR RIVER HATCHERY', 'ISSAQUAH HATCHERY'] // Cedar River
 };
 
 // Counts render as "--" until a published figure exists.

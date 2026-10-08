@@ -10,7 +10,7 @@
       → water.js
       [Detail → docs/PLAN_REFERENCE.md#data-hatchery]
 
-- [ ] Phase C: Debug pipeline → Supabase + button styling
+- [x] Phase C: Debug pipeline → Supabase + button styling
       → api/report-issue.py, migration, debug.js, index.html, styles.css
       [Detail → docs/PLAN_REFERENCE.md#ui-debug]
 

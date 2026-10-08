@@ -146,7 +146,6 @@ export function updateActiveDateUI() {
 
     // Primary: backend legal window (already computed from the registry rule).
     if (rep && rep.lines_in && rep.lines_out && !rep.api_offline) {
-    if (rep && rep.lines_in && rep.lines_out && !rep.api_offline) {
         legalIn = rep.lines_in;
         legalOut = rep.lines_out;
     } else if (legalRule === 'daylight' && typeof calculateSolarHours === 'function') {

@@ -217,6 +217,7 @@ function removeAllMarkers() {
 
 // ── Popup overlay ─────────────────────────────────────────────────────────────────
 function showPopup(html) {
+    _popupShownAt = Date.now();
     const popup = document.getElementById('pin-popup');
     if (popup) {
         const body = document.getElementById('pin-popup-body');
@@ -307,11 +308,14 @@ export async function refreshStationMap(center) {
             // Skip seasonal gauges that are currently out of season
             if (mapPinGaugeType(s.id) === 'seasonal' && !mapPinIsSeasonal(s.id)) return;
             const el = makePinEl(mapPinColor(s));
-            el.addEventListener('click', function (e) {
+            const marker = new maplibregl.Marker({ element: el });
+            marker.setLngLat([s.lon, s.lat]);
+            marker.getElement().addEventListener('click', function (e) {
                 e.stopPropagation();
                 showStationPopup(s);
             });
-            addMarker(el, [s.lon, s.lat]);
+            marker.addTo(_stationMap);
+            _mapMarkers.push({ el: marker.getElement(), lng: s.lon, lat: s.lat });
         });
         out.count = stations.length;
         out.note = (res.data && res.data.note) || '';
@@ -559,7 +563,11 @@ async function doSavePin(lat, lng, label) {
 }
 
 // ── Map click handler ─────────────────────────────────────────────────────────────
+var _popupShownAt = 0;
+
 export function onMapClick(e) {
+    // If a pin popup was just shown (within the last 200ms), don't hide it
+    if (Date.now() - _popupShownAt < 200) return;
     if (!e || e.lat == null || e.lng == null) {
         if (!e || !e.latlng) return;
     }

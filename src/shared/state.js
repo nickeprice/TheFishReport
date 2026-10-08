@@ -15,5 +15,7 @@ State.turbidityFnu = null;
 // --- surface wind (stashed by applyReportWeather for catch-log enrichment) ---
 State.currentWindMph = null;
 State.currentWindDir = null;
+// --- NHDPlus reach data (set by fetchNhdPlus in nhdplus.js) ---
+State.nhdData = null;
 // Test compat shim:
 window.State = State;

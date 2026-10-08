@@ -46,6 +46,7 @@ pass fails.
   `toSpotRow(payload)`, `saveFavoriteSpot(payload)`, `fetchFavoriteSpots()`,
   `deleteFavoriteSpot(id)` — the private favourite-spot CRUD (WS-5; `user_id` is never
   client-supplied, the DB default owns it)
+- **nhdplus.js** — `fetchNhdPlus(lat, lon)`, `NHDPLUS_CACHE_KEY` — EPA WATERS NHDPlus reach query, cached by GPS
 - **water.js** — `fetchCFSMomentum(siteId)`, `renderCfsTrend(siteId, sorted)`,
   `fetchCfsReadingsWdfn(siteId)`,
   `fetchCfsReadingsLegacy(siteId)`, `applyOwnGaugeWaterQuality(waterTempF, turbidityFnu)`,
@@ -55,7 +56,7 @@ pass fails.
 
 ## src/shared
 - **state.js** — `State.userGPSCoords`, `State.waterTempF`, `State.turbidityFnu`,
-  `State.currentWindMph`, `State.currentWindDir` — cross-feature shared state, replacing
+  `State.currentWindMph`, `State.currentWindDir`, `State.nhdData` — cross-feature shared state, replacing
   `window.*` globals. Loaded first among shared scripts.
 - **debug.js** — `logDebug(msg, source)` (+ the double-tap header matrix)
 - **ui.js** — `showToast(msg, kind, ms, action)`

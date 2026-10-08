@@ -18,6 +18,7 @@ import { setCatchScope, CATCH_SCOPE } from './features/catch-log/board.js';
 import { loadWaterReport } from './features/telemetry/report.js';
 import { openWaterTypeGuide } from './features/gear-sim/water-types.js';
 import { updateActiveDateUI } from './features/telemetry/daynav.js';
+import { fetchNhdPlus } from './services/nhdplus.js';
 
 // Side-effect imports — load modules to trigger window-shim init
 import './shared/tackle.js';
@@ -72,7 +73,12 @@ window.onload = async function() {
     // gear-sim calibration fallback and the pending-sync flush all read it synchronously.
     try { await outboxLoad(); } catch (e) { logDebug('Outbox load failed: ' + e.message, 'DB'); }
 
-    getGPS(function () { updateActiveDateUI(); });
+    getGPS(function () {
+        updateActiveDateUI();
+        // Fetch NHDPlus reach data once GPS is known (silent failure OK)
+        var coords = State.userGPSCoords;
+        if (coords && coords.length === 2) fetchNhdPlus(coords[1], coords[0]);
+    });
     initAuth();
     
     // Flush the outbox when the network returns / the app is resumed (Phase 3.3).

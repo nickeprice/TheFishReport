@@ -3,13 +3,20 @@
  * public: logDebug(msg, source), toggleDebug(), copyDebugLog(), reportDebugIssue()
  * ES module.
  */
-// --- DEBUG TOGGLE (tap "···" next to station name) ---
+// --- DEBUG TOGGLE (URL parameter ?debug=1) ---
 export function toggleDebug() {
     const con = document.getElementById('debug-console');
     con.classList.toggle('open');
     logDebug(con.classList.contains('open') ? 'Debug Matrix Opened' : 'Debug Matrix Closed', "SYS");
 }
 window.toggleDebug = toggleDebug;
+
+// Auto-open debug console when ?debug=1 is in the URL
+(function () {
+    if (window.location && window.location.search && window.location.search.indexOf('debug=1') >= 0) {
+        setTimeout(toggleDebug, 500);
+    }
+})();
 
 export function logDebug(msg, source) {
     const con = document.getElementById('debug-console');

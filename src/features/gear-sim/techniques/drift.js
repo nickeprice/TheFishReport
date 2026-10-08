@@ -1,5 +1,5 @@
 import { logDebug } from '../../../shared/debug.js';
-import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG, tackleWeightPhysicsData, tackleYarnDragData } from '../inputs.js';
+import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG, tackleWeightPhysicsData, tackleYarnDragData, weightTerminalVelocity, assessBottomContact } from '../inputs.js';
 import { velocityAtSpot, spotDepthFt } from '../continuity.js';
 import { waterTypeMultiplier } from '../water-types.js';
 import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches, CFS_TO_MS } from '../physics.js';
@@ -67,6 +67,12 @@ export var DRIFT_TECHNIQUE = {
                 spotRatio: velocity.spotRatio || null
             };
             bedVel = velocity.bottom;
+        }
+
+        // Bottom contact check (Phase D2): does the weight reach the bed?
+        let bottomContact = null;
+        if (typeof assessBottomContact === 'function') {
+            bottomContact = assessBottomContact(rig, velocity);
         }
 
         // Lift: read NET values from tackle.json (buoyancy_g - mass_g)
@@ -221,7 +227,8 @@ export var DRIFT_TECHNIQUE = {
             whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges,
             hookDepthM: hookDepthM, interceptionProb: interceptionProb,
             sweepQuality: sweepQuality, salmonDepthM: salmonDepthM,
-            chainResult: chainResult, chainEnv: chainEnv
+            chainResult: chainResult, chainEnv: chainEnv,
+            bottomContact: bottomContact
         };
     }
 };

@@ -100,7 +100,8 @@ export function buildSimStats(rig, out) {
         hookDepthM: out.hookDepthM || null,
         interceptionProb: out.interceptionProb || 0,
         sweepQuality: out.sweepQuality || 0,
-        salmonDepthM: out.salmonDepthM || null
+        salmonDepthM: out.salmonDepthM || null,
+        bottomContact: out.bottomContact || null
     };
 }
 
@@ -177,6 +178,25 @@ export function paintSimHud(rig, out, stats) {
         (out.rigChanges && out.rigChanges.length ? ' | precise rig changes: ' + out.rigChanges.join(', ') +
             ' -> ' + hgt.toFixed(1) + '"' : '') +
         (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
+
+    // Bottom contact check (Phase D2)
+    if (out.bottomContact) {
+        logDebug('Bottom contact: ' + out.bottomContact.note +
+            ' (v_term=' + (out.bottomContact.terminalVelMs ? out.bottomContact.terminalVelMs.toFixed(2) + ' m/s' : '?') +
+            ', bed=' + out.bottomContact.bedVelMs.toFixed(2) + ' m/s)', 'SIM');
+    }
+    const contactEl = document.getElementById('hud-contact');
+    if (contactEl) {
+        if (out.bottomContact && out.bottomContact.contacts) {
+            contactEl.innerText = '⚓ Weight reaches bottom';
+            contactEl.style.color = 'var(--text-muted)';
+        } else if (out.bottomContact && out.bottomContact.terminalVelMs !== null) {
+            contactEl.innerText = '↕ Weight suspending above bottom';
+            contactEl.style.color = 'var(--accent-yellow)';
+        } else {
+            contactEl.innerText = '';
+        }
+    }
 
     // THE NOTEBOOK (debug trail only): the model's own error over the catches it used -
     // residual = where the fish actually were minus where the model predicted. Both sides of

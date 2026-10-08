@@ -209,3 +209,58 @@ export function thermalOptimum(tempF) {
     return { band: b.band, range: b.range, shift: b.shift, label: b.label, note: b.note, tempF: t };
 }
 
+/**
+ * Terminal velocity of a weight sinking through still water.
+ * v_term = sqrt(2 * submerged_weight / (ρ * Cd * A))
+ * @param {number} weightOz - weight in ounces
+ * @param {string} weightShape - shape label (e.g. "lead-2") or null
+ * @returns {number|null} terminal velocity in m/s, or null if unmeasurable
+ */
+export function weightTerminalVelocity(weightOz, weightShape) {
+    if (!weightOz || !weightShape) return null;
+    const w = tackleWeightPhysicsData(weightShape, weightOz);
+    if (!w || !w.submerged_mass_g || w.submerged_mass_g <= 0) return null;
+    if (!w.areaCm2 || w.areaCm2 <= 0) return null;
+    const subWeightN = (w.submerged_mass_g / 1000) * 9.80665;
+    const rho = 998.6;          // kg/m³ fresh water
+    const areaM2 = w.areaCm2 * 1e-4;
+    const cd = w.cd || 1.0;
+    return Math.sqrt(2 * subWeightN / (rho * cd * areaM2));
+}
+
+/**
+ * Assess whether the weight contacts the bottom at the current flow.
+ * Compares terminal velocity against bed velocity + turbulent fluctuation.
+ * Uses NHDPlus slope when available for refined bed shear estimate.
+ * @param {object} rig - current rig setup
+ * @param {object} velocity - { mean, bottom } in ft/s
+ * @returns {{ contacts: boolean, terminalVelMs: number|null, bedVelMs: number, note: string }}
+ */
+export function assessBottomContact(rig, velocity) {
+    const terminalMs = weightTerminalVelocity(rig.weightOz, rig.weightShape);
+    const bedVelMs = (velocity && velocity.bottom) ? velocity.bottom * 0.3048 : 0;
+    // NHDPlus slope refines the bed shear estimate
+    const nhd = State.nhdData;
+    let shearVelMs = null, slopeNote = '';
+    if (nhd && nhd.slope && nhd.slope > 0) {
+        // bed shear velocity u* = sqrt(g * slope * depth)
+        // Assume 6 ft (1.83 m) mean depth as default when no spot depth
+        const depthM = 1.83;
+        shearVelMs = Math.sqrt(9.80665 * nhd.slope * depthM);
+        slopeNote = ' (NHDPlus slope)';
+    }
+    // Use the higher of bed velocity and shear velocity for comparison
+    const effectiveBedMs = Math.max(bedVelMs, shearVelMs || 0);
+    if (!terminalMs || terminalMs <= 0) {
+        return { contacts: false, terminalVelMs: null, bedVelMs: effectiveBedMs, note: 'unknown weight' };
+    }
+    // Terminal velocity > 2× bed velocity => weight will likely reach bottom
+    const contacts = terminalMs > effectiveBedMs * 2;
+    return {
+        contacts: contacts,
+        terminalVelMs: terminalMs,
+        bedVelMs: effectiveBedMs,
+        note: (contacts ? 'bottom contact' : 'suspending') + slopeNote
+    };
+}
+

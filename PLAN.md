@@ -2,14 +2,6 @@
 
 ## 🛠 Immediate Map Hotfixes & Polish
 
-- [ ] H3: Name pill save/cancel wiring (no ghost pins)
-      → map.js
-      [Detail → docs/PLAN_REFERENCE.md#hotfix-pill]
-
-- [ ] H4: Glare-resistant pin popups (high-contrast flow cards)
-      → styles.css, map.js
-      [Detail → docs/PLAN_REFERENCE.md#hotfix-glare]
-
 - [ ] H5: Override sloppy USGS coords for Puyallup + Green
       → washington.js
       [Detail → docs/PLAN_REFERENCE.md#hotfix-coords]

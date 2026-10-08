@@ -60,13 +60,20 @@ export function mapLegalText(rule) {
 export function stationPopupHtml(s) {
     const cfs = (s.cfs === undefined || s.cfs === null) ? '--' : s.cfs;
     const gage = (s.gage === undefined || s.gage === null) ? '--' : s.gage;
-    const legal = mapLegalText(s.legal_hours);
+    var legalBadge = '';
+    if (s.legal_hours === '24hr') {
+        legalBadge = '<span class="pin-popup-badge badge-open">OPEN</span>';
+    } else if (s.legal_hours === 'daylight') {
+        legalBadge = '<span class="pin-popup-badge badge-daylight">DAYLIGHT</span>';
+    } else {
+        legalBadge = '<span class="pin-popup-badge badge-closed">CLOSED</span>';
+    }
     const safeId = escapeJsString(s.id || '');
     const safeName = escapeJsString(s.name || s.id);
     return '<span class="pin-popup-title">' + escapeHtml(s.name || s.id) + '</span>' +
         '<span class="pin-popup-meta">USGS ' + escapeHtml(s.id || '') + '</span>' +
         '<span class="pin-popup-cfs">' + escapeHtml(String(cfs)) + ' <span class="pin-popup-cfs-label">CFS</span> \u00b7 ' + escapeHtml(String(gage)) + ' <span class="pin-popup-cfs-label">ft</span></span>' +
-        (legal ? '<span class="pin-popup-gage">' + escapeHtml(legal) + '</span>' : '') +
+        legalBadge +
         '<button class="pin-popup-btn" onclick="selectPreset(\'' + safeId + '\',' +
         Number(s.lat) + ',' + Number(s.lon) + ',\'' + safeName +
         '\'); closeMapScreen(); return false;">\u00b7\u00b7\u00b7 Fish this gauge</button>';

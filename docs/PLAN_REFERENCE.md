@@ -111,33 +111,8 @@ rows with full-width buttons.
 
 <!-- H2 complete — detail deleted per protocol -->
 
-<a id="hotfix-pill"></a>
-## H3: Name Pill Save/Cancel Wiring (No Ghost Pins)
-
-**Change:** `confirmPinSpot()` reads `#pin-pill-input` value, calls `doSavePin(lat, lng, label)`, dismisses pill, clears temp pin. `cancelPinSpot()` clears temp pin + dismisses pill. No ghost pins left on the map.
-
-**Audit targets:**
-- `doSavePin()` saves via `saveSpotAt()`, then calls `refreshStationMap()` (which calls `removeAllMarkers()` — must not remove temp pin)
-- `onMapClick()` invokes `dropTempPin()` then `showNamePill()`
-
----
-
-<a id="hotfix-glare"></a>
-## H4: Glare-Resistant Pin Popups (High-Contrast Flow Cards)
-
-**Change:** Rewrite popup HTML and styles for outdoor readability.
-
-**Design:**
-- Dark background (`#1c1c1f`) with high-contrast white text
-- CFS as large prominent number with bold white font
-- Legal hours as colored badge: `#22c55e` (OPEN), `#f5c842` (DAYLIGHT), `#f87171` (CLOSED)
-- Thin border `#38383a`, 12px border-radius, subtle shadow
-
-**Files:**
-- `styles.css` — `.pin-popup` and `.pin-popup-body` styles
-- `map.js` — `showPopup()` content generation
-
----
+<!-- H3 complete — detail deleted per protocol -->
+<!-- H4 complete — detail deleted per protocol -->
 
 <a id="hotfix-coords"></a>
 ## H5: Override Sloppy USGS Coords for Puyallup + Green

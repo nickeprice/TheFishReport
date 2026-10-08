@@ -940,6 +940,19 @@ td.empty-state { padding: 30px 10px; }
     text-align: center;
 }
 .pin-popup-delete:active { background: rgba(248,113,113,0.15); }
+.pin-popup-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+.badge-open { background: #22c55e; color: #000; }
+.badge-daylight { background: #f5c842; color: #000; }
+.badge-closed { background: #f87171; color: #fff; }
 /* Floating action button — add a spot */
 .map-fab {
     position: absolute;

@@ -438,10 +438,10 @@ function staticIntegrity() {
       WA.default_tide_station === '9446484' &&
       WA.default_coords.lat === 47.2028 && WA.default_coords.lon === -122.2965 &&
       JSON.stringify(WA.netting_days) === '[6,0,1]' &&
-      WA.discovery_pool.length === 15 &&
+      WA.discovery_pool.length === 32 &&
       WA.waterbodies.length === 15 &&
-      WA.waterbodies.every((w) => w.gauge && ['daylight', '24hr', 'custom', 'unknown'].includes(w.legal_hours)) &&
-      WA.waterbodies.filter((w) => w.legal_hours === 'daylight').map((w) => w.id).join() === 'puyallup' &&
+      WA.waterbodies.every((w) => w.gauge && ['daylight', '24hr', 'closed', 'custom', 'unknown'].includes(w.legal_hours)) &&
+      WA.waterbodies.filter((w) => w.legal_hours === 'closed').map((w) => w.id).join() === 'cedar' &&
       WA.waterbodies.filter((w) => w.stocks).map((w) => w.id).join() === 'puyallup';
     okReg
       ? ok('region registry drives both the API and the frontend', `${WA.waterbodies.length} waterbodies, backend parses the same file`)

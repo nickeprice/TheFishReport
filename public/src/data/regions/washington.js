@@ -281,7 +281,7 @@ window.REGIONS.WA = {
                 { "site_id": "12115000", "name": "Cedar River near Cedar Falls", "role": "upstream" }
             ],
             "coords": { "lat": 47.5121, "lon": -122.1905 },
-            "legal_hours": "daylight",
+            "legal_hours": "closed",
             "netting_sites": null,
             "stocks": null,
             "capabilities": {},

@@ -11,6 +11,20 @@ import { applyReportWeather } from '../../services/water.js';
 import { State } from '../../shared/state.js';
 import { checkRiverStatus } from '../../utils/regulations.js';
 
+// Resolve legal-hours rule from the local REGIONS registry as a fallback
+// when the API returns "unknown" or is unreachable.
+function _resolveLocalLegalRule(riverId) {
+    var wbs = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.waterbodies;
+    if (!wbs || !riverId) return 'daylight';
+    var riverPart = riverId.split(',')[0].split(' at ')[0].split(' near ')[0].trim().toLowerCase();
+    for (var i = 0; i < wbs.length; i++) {
+        if (wbs[i].name && wbs[i].name.toLowerCase().indexOf(riverPart) >= 0) {
+            return wbs[i].legal_hours || 'daylight';
+        }
+    }
+    return 'daylight';
+}
+
 export function stepDate(delta) {
     const ao = window.activeDateOffset || 0;
     const newOffset = ao + delta;
@@ -36,7 +50,9 @@ export function stepDate(delta) {
  */
 export function legalHoursLabel(rule, legalIn, legalOut) {
     if (rule === '24hr') return 'Legal Hours: Open all day';
+    if (rule === 'closed') return 'Legal Hours: River closed \u2014 no fishing';
     if (rule !== 'daylight') return 'Legal Hours: not verified \u2014 check the regulations';
+    if (legalIn === '--:--' || legalOut === '--:--') return 'Legal Hours: not verified \u2014 check the regulations';
     return 'Legal Hours: ' + legalIn + ' \u2013 ' + legalOut;
 }
 
@@ -122,12 +138,14 @@ export function updateActiveDateUI() {
     const stLon = activeStation ? activeStation.lon : -122.3020;
     const rep = (ao >= 0 && ao < rd.length) ? rd[ao] : null;
     let legalIn = "--:--", legalOut = "--:--";
-    // The waterbody's hours RULE comes from the region registry. Only a `daylight`
-    // river may use the local solar approximation - a 24hr/unknown window is never
-    // invented client-side (UPDATE 3.0 Phase 1.5).
-    const legalRule = (rep && rep.legal_hours) ? rep.legal_hours : 'daylight';
+
+    // Resolve legal-hours rule: prefer API response, then local REGIONS registry, default daylight
+    const legalRule = (rep && rep.legal_hours && rep.legal_hours !== 'unknown')
+        ? rep.legal_hours
+        : _resolveLocalLegalRule(riverId);
 
     // Primary: backend legal window (already computed from the registry rule).
+    if (rep && rep.lines_in && rep.lines_out && !rep.api_offline) {
     if (rep && rep.lines_in && rep.lines_out && !rep.api_offline) {
         legalIn = rep.lines_in;
         legalOut = rep.lines_out;

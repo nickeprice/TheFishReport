@@ -25,15 +25,15 @@ window.REGIONS.WA = {
     "units": { "flow": "cfs", "gage": "ft", "temp": "F" },
     "forecast_days": 4,
     "default_site": "12101500",
-    "default_coords": { "lat": 47.195, "lon": -122.302 },
+    "default_coords": { "lat": 47.2028, "lon": -122.2965 },
     "default_tide_station": "9446484",
     "default_species": ["Chinook", "Coho", "Pink", "Chum", "Steelhead"],
     "netting_days": [6, 0, 1],
     "discovery_pool": [
-        { "site_id": "12101500", "name": "Puyallup River at Puyallup", "coords": { "lat": 47.195, "lon": -122.302 } },
+        { "site_id": "12101500", "name": "Puyallup River at Puyallup", "coords": { "lat": 47.2028, "lon": -122.2965 } },
         { "site_id": "12093500", "name": "Puyallup River near Orting", "coords": { "lat": 47.1005, "lon": -122.2133 } },
         { "site_id": "12094000", "name": "Carbon River near Fairfax", "coords": { "lat": 47.0177, "lon": -122.0197 } },
-        { "site_id": "12113000", "name": "Green River at Auburn", "coords": { "lat": 47.3115, "lon": -122.2265 } },
+        { "site_id": "12113000", "name": "Green River at Auburn", "coords": { "lat": 47.3125, "lon": -122.2027 } },
         { "site_id": "12089500", "name": "Nisqually River at McKenna", "coords": { "lat": 46.9365, "lon": -122.5483 } },
         { "site_id": "12200500", "name": "Skagit River near Mount Vernon", "coords": { "lat": 48.444828, "lon": -122.335437 } },
         { "site_id": "12150800", "name": "Snoqualmie River near Snoqualmie", "coords": { "lat": 47.830932, "lon": -122.048459 } },
@@ -55,7 +55,7 @@ window.REGIONS.WA = {
             "related_gauges": [
                 { "site_id": "12093500", "name": "Puyallup River near Orting", "role": "upstream" }
             ],
-            "coords": { "lat": 47.195, "lon": -122.302 },
+            "coords": { "lat": 47.2028, "lon": -122.2965 },
             "legal_hours": "daylight",
             "netting_sites": ["12101500", "12093500"],
             "stocks": [
@@ -100,7 +100,7 @@ window.REGIONS.WA = {
             "waterbody_type": "river",
             "gauge": { "site_id": "12113000", "param": "00060" },
             "related_gauges": null,
-            "coords": { "lat": 47.3115, "lon": -122.2265 },
+            "coords": { "lat": 47.3125, "lon": -122.2027 },
             "legal_hours": "unknown",
             "netting_sites": null,
             "stocks": null,

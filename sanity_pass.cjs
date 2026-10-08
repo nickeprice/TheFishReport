@@ -436,7 +436,7 @@ function staticIntegrity() {
       py.includes('"12101500"') && py.includes('"9446484"') &&
       WA.default_site === '12101500' &&
       WA.default_tide_station === '9446484' &&
-      WA.default_coords.lat === 47.195 && WA.default_coords.lon === -122.302 &&
+      WA.default_coords.lat === 47.2028 && WA.default_coords.lon === -122.2965 &&
       JSON.stringify(WA.netting_days) === '[6,0,1]' &&
       WA.discovery_pool.length === 15 &&
       WA.waterbodies.length === 15 &&

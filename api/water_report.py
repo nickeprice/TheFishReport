@@ -72,12 +72,17 @@ def stocks_for_site(site_id):
 
 
 def legal_hours_for_site(site_id):
-    """The waterbody's fishing-hours rule: daylight | 24hr | custom | unknown.
+    """The waterbody's fishing-hours rule: daylight | 24hr | closed | custom | unknown.
 
     "unknown" is the honest default - a legal window is never invented (UPDATE 3.0
-    Phase 1.5). The frontend renders "check the regulations" for it."""
+    Phase 1.5). The frontend renders "check the regulations" for it. "closed" means
+    the river is permanently closed to fishing (e.g. Cedar River watershed).
+    "custom" means the window is defined by WDFW zone rules (not a simple solar rule)."""
     _wb = _WB_BY_SITE.get(str(site_id))
-    return ((_wb or {}).get("legal_hours") or "unknown")
+    val = ((_wb or {}).get("legal_hours") or "unknown")
+    if val not in ("daylight", "24hr", "closed"):
+        return "unknown"
+    return val
 
 
 USGS_SITE = _WA.get("default_site") or "12101500"
@@ -171,6 +176,8 @@ def legal_window(rule, sunrise_dt, sunset_dt, dt):
         return ((sunrise_dt - timedelta(hours=1)).strftime('%-I:%M %p'),
                 (sunset_dt + timedelta(hours=1)).strftime('%-I:%M %p'),
                 timeline_in, timeline_out)
+    if rule == "closed":
+        return ("--:--", "--:--", None, None)
     return None, None, timeline_in, timeline_out
 
 def _parse_clock(text, day):
@@ -1451,7 +1458,7 @@ class handler(BaseHTTPRequestHandler):
             weather_hour, weather_hourly = None, []
             time_arr, now_local = [], None
             legal_rule = legal_hours_for_site(site)
-            if legal_rule not in ("24hr", "daylight"):
+            if legal_rule not in ("24hr", "daylight", "closed"):
                 legal_rule = "unknown" if legal_rule != "custom" else "custom"
             lines_in_str, lines_out_str, timeline_in, timeline_out = legal_window(
                 legal_rule, sunrise_dt, sunset_dt, dt)

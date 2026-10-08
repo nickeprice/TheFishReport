@@ -19,11 +19,11 @@
       [Detail → docs/PLAN_REFERENCE.md#drift-coverage]
 
 - [ ] Phase D5: Flow-Adjusted Recommendations
-      → inputs.js, water.js, solver.js, styles.css
+      → inputs.js, solver.js, styles.css
       [Detail → docs/PLAN_REFERENCE.md#drift-flow]
 
 - [ ] Phase D6: NHDPlus-Enhanced Features
-      → hero.js, log.js, picker.js, drift.js, zone-core.js
+      → hero.js, log.js, picker.js, drift.js, zone-core.js, report.js
       [Detail → docs/PLAN_REFERENCE.md#drift-nhdplus-features]
 
 - [ ] Phase D7: River Entry Conditions

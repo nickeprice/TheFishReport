@@ -206,38 +206,51 @@ water."
 <a id="drift-flow"></a>
 ## Drift Phase 5: Flow-Adjusted Recommendations
 
-**Data:** USGS Statistics Service. One REST call per gauge per report load:
+**Goal:** Recommend leader length / weight based on current flow vs normal.
+
+**Primary data — NHDPlus monthly estimates (already cached in State.nhdData):**
+- `qa_01`–`qa_12` — mean monthly flow (CFS) by calendar month
+- `qc_01`–`qc_12` — 10-yr low monthly flow
+- `qe_01`–`qe_12` — 10-yr high monthly flow
+- Same pattern for velocity: `va_*`, `vc_*`, `ve_*`
+
+**Why NHDPlus first:** Works for ALL reaches (gauged + ungauged). Zero extra REST calls.
+Compare current USGS flow against the NHDPlus monthly mean for that month.
+Always falls back cleanly — if NHDPlus data is absent, skip to USGS stats.
+
+**Fallback — USGS Statistics Service** (gauged sites only):
 ```
 https://waterservices.usgs.gov/rest/stat/service/stats
   ?sites=12101500&statParameterCd=00060&statTypeCd=all&format=json
 ```
 
-**Why percentiles beat means:** River flows are log-normal. The p50 (median)
-is "normal flow." The p10 says "unusually low."
-
 **New functions in `inputs.js`:**
-- `fetchFlowPercentiles(siteId)` — cached by station
-- `flowAdjustedWeightRec(weightOz, flow, percentiles, nhdData, month)`
+- `flowVsNormal(currentFlow, nhdData, month)` — compare against NHDPlus monthly mean
+- `flowAdjustedWeightRec(weightOz, flow, nhdData, month)` — weight recommendation
 
-**Files:** `inputs.js` (+40), `drift.js` (+5), `solver.js` (+5),
-`water.js` (+5)
+**Files:** `inputs.js` (+35), `solver.js` (+5), `styles.css` (+5)
 
 ---
 
 <a id="drift-nhdplus-features"></a>
 ## Drift Phase 6: NHDPlus-Enhanced Features
 
-All consume the single NHDPlus response from Phase 0.
+All consume the single NHDPlus response from Phase 0 (`State.nhdData`).
 
 | # | Feature | File | What |
 |---|---------|------|------|
-| 6a | Flow-vs-normal | `hero.js` | "% of Oct normal" |
-| 6b | Auto river name | `log.js` | Replace deriveRiverName() |
-| 6c | Ungauged context | `picker.js` | Reach data when no gauge |
-| 6d | Bankfull blowout | `drift.js` | flow/qb > 0.8 |
-| 6e | Stream order behavior | `zone-core.js` | 1-2/3-4/5-6 |
+| 6a | Flow-vs-normal | `hero.js` | "% of normal" using NHDPlus monthly mean (`qa_MM`) vs current USGS flow |
+| 6b | Auto river name | `log.js` | Replace `deriveRiverName()` with `gnis_name` from NHDPlus |
+| 6c | Ungauged context | `picker.js` | Show reach data (streamorder, slope) when a selected station has no gauge |
+| 6d | Bankfull blowout | `drift.js` | NHDPlus doesn't have `qb` — approximate via `qe_MM` (high flow) × 1.5 or skip |
+| 6e | Stream order behavior | `zone-core.js` | 1-2: small, 3-4: medium, 5-6: large river behavior |
+| 6f | Streamgage cross-ref | `report.js` | Look up NHDPlus reach via USGS site ID (Layer 0) when GPS unavailable |
 
-**Files:** `hero.js`, `log.js`, `picker.js`, `drift.js`, `zone-core.js`
+**Notes:**
+- `qb` (bankfull flow) is NOT in the API fields — use `qe_MM` × 1.5 as proxy or remove
+- Layer 0 (Streamgage) links `source_featureid` (USGS site ID) → `flcomid` (NHDPlus COMID) — enables reach lookup by station pick, not just GPS
+
+**Files:** `hero.js`, `log.js`, `picker.js`, `drift.js`, `zone-core.js`, `report.js`
 ---
 
 <a id="drift-entry"></a>

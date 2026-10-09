@@ -4,14 +4,14 @@
  * drag, and 3-state bottom contact.
  *
  * public: driftDepth(), driftEnvironment(), driftSlipSpeed(),
- *         driftLeaderShape(), driftBottomState(),
+ *         driftLeaderCatenary(), driftLeaderShape(), driftBottomState(),
  *         detectWaterType(), driftCoverageScore(),
  *         flowVsNormal()
  * ES module.
  */
 import { spotDepthFt, spotNearestWidth, gaugeWidthFt, velocityAtSpot } from './continuity.js';
 import { weightTerminalVelocity } from './inputs-readers.js';
-import { CFS_TO_MS, presentationHeightInches } from './physics.js';
+import { CFS_TO_MS } from './physics.js';
 import { ROUGHNESS_COBBLE } from './hydro.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -182,12 +182,71 @@ export function driftSlipSpeed(z, env, driftSpeedMs) {
     return Math.max(0, slip);
 }
 
+// ── Iterative α-corrected catenary solver ──────────────────────────────────────
+
+/**
+ * Scientific drift leader height via iterative angle-corrected catenary.
+ *
+ * The simple catenary formula h = (F/w)·asinh(w·L/F) assumes the leader is
+ * perpendicular to the flow (sin³(α)=1). In a drift rig the leader streams
+ * nearly parallel to the current. The effective drag is:
+ *
+ *     w_eff = w_raw · sin³(α) · (v_slip / v_bed)²
+ *
+ * where:
+ *   α = atan(height / leaderLen)  — mean leader angle from horizontal
+ *   v_slip = u(z_mid) - v_drift   — relative water velocity at mid-height
+ *   w_raw = totalDragPerFt at full v_bed  — raw overestimated drag
+ *
+ * @param {number} liftGf — net upward buoyancy at corky (gf)
+ * @param {number} rawDragGfPerFt — totalDragPerFt computed at full bedVel (gf/ft)
+ * @param {number} ldLenFt — leader length (ft)
+ * @param {object} env — environment from driftEnvironment()
+ * @returns {number} height in inches (floored at 0, capped at leader)
+ */
+export function driftLeaderCatenary(liftGf, rawDragGfPerFt, ldLenFt, env) {
+    if (!liftGf || liftGf <= 0.001 || !rawDragGfPerFt || rawDragGfPerFt <= 0.001 || !ldLenFt || ldLenFt <= 0) {
+        return 0;  // no buoyancy → leader lies flat
+    }
+    const vBedMs = (env && env.vBedMs && env.vBedMs > 0) ? env.vBedMs : 0.5;
+    let hFt = ldLenFt * 0.5;  // initial guess: half the leader
+
+    for (let i = 0; i < 15; i++) {
+        // 1. Mean leader angle α
+        const alpha = Math.atan2(hFt, ldLenFt);
+        const sinAlpha = Math.sin(alpha);
+        const angleFactor = Math.pow(sinAlpha, 3);  // sin³(α) drag correction
+
+        // 2. Slip speed at mid-height (z ≈ h/2 above bed)
+        const zMidM = Math.max(env.z0 * 2, hFt * 0.3048 * 0.5);
+        // v_drift ≈ 70% of bed velocity when weight drags on bottom
+        const vDriftMs = vBedMs * 0.7;
+        const vSlipMs = driftSlipSpeed(zMidM, env, vDriftMs);
+
+        // 3. Velocity scaling factor: drag ∝ v²
+        const velFactor = (vBedMs > 0.01 && vSlipMs > 0)
+            ? Math.pow(vSlipMs / vBedMs, 2)
+            : 0.01;
+
+        // 4. Effective corrected drag
+        const wEff = Math.max(0.001, rawDragGfPerFt * angleFactor * velFactor);
+
+        // 5. New height via catenary formula
+        const x = wEff * ldLenFt / Math.max(0.01, liftGf);
+        const hNew = (liftGf / wEff) * Math.asinh(x);
+
+        if (Math.abs(hNew - hFt) < 0.002) break;  // converged to ~1/40"
+        hFt = Math.max(0.001, Math.min(ldLenFt, hNew));
+    }
+    return Math.min(hFt * 12, ldLenFt * 12);  // feet → inches, capped at leader
+}
+
 // ── Leader shape (quasi-static) ────────────────────────────────────────────────
 
 /**
- * Quasi-static leader equilibrium shape, approximated by a simplified force
- * balance: the leader is a straight line from rod tip to weight, with drag
- * force bending it downstream.
+ * Quasi-static leader equilibrium shape, solved via iterative α-corrected
+ * catenary (driftLeaderCatenary) that accounts for leader angle relative
+ * to the flow and slip-speed velocity.
  *
  * At sweepAngle != 0 the rig is assumed fishing across current (45° left
  * or right). The effective drag area increases and the leader sweeps wider.
@@ -199,17 +258,20 @@ export function driftSlipSpeed(z, env, driftSpeedMs) {
  *             leaderPoints: Array, converged: boolean }}
  */
 export function driftLeaderShape(rig, env, liftGf, dragGfPerFt, sweepAngle) {
-    // Uses the proven catenary equation h = (F/w) * asinh(w*L/F)
-    // via physics.js presentationHeightInches(), passing the actual gear
-    // lift (corky/yarn buoyancy - hook/bead mass) and distributed drag.
+    // Uses the iterative α-corrected catenary solver which accounts for
+    // the leader angle relative to the flow (sin³ drag correction) and
+    // slip-speed velocity (weight drifts with current, not stationary).
     const sweepRad = (sweepAngle || 0) * Math.PI / 180;
     const sinSweep = Math.sin(sweepRad);
-    const ldLenFt = rig.ldLen;  // leader length in feet (rig unit)
+    const ldLenFt = rig.ldLen;
     const depthM = (env && env.depthM) ? env.depthM : 2.0;
 
-    const hInches = (typeof presentationHeightInches === 'function')
-        ? presentationHeightInches(liftGf, dragGfPerFt, ldLenFt)
-        : 12.0;  // safe fallback: 12 inches
+    const hInches = (typeof driftLeaderCatenary === 'function')
+        ? driftLeaderCatenary(liftGf, dragGfPerFt, ldLenFt, env)
+        : 12.0;  // safe fallback
+
+    const hookZM = hInches * 0.0254;
+    const hookDepthM = Math.max(0, depthM - hookZM);
 
     const hookZM = hInches * 0.0254;  // inches → metres
     const hookDepthM = Math.max(0, depthM - hookZM);
@@ -422,6 +484,7 @@ export function flowVsNormal(currentFlow, nhdData, month) {
 window.driftDepth = driftDepth;
 window.driftEnvironment = driftEnvironment;
 window.driftSlipSpeed = driftSlipSpeed;
+window.driftLeaderCatenary = driftLeaderCatenary;
 window.driftLeaderShape = driftLeaderShape;
 window.driftBottomState = driftBottomState;
 window.detectWaterType = detectWaterType;

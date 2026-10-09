@@ -12,22 +12,10 @@
 
 ## 🔗 Chain + Data Expansion (32 gauges / 15 rivers)
 
-- [x] Phase 0: Chain solver terminates at weight (remove 35m mainline)
-      → chain-shooting.js
-      [Detail → docs/PLAN_REFERENCE.md#data-chain-fix]
-
-- [x] Phase 1: Expand all 3 datasets to 32 gauges / 15 rivers
+- [ ] Phase 0: Run extraction scripts — generate data for all 32 gauges / 15 rivers
       → precompute_spot_widths.py, extract_river_substrate.py, extract_river_widths.py
       [Detail → docs/PLAN_REFERENCE.md#data-expand-all]
 
-- [x] Phase 2: Lat/lon lookup with inverse-variance blended width
-      → continuity.js
-      [Detail → docs/PLAN_REFERENCE.md#ui-blended-width]
-
-- [x] Phase 3: Wire blended width into drift depth model
-      → drift-model.js
-      [Detail → docs/PLAN_REFERENCE.md#drift-wire-depth]
-
-- [ ] Phase 4: Verification — sanity, tests, all 32 gauges
+- [ ] Phase 1: Verification — sanity, build, tests
       → sanity_pass.cjs, tests/
       [Detail → docs/PLAN_REFERENCE.md#data-verify]

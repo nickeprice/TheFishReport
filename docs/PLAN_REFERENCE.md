@@ -92,23 +92,18 @@ scripts/extract_river_substrate.py
 ---
 
 <a id="data-chain-fix"></a>
-## Phase 0: Chain solver terminates at weight
+## Phase 0: Code changes (already committed)
+- Chain solver removed — `presentationHeightInches` catenary is the correct drift-fishing model
+- Lat/lon blended width (`blendedWidthFt`) on all 15 rivers
+- Substrate z₀ from HydroATLAS wired into driftEnvironment
+- Continuity.js: `spotWidthAt`, `spotWidthInterp`, `drainageWidthFt`, `spotSubstrateAt`
 
-**Goal:** Remove the 35m mainline from the chain integration. The weight is the
-physical bottom anchor — the rig terminates there.
-
-**Change in `chain-shooting.js:43-44`:**
-```diff
-- const mlLenM = 35;
-- const totalLenM = ldLenM + mlLenM;
-+ const mlLenM = 0.10;   // leader only — weight IS the terminus
-+ const totalLenM = ldLenM + mlLenM;
-```
-
-**Files:** `chain-shooting.js` (1 line)
+These are already in the codebase. Remaining work: run the extraction scripts.
 
 <a id="data-expand-all"></a>
-## Phase 1: Expand all 3 datasets to 32 gauges / 15 rivers
+## Phase 0: Run extraction scripts
+
+Run these 3 scripts in order to generate the expanded data files.
 
 ### 1a — SPOT_WIDTHS (precompute_spot_widths.py)
 
@@ -186,125 +181,8 @@ Uses NAIP satellite imagery via Microsoft Planetary Computer STAC API.
 → regenerates `public/src/data/river_widths.js`.
 
 **Files:** `scripts/tools/precompute_spot_widths.py`, `scripts/extract_river_substrate.py`, `scripts/tools/extract_river_widths.py`
-<a id="ui-blended-width"></a>
-## Phase 2: Lat/lon lookup with inverse-variance blended width
 
-**Goal:** Replace gauge-ID-dependent SPOT_WIDTHS_SITE_MAP with lat/lon
-nearest-neighbor across ALL rivers. Add inverse-variance weighting to blend
-all available width sources into one estimate.
-
-### New exports in `continuity.js`
-
-```js
-// Search ALL rivers for nearest SPOT_WIDTHS point to (lat, lon).
-// Returns { point, distance_m, riverKey } or null if >5km.
-export function spotWidthAt(lat, lon)
-
-// Same, but finds TWO nearest cross-sections on the same river by cum_m
-// and interpolates width between them.
-export function spotWidthInterp(lat, lon)
-
-// Inverse-variance blended width from all available sources.
-// Returns { widthFt, sigma, sources }
-export function blendedWidthFt(lat, lon, siteId)
-```
-
-### Inverse-variance blending formula
-
-```js
-function blendedWidthFt(lat, lon, siteId) {
-    const src = [];
-    const interp = spotWidthInterp(lat, lon);
-    if (interp) src.push({ w: interp.width_ft, v: 100 });  // σ=0.10
-
-    const gw = gaugeWidthFt(siteId);
-    if (gw) src.push({ w: gw, v: 25 });  // σ=0.20
-
-    const da = drainageWidthFt(siteId);
-    if (da) src.push({ w: da, v: 6.25 });  // σ=0.40
-
-    if (!src.length) return { widthFt: null, sigma: null, sources: [] };
-    let num = 0, den = 0;
-    for (const s of src) { num += s.w * s.v; den += s.v; }
-    return { widthFt: num / den, sigma: 1 / Math.sqrt(den), sources: src };
-}
-```
-
-### SPOT_WIDTHS_SITE_MAP replacement
-
-Delete the old map. The new search iterates all `window.SPOT_WIDTHS.rivers`
-entries by haversine distance. When two points on the same river are within
-1km, interpolate by `cum_m` river distance.
-
-### Drainage area width regression
-
-```js
-// w_ft = a * totdasqkm^b  (a=4.0, b=0.4 for PNW gravel-bed rivers)
-export function drainageWidthFt(siteId) {
-    // reads from window.NHD_DATA or State.nhdData
-}
-```
-
-### Uncertainty propagation
-
-| Tier | σ | Weight (1/σ²) |
-|------|---|---------------|
-| SPOT_WIDTHS interpolated | 0.10 | 100 |
-| SPOT_WIDTHS single nearest | 0.15 | 44 |
-| RIVER_WIDTHS gauge | 0.20 | 25 |
-| Drainage area regression | 0.40 | 6.25 |
-
-When all tiers agree on width, the blended σ ≈ 0.09 (9%) — better than any
-single measurement. When only one tier is available, σ matches that tier.
-
-**Files:** `continuity.js` (~80 lines changed: remove SPOT_WIDTHS_SITE_MAP,
-add blendedWidthFt + spotWidthAt + spotWidthInterp + drainageWidthFt)
-
-<a id="drift-wire-depth"></a>
-## Phase 3: Wire blended width into drift depth model
-
-**Goal:** `driftDepth()` and `driftEnvironment()` use the blended width instead
-of the old single-source lookup. Remove siteId-only dependence — pass
-lat/lon to the depth chain.
-
-### driftDepth changes
-
-```diff
-- export function driftDepth(flow, siteId, nhdData)
-+ export function driftDepth(flow, siteId, lat, lon, nhdData)
-
-  // Tier 1: measured USGS spot depth (unchanged)
-  const spotDepth = spotDepthFt(flow, siteId);
-
-- // Tier 2: Manning via spotNearestWidth(siteId)
-- const w = spotNearestWidth(siteId);
-+ // Tier 2: Manning via blendedWidthFt(lat, lon, siteId)
-+ const w = blendedWidthFt(lat, lon, siteId);
-
-  // Tier 3: Continuity via blended width
-```
-
-### driftEnvironment changes
-
-```diff
-- export function driftEnvironment(flow, siteId, nhdData)
-+ export function driftEnvironment(flow, siteId, lat, lon, nhdData)
-```
-
-### z₀ also gets the same treatment
-
-Add `spotSubstrateAt(lat, lon)` that searches ALL rivers' substrate points
-by haversine, same as spotWidthAt. No longer tied to SPOT_WIDTHS_SITE_MAP.
-
-### Callers
-
-Search for `driftDepth(` and `driftEnvironment(` calls and pass lat, lon:
-- `gear-sim/inputs.js` — passes active station coords
-- `gear-sim/drift.js` — assembly point
-- `services/water-gauge.js` — any direct calls
-
-**Files:** `drift-model.js` (+20 lines), `continuity.js` (+10 for substrate),
-`inputs.js` (3-5 lines), `drift.js` (3-5 lines)
+---
 
 <a id="data-verify"></a>
 ## Phase 4: Verification

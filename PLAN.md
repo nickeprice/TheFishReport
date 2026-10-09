@@ -1,23 +1,23 @@
 # Fish Report — Active Plan
 
-## 🔄 Rebuild Gear Sim for Drift Fishing (after Vite migration)
+## 🔄 Rebuild Gear Sim for Drift Fishing
 
-- [ ] Phase D3: Complete drift force model
-      → chain.js, drift.js, solver.js
-      [Detail → docs/PLAN_REFERENCE.md#drift-forces]
+- [ ] Phase 0: Data Wiring — add qc_*/qe_* to nhdplus.js, verify spot-width data
+      → nhdplus.js
+      [Detail → docs/PLAN_REFERENCE.md#drift-data]
 
-- [ ] Phase D4: Drift coverage score
-      → inputs.js, drift.js, solver.js, index.html
+- [ ] Phase 1: Drift Force Model — new drift-model.js with Manning depth fallback, slip-speed drag, 3-state bottom contact
+      → drift-model.js (new), drift.js, solver.js
+      [Detail → docs/PLAN_REFERENCE.md#drift-force-model]
+
+- [ ] Phase 2: Sweep + Coverage Score — 5 snapshot quasi-static sweep, water-type channel position
+      → drift-model.js, drift.js, inputs-readers.js, index.html
       [Detail → docs/PLAN_REFERENCE.md#drift-coverage]
 
-- [ ] Phase D5: Flow-Adjusted Recommendations
-      → inputs.js, solver.js, styles.css
-      [Detail → docs/PLAN_REFERENCE.md#drift-flow]
+- [ ] Phase 3: Flow-Adjusted Recommendations — NHDPlus monthly flow vs current
+      → drift-model.js, solver.js, index.html
+      [Detail → docs/PLAN_REFERENCE.md#drift-flow-rec]
 
-- [ ] Phase D6: NHDPlus-Enhanced Features
-      → hero.js, log.js, picker.js, drift.js, zone-core.js, report.js
-      [Detail → docs/PLAN_REFERENCE.md#drift-nhdplus-features]
-
-- [ ] Phase D7: River Entry Conditions
-      → water.js, report.js, hero.js, index.html, styles.css
-      [Detail → docs/PLAN_REFERENCE.md#drift-entry]
+- [ ] Phase 4: Cleanup + Baselines — remove old catenary + chain solver, update sanity_pass.js
+      → drift.js, chain.js, chain-helpers.js, chain-shooting.js, sanity_pass.js
+      [Detail → docs/PLAN_REFERENCE.md#drift-cleanup]

@@ -185,18 +185,23 @@ export function driftSlipSpeed(z, env, driftSpeedMs) {
 // ── Iterative α-corrected catenary solver ──────────────────────────────────────
 
 /**
- * Scientific drift leader height via iterative angle-corrected catenary.
+ * Iterative slip-speed-corrected catenary solver.
  *
- * The simple catenary formula h = (F/w)·asinh(w·L/F) assumes the leader is
- * perpendicular to the flow (sin³(α)=1). In a drift rig the leader streams
- * nearly parallel to the current. The effective drag is:
+ * The simple catenary formula h = (F/w)·asinh(w·L/F) uses the full
+ * bed velocity for drag, which overestimates it because the rig drifts
+ * with the current. This corrects the drag by scaling to the slip speed
+ * (relative water-to-leader velocity at mid-height):
  *
- *     w_eff = w_raw · sin³(α) · (v_slip / v_bed)²
+ *     w_eff = w_raw · (v_slip / v_bed)²
  *
  * where:
- *   α = atan(height / leaderLen)  — mean leader angle from horizontal
- *   v_slip = u(z_mid) - v_drift   — relative water velocity at mid-height
- *   w_raw = totalDragPerFt at full v_bed  — raw overestimated drag
+ *   v_slip = u(z_mid) - v_drift    — relative velocity at mid-height
+ *   v_drift = 0.7 · v_bed          — weight drags bottom at ~70% of bed velocity
+ *   w_raw = totalDragPerFt at v_bed
+ *
+ * No sin³(α) angle correction: the integral of sin³ over the curved leader
+ * is much larger than sin³ at the mean angle (most of the leader is near
+ * the bed at shallow angles), making a uniform sin³ factor too aggressive.
  *
  * @param {number} liftGf — net upward buoyancy at corky (gf)
  * @param {number} rawDragGfPerFt — totalDragPerFt computed at full bedVel (gf/ft)
@@ -212,24 +217,24 @@ export function driftLeaderCatenary(liftGf, rawDragGfPerFt, ldLenFt, env) {
     let hFt = ldLenFt * 0.5;  // initial guess: half the leader
 
     for (let i = 0; i < 15; i++) {
-        // 1. Mean leader angle α
-        const alpha = Math.atan2(hFt, ldLenFt);
-        const sinAlpha = Math.sin(alpha);
-        const angleFactor = Math.pow(sinAlpha, 3);  // sin³(α) drag correction
-
-        // 2. Slip speed at mid-height (z ≈ h/2 above bed)
+        // 1. Slip speed at mid-height of the leader (z ≈ h/2 above bed)
+        //    The weight drags on the bottom at ~70% of bed velocity,
+        //    so the relative water velocity = u(z) - v_drift
         const zMidM = Math.max(env.z0 * 2, hFt * 0.3048 * 0.5);
-        // v_drift ≈ 70% of bed velocity when weight drags on bottom
         const vDriftMs = vBedMs * 0.7;
         const vSlipMs = driftSlipSpeed(zMidM, env, vDriftMs);
 
-        // 3. Velocity scaling factor: drag ∝ v²
+        // 2. Drag scales with velocity squared. The raw totalDragPerFt
+        //    was computed at full bed velocity; scale it to slip speed.
         const velFactor = (vBedMs > 0.01 && vSlipMs > 0)
             ? Math.pow(vSlipMs / vBedMs, 2)
             : 0.01;
 
-        // 4. Effective corrected drag
-        const wEff = Math.max(0.001, rawDragGfPerFt * angleFactor * velFactor);
+        // 3. Effective drag at slip speed (NO sin³ factor — the angle
+        //    varies along the leader and the integral of sin³ over the
+        //    curved leader shape is much larger than sin³ at the mean
+        //    angle. The slip-speed correction alone is sufficient.)
+        const wEff = Math.max(0.001, rawDragGfPerFt * velFactor);
 
         // 5. New height via catenary formula
         const x = wEff * ldLenFt / Math.max(0.01, liftGf);

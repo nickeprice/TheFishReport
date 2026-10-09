@@ -98,6 +98,8 @@ export function buildSimStats(rig, out) {
         dragCoeff: 1.0,
         blownOut: out.blownOut,
         hookDepthM: out.hookDepthM || null,
+        chainResult: out.chainResult || null,
+        chainEnv: out.chainEnv || null,
         driftEnv: out.driftEnv || null,
         driftResult: out.driftResult || null,
         driftContact: out.driftContact || null,
@@ -164,6 +166,14 @@ export function paintSimHud(rig, out, stats) {
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
         '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
         (out.hookDepthM ? '; hook depth ' + (out.hookDepthM * 39.37).toFixed(1) + '"' : '; hook height ~' + hgt.toFixed(1) + '" (drift model)') +
+        // Chain solver detail
+        (out.chainResult ? '; chain={' + (out.chainResult.converged ? 'converged' : 'converged=' + out.chainResult.converged) +
+            ' hD=' + out.chainResult.hookDepthM.toFixed(3) + 'm' +
+            (out.chainResult.iterations ? ' iter=' + out.chainResult.iterations : '') +
+            (out.chainResult.detail ? ' ' + out.chainResult.detail : '') + '}' : '') +
+        // Chain env
+        (out.chainEnv ? '; env={H=' + out.chainEnv.depthM.toFixed(2) + 'm uMax=' + out.chainEnv.uMax.toFixed(3) +
+            ' z0=' + out.chainEnv.z0 + ' rodH=' + out.chainEnv.rodHeightM + '}' : '') +
         // Drift-model detail
         (out.depthResult ? '; depth={val=' + (out.depthResult.valueFt ? out.depthResult.valueFt.toFixed(1) + 'ft' : 'null') +
             ' src=' + out.depthResult.source +

@@ -8,6 +8,8 @@ import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
 import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal } from '../drift-model.js';
+import { chainSolve } from '../chain.js';
+import { ROUGHNESS_COBBLE } from '../hydro.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *
@@ -200,17 +202,29 @@ export var DRIFT_TECHNIQUE = {
             }
         }
 
-        let hookDepthM = null, driftResult = null;
+        let hookDepthM = null, chainResult = null, chainEnv = null;
         try {
-            // Leader shape at 0° sweep (straight downstream) for the HUD height
-            driftResult = driftLeaderShape(rig, driftEnv, liftGf, dragGfPerFt, 0);
-            hookDepthM = driftResult.converged ? driftResult.hookDepthM : null;
+            // Use the unified chain solver (RK4 + shooting + air catenary)
+            // which integrates element-by-element with the log-law velocity
+            // profile — the correct physics for a leader in boundary-layer flow.
+            const bedVelMs = bedVel * CFS_TO_MS;
+            const meanVelMs = velocity.mean * CFS_TO_MS;
+            const z0 = ROUGHNESS_COBBLE;
+            chainEnv = {
+                depthM: H,
+                uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
+                z0: z0,
+                rodHeightM: 1.5
+            };
+            chainResult = (typeof chainSolve === 'function')
+                ? chainSolve(rig, chainEnv) : null;
+            hookDepthM = chainResult && chainResult.converged ? chainResult.hookDepthM : null;
         } catch (e) {
-            logDebug('Drift model: ' + String(e.message).split('\n')[0], 'SIM');
+            logDebug('Chain solver: ' + String(e.message).split('\n')[0], 'SIM');
         }
-        // Override presentation height with drift-model result when available
-        if (driftResult && driftResult.converged) {
-            hgt = driftResult.hookZM * 39.37;  // m -> inches above bottom
+        // Override presentation height with chain solver result when converged
+        if (chainResult && chainResult.converged) {
+            hgt = chainResult.hookZ * 39.37;  // m → inches above bottom
         } else {
             hgt = fallbackHgt;
         }
@@ -241,7 +255,8 @@ export var DRIFT_TECHNIQUE = {
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
             whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges,
             hookDepthM: hookDepthM,
-            driftEnv: driftEnv, driftResult: driftResult, driftContact: driftContact,
+            chainResult: chainResult, chainEnv: chainEnv,
+            driftEnv: driftEnv, driftContact: driftContact,
             depthResult: depthResult,
             coverageScore: coverageScore,
             flowRec: flowRec

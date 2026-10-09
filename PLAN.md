@@ -6,6 +6,6 @@
       → physics.js
       [Detail → docs/PLAN_REFERENCE.md#physics-drag-coefficients]
 
-- [ ] Phase B: HydroATLAS substrate → real bed roughness z₀
+- [x] Phase B: HydroATLAS substrate → real bed roughness z₀
       → extract_river_substrate.py (new), river_substrate.js (gen), continuity.js, drift-model.js
       [Detail → docs/PLAN_REFERENCE.md#physics-substrate-z0]

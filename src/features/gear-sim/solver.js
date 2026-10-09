@@ -188,8 +188,8 @@ export function paintSimHud(rig, out, stats) {
             (out.coverageScore.waterMatch ? '' : ' waterMismatch') : '') +
         // Flow recommendation
         (out.flowRec && out.flowRec.label !== 'unknown' ? '; flow=' + out.flowRec.label +
-            ' cur=' + out.flowRec.currentFlow + ' normal=' + out.flowRec.normalFlow +
-            ' ratio=' + out.flowRec.ratio : '') +
+            ' ratio=' + (out.flowRec.ratio ? out.flowRec.ratio.toFixed(2) : '?') +
+            (out.flowRec.recurrence ? ' rec=' + out.flowRec.recurrence : '') : '') +
         // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
         // debug trail is where they survive in full - including the community-sonar note.
         (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +
@@ -242,10 +242,10 @@ export function paintSimHud(rig, out, stats) {
     const flowEl = document.getElementById('hud-flow-rec');
     if (flowEl) {
         if (out.flowRec && out.flowRec.label !== 'unknown') {
-            flowEl.innerText = 'Flow: ' + out.flowRec.currentFlow + ' cfs vs normal ' +
-                out.flowRec.normalFlow + ' cfs (' + out.flowRec.label + ') — ' +
+            var recStr = out.flowRec.recurrence ? ' (' + out.flowRec.recurrence + ')' : '';
+            flowEl.innerText = 'Flow: ' + out.flowRec.label + recStr + ' — ' +
                 out.flowRec.suggestion;
-            flowEl.style.color = (out.flowRec.label === 'normal') ? 'var(--text-muted)' : 'var(--accent-yellow)';
+            flowEl.style.color = (out.flowRec.label === 'normal' || out.flowRec.label === 'below normal') ? 'var(--text-muted)' : 'var(--accent-yellow)';
         } else {
             flowEl.innerText = '';
         }

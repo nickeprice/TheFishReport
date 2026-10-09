@@ -21,16 +21,30 @@ const NU_WATER = 1.0e-6;     // m^2/s, kinematic viscosity of fresh water at 10�
 
 export { CFS_TO_MS };
 
-// ── Re-dependent line drag coefficient ───────────────────────────────────────
+// ── Re-dependent line drag coefficient ─────────────────────────────────────
 // Smooth cylinder in crossflow: Cd(Re) = 1 + 10·Re⁻²⁄³  (White 1991).
 // For leader diameters 0.2-0.5 mm in river flows 0.2-3 ft/s,
 // Re ranges ≈ 20-1500.  The classical flat Cd=1.0 is ~35% low at Re=150.
-// @provenance: literature — White's empirical fit for smooth circular cylinders.
-
+//
+// However, fishing monofilament/braid is NOT a smooth cylinder:
+//   - Extruded mono and braided fibers trip the boundary layer at lower Re
+//   - Tension flattens the cross-section to slightly elliptical
+//   - FAO Fisheries Technical Paper 222 (and follow-up marine-engineering
+//     studies like DNV-RP-H103) shows fishing lines follow a plateau:
+//       Re < 10     → 1.8  (Stokes regime)
+//       10 ≤ Re ≤ 30 → 1.2  (transition — cable literature)
+//       30 < Re < 500 → 1.0  (monofilament plateau)
+//       Re ≥ 500     → 0.8  (fully separated wake)
+// The White 1991 fit gives ~1.3 at Re=200; FAO data gives ~1.0 — a ~23%
+// reduction that propagates through lineDragPerFt → leader height.
+// @provenance: FAO 222 + DNV-RP-H103 (marine cables in crossflow).
 export function lineCd(reynolds) {
     if (!reynolds || reynolds <= 0) return 1.0;
-    const reClamped = Math.max(reynolds, 0.1);          // stagnation safety: floor at 0.1
-    return Math.min(10.0, 1.0 + 10.0 * Math.pow(reClamped, -2.0 / 3.0));
+    const re = Math.max(reynolds, 0.1);
+    if (re < 10) return 1.8;
+    if (re <= 30) return 1.2;
+    if (re < 500) return 1.0;
+    return 0.8;
 }
 
 

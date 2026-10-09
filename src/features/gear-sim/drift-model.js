@@ -3,34 +3,23 @@
  * catenary physics and chain solver with Manning depth fallback, slip-speed
  * drag, and 3-state bottom contact.
  *
- * public: driftDepth(), driftEnvironment(), driftSlipSpeed(),
+ * public: driftDepth(), driftEnvironment(),
  *         driftLeaderShape(), driftBottomState(),
  *         detectWaterType(), driftCoverageScore(),
  *         flowVsNormal()
  * ES module.
  */
-import { spotDepthFt, spotNearestWidth, gaugeWidthFt, velocityAtSpot } from './continuity.js';
+import { spotDepthFt, spotNearestWidth, velocityAtSpot } from './continuity.js';
 import { weightTerminalVelocity } from './inputs-readers.js';
 import { CFS_TO_MS, presentationHeightInches } from './physics.js';
-import { ROUGHNESS_COBBLE } from './hydro.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const KAPPA = 0.41;                    // von Kármán — standard fluid dynamics
 const MANNING_N = 0.035;              // gravel-cobble roughness — textbook
 const G = 9.80665;                    // m/s²
 const SECONDS_PER_HOUR = 3600;
-const RHO = 998;                      // kg/m³ fresh water
 const FT_TO_M = 0.3048;
 const M_TO_FT = 1 / FT_TO_M;
-
-/**
- * Get the current flow (cfs) from the app's global state.
- * Replicates getCurrentFlow() without importing it to avoid circular deps.
- */
-function _currentFlow() {
-    try { return Number(document.getElementById('current-flow')?.innerText?.replace(/[^0-9.]/g, '') || '0'); }
-    catch (e) { return 0; }
-}
 
 // ── Manning depth fallback ────────────────────────────────────────────────────
 
@@ -446,7 +435,6 @@ export function flowVsNormal(currentFlow, nhdData, month) {
 // ── Window shims for backward compat ───────────────────────────────────────────
 window.driftDepth = driftDepth;
 window.driftEnvironment = driftEnvironment;
-window.driftSlipSpeed = driftSlipSpeed;
 window.driftLeaderShape = driftLeaderShape;
 window.driftBottomState = driftBottomState;
 window.detectWaterType = detectWaterType;

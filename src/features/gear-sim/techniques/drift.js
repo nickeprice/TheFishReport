@@ -7,9 +7,8 @@ import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches,
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
-import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType, detectWaterType } from '../drift-model.js';
+import { driftDepth, driftEnvironment, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType, detectWaterType } from '../drift-model.js';
 import { chainSolve } from '../chain.js';
-import { ROUGHNESS_COBBLE } from '../hydro.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *

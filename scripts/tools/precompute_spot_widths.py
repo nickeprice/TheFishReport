@@ -62,10 +62,8 @@ SAMPLE_INTERVAL_M = 500
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 OVERPASS_TIMEOUT = 120
 DEM_HALF_M = 250.0
-OUTPUT_JS = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "public", "src", "data", "spot_widths.js"
-)
+_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+OUTPUT_JS = os.path.join(_REPO, "public", "src", "data", "spot_widths.js")
 UA = "TheFishReport/1.0 (spot-widths precompute)"
 
 # ── Geography helpers ────────────────────────────────────────────────────────
@@ -267,7 +265,7 @@ def generate_sample_points(river, dry_run=False):
     results = []
     n_total = len(samples)
     n_error = 0
-    _executor = ThreadPoolExecutor(1)
+    _executor = ThreadPoolExecutor(8)  # 8 concurrent DEM tile downloads
 
     def _measure(lat, lon):
         return we.measure_width_elevation(lat, lon, half_m=DEM_HALF_M)

@@ -92,11 +92,10 @@ def main():
                 out["rivers"][key] = {"river":name,"n_points":0,"points":[]}
                 continue
 
-            # Query RiverATLAS for these IDs
-            id_list = ",".join(str(i) for i in ids)
+            # Query RiverATLAS with the same spatial extent (has geometry, so -spat is fast)
             sql2 = ("SELECT HYRIV_ID,cly_pc_cav,slt_pc_cav,snd_pc_cav,lit_cl_cmj "
-                    "FROM RiverATLAS_v10 WHERE HYRIV_ID IN (%s)" % id_list)
-            dt2 = ogr2json(atl,sql2)
+                    "FROM RiverATLAS_v10 WHERE HYRIV_ID > 0")
+            dt2 = ogr2json(atl,sql2,spat=[glon-buf,glat-buf,glon+buf,glat+buf])
             atlas = {f["properties"]["HYRIV_ID"]:f["properties"]
                      for f in dt2.get("features",[]) if f.get("properties",{}).get("HYRIV_ID")}
 

@@ -8,7 +8,6 @@ import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
 import { driftDepth, driftEnvironment, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType, detectWaterType } from '../drift-model.js';
-import { chainSolve } from '../chain.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *
@@ -102,8 +101,13 @@ export var DRIFT_TECHNIQUE = {
         if (mlDia > 0) {
             dragGfPerFt += lineDragPerFt(mlDia, velocity.mean);
         }
+        // Weight bounces on the bottom, leader trails downstream.
+        // Hook height uses the exact catenary solution:
+        //   h = (lift / drag) * asinh(drag * leader / lift)
+        // This IS the correct physics for drift fishing — anchored at the
+        // weight on the bottom, buoyant free end at the hook. No surface
+        // shooting. No mainline integration.
         let hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
-        const fallbackHgt = hgt;  // preserve for when chain solver does not converge
         const blownOut = (bedVel > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------
@@ -264,30 +268,12 @@ export var DRIFT_TECHNIQUE = {
             driftEnv.noSurfaceFlow = false;
         }
 
-        let hookDepthM = null, chainResult = null, chainEnv = null;
-        try {
-            // Use the unified chain solver (RK4 + shooting + air catenary)
-            // which integrates element-by-element with the log-law velocity
-            // profile — the correct physics for a leader in boundary-layer flow.
-            const bedVelMs = bedVel * CFS_TO_MS;
-            const meanVelMs = velocity.mean * CFS_TO_MS;
-            chainEnv = {
-                depthM: driftEnv.depthM || H,
-                uMax: poolMode ? 0.5 : Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
-                z0: z0,
-                rodHeightM: 1.5
-            };
-            chainResult = (typeof chainSolve === 'function')
-                ? chainSolve(rig, chainEnv) : null;
-            hookDepthM = chainResult && chainResult.converged ? chainResult.hookDepthM : null;
-        } catch (e) {
-            logDebug('Chain solver: ' + String(e.message).split('\n')[0], 'SIM');
-        }
-        // Override presentation height with chain solver result when converged
-        if (chainResult && chainResult.converged) {
-            hgt = chainResult.hookZ * 39.37;  // m → inches above bottom
-        } else {
-            hgt = fallbackHgt;
+        // Hook depth: weight bounces on the bottom, leader trails downstream.
+        // The correct physics is the catenary: h = (lift/drag) * asinh(drag*L/lift).
+        // No surface-shooting method — the hook stays near the bottom.
+        let hookDepthM = null;
+        if (driftEnv && driftEnv.depthM && driftEnv.depthM > 0) {
+            hookDepthM = Math.max(0, driftEnv.depthM - hgt * 0.0254);
         }
         // Use drift-model bottom state (3-state)
         const driftContact = driftBottomState(rig, driftEnv);
@@ -316,7 +302,6 @@ export var DRIFT_TECHNIQUE = {
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
             whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges,
             hookDepthM: hookDepthM,
-            chainResult: chainResult, chainEnv: chainEnv,
             driftEnv: driftEnv, driftContact: driftContact,
             depthResult: depthResult,
             coverageScore: coverageScore,

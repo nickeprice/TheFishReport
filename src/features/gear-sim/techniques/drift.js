@@ -203,7 +203,7 @@ export var DRIFT_TECHNIQUE = {
         let hookDepthM = null, driftResult = null;
         try {
             // Leader shape at 0° sweep (straight downstream) for the HUD height
-            driftResult = driftLeaderShape(rig, driftEnv, 0);
+            driftResult = driftLeaderShape(rig, driftEnv, liftGf, dragGfPerFt, 0);
             hookDepthM = driftResult.converged ? driftResult.hookDepthM : null;
         } catch (e) {
             logDebug('Drift model: ' + String(e.message).split('\n')[0], 'SIM');
@@ -220,7 +220,7 @@ export var DRIFT_TECHNIQUE = {
         let coverageScore = null;
         try {
             if (typeof driftCoverageScore === 'function' && zone) {
-                coverageScore = driftCoverageScore(rig, driftEnv, zone);
+                coverageScore = driftCoverageScore(rig, driftEnv, liftGf, dragGfPerFt, zone);
             }
         } catch (e) {
             logDebug('Coverage score: ' + String(e.message).split('\n')[0], 'SIM');

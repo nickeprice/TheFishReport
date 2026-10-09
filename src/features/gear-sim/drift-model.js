@@ -11,7 +11,7 @@
  */
 import { spotDepthFt, spotNearestWidth, gaugeWidthFt, velocityAtSpot } from './continuity.js';
 import { weightTerminalVelocity } from './inputs-readers.js';
-import { CFS_TO_MS } from './physics.js';
+import { CFS_TO_MS, presentationHeightInches } from './physics.js';
 import { ROUGHNESS_COBBLE } from './hydro.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -198,41 +198,32 @@ export function driftSlipSpeed(z, env, driftSpeedMs) {
  * @returns {{ hookDepthM: number|null, hookZM: number|null,
  *             leaderPoints: Array, converged: boolean }}
  */
-export function driftLeaderShape(rig, env, sweepAngle) {
+export function driftLeaderShape(rig, env, liftGf, dragGfPerFt, sweepAngle) {
+    // Uses the proven catenary equation h = (F/w) * asinh(w*L/F)
+    // via physics.js presentationHeightInches(), passing the actual gear
+    // lift (corky/yarn buoyancy - hook/bead mass) and distributed drag.
     const sweepRad = (sweepAngle || 0) * Math.PI / 180;
     const sinSweep = Math.sin(sweepRad);
-
-    const ldLenM = rig.ldLen * FT_TO_M;
+    const ldLenFt = rig.ldLen;  // leader length in feet (rig unit)
     const depthM = (env && env.depthM) ? env.depthM : 2.0;
 
-    // Estimate drag on leader at mean velocity
-    const meanVelMs = env ? env.vSurfaceMs * 0.6 : 1.0;
-    const ldDiaM = (rig.ldDia && rig.ldDia > 0) ? rig.ldDia * 0.001 : 0.0003;
-    const ldAreaPerM = ldDiaM;
-    const dragPerM = 0.5 * RHO * 1.0 * ldAreaPerM * meanVelMs * meanVelMs;
+    const hInches = (typeof presentationHeightInches === 'function')
+        ? presentationHeightInches(liftGf, dragGfPerFt, ldLenFt)
+        : 12.0;  // safe fallback: 12 inches
 
-    // Net lift: buoyancy minus submerged weight
-    const submergedWeightN = (rig.weightOz || 0.5) * 0.278 * 9.81 / 1000;
-    const netLiftN = Math.max(0.01, 0.05 - submergedWeightN);
-
-    // Angle from vertical
-    const theta = Math.atan2(dragPerM * ldLenM, netLiftN);
-    const vertComponent = Math.cos(theta);
-    const horizComponent = Math.sin(theta);
-
-    const hookZM = ldLenM * vertComponent;
+    const hookZM = hInches * 0.0254;  // inches → metres
     const hookDepthM = Math.max(0, depthM - hookZM);
 
     const leaderPoints = [
         { x: 0, z: 0 },
-        { x: ldLenM * horizComponent * sinSweep, z: hookZM }
+        { x: ldLenFt * FT_TO_M * sinSweep, z: hookZM }
     ];
 
     return {
         hookDepthM: hookDepthM,
         hookZM: hookZM,
         leaderPoints: leaderPoints,
-        converged: true
+        converged: isFinite(hInches) && hInches > 0
     };
 }
 
@@ -325,7 +316,7 @@ const SWEEP_WEIGHTS = [1, 2, 3, 2, 1];  // edge/mid/center/mid/edge
  * @returns {{ score: number, snapshots: Array<{angle: number, inZone: bool, hookZM: number}>,
  *             waterMatch: boolean, note: string }}
  */
-export function driftCoverageScore(rig, env, zone) {
+export function driftCoverageScore(rig, env, liftGf, dragGfPerFt, zone) {
     const snapshots = [];
     let weightedSum = 0;
     let totalWeight = 0;
@@ -333,7 +324,7 @@ export function driftCoverageScore(rig, env, zone) {
     for (let i = 0; i < SWEEP_ANGLES.length; i++) {
         const angle = SWEEP_ANGLES[i];
         const weight = SWEEP_WEIGHTS[i];
-        const shape = driftLeaderShape(rig, env, angle);
+        const shape = driftLeaderShape(rig, env, liftGf, dragGfPerFt, angle);
 
         // Hook height above bottom in inches (strike zone is in inches)
         const hookInches = shape.hookZM * 39.37;

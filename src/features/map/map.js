@@ -1,7 +1,8 @@
 /**
  * src/features/map/map.js - interactive station map (CDN MapLibre GL JS).
  *
- * public: openMapScreen(), closeMapScreen(), refreshStationMap(center), mapCenter()
+ * public: openMapScreen(), closeMapScreen(), refreshStationMap(center), mapCenter(),
+ *         plotGaugePins(), plotSavedSpotStars()
  *
  * Uses MapLibre GL JS v4.7.1 loaded from CDN (unpkg). Satellite imagery base
  * with gauge pins, saved spot stars, and tap-to-pin drop via FAB.
@@ -289,6 +290,32 @@ export function plotSavedSpotStars() {
     return plotted;
 }
 
+// ── Plot gauge pins from registry ───────────────────────────────────────────
+export function plotGaugePins() {
+    const stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
+    if (!stations) return 0;
+    let plotted = 0;
+    stations.forEach(function (st) {
+        if (!st.coords) return;
+        // Skip seasonal gauges that are currently out of season
+        if (st.gauge_type === 'seasonal' && !mapPinIsSeasonal(st.site_id)) return;
+        var pinColor = (st.gauge_type === 'seasonal') ? '#eab308' : '#22c55e';
+        var el = document.createElement('div');
+        el.className = 'station-pin';
+        el.innerHTML = '<span class="station-pin-dot" style="background:' + pinColor + '"></span>';
+        el.addEventListener('click', function (e) {
+            e.stopPropagation();
+            showStationPopup({ id: st.site_id, name: st.name, lat: st.coords.lat, lon: st.coords.lon });
+        });
+        var m = new maplibregl.Marker({ element: el });
+        m.setLngLat([st.coords.lon, st.coords.lat]);
+        m.addTo(_stationMap);
+        _mapMarkers.push({ el: m.getElement(), lng: st.coords.lon, lat: st.coords.lat });
+        plotted++;
+    });
+    return plotted;
+}
+window.plotGaugePins = plotGaugePins;
 // ── Refresh stations ──────────────────────────────────────────────────────────────
 export async function refreshStationMap(center) {
     if (!_stationMap || typeof apiGetJson !== 'function') {
@@ -368,29 +395,7 @@ export async function openMapScreen() {
         });
         // Render gauge pins on load with badge popups
         _stationMap.on('load', function () {
-            // Plot ALL registry gauges so every known gauge is visible on the map.
-            // Pin color: green = permanent, yellow = seasonal (in season).
-            // Live cfs/gage is fetched on-demand via showStationPopup when a pin is tapped.
-            const stations = window.REGIONS && window.REGIONS.WA && window.REGIONS.WA.discovery_pool;
-            if (stations) {
-                stations.forEach(function (st) {
-                    if (!st.coords) return;
-                    // Skip seasonal gauges that are currently out of season
-                    if (st.gauge_type === 'seasonal' && !mapPinIsSeasonal(st.site_id)) return;
-                    var pinColor = (st.gauge_type === 'seasonal') ? '#eab308' : '#22c55e';
-                    var el = document.createElement('div');
-                    el.className = 'station-pin';
-                    el.innerHTML = '<span class="station-pin-dot" style="background:' + pinColor + '"></span>';
-                    el.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        showStationPopup({ id: st.site_id, name: st.name, lat: st.coords.lat, lon: st.coords.lon });
-                    });
-                    var m = new maplibregl.Marker({ element: el });
-                    m.setLngLat([st.coords.lon, st.coords.lat]);
-                    m.addTo(_stationMap);
-                    _mapMarkers.push({ el: m.getElement(), lng: st.coords.lon, lat: st.coords.lat });
-                });
-            }
+            plotGaugePins();
             plotSavedSpotStars();
         });
         // Tap-to-pin click handler
@@ -555,9 +560,10 @@ async function doSavePin(lat, lng, label) {
     const id = await saveSpotAt(lat, lng, label);
     if (!id) { if (typeof showToast === 'function') showToast('Could not save that spot.', 'warn', 4000); return; }
     if (typeof showToast === 'function') showToast('Saved: ' + label, 'success', 2500);
-    // Remove old markers (temp pins, station pins, old stars) then re-plot stars only.
+    // Remove old markers (temp pins, gauge pins, old stars) then re-plot both layers.
     // spotsState.rows was already updated by saveSpotAt() so stars appear immediately.
     removeAllMarkers();
+    if (typeof plotGaugePins === 'function') plotGaugePins();
     if (typeof plotSavedSpotStars === 'function') plotSavedSpotStars();
 }
 

@@ -93,6 +93,9 @@ window.loadFavoriteSpots = loadFavoriteSpots;
     }
     spotsState.loaded = true;
     renderFavoriteSpots();
+    // Update the map drawer's saved-spots row if it's open
+    var drawerContainer = document.getElementById('drawer-spots');
+    if (drawerContainer && typeof renderDrawerSpots === 'function') renderDrawerSpots(drawerContainer);
     return spotsState.rows;
 }
 
@@ -245,6 +248,9 @@ export async function saveSpotAt(lat, lon, label) {
     // Also update in-memory state so the star + chip list appear immediately
     spotsState.rows.push(row);
     renderFavoriteSpots();
+    // Update the map drawer's saved-spots row if it's open
+    var drawerContainer = document.getElementById('drawer-spots');
+    if (drawerContainer) renderDrawerSpots(drawerContainer);
     if (res && res.ok) {
         logDebug('Favourite spot saved: ' + label + (station ? ' (flow via ' + station.id + ')' : ' (no gauge resolved)'), 'SPOT');
         if (resolved && !resolved.ok) {
@@ -323,6 +329,9 @@ export async function deleteSavedSpot(id) {
     if (res && res.ok) {
         showToast('Spot deleted', 'success', 2500);
         await loadFavoriteSpots();
+        // Update the map drawer's saved-spots row if it's open
+        var drawerContainer = document.getElementById('drawer-spots');
+        if (drawerContainer && typeof renderDrawerSpots === 'function') renderDrawerSpots(drawerContainer);
     } else {
         showToast('Could not delete: ' + ((res && res.error) || 'unknown error'), 'error', 5000);
     }

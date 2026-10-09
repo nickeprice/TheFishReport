@@ -189,10 +189,10 @@ pass fails.
   `deleteSavedSpot(id)` — a spot is a lat/lon YOU pick (weather at the point, flow from the
   resolved gauge), RLS-private, cached locally
 - **spots-map.js** — `savedSpotPopupHtml(spot)` — popup HTML for saved spots
-- **map.js** — `openMapModal()`, `closeMapModal()`, `onMapClick()`,
-  `refreshStationMap(center)`, `mapCenter()`, `startSpotPick()`, `onSpotPick()`,
-  `confirmPinSpot()`, `cancelPinSpot()`, `mapModalOpen` — full-screen map modal
-  with composite satellite+labels, pin-drop with floating name pill
+- **map.js** — `openMapScreen()`, `closeMapScreen()`, `onMapClick()`,
+  `refreshStationMap(center)`, `mapCenter()`, `plotGaugePins()`, `plotSavedSpotStars()`,
+  `confirmPinSpot()`, `cancelPinSpot()` — full-screen map modal
+  with composite satellite+labels, gauge pins, saved spot stars, and pin-drop via FAB
 
 ## src/app.js
 Bootstrap only — no public API. It wires `window.onload` to the globals above.

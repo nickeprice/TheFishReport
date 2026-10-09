@@ -106,7 +106,8 @@ export function buildSimStats(rig, out) {
         driftResult: out.driftResult || null,
         driftContact: out.driftContact || null,
         depthResult: out.depthResult || null,
-        coverageScore: out.coverageScore || null
+        coverageScore: out.coverageScore || null,
+        flowRec: out.flowRec || null
     };
 }
 
@@ -189,6 +190,10 @@ export function paintSimHud(rig, out, stats) {
         // Coverage score
         (out.coverageScore ? '; coverage=' + out.coverageScore.pct + '%' +
             (out.coverageScore.waterMatch ? '' : ' waterMismatch') : '') +
+        // Flow recommendation
+        (out.flowRec && out.flowRec.label !== 'unknown' ? '; flow=' + out.flowRec.label +
+            ' cur=' + out.flowRec.currentFlow + ' normal=' + out.flowRec.normalFlow +
+            ' ratio=' + out.flowRec.ratio : '') +
         // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
         // debug trail is where they survive in full - including the community-sonar note.
         (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +
@@ -244,6 +249,19 @@ export function paintSimHud(rig, out, stats) {
             covEl.style.color = color;
         } else {
             covEl.innerText = '';
+        }
+    }
+
+    // Flow recommendation HUD element
+    const flowEl = document.getElementById('hud-flow-rec');
+    if (flowEl) {
+        if (out.flowRec && out.flowRec.label !== 'unknown') {
+            flowEl.innerText = 'Flow: ' + out.flowRec.currentFlow + ' cfs vs normal ' +
+                out.flowRec.normalFlow + ' cfs (' + out.flowRec.label + ') — ' +
+                out.flowRec.suggestion;
+            flowEl.style.color = (out.flowRec.label === 'normal') ? 'var(--text-muted)' : 'var(--accent-yellow)';
+        } else {
+            flowEl.innerText = '';
         }
     }
 

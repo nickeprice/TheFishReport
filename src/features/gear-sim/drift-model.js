@@ -5,7 +5,8 @@
  *
  * public: driftDepth(), driftEnvironment(), driftSlipSpeed(),
  *         driftLeaderShape(), driftBottomState(),
- *         detectWaterType(), driftCoverageScore()
+ *         detectWaterType(), driftCoverageScore(),
+ *         flowVsNormal()
  * ES module.
  */
 import { spotDepthFt, spotNearestWidth, gaugeWidthFt, velocityAtSpot } from './continuity.js';
@@ -367,6 +368,65 @@ export function driftCoverageScore(rig, env, zone) {
     };
 }
 
+// ── Flow vs normal ─────────────────────────────────────────────────────────────
+
+/**
+ * Compare current flow against the NHDPlus 30-yr monthly normal for the current month.
+ * Returns the ratio and a recommendation label.
+ *
+ * @param {number} currentFlow — discharge in cfs
+ * @param {object|null} nhdData — NHDPlus reach data (State.nhdData)
+ * @param {number} month — month number 1-12 (default: current month)
+ * @returns {{ ratio: number|null, label: string, suggestion: string } | null}
+ */
+export function flowVsNormal(currentFlow, nhdData, month) {
+    if (!currentFlow || currentFlow <= 0 || !nhdData) {
+        return {
+            ratio: null,
+            label: 'unknown',
+            suggestion: 'No flow data — use standard rig'
+        };
+    }
+    const m = (month >= 1 && month <= 12) ? month : new Date().getMonth() + 1;
+    const key = 'qa_' + String(m).padStart(2, '0');
+    const normalFlow = nhdData[key] ? Number(nhdData[key]) : null;
+    if (!normalFlow || normalFlow <= 0) {
+        return {
+            ratio: null,
+            label: 'unknown',
+            suggestion: 'No NHDPlus monthly normals — use standard rig'
+        };
+    }
+
+    const ratio = currentFlow / normalFlow;
+    let label, suggestion;
+
+    if (ratio < 0.6) {
+        label = 'very low';
+        suggestion = 'Lighter weight (1 size down), +1-2 ft leader';
+    } else if (ratio < 0.8) {
+        label = 'low';
+        suggestion = 'Consider lighter weight or longer leader';
+    } else if (ratio < 1.2) {
+        label = 'normal';
+        suggestion = 'Standard rig';
+    } else if (ratio < 2.0) {
+        label = 'high';
+        suggestion = 'Heavier weight (1 size up), -1 ft leader';
+    } else {
+        label = 'very high';
+        suggestion = 'Heaviest weight, shortest leader, or wait';
+    }
+
+    return {
+        ratio: Math.round(ratio * 100) / 100,
+        label: label,
+        suggestion: suggestion,
+        currentFlow: currentFlow,
+        normalFlow: normalFlow
+    };
+}
+
 // ── Window shims for backward compat ───────────────────────────────────────────
 window.driftDepth = driftDepth;
 window.driftEnvironment = driftEnvironment;
@@ -375,3 +435,4 @@ window.driftLeaderShape = driftLeaderShape;
 window.driftBottomState = driftBottomState;
 window.detectWaterType = detectWaterType;
 window.driftCoverageScore = driftCoverageScore;
+window.flowVsNormal = flowVsNormal;

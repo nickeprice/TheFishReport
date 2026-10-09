@@ -7,7 +7,7 @@ import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches,
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
-import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore } from '../drift-model.js';
+import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal } from '../drift-model.js';
 import { chainSolve } from '../chain.js';
 import { ROUGHNESS_COBBLE } from '../hydro.js';
 import { interceptionProbability } from '../interception.js';
@@ -243,6 +243,15 @@ export var DRIFT_TECHNIQUE = {
         } catch (e) {
             logDebug('Coverage score: ' + String(e.message).split('\n')[0], 'SIM');
         }
+        // Flow-adjusted recommendation
+        let flowRec = null;
+        try {
+            if (typeof flowVsNormal === 'function') {
+                flowRec = flowVsNormal(env.flow, nhdData);
+            }
+        } catch (e) {
+            logDebug('Flow rec: ' + String(e.message).split('\n')[0], 'SIM');
+        }
         // Blend interception probability into score: 70% positional, 30% interception
         const blendedScore = score * (0.7 + 0.3 * interceptionProb);
         score = Math.max(0.0, Math.min(5.0, Number(blendedScore.toFixed(3))));
@@ -258,7 +267,8 @@ export var DRIFT_TECHNIQUE = {
             bottomContact: bottomContact,
             driftEnv: driftEnv, driftResult: driftResult, driftContact: driftContact,
             depthResult: depthResult,
-            coverageScore: coverageScore
+            coverageScore: coverageScore,
+            flowRec: flowRec
         };
     }
 };

@@ -278,6 +278,28 @@ export function driftBottomState(rig, env) {
 // ── Water type auto-detection ───────────────────────────────────────────────────
 
 /**
+ * Roughness length z₀ from median grain diameter per standard Nikora 1992:
+ *   z₀ = 0.033 × 2.5 × D₅₀
+ *
+ * Water type → estimated D₅₀ → z₀:
+ *   Riffle (cobble/boulder): D₅₀ = 0.20m → z₀ = 0.0165m
+ *   Run    (gravel/cobble):  D₅₀ = 0.10m → z₀ = 0.00825m
+ *   Glide  (sand/gravel):    D₅₀ = 0.02m → z₀ = 0.00165m
+ *   Pool   (silt/sand):      D₅₀ = 0.002m → z₀ = 0.000165m
+ *   Default/unknown:         D₅₀ = 0.10m → z₀ = 0.00825m
+ */
+const Z0_BY_TYPE = {
+    riffle: 0.0165,
+    run:    0.00825,
+    glide:  0.00165,
+    pool:   0.000165
+};
+
+export function z0FromWaterType(waterType) {
+    return Z0_BY_TYPE[waterType] || 0.00825;
+}
+
+/**
  * Auto-detect water type from NHDPlus slope and stream order.
  * Falls back to 'run' when data is unavailable.
  *

@@ -7,7 +7,7 @@ import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches,
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
-import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal } from '../drift-model.js';
+import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType } from '../drift-model.js';
 import { chainSolve } from '../chain.js';
 import { ROUGHNESS_COBBLE } from '../hydro.js';
 /**
@@ -202,6 +202,11 @@ export var DRIFT_TECHNIQUE = {
             }
         }
 
+        // Dynamic z₀ from water type (Nikora 1992: z₀ = 0.033 × 2.5 × D₅₀)
+        const waterType = rig.waterType || 'run';
+        const z0 = z0FromWaterType(waterType);
+        driftEnv.z0 = z0;
+
         let hookDepthM = null, chainResult = null, chainEnv = null;
         try {
             // Use the unified chain solver (RK4 + shooting + air catenary)
@@ -209,7 +214,6 @@ export var DRIFT_TECHNIQUE = {
             // profile — the correct physics for a leader in boundary-layer flow.
             const bedVelMs = bedVel * CFS_TO_MS;
             const meanVelMs = velocity.mean * CFS_TO_MS;
-            const z0 = ROUGHNESS_COBBLE;
             chainEnv = {
                 depthM: H,
                 uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),

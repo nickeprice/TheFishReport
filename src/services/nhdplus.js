@@ -14,7 +14,7 @@ const BUFFER_DEG = 0.0045;
 // EPA WATERS REST endpoint for Network Flowline layer
 const EPA_URL = 'https://watersgeo.epa.gov/arcgis/rest/services/NHDPlus/NHDPlus/MapServer/2/query';
 // Fields we need from the flowline
-const OUT_FIELDS = 'comid,gnis_name,streamorder,slope,lengthkm,totdasqkm,qa_MA,va_MA,qa_01,va_01,qa_02,va_02,qa_03,va_03,qa_04,va_04,qa_05,va_05,qa_06,va_06,qa_07,va_07,qa_08,va_08,qa_09,va_09,qa_10,va_10,qa_11,va_11,qa_12,va_12';
+const OUT_FIELDS = 'comid,gnis_name,streamorder,slope,lengthkm,totdasqkm,qa_MA,va_MA,qa_01,va_01,qa_02,va_02,qa_03,va_03,qa_04,va_04,qa_05,va_05,qa_06,va_06,qa_07,va_07,qa_08,va_08,qa_09,va_09,qa_10,va_10,qa_11,va_11,qa_12,va_12,qc_01,vc_01,qc_02,vc_02,qc_03,vc_03,qc_04,vc_04,qc_05,vc_05,qc_06,vc_06,qc_07,vc_07,qc_08,vc_08,qc_09,vc_09,qc_10,vc_10,qc_11,vc_11,qc_12,vc_12,qe_01,ve_01,qe_02,ve_02,qe_03,ve_03,qe_04,ve_04,qe_05,ve_05,qe_06,ve_06,qe_07,ve_07,qe_08,ve_08,qe_09,ve_09,qe_10,ve_10,qe_11,ve_11,qe_12,ve_12';
 
 /**
  * Fetch NHDPlus reach data nearest to (lat, lon).

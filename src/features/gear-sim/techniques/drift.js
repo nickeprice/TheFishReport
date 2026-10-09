@@ -7,7 +7,7 @@ import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches,
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
-import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType } from '../drift-model.js';
+import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType, detectWaterType } from '../drift-model.js';
 import { chainSolve } from '../chain.js';
 import { ROUGHNESS_COBBLE } from '../hydro.js';
 /**
@@ -203,7 +203,11 @@ export var DRIFT_TECHNIQUE = {
         }
 
         // Dynamic z₀ from water type (Nikora 1992: z₀ = 0.033 × 2.5 × D₅₀)
-        const waterType = rig.waterType || 'run';
+        // Prefer NHDPlus auto-detect when API data is available, fall back to
+        // the user's form selection when offline or unsupported.
+        const waterType = (nhdData && typeof detectWaterType === 'function')
+            ? (detectWaterType(nhdData.slope, nhdData.streamorder) || rig.waterType || 'run')
+            : (rig.waterType || 'run');
         const z0 = z0FromWaterType(waterType);
         driftEnv.z0 = z0;
 

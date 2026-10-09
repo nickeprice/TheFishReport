@@ -210,6 +210,51 @@ export var DRIFT_TECHNIQUE = {
         const z0 = z0FromWaterType(waterType);
         driftEnv.z0 = z0;
 
+        // ── NHDPlus fcode / lakefract physics validity gate ──────────────
+        let reachMode = 'stream';
+        if (nhdData) {
+            const fc = nhdData.fcode ? Number(nhdData.fcode) : 0;
+            const lf = nhdData.lakefract ? Number(nhdData.lakefract) : 0;
+
+            if (fc === 55800 || fc === 33400 || lf > 0.5) {
+                // Artificial Path (through lake/reservoir) or Connector (through
+                // waterbody) or high lake fraction → POOL MODE. No meaningful
+                // channel velocity profile; depth is pool-controlled.
+                reachMode = 'pool';
+            } else if (fc === 33600 || fc === 33601 || fc === 33603) {
+                // Canal / Ditch — smooth engineered channel
+                reachMode = 'canal';
+                driftEnv.z0 = 0.001;  // lower roughness
+            } else if (fc === 42000 || fc === 42800) {
+                // Underground conduit or pipeline — no surface flow
+                reachMode = 'no_surface';
+            } else if (fc === 56600) {
+                // Coastline — marine/tidal, not river
+                reachMode = 'marine';
+            }
+            // 46006/46003/46007 Stream/River → normal drift (default)
+        }
+
+        // In POOL MODE, suppress channel hydraulics: use a bulk pool depth
+        // estimate and mark env as non-channel so the chain solver uses a
+        // simplified profile.
+        const poolMode = (reachMode === 'pool');
+        if (poolMode) {
+            driftEnv.depthM = Math.max(H, 1.5);      // at least 1.5m
+            driftEnv.vSurfaceMs = Math.min(driftEnv.vSurfaceMs, 0.5);  // slow
+            driftEnv.vBedMs = driftEnv.vSurfaceMs * 0.3;
+            driftEnv.uStar = driftEnv.vSurfaceMs * 0.06;
+            driftEnv.poolMode = true;
+        } else {
+            driftEnv.poolMode = false;
+        }
+        // no_surface / marine: don't block, but mark for downstream consumers
+        if (reachMode === 'no_surface' || reachMode === 'marine') {
+            driftEnv.noSurfaceFlow = true;
+        } else {
+            driftEnv.noSurfaceFlow = false;
+        }
+
         let hookDepthM = null, chainResult = null, chainEnv = null;
         try {
             // Use the unified chain solver (RK4 + shooting + air catenary)
@@ -218,8 +263,8 @@ export var DRIFT_TECHNIQUE = {
             const bedVelMs = bedVel * CFS_TO_MS;
             const meanVelMs = velocity.mean * CFS_TO_MS;
             chainEnv = {
-                depthM: H,
-                uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
+                depthM: driftEnv.depthM || H,
+                uMax: poolMode ? 0.5 : Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
                 z0: z0,
                 rodHeightM: 1.5
             };

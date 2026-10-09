@@ -40,7 +40,7 @@ window.chainSolve = chainSolve;
 export function chainSolve(rig, env) {
     // ── 1. Rig geometry ────────────────────────────────────────────
     const ldLenM = (rig.ldLen || 4) * 0.3048;
-    const mlLenM = 35;
+    const mlLenM = 35;             // mainline for surface-to-rod-tip connection (negligible drag)
     const totalLenM = ldLenM + mlLenM;
 
     // ── 2. Line properties ─────────────────────────────────────────

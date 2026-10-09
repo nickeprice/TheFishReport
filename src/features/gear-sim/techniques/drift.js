@@ -175,8 +175,17 @@ export var DRIFT_TECHNIQUE = {
         // Dynamic spot depth: pull from continuity.js or driftDepth().
         const siteId = env.siteId;
         const nhdData = State.nhdData;
-        const depthResult = driftDepth(env.flow, siteId, nhdData);
-        const driftEnv = driftEnvironment(env.flow, siteId, nhdData);
+        // Read active station lat/lon for blended width lookup
+        let spotLat = null, spotLon = null;
+        try {
+            const active = JSON.parse(localStorage.getItem('active_station') || 'null');
+            if (active && active.lat != null && active.lon != null) {
+                spotLat = Number(active.lat);
+                spotLon = Number(active.lon);
+            }
+        } catch (e) {}
+        const depthResult = driftDepth(env.flow, siteId, spotLat, spotLon, nhdData);
+        const driftEnv = driftEnvironment(env.flow, siteId, spotLat, spotLon, nhdData);
 
         // Apply water type depth multiplier
         let depthFt = depthResult.valueFt !== null ? depthResult.valueFt : 6.0;

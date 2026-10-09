@@ -90,3 +90,228 @@ scripts/extract_river_substrate.py
 - F5f: Verification — sanity 43/43, build OK, 32 tests passed
 
 ---
+
+<a id="data-chain-fix"></a>
+## Phase 0: Chain solver terminates at weight
+
+**Goal:** Remove the 35m mainline from the chain integration. The weight is the
+physical bottom anchor — the rig terminates there.
+
+**Change in `chain-shooting.js:43-44`:**
+```diff
+- const mlLenM = 35;
+- const totalLenM = ldLenM + mlLenM;
++ const mlLenM = 0.10;   // leader only — weight IS the terminus
++ const totalLenM = ldLenM + mlLenM;
+```
+
+**Files:** `chain-shooting.js` (1 line)
+
+<a id="data-expand-all"></a>
+## Phase 1: Expand all 3 datasets to 32 gauges / 15 rivers
+
+### 1a — SPOT_WIDTHS (precompute_spot_widths.py)
+
+**Add 10 new rivers** to the RIVERS list. Each needs: `id`, `name`, `site_id`
+(a primary gauge), `lat`, `lon`, `usgs_width_ft` for validation.
+
+| New river | Primary gauge | Coords | USGS width |
+|-----------|---------------|--------|-----------|
+| snoqualmie | 12144500 | 47.52, -121.84 | 150 |
+| skykomish | 12134500 | 47.81, -121.56 | 180 |
+| snohomish | 12150800 | 47.86, -122.00 | 200 |
+| skagit | 12200500 | 48.42, -122.33 | 250 |
+| cedar | 12119000 | 47.49, -122.20 | 80 |
+| cowlitz | 14243000 | 46.27, -122.91 | 300 |
+| stillaguamish | 12167000 | 48.24, -122.12 | 160 |
+| duwamish | 12113390 | 47.53, -122.28 | 200 |
+| puyallup_upper | 12092000 | 46.97, -122.14 | 120 |
+| white_lower | 12100490 | 47.22, -122.21 | 130 |
+
+**Run:** `python3 scripts/tools/precompute_spot_widths.py`
+→ regenerates `public/src/data/spot_widths.js` with ~3500 cross-sections
+(~500m intervals × 15 rivers).
+
+### 1b — RIVER_SUBSTRATE (extract_river_substrate.py)
+
+**Expand RUNS list** from 5 to 15 entries. Each entry = `(key, name, lat, lon, buf)`.
+Uses HydroATLAS spatial query by gauge coordinates. All 15 rivers get D₅₀ → z₀
+for every ~500m reach.
+
+**Run:** `python3 scripts/extract_river_substrate.py`
+→ regenerates `public/src/data/river_substrate.js`.
+
+### 1c — RIVER_WIDTHS (extract_river_widths.py)
+
+**Expand GAUGES list** from 5 to 32 entries. Each entry = `(site_id, name, lat, lon)`.
+Uses NAIP satellite imagery via Microsoft Planetary Computer STAC API.
+
+| Gauge ID | Name | Lat | Lon |
+|----------|------|-----|-----|
+| 12101500 | Puyallup at Puyallup | 47.20843358 | -122.3270652 |
+| 12093500 | Puyallup near Orting | 47.10 | -122.22 |
+| 12096500 | Puyallup at Alderton | 47.15 | -122.24 |
+| 12101470 | Puyallup at 5th St Bridge | 47.23 | -122.33 |
+| 12096505 | Puyallup at E Main Bridge | 47.18 | -122.30 |
+| 12092000 | Puyallup near Electron | 46.97 | -122.14 |
+| 12094000 | Carbon near Fairfax | 47.02788105 | -122.0326105 |
+| 12098500 | White near Buckley | 47.15118666 | -121.94981 |
+| 12097850 | White below Clearwater | 47.10 | -121.86 |
+| 12100490 | White at R Street | 47.22 | -122.21 |
+| 12113000 | Green near Auburn | 47.3123228 | -122.2040082 |
+| 12108800 | Green below Crisp Creek | 47.24 | -121.80 |
+| 12113150 | Green above 277th St | 47.38 | -122.19 |
+| 12113310 | Green below Meeker St | 47.50 | -122.22 |
+| 12113340 | Green at 212 St | 47.40 | -122.21 |
+| 12113350 | Green at Tukwila | 47.47 | -122.26 |
+| 12113390 | Duwamish at Tukwila | 47.53 | -122.28 |
+| 12112600 | Big Soos Creek | 47.32 | -122.18 |
+| 12113347 | Mill Creek | 47.36 | -122.24 |
+| 12089500 | Nisqually at McKenna | 46.93340268 | -122.5609345 |
+| 12200500 | Skagit near Mt Vernon | 48.42 | -122.33 |
+| 12194000 | Skagit near Concrete | 48.53 | -121.75 |
+| 12144500 | Snoqualmie near Snoqualmie | 47.52 | -121.84 |
+| 12149000 | Snoqualmie near Carnation | 47.66 | -121.90 |
+| 12134500 | Skykomish at Gold Bar | 47.85 | -121.69 |
+| 12150800 | Snohomish near Monroe | 47.86 | -122.00 |
+| 12167000 | NF Stillaguamish | 48.24 | -122.12 |
+| 14243000 | Cowlitz at Castle Rock | 46.27 | -122.91 |
+| 14238000 | Cowlitz below Mayfield Dam | 46.50 | -122.57 |
+| 14233500 | Cowlitz near Kosmos | 46.62 | -122.17 |
+| 14240525 | NF Toutle below SRS | 46.35 | -122.35 |
+| 12119000 | Cedar at Renton | 47.49 | -122.20 |
+| 12115000 | Cedar near Cedar Falls | 47.42 | -121.77 |
+
+**Run:** `/tmp/tfr_env/bin/python scripts/tools/extract_river_widths.py`
+→ regenerates `public/src/data/river_widths.js`.
+
+**Files:** `scripts/tools/precompute_spot_widths.py`, `scripts/extract_river_substrate.py`, `scripts/tools/extract_river_widths.py`
+<a id="ui-blended-width"></a>
+## Phase 2: Lat/lon lookup with inverse-variance blended width
+
+**Goal:** Replace gauge-ID-dependent SPOT_WIDTHS_SITE_MAP with lat/lon
+nearest-neighbor across ALL rivers. Add inverse-variance weighting to blend
+all available width sources into one estimate.
+
+### New exports in `continuity.js`
+
+```js
+// Search ALL rivers for nearest SPOT_WIDTHS point to (lat, lon).
+// Returns { point, distance_m, riverKey } or null if >5km.
+export function spotWidthAt(lat, lon)
+
+// Same, but finds TWO nearest cross-sections on the same river by cum_m
+// and interpolates width between them.
+export function spotWidthInterp(lat, lon)
+
+// Inverse-variance blended width from all available sources.
+// Returns { widthFt, sigma, sources }
+export function blendedWidthFt(lat, lon, siteId)
+```
+
+### Inverse-variance blending formula
+
+```js
+function blendedWidthFt(lat, lon, siteId) {
+    const src = [];
+    const interp = spotWidthInterp(lat, lon);
+    if (interp) src.push({ w: interp.width_ft, v: 100 });  // σ=0.10
+
+    const gw = gaugeWidthFt(siteId);
+    if (gw) src.push({ w: gw, v: 25 });  // σ=0.20
+
+    const da = drainageWidthFt(siteId);
+    if (da) src.push({ w: da, v: 6.25 });  // σ=0.40
+
+    if (!src.length) return { widthFt: null, sigma: null, sources: [] };
+    let num = 0, den = 0;
+    for (const s of src) { num += s.w * s.v; den += s.v; }
+    return { widthFt: num / den, sigma: 1 / Math.sqrt(den), sources: src };
+}
+```
+
+### SPOT_WIDTHS_SITE_MAP replacement
+
+Delete the old map. The new search iterates all `window.SPOT_WIDTHS.rivers`
+entries by haversine distance. When two points on the same river are within
+1km, interpolate by `cum_m` river distance.
+
+### Drainage area width regression
+
+```js
+// w_ft = a * totdasqkm^b  (a=4.0, b=0.4 for PNW gravel-bed rivers)
+export function drainageWidthFt(siteId) {
+    // reads from window.NHD_DATA or State.nhdData
+}
+```
+
+### Uncertainty propagation
+
+| Tier | σ | Weight (1/σ²) |
+|------|---|---------------|
+| SPOT_WIDTHS interpolated | 0.10 | 100 |
+| SPOT_WIDTHS single nearest | 0.15 | 44 |
+| RIVER_WIDTHS gauge | 0.20 | 25 |
+| Drainage area regression | 0.40 | 6.25 |
+
+When all tiers agree on width, the blended σ ≈ 0.09 (9%) — better than any
+single measurement. When only one tier is available, σ matches that tier.
+
+**Files:** `continuity.js` (~80 lines changed: remove SPOT_WIDTHS_SITE_MAP,
+add blendedWidthFt + spotWidthAt + spotWidthInterp + drainageWidthFt)
+
+<a id="drift-wire-depth"></a>
+## Phase 3: Wire blended width into drift depth model
+
+**Goal:** `driftDepth()` and `driftEnvironment()` use the blended width instead
+of the old single-source lookup. Remove siteId-only dependence — pass
+lat/lon to the depth chain.
+
+### driftDepth changes
+
+```diff
+- export function driftDepth(flow, siteId, nhdData)
++ export function driftDepth(flow, siteId, lat, lon, nhdData)
+
+  // Tier 1: measured USGS spot depth (unchanged)
+  const spotDepth = spotDepthFt(flow, siteId);
+
+- // Tier 2: Manning via spotNearestWidth(siteId)
+- const w = spotNearestWidth(siteId);
++ // Tier 2: Manning via blendedWidthFt(lat, lon, siteId)
++ const w = blendedWidthFt(lat, lon, siteId);
+
+  // Tier 3: Continuity via blended width
+```
+
+### driftEnvironment changes
+
+```diff
+- export function driftEnvironment(flow, siteId, nhdData)
++ export function driftEnvironment(flow, siteId, lat, lon, nhdData)
+```
+
+### z₀ also gets the same treatment
+
+Add `spotSubstrateAt(lat, lon)` that searches ALL rivers' substrate points
+by haversine, same as spotWidthAt. No longer tied to SPOT_WIDTHS_SITE_MAP.
+
+### Callers
+
+Search for `driftDepth(` and `driftEnvironment(` calls and pass lat, lon:
+- `gear-sim/inputs.js` — passes active station coords
+- `gear-sim/drift.js` — assembly point
+- `services/water-gauge.js` — any direct calls
+
+**Files:** `drift-model.js` (+20 lines), `continuity.js` (+10 for substrate),
+`inputs.js` (3-5 lines), `drift.js` (3-5 lines)
+
+<a id="data-verify"></a>
+## Phase 4: Verification
+
+- `node sanity_pass.cjs --quiet` — confirm all exports exist, blended width
+  returns non-null for sample gauges
+- `npm run build` — Vite build succeeds
+- `python -m pytest tests/ -q --tb=line` — gear sim tests pass
+
+**Files:** `sanity_pass.cjs` (+3 baseline cases for blended width)

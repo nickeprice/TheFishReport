@@ -41,13 +41,23 @@ def tex_class(clay,silt,sand):
     if silt >= 80: return "silt"
     return "loam"
 
-# 5 core PNW rivers with gauge coordinates + 5km search radius
+# 5 core PNW rivers + 10 expanded rivers with gauge coordinates + 5km search radius
 RUNS = [
     ("puyallup","Puyallup",47.19,-122.29,0.05),
     ("white","White",47.31,-122.18,0.05),
     ("carbon","Carbon",47.20,-122.31,0.05),
     ("green","Green",47.43,-122.28,0.05),
     ("nisqually","Nisqually",47.07,-122.70,0.05),
+    ("snoqualmie","Snoqualmie",47.52,-121.84,0.05),
+    ("skykomish","Skykomish",47.81,-121.56,0.05),
+    ("snohomish","Snohomish",47.86,-122.00,0.05),
+    ("skagit","Skagit",48.42,-122.33,0.05),
+    ("cedar","Cedar",47.49,-122.20,0.05),
+    ("cowlitz","Cowlitz",46.32,-122.84,0.05),
+    ("stillaguamish","Stillaguamish",48.24,-122.12,0.05),
+    ("duwamish","Duwamish",47.53,-122.28,0.05),
+    ("puyallup_upper","Puyallup",46.96,-122.14,0.05),
+    ("white_lower","White",47.27,-122.22,0.05),
 ]
 
 def main():

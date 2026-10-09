@@ -23,21 +23,21 @@
  *
  * public: gaugeWidthFt(siteId), spotWidthRatio(siteId), velocityAtSpot(flow, siteId),
  *         depthAtGauge(flow, siteId), spotDepthFt(flow, siteId),
- *         spotNearestWidth(siteId)
+ *         spotNearestWidth(siteId), spotWidthAt(lat, lon),
+ *         spotWidthInterp(lat, lon), blendedWidthFt(lat, lon, siteId),
+ *         drainageWidthFt(siteId), spotSubstrateAt(lat, lon)
  * ES module.
  */
-import { hydraulicVelocity } from './inputs.js';
-export var SAME_REACH_UNCERTAINTY = 0.20;        // +/- this much without a spot measurement
-const SAME_REACH_MEASURED_UNCERTAINTY = 0.10; // +/- 10% when spot width IS measured
+// Site ID -> SPOT_WIDTHS river key lookup — REPLACED by lat/lon nearest-neighbor search.
+// All 32 gauges / 15 rivers now supported via haversine search across ALL points.
 
-// Site ID -> SPOT_WIDTHS river key lookup.
-const SPOT_WIDTHS_SITE_MAP = {
-    "12101500": "puyallup",
-    "12098500": "white",
-    "12094000": "carbon",
-    "12113000": "green",
-    "12089500": "nisqually"
-};
+import { hydraulicVelocity } from './inputs.js';
+
+// ── Width source helpers ────────────────────────────────────────────────────
+
+/** Read NAIP-derived gauge width from window.RIVER_WIDTHS. */
+export var SAME_REACH_UNCERTAINTY = 0.20;
+const SAME_REACH_MEASURED_UNCERTAINTY = 0.10;
 
 export function gaugeWidthFt(siteId) {
     const all = (typeof window !== 'undefined') ? window.RIVER_WIDTHS : null;
@@ -46,105 +46,179 @@ export function gaugeWidthFt(siteId) {
     return (w > 0) ? w : null;
 }
 
-// Nearest RIVER_SUBSTRATE substrate point.
-// Returns { point, distance_m } or null when unavailable.
-export function spotNearestSubstrate(siteId) {
-    if (!siteId) return null;
-    const key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
-    if (!key) return null;
-    const all = (typeof window !== 'undefined') ? window.RIVER_SUBSTRATE : null;
-    if (!all || !all.rivers) return null;
-    const river = all.rivers[key];
-    if (!river || !river.points || !river.points.length) return null;
+// ── SPOT_WIDTHS: nearest-neighbor across ALL rivers ─────────────────────────
 
-    let lat = null, lon = null;
-    try {
-        const raw = localStorage.getItem('active_station');
-        if (raw) {
-            const st = JSON.parse(raw);
-            if (st.lat != null && st.lon != null) {
-                lat = Number(st.lat);
-                lon = Number(st.lon);
-            }
-        }
-    } catch (e) {}
-    if (lat == null || lon == null) return null;
-
-    let best = null, bestDist = Infinity;
-    for (let i = 0; i < river.points.length; i++) {
-        const p = river.points[i];
-        const d = haversineM(lat, lon, p.lat, p.lon);
-        if (d < bestDist) { bestDist = d; best = p; }
-    }
-    return { point: best, distance_m: bestDist };
-}
-
-export function haversineM(lat1, lon1, lat2, lon2) {
+/** Haversine distance in metres between two lat/lon points. */
+function haversineM(lat1, lon1, lat2, lon2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) *
+              Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Nearest SPOT_WIDTHS DEM cross-section to the active station's GPS coordinates.
-// Returns { point, distance_m } or null when unavailable.
-export function spotNearestWidth(siteId) {
-    if (!siteId) return null;
-    const key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
-    if (!key) return null;
+const SPOT_SEARCH_LIMIT_M = 5000;
+
+/** Nearest SPOT_WIDTHS cross-section to (lat, lon) across ALL rivers. */
+export function spotWidthAt(lat, lon) {
     const all = (typeof window !== 'undefined') ? window.SPOT_WIDTHS : null;
     if (!all || !all.rivers) return null;
-    const river = all.rivers[key];
-    if (!river || !river.points || !river.points.length) return null;
+    let best = null, bestDist = Infinity, bestKey = null;
+    const keys = Object.keys(all.rivers);
+    for (let ri = 0; ri < keys.length; ri++) {
+        const river = all.rivers[keys[ri]];
+        if (!river || !river.points || !river.points.length) continue;
+        const pts = river.points;
+        for (let pi = 0; pi < pts.length; pi++) {
+            const p = pts[pi];
+            const d = haversineM(lat, lon, p.lat, p.lon);
+            if (d < bestDist) { bestDist = d; best = p; bestKey = keys[ri]; }
+        }
+    }
+    if (bestDist > SPOT_SEARCH_LIMIT_M) return null;
+    return { point: best, distance_m: bestDist, riverKey: bestKey };
+}
 
-    // Read the active station's GPS coordinates from localStorage.
-    let lat = null, lon = null;
+/** Interpolate width between 2 nearest cross-sections on same river by cum_m. */
+export function spotWidthInterp(lat, lon) {
+    const nearest = spotWidthAt(lat, lon);
+    if (!nearest || !nearest.point || !nearest.riverKey) return null;
+    const all = window.SPOT_WIDTHS;
+    const river = all.rivers[nearest.riverKey];
+    const pts = river.points;
+    const refCum = nearest.point.cum_m || 0;
+    const refDist = nearest.distance_m;
+    let p1 = null, p2 = null, d1 = Infinity, d2 = Infinity;
+    for (let pi = 0; pi < pts.length; pi++) {
+        const p = pts[pi];
+        if (!p.cum_m) continue;
+        const diff = Math.abs(p.cum_m - refCum);
+        if (diff < 0.1) continue;
+        if (diff < d1) { d2 = d1; p2 = p1; d1 = diff; p1 = p; }
+        else if (diff < d2) { d2 = diff; p2 = p; }
+    }
+    if (!p1 || !p2 || !p1.wetted_ft || !p2.wetted_ft) {
+        const w = nearest.point.wetted_ft || nearest.point.bankfull_ft || null;
+        return { width_ft: w, point1: nearest.point, point2: null,
+                 cum_m: refCum, distance_m: refDist, riverKey: nearest.riverKey };
+    }
+    const cum1 = Math.min(p1.cum_m, p2.cum_m);
+    const cum2 = Math.max(p1.cum_m, p2.cum_m);
+    const w1 = (p1.cum_m === cum1) ? p1.wetted_ft : p2.wetted_ft;
+    const w2 = (p1.cum_m === cum2) ? p1.wetted_ft : p2.wetted_ft;
+    const delta = cum2 - cum1;
+    const frac = (delta > 0.01) ? Math.max(0, Math.min(1, (refCum - cum1) / delta)) : 0;
+    return { width_ft: Math.round((w1 + (w2 - w1) * frac) * 10) / 10,
+             point1: p1, point2: p2, cum_m: refCum, distance_m: refDist, riverKey: nearest.riverKey };
+}
+
+// ── Drainage-area width regression ───────────────────────────────────────────
+export function drainageWidthFt(siteId) {
+    const nhdData = (typeof window !== 'undefined' && window.State && window.State.nhdData)
+        ? window.State.nhdData : null;
+    if (!nhdData || !siteId) return null;
+    const da = nhdData[String(siteId)] && nhdData[String(siteId)].totdasqkm
+        ? Number(nhdData[String(siteId)].totdasqkm) : null;
+    if (!da || da <= 0) return null;
+    return Math.round(4.0 * Math.pow(da, 0.4) * 3.28084 * 10) / 10;
+}
+
+// ── Inverse-variance blended width ──────────────────────────────────────────
+export function blendedWidthFt(lat, lon, siteId) {
+    const src = [];
+    const interp = spotWidthInterp(lat, lon);
+    if (interp && interp.width_ft && interp.width_ft > 0) {
+        src.push({ w: interp.width_ft, v: 100, label: 'spot_widths_interp' });
+    } else {
+        const nearest = spotWidthAt(lat, lon);
+        if (nearest && nearest.point) {
+            const w = nearest.point.wetted_ft || nearest.point.bankfull_ft || null;
+            if (w && w > 0) src.push({ w: w, v: 44, label: 'spot_widths_nearest' });
+        }
+    }
+    const gw = gaugeWidthFt(siteId);
+    if (gw && gw > 0) src.push({ w: gw, v: 25, label: 'gauge_width' });
+    const da = drainageWidthFt(siteId);
+    if (da && da > 0) src.push({ w: da, v: 6.25, label: 'drainage_area' });
+    if (!src.length) return { widthFt: null, sigma: null, sources: [] };
+    let num = 0, den = 0;
+    for (let si = 0; si < src.length; si++) {
+        num += src[si].w * src[si].v;
+        den += src[si].v;
+    }
+    return { widthFt: Math.round(num / den * 10) / 10,
+             sigma: 1 / Math.sqrt(den), sources: src };
+}
+
+// ── Substrate lookup — lat/lon across ALL rivers ────────────────────────────
+export function spotSubstrateAt(lat, lon) {
+    const all = (typeof window !== 'undefined') ? window.RIVER_SUBSTRATE : null;
+    if (!all || !all.rivers) return null;
+    let best = null, bestDist = Infinity;
+    const keys = Object.keys(all.rivers);
+    for (let ri = 0; ri < keys.length; ri++) {
+        const river = all.rivers[keys[ri]];
+        if (!river || !river.points || !river.points.length) continue;
+        for (let pi = 0; pi < river.points.length; pi++) {
+            const p = river.points[pi];
+            const d = haversineM(lat, lon, p.lat, p.lon);
+            if (d < bestDist) { bestDist = d; best = p; }
+        }
+    }
+    if (bestDist > SPOT_SEARCH_LIMIT_M) return null;
+    return { point: best, distance_m: bestDist };
+}
+
+// Backward compat: spotNearestSubstrate(siteId) reads active_station from localStorage
+export function spotNearestSubstrate(siteId) {
     try {
         const raw = localStorage.getItem('active_station');
         if (raw) {
             const st = JSON.parse(raw);
             if (st.lat != null && st.lon != null) {
-                lat = Number(st.lat);
-                lon = Number(st.lon);
+                return spotSubstrateAt(Number(st.lat), Number(st.lon));
             }
         }
     } catch (e) {}
-    if (lat == null || lon == null) return null;
-
-    // Linear scan — SPOT_WIDTHS is small (under 100 points per river).
-    let best = null, bestDist = Infinity;
-    for (let i = 0; i < river.points.length; i++) {
-        const p = river.points[i];
-        const d = haversineM(lat, lon, p.lat, p.lon);
-        if (d < bestDist) {
-            bestDist = d;
-            best = p;
-        }
-    }
-    return best ? { point: best, distance_m: bestDist } : null;
+    return null;
 }
 
-// width_gauge / width_spot. Returns provenance, not a bare number, so callers cannot
-// quietly present an unmeasured ratio as if it were measured.
-// When SPOT_WIDTHS data exists for the active station's river, uses the nearest
-// DEM cross-section. Otherwise falls back to 1.0 (same-reach estimate).
+// ── Legacy spotNearestWidth — now delegates to spotWidthAt ──────────────────
+
+export function spotNearestWidth(siteId) {
+    try {
+        const raw = localStorage.getItem('active_station');
+        if (raw) {
+            const st = JSON.parse(raw);
+            if (st.lat != null && st.lon != null) {
+                return spotWidthAt(Number(st.lat), Number(st.lon));
+            }
+        }
+    } catch (e) {}
+    return null;
+}
+
+// width_gauge / width_spot — lat/lon lookup across ALL rivers.
 export function spotWidthRatio(siteId) {
     const gaugeFt = gaugeWidthFt(siteId);
-    const near = spotNearestWidth(siteId);
-    if (near && near.point && near.point.wetted_ft > 0 && gaugeFt && gaugeFt > 0) {
-        const ratio = gaugeFt / near.point.wetted_ft;
-        return {
-            ratio: ratio,
-            measured: true,
-            gaugeFt: gaugeFt,
-            spotFt: near.point.wetted_ft,
-            spotDistanceM: Math.round(near.distance_m)
-        };
-    }
+    try {
+        const raw = localStorage.getItem('active_station');
+        if (raw) {
+            const st = JSON.parse(raw);
+            if (st.lat != null && st.lon != null) {
+                const near = spotWidthAt(Number(st.lat), Number(st.lon));
+                if (near && near.point && near.point.wetted_ft > 0 && gaugeFt && gaugeFt > 0) {
+                    const ratio = gaugeFt / near.point.wetted_ft;
+                    return {
+                        ratio: ratio, measured: true,
+                        gaugeFt: gaugeFt, spotFt: near.point.wetted_ft,
+                        spotDistanceM: Math.round(near.distance_m)
+                    };
+                }
+            }
+        }
+    } catch (e) {}
     return { ratio: 1.0, measured: false, gaugeFt: gaugeFt };
 }
 

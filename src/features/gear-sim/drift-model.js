@@ -9,7 +9,7 @@
  *         flowVsNormal()
  * ES module.
  */
-import { spotDepthFt, spotNearestWidth, spotNearestSubstrate, velocityAtSpot } from './continuity.js';
+import { spotDepthFt, spotNearestWidth, spotNearestSubstrate, velocityAtSpot, blendedWidthFt, spotSubstrateAt } from './continuity.js';
 import { weightTerminalVelocity } from './inputs-readers.js';
 import { CFS_TO_MS, presentationHeightInches } from './physics.js';
 
@@ -29,10 +29,12 @@ const M_TO_FT = 1 / FT_TO_M;
  *
  * @param {number} flow — discharge in cfs (use getCurrentFlow())
  * @param {string} siteId — USGS gauge site ID
+ * @param {number} lat — latitude of the angler's spot
+ * @param {number} lon — longitude of the angler's spot
  * @param {object|null} nhdData — NHDPlus reach data (State.nhdData)
  * @returns {{ valueFt: number|null, source: string|null, uncertainty: number|null, note: string }}
  */
-export function driftDepth(flow, siteId, nhdData) {
+export function driftDepth(flow, siteId, lat, lon, nhdData) {
     // Tier 1: measured spot depth from USGS field data
     const spotDepth = (typeof spotDepthFt === 'function')
         ? spotDepthFt(flow, siteId) : null;
@@ -48,30 +50,20 @@ export function driftDepth(flow, siteId, nhdData) {
     const Q = (flow && flow > 0) ? flow : 1040;  // reference fallback
 
     // Tier 2: Manning equation  d_ft = ( n * Q / ( w * sqrt(S) ) )^(3/5)
-    // Stage-adjust using the bankfull-fill ratio (wetted / bankfull) which
-    // accounts for the channel being narrower at low flow and wider at flood.
-    const w = (typeof spotNearestWidth === 'function')
-        ? spotNearestWidth(siteId) : null;
-    const wettedFt = (w && w.point && w.point.wetted_ft > 0) ? w.point.wetted_ft : null;
-    const bankfullFt = (w && w.point && w.point.bankfull_ft > 0) ? w.point.bankfull_ft : null;
+    // Uses blended width (SPOT_WIDTHS → RIVER_WIDTHS → drainage area)
+    const blend = (typeof blendedWidthFt === 'function')
+        ? blendedWidthFt(lat, lon, siteId) : null;
+    const wettedFt = (blend && blend.widthFt > 0) ? blend.widthFt : null;
     const S = (nhdData && nhdData.slope && nhdData.slope > 0) ? nhdData.slope : null;
 
     if (wettedFt && S && S > 0) {
         const dFt = Math.pow(MANNING_N * Q / (wettedFt * Math.sqrt(S)), 3.0 / 5.0);
         if (dFt > 0 && isFinite(dFt)) {
-            // Stage adjustment: at bankfull, use Manning depth as-is.
-            // At partial fill, the channel is narrower → actually shallower than
-            // the constant-width Manning equation predicts. Scale down linearly
-            // with the fill ratio.
-            const fillRatio = bankfullFt && bankfullFt > 0
-                ? Math.min(1.0, wettedFt / bankfullFt)
-                : 1.0;
-            const adjustFt = dFt * (0.5 + 0.5 * fillRatio);
             return {
-                valueFt: adjustFt,
+                valueFt: Math.round(dFt * 10) / 10,
                 source: 'manning',
-                uncertainty: 0.30,
-                note: 'Manning equation via spot width + NHDPlus slope'
+                uncertainty: (blend && blend.sigma) ? blend.sigma : 0.30,
+                note: 'Manning via blended width + NHDPlus slope'
             };
         }
     }
@@ -112,12 +104,14 @@ export function driftDepth(flow, siteId, nhdData) {
  *
  * @param {number} flow — discharge in cfs
  * @param {string} siteId — USGS gauge site ID
+ * @param {number} lat — latitude of the angler's spot
+ * @param {number} lon — longitude of the angler's spot
  * @param {object|null} nhdData — NHDPlus reach data
  * @returns {{ depthM: number|null, uSurface: number, uStar: number, z0: number,
  *            waterType: string, vBedMs: number, vSurfaceMs: number, nhdData: object|null }}
  */
-export function driftEnvironment(flow, siteId, nhdData) {
-    const depthResult = driftDepth(flow, siteId, nhdData);
+export function driftEnvironment(flow, siteId, lat, lon, nhdData) {
+    const depthResult = driftDepth(flow, siteId, lat, lon, nhdData);
     const depthM = depthResult.valueFt ? depthResult.valueFt * FT_TO_M : null;
 
     // Surface velocity: spot velocity when available
@@ -133,7 +127,11 @@ export function driftEnvironment(flow, siteId, nhdData) {
     } catch (e) { /* fall back to defaults */ }
 
     // uStar from surface velocity and depth
-    const z0 = 0.00825;
+    // z0 from measured substrate (HydroATLAS) or fallback
+    const sub = (typeof spotSubstrateAt === 'function' && lat && lon)
+        ? spotSubstrateAt(lat, lon) : null;
+    const z0 = (sub && sub.point && sub.point.z0_m && sub.point.z0_m > 0)
+        ? sub.point.z0_m : 0.00825;
     let uStar = null;
     if (depthM && depthM > 0 && vSurfaceMs > 0) {
         const lnArg = depthM / z0;

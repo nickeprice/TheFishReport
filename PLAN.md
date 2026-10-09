@@ -2,11 +2,11 @@
 
 ## 🔄 Rebuild Gear Sim for Drift Fishing
 
-- [ ] Phase 0: Data Wiring — add qc_*/qe_* to nhdplus.js, verify spot-width data
+- [x] Phase 0: Data Wiring — add qc_*/qe_* to nhdplus.js, verify spot-width data
       → nhdplus.js
       [Detail → docs/PLAN_REFERENCE.md#drift-data]
 
-- [ ] Phase 1: Drift Force Model — new drift-model.js with Manning depth fallback, slip-speed drag, 3-state bottom contact
+- [x] Phase 1: Drift Force Model — new drift-model.js with Manning depth fallback, slip-speed drag, 3-state bottom contact
       → drift-model.js (new), drift.js, solver.js
       [Detail → docs/PLAN_REFERENCE.md#drift-force-model]
 

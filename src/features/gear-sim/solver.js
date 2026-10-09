@@ -101,7 +101,12 @@ export function buildSimStats(rig, out) {
         interceptionProb: out.interceptionProb || 0,
         sweepQuality: out.sweepQuality || 0,
         salmonDepthM: out.salmonDepthM || null,
-        bottomContact: out.bottomContact || null
+        bottomContact: out.bottomContact || null,
+        driftEnv: out.driftEnv || null,
+        driftResult: out.driftResult || null,
+        driftContact: out.driftContact || null,
+        depthResult: out.depthResult || null,
+        coverageScore: out.coverageScore || null
     };
 }
 
@@ -172,6 +177,18 @@ export function paintSimHud(rig, out, stats) {
         // Chain env
         (out.chainEnv ? '; env={H=' + out.chainEnv.depthM.toFixed(2) + 'm uMax=' + out.chainEnv.uMax.toFixed(3) +
             ' z0=' + out.chainEnv.z0 + ' rodH=' + out.chainEnv.rodHeightM + '}' : '') +
+        // Drift-model detail
+        (out.depthResult ? '; depth={val=' + (out.depthResult.valueFt ? out.depthResult.valueFt.toFixed(1) + 'ft' : 'null') +
+            ' src=' + out.depthResult.source +
+            ' unc=' + (out.depthResult.uncertainty !== null ? (out.depthResult.uncertainty * 100).toFixed(0) + '%' : '?') + '}' : '') +
+        (out.driftEnv ? '; driftEnv={H=' + (out.driftEnv.depthM ? out.driftEnv.depthM.toFixed(2) + 'm' : '?') +
+            ' vSurf=' + out.driftEnv.vSurfaceMs.toFixed(3) + ' u*=' + out.driftEnv.uStar.toFixed(3) + '}' : '') +
+        (out.driftContact ? '; contact={' + out.driftContact.state +
+            ' v_term=' + (out.driftContact.terminalVelMs ? out.driftContact.terminalVelMs.toFixed(2) + 'm/s' : '?') +
+            ' v_bed=' + out.driftContact.bedVelMs.toFixed(2) + '}' : '') +
+        // Coverage score
+        (out.coverageScore ? '; coverage=' + out.coverageScore.pct + '%' +
+            (out.coverageScore.waterMatch ? '' : ' waterMismatch') : '') +
         // The per-term reasons are NOT on the HUD any more (the summary replaced them), so the
         // debug trail is where they survive in full - including the community-sonar note.
         (zone.notes && zone.notes.length ? ' | zone reasons: ' + zone.notes.join(' | ') : '') +
@@ -179,15 +196,31 @@ export function paintSimHud(rig, out, stats) {
             ' -> ' + hgt.toFixed(1) + '"' : '') +
         (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
 
-    // Bottom contact check (Phase D2)
-    if (out.bottomContact) {
+    // Bottom contact check — prefer drift-model 3-state when available
+    if (out.driftContact) {
+        logDebug('Bottom contact (drift-model): ' + out.driftContact.note +
+            ' (v_term=' + (out.driftContact.terminalVelMs ? out.driftContact.terminalVelMs.toFixed(2) + ' m/s' : '?') +
+            ', bed=' + out.driftContact.bedVelMs.toFixed(2) + ' m/s)', 'SIM');
+    } else if (out.bottomContact) {
         logDebug('Bottom contact: ' + out.bottomContact.note +
             ' (v_term=' + (out.bottomContact.terminalVelMs ? out.bottomContact.terminalVelMs.toFixed(2) + ' m/s' : '?') +
             ', bed=' + out.bottomContact.bedVelMs.toFixed(2) + ' m/s)', 'SIM');
     }
     const contactEl = document.getElementById('hud-contact');
     if (contactEl) {
-        if (out.bottomContact && out.bottomContact.contacts) {
+        const dc = out.driftContact;
+        if (dc) {
+            if (dc.state === 'dragging') {
+                contactEl.innerText = '⚓ Weight dragging bottom';
+                contactEl.style.color = 'var(--text-muted)';
+            } else if (dc.state === 'bouncing') {
+                contactEl.innerText = '↕ Weight bouncing along bottom';
+                contactEl.style.color = 'var(--accent-yellow)';
+            } else {
+                contactEl.innerText = '↕ Weight suspending above bottom';
+                contactEl.style.color = 'var(--accent-yellow)';
+            }
+        } else if (out.bottomContact && out.bottomContact.contacts) {
             contactEl.innerText = '⚓ Weight reaches bottom';
             contactEl.style.color = 'var(--text-muted)';
         } else if (out.bottomContact && out.bottomContact.terminalVelMs !== null) {
@@ -195,6 +228,22 @@ export function paintSimHud(rig, out, stats) {
             contactEl.style.color = 'var(--accent-yellow)';
         } else {
             contactEl.innerText = '';
+        }
+    }
+
+    // Coverage score HUD element
+    const covEl = document.getElementById('hud-coverage');
+    if (covEl) {
+        if (out.coverageScore) {
+            const pct = out.coverageScore.pct;
+            let color = 'var(--accent-green)';
+            if (pct < 33) color = 'var(--accent-red)';
+            else if (pct < 66) color = 'var(--accent-yellow)';
+            covEl.innerText = 'Sweep coverage: ' + pct + '%' +
+                (out.coverageScore.waterMatch ? '' : ' — water type mismatch');
+            covEl.style.color = color;
+        } else {
+            covEl.innerText = '';
         }
     }
 

@@ -1,4 +1,5 @@
 import { logDebug } from '../../../shared/debug.js';
+import { State } from '../../../shared/state.js';
 import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG, tackleWeightPhysicsData, tackleYarnDragData, weightTerminalVelocity, assessBottomContact } from '../inputs.js';
 import { velocityAtSpot, spotDepthFt } from '../continuity.js';
 import { waterTypeMultiplier } from '../water-types.js';
@@ -6,6 +7,7 @@ import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches,
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
+import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore } from '../drift-model.js';
 import { chainSolve } from '../chain.js';
 import { ROUGHNESS_COBBLE } from '../hydro.js';
 import { interceptionProbability } from '../interception.js';
@@ -172,49 +174,74 @@ export var DRIFT_TECHNIQUE = {
         const outlook = (typeof fishOutlook === 'function') ? fishOutlook(zone, hgt) : null;
         const precise = (best && typeof rigChangeList === 'function') ? rigChangeList(best, rig) : [];
 
-        // ====== NEW PIPELINE (Phase 8): chain solver ======
-        // Use the unified chain solver (RK4 + shooting + air catenary)
-        // which replaces cable.js, terminal.js, and sinker.js with one ODE.
-        // Dynamic spot depth: pull from continuity.js, fall back to 6.0 ft.
-        const spotDepth = (typeof spotDepthFt === 'function')
-            ? spotDepthFt(env.flow, env.siteId) : null;
-        let depthFt = (spotDepth && spotDepth.value) ? spotDepth.value : 6.0;
-        // Water type depth multiplier (Phase 1.6)
+        // ====== NEW PIPELINE (Phase 1): drift-model ======
+        // Replaces the old chain solver with Manning depth fallback, slip-speed
+        // drag, and 3-state bottom contact from drift-model.js.
+        // Dynamic spot depth: pull from continuity.js or driftDepth().
+        const siteId = env.siteId;
+        const nhdData = State.nhdData;
+        const depthResult = driftDepth(env.flow, siteId, nhdData);
+        const driftEnv = driftEnvironment(env.flow, siteId, nhdData);
+
+        // Apply water type depth multiplier
+        let depthFt = depthResult.valueFt !== null ? depthResult.valueFt : 6.0;
         if (wtMultiplier && wtMultiplier.depthMul !== 1.0 && depthFt > 0) {
             depthFt *= wtMultiplier.depthMul;
         }
-        const H = depthFt * 0.3048;  // ft → m
+        const H = depthFt * 0.3048;
+
+        // Override depth on driftEnv so downstream functions use corrected depth
+        driftEnv.depthM = H;
+        driftEnv.waterType = rig.waterType || 'run';
+        if (wtMultiplier && wtMultiplier.velMul !== 1.0) {
+            driftEnv.vSurfaceMs *= wtMultiplier.velMul;
+            driftEnv.vBedMs *= wtMultiplier.velMul;
+            driftEnv.uSurface = driftEnv.vSurfaceMs;
+            // Recompute uStar with corrected velocity
+            if (H > 0 && driftEnv.vSurfaceMs > 0) {
+                const lnArg = H / driftEnv.z0;
+                if (lnArg > 1) {
+                    driftEnv.uStar = driftEnv.vSurfaceMs * 0.41 / Math.log(lnArg);
+                }
+            }
+        }
+
         let hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
         let chainResult = null, chainEnv = null;
+        let driftResult = null;
         try {
-            if (typeof chainSolve === 'function') {
-                const bedVelMs = bedVel * CFS_TO_MS;
-                const meanVelMs = velocity.mean * CFS_TO_MS;
-                chainEnv = {
-                    depthM: H,
-                    uMax: Math.max(meanVelMs * 1.2, bedVelMs * 1.5),
-                    z0: ROUGHNESS_COBBLE,
-                    rodHeightM: 1.5
-                };
-                chainResult = chainSolve(rig, chainEnv);
-                hookDepthM = chainResult.converged ? chainResult.hookDepthM : null;
+            // Leader shape at 0° sweep (straight downstream) for the HUD height
+            driftResult = driftLeaderShape(rig, driftEnv, 0);
+            hookDepthM = driftResult.converged ? driftResult.hookDepthM : null;
 
-                if (typeof interceptionProbability === 'function') {
-                    const ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);
-                    interceptionProb = ip.probability;
-                    sweepQuality = ip.avgSweepQuality;
-                }
-                if (typeof salmonPositionZ === 'function')
-                    salmonDepthM = salmonPositionZ();
+            if (typeof interceptionProbability === 'function') {
+                const bedVelMs = driftEnv.vBedMs;
+                const gearMassKg = wData ? wData.submerged_mass_g / 1000 : 0.030;
+                const ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);
+                interceptionProb = ip.probability;
+                sweepQuality = ip.avgSweepQuality;
             }
+            if (typeof salmonPositionZ === 'function')
+                salmonDepthM = salmonPositionZ();
         } catch (e) {
-                logDebug('Chain solver: ' + String(e.message).split('\n')[0], 'SIM');
+            logDebug('Drift model: ' + String(e.message).split('\n')[0], 'SIM');
         }
-        // Override presentation height with chain solver result when converged
-        if (chainResult && chainResult.converged) {
-            hgt = chainResult.hookZ * 39.37;  // m → inches above bottom
+        // Override presentation height with drift-model result when available
+        if (driftResult && driftResult.converged) {
+            hgt = driftResult.hookZM * 39.37;  // m -> inches above bottom
         } else {
             hgt = fallbackHgt;
+        }
+        // Use drift-model bottom state (3-state)
+        const driftContact = driftBottomState(rig, driftEnv);
+        // Coverage score: 5-angle sweep weighted by position dwell time
+        let coverageScore = null;
+        try {
+            if (typeof driftCoverageScore === 'function' && zone) {
+                coverageScore = driftCoverageScore(rig, driftEnv, zone);
+            }
+        } catch (e) {
+            logDebug('Coverage score: ' + String(e.message).split('\n')[0], 'SIM');
         }
         // Blend interception probability into score: 70% positional, 30% interception
         const blendedScore = score * (0.7 + 0.3 * interceptionProb);
@@ -228,7 +255,10 @@ export var DRIFT_TECHNIQUE = {
             hookDepthM: hookDepthM, interceptionProb: interceptionProb,
             sweepQuality: sweepQuality, salmonDepthM: salmonDepthM,
             chainResult: chainResult, chainEnv: chainEnv,
-            bottomContact: bottomContact
+            bottomContact: bottomContact,
+            driftEnv: driftEnv, driftResult: driftResult, driftContact: driftContact,
+            depthResult: depthResult,
+            coverageScore: coverageScore
         };
     }
 };

@@ -13,12 +13,16 @@ import('../../shared/tackle.js').then(function(m) { _tackleMod = m; });
 // ==================================================================================
 export var WATER_TYPES = [
     { id: 'pool',   label: 'Pool',   depthMul: 1.2, velMul: 0.7,
+      channelPosition: 'center-deep', channelWidth: 0.3,
       desc: 'Deep, slow water — fish hold deep and near cover.' },
     { id: 'riffle', label: 'Riffle', depthMul: 0.7, velMul: 1.3,
+      channelPosition: 'spread',      channelWidth: 0.8,
       desc: 'Shallow, fast water — fish hold in pockets and seams.' },
     { id: 'run',    label: 'Run',    depthMul: 1.0, velMul: 1.0,
+      channelPosition: 'center',      channelWidth: 0.5,
       desc: 'Moderate depth and current — fish spread across the channel.' },
     { id: 'glide',  label: 'Glide',  depthMul: 0.9, velMul: 0.9,
+      channelPosition: 'edges',       channelWidth: 0.6,
       desc: 'Smooth, even flow — fish hold in tailouts and edges.' }
 ];
 window.WATER_TYPES = WATER_TYPES;

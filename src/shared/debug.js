@@ -18,6 +18,22 @@ window.toggleDebug = toggleDebug;
     }
 })();
 
+// --- Double-tap top-left corner (80×80px) to toggle debug ---
+(function () {
+    var lastTap = 0;
+    function onTap(e) {
+        if (e.clientX > 80 || e.clientY > 80) return;
+        var now = Date.now();
+        if (now - lastTap < 500) {
+            toggleDebug();
+            e.preventDefault();
+        }
+        lastTap = now;
+    }
+    document.addEventListener('click', onTap);
+    document.addEventListener('touchend', onTap);
+})();
+
 export function logDebug(msg, source) {
     const con = document.getElementById('debug-console');
     const time = new Date().toISOString().split('T')[1].slice(0,-1);

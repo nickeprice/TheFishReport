@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""extract_river_substrate.py — Extract substrate data from HydroATLAS.
+"""
+extract_river_substrate.py — Extract substrate from HydroATLAS for 5 PNW rivers.
 Usage: python3 scripts/extract_river_substrate.py
-Inputs: HydroRIVERS_v10_na.gdb + RiverATLAS_Data_v10.gdb in repo root.
+Requires GDAL >= 3.5 (ogr2ogr). Reads HydroRIVERS_v10_na.gdb + RiverATLAS_Data_v10.gdb.
 Output: src/data/river_substrate.js
 """
 import json, os, subprocess, sys, tempfile, glob
@@ -9,104 +10,114 @@ import json, os, subprocess, sys, tempfile, glob
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 TEXT_D50 = {"clay":0.002,"silt":0.008,"sand":0.25,"loam":0.025,
-            "sandy_loam":0.06,"loamy_sand":0.12,"gravel":10.0,
-            "cobble":100.0,"boulder":500.0}
+            "sandy_loam":0.06,"loamy_sand":0.12,"gravel":10.0,"cobble":100.0,"boulder":500.0}
 D50DEF = 10.0
-
-def z0(d):
-    return 0.033 * 2.5 * d / 1000.0
+def z0(d): return 0.033 * 2.5 * d / 1000.0
 
 def find_ogr():
     try:
         subprocess.run(["ogr2ogr","--version"],capture_output=True,check=True)
         return "ogr2ogr"
-    except:
-        pass
-    for p in ["/opt/homebrew/opt/gdal/bin/ogr2ogr",
-              "/usr/local/bin/ogr2ogr","/usr/bin/ogr2ogr"]:
-        if glob.glob(p):
-            return glob.glob(p)[0]
+    except: pass
+    for p in ["/opt/homebrew/opt/gdal/bin/ogr2ogr","/usr/local/bin/ogr2ogr","/usr/bin/ogr2ogr"]:
+        if glob.glob(p): return glob.glob(p)[0]
     sys.exit("ogr2ogr not found. brew install gdal")
 
-def ogr2json(path, sql):
+def ogr2json(path, sql, spat=None):
     ogr = find_ogr()
     with tempfile.NamedTemporaryFile(suffix=".json",delete=False) as tmp:
         fp = tmp.name
-    err = subprocess.run([ogr,"-f","GeoJSON",fp,path,"-sql",sql],
-                         capture_output=True,check=True,timeout=300)
-    with open(fp) as f:
-        return json.load(f)
-    if os.path.exists(fp):
-        os.unlink(fp)
+    os.unlink(fp)  # remove so ogr2ogr can create it (no overwrite)
+    cmd = [ogr,"-f","GeoJSON",fp,path,"-sql",sql]
+    if spat:
+        cmd += ["-spat"] + [str(x) for x in spat]
+    subprocess.run(cmd,capture_output=True,check=True,timeout=300)
+    with open(fp) as f: return json.load(f)
 
 def tex_class(clay,silt,sand):
-    if clay is None or silt is None or sand is None:
-        return "gravel"
-    if sand >= 85:
-        return "sand"
-    if clay >= 40 and silt < 40:
-        return "clay"
-    if silt >= 80:
-        return "silt"
+    if clay is None or silt is None or sand is None: return "gravel"
+    if sand >= 85: return "sand"
+    if clay >= 40 and silt < 40: return "clay"
+    if silt >= 80: return "silt"
     return "loam"
 
+# 5 core PNW rivers with gauge coordinates + 5km search radius
 RUNS = [
-    ("puyallup","Puyallup River"),
-    ("white","White River"),
-    ("carbon","Carbon River"),
-    ("green","Green River"),
-    ("nisqually","Nisqually River"),
+    ("puyallup","Puyallup",47.19,-122.29,0.05),
+    ("white","White",47.31,-122.18,0.05),
+    ("carbon","Carbon",47.20,-122.31,0.05),
+    ("green","Green",47.43,-122.28,0.05),
+    ("nisqually","Nisqually",47.07,-122.70,0.05),
 ]
 
 def main():
-    hyd = os.path.join(REPO, "HydroRIVERS_v10_na.gdb")
-    atl = os.path.join(REPO, "RiverATLAS_Data_v10.gdb")
+    # Find HydroRIVERS
+    hyd = None
+    for p in [os.path.join(REPO,"HydroRIVERS_v10_na.gdb"),
+              "/Users/nprice/Downloads/HydroRIVERS_v10_na.gdb/HydroRIVERS_v10_na.gdb",
+              "/Users/nprice/Downloads/HydroRIVERS_v10_na.gdb"]:
+        if os.path.isdir(p): hyd = p; break
+    if not hyd: sys.exit("ERROR: HydroRIVERS_v10_na.gdb not found")
+
+    # Find RiverATLAS
+    atl = None
+    for p in [os.path.join(REPO,"RiverATLAS_Data_v10.gdb"),
+              "/Users/nprice/Downloads/RiverATLAS_Data_v10.gdb/RiverATLAS_v10.gdb",
+              "/Users/nprice/Downloads/RiverATLAS_Data_v10.gdb"]:
+        if os.path.isdir(p) or "RiverATLAS_v10" in str(p): atl = p; break
+        inner = os.path.join(p,"RiverATLAS_v10.gdb")
+        if os.path.isdir(inner): atl = inner; break
+    if not atl: sys.exit("ERROR: RiverATLAS not found")
+
     out = {"rivers": {}}
-
-    for key, name in RUNS:
+    for key,name,glat,glon,buf in RUNS:
         try:
-            sql = (
-                "SELECT r.HYRIV_ID, r.RIVER_NAME, "
-                "a.cly_pc_cav, a.slt_pc_cav, a.snd_pc_cav, a.lit_cl_cse "
-                "FROM HydroRIVERS_v10 r "
-                "LEFT JOIN RiverATLAS_v10 a ON r.HYRIV_ID = a.HYRIV_ID "
-                "WHERE r.RIVER_NAME = '{0}'".format(name)
-            )
-            dt = ogr2json(atl, sql)
+            # Spatial query HydroRIVERS for reaches near this gauge
+            sql1 = "SELECT HYRIV_ID FROM HydroRIVERS_v10_na WHERE SHAPE_Length > 0"
+            dt1 = ogr2json(hyd,sql1,spat=[glon-buf,glat-buf,glon+buf,glat+buf])
+            ids = list({f["properties"]["HYRIV_ID"] for f in dt1.get("features",[])
+                        if f.get("properties",{}).get("HYRIV_ID")})
+            if not ids:
+                print("%s: 0 reaches" % name)
+                out["rivers"][key] = {"river":name,"n_points":0,"points":[]}
+                continue
+
+            # Query RiverATLAS for these IDs
+            id_list = ",".join(str(i) for i in ids)
+            sql2 = ("SELECT HYRIV_ID,cly_pc_cav,slt_pc_cav,snd_pc_cav,lit_cl_cmj "
+                    "FROM RiverATLAS_v10 WHERE HYRIV_ID IN (%s)" % id_list)
+            dt2 = ogr2json(atl,sql2)
+            atlas = {f["properties"]["HYRIV_ID"]:f["properties"]
+                     for f in dt2.get("features",[]) if f.get("properties",{}).get("HYRIV_ID")}
+
+            # Build points from HydroRIVERS geometry + RiverATLAS attributes
             pts = []
-            for f in dt.get("features", []):
-                p = f.get("properties", {})
-                c = f.get("geometry", {}).get("coordinates", [[[-122, 47]]])
-                try:
-                    lon, lat = c[0][len(c[0]) // 2]
-                except Exception:
-                    continue
-                cly = p.get("cly_pc_cav")
-                slt = p.get("slt_pc_cav")
-                snd = p.get("snd_pc_cav")
-                tex = tex_class(cly, slt, snd)
-                d_mm = TEXT_D50.get(tex, D50DEF)
-                pts.append({
-                    "lat": round(lat, 6),
-                    "lon": round(lon, 6),
-                    "d50_mm": d_mm,
-                    "z0_m": round(z0(d_mm), 6),
-                    "texture": tex
-                })
-            out["rivers"][key] = {"river": name, "n_points": len(pts), "points": pts}
-            print("{0}: {1} reaches".format(name, len(pts)))
+            for f in dt1.get("features",[]):
+                p = f.get("properties",{})
+                hid = p.get("HYRIV_ID")
+                if hid is None: continue
+                a = atlas.get(hid,{})
+                c = f.get("geometry",{}).get("coordinates",[[[-122,47]]])
+                try: lon,lat = c[0][len(c[0])//2]
+                except: continue
+                cly = a.get("cly_pc_cav")
+                slt = a.get("slt_pc_cav")
+                snd = a.get("snd_pc_cav")
+                tex = tex_class(cly,slt,snd)
+                d_mm = TEXT_D50.get(tex,D50DEF)
+                pts.append({"lat":round(lat,6),"lon":round(lon,6),
+                            "d50_mm":d_mm,"z0_m":round(z0(d_mm),6),"texture":tex})
+            out["rivers"][key] = {"river":name,"n_points":len(pts),"points":pts}
+            print("%s: %d reaches" % (name,len(pts)))
         except Exception as e:
-            print("ERROR {0}: {1}".format(name, e))
-            out["rivers"][key] = {"river": name, "n_points": 0, "points": []}
+            print("ERROR %s: %s" % (name,e))
+            out["rivers"][key] = {"river":name,"n_points":0,"points":[]}
 
-    with open(os.path.join(REPO, "src/data/river_substrate.js"), "w") as f:
-        js = ("// GENERATED by scripts/extract_river_substrate.py\n"
-              "// DO NOT EDIT\n"
-              "window.RIVER_SUBSTRATE = ")
-        f.write(js + json.dumps(out, indent=2) + ";\n")
-
+    with open(os.path.join(REPO,"src/data/river_substrate.js"),"w") as f:
+        f.write("// GENERATED by scripts/extract_river_substrate.py\n// DO NOT EDIT\n"
+                "window.RIVER_SUBSTRATE = " + json.dumps(out,indent=2) + ";\n")
     n = sum(r["n_points"] for r in out["rivers"].values())
-    print("Done: {0} total points -> src/data/river_substrate.js".format(n))
+    print("Done: %d total points -> src/data/river_substrate.js" % n)
 
 if __name__ == "__main__":
     main()

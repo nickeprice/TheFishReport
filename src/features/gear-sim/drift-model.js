@@ -211,39 +211,36 @@ export function driftSlipSpeed(z, env, driftSpeedMs) {
  */
 export function driftLeaderCatenary(liftGf, rawDragGfPerFt, ldLenFt, env) {
     if (!liftGf || liftGf <= 0.001 || !rawDragGfPerFt || rawDragGfPerFt <= 0.001 || !ldLenFt || ldLenFt <= 0) {
-        return 0;  // no buoyancy → leader lies flat
+        return 0;
     }
     const vBedMs = (env && env.vBedMs && env.vBedMs > 0) ? env.vBedMs : 0.5;
-    let hFt = ldLenFt * 0.5;  // initial guess: half the leader
 
-    for (let i = 0; i < 15; i++) {
-        // 1. Slip speed at mid-height of the leader (z ≈ h/2 above bed)
-        //    The weight drags on the bottom at ~70% of bed velocity,
-        //    so the relative water velocity = u(z) - v_drift
-        const zMidM = Math.max(env.z0 * 2, hFt * 0.3048 * 0.5);
-        const vDriftMs = vBedMs * 0.7;
-        const vSlipMs = driftSlipSpeed(zMidM, env, vDriftMs);
+    // Compute effective drag ONCE at a fixed reference height above bed
+    // (10 cm ≈ 4 inches). The majority of the leader sits within 4-8
+    // inches of the bottom. Using a fixed height breaks the feedback loop
+    // that caused mid-height iteration to diverge.
+    const zRefM = 0.10;  // 10 cm ≈ 4 inches above bed — leader's working zone
+    // v_drift: the weight drags on the bottom at roughly the water speed
+    // at z=z0 (the roughness sublayer), which for a log-law profile is
+    // approximately u*(z0) ≈ 0. We approximate v_drift as 0.1 m/s which
+    // represents the slow drifting of the weight over a gravel bottom.
+    const vDriftMs = 0.10;
+    const vSlipMs = driftSlipSpeed(zRefM, env, vDriftMs);
 
-        // 2. Drag scales with velocity squared. The raw totalDragPerFt
-        //    was computed at full bed velocity; scale it to slip speed.
-        const velFactor = (vBedMs > 0.01 && vSlipMs > 0)
-            ? Math.pow(vSlipMs / vBedMs, 2)
-            : 0.01;
+    // Drag scales with the square of the velocity ratio
+    const velFactor = (vBedMs > 0.01 && vSlipMs > 0)
+        ? Math.pow(vSlipMs / vBedMs, 2)
+        : 0.01;
 
-        // 3. Effective drag at slip speed (NO sin³ factor — the angle
-        //    varies along the leader and the integral of sin³ over the
-        //    curved leader shape is much larger than sin³ at the mean
-        //    angle. The slip-speed correction alone is sufficient.)
-        const wEff = Math.max(0.001, rawDragGfPerFt * velFactor);
+    const wEff = Math.max(0.001, rawDragGfPerFt * velFactor);
 
-        // 5. New height via catenary formula
-        const x = wEff * ldLenFt / Math.max(0.01, liftGf);
-        const hNew = (liftGf / wEff) * Math.asinh(x);
+    // Single-pass catenary — no iteration needed since wEff is constant
+    const x = wEff * ldLenFt / Math.max(0.01, liftGf);
+    const hInches = (wEff > 0.001)
+        ? (liftGf / wEff) * Math.asinh(x) * 12
+        : ldLenFt * 12;
 
-        if (Math.abs(hNew - hFt) < 0.002) break;  // converged to ~1/40"
-        hFt = Math.max(0.001, Math.min(ldLenFt, hNew));
-    }
-    return Math.min(hFt * 12, ldLenFt * 12);  // feet → inches, capped at leader
+    return Math.min(Math.max(0, hInches), ldLenFt * 12);
 }
 
 // ── Leader shape (quasi-static) ────────────────────────────────────────────────

@@ -105,7 +105,7 @@ pass fails.
   `rigLift()`, `getActiveStationId()`, `measuredFit(siteId)`, `measuredVelocity(siteId, flow)`,
   `WATER_TYPES` (pool/riffle/run/glide depth/vel multipliers),
   `THERMAL_BANDS`, `thermalOptimum(tempF)` — the water-temperature curve (WS-8a);
-  `weightTerminalVelocity(weightOz, weightShape)`, `assessBottomContact(rig, velocity)` — bottom contact check
+  `weightTerminalVelocity(weightOz, weightShape)` — terminal velocity of weight sinking through still water
 - **continuity.js** — `gaugeWidthFt(siteId)`, `spotWidthRatio(siteId)`,
   `velocityAtSpot(flow, siteId)` — gauge velocity -> "near you" (Manning-adjusted when
   SPOT_WIDTHS data is available, same-reach estimate ±20% otherwise);
@@ -126,19 +126,11 @@ pass fails.
   `frictionForce(v_xy, F_n)`, `isSnagged(z, z_bed, pullVec, muS)` —
   cobble-bed substrate, Hertz contact, Coulomb friction, and snag detection for
   the lumped-mass cable simulator.
-- **chain.js** — `chainSolve(rig, env)` — unified chain solver: RK4 shooting
-  method integrating the ODE from hook to rod tip through water, then an analytical
-  air catenary. Replaces cable.js, terminal.js, and sinker.js with a single model.
-  Returns `{ hookDepthM, hookZ, converged, iterations, detail }`.
-- **salmon.js** — `SALMON_DEFAULTS`, `salmonState(t, freqHz, dutyCycle, phase)`,
-  `salmonMouthCone(mouthFraction)`, `salmonPositionZ(depthMinM, depthMaxM)` —
-  adult salmon target: respiration cycle (sinusoidal, f=1.0 Hz, duty=35%),
-  elliptical mouth cone (65×45×80 mm), random holding depth (0.15-0.60 m).
-- **interception.js** — `interceptionRun(hookDepthM, salmonZ, mouthOpen, flowMs)`,
-  `interceptionProbability(hookDepthM, flowMs)`, `HOOK_SET_FORCE_N` — flossing
-  interception state machine: 4-phase (DRIFT_STABILIZE → SWEEP → COLLISION → SEAT),
-  Monte-Carlo (N=100) over randomised salmon depth + breathing phase,
-  hook set threshold 8.0 N, seat distance 0.008 m.
+- **drift-model.js** — `driftDepth()`, `driftEnvironment()`, `driftSlipSpeed()`,
+  `driftLeaderShape()`, `driftBottomState()`, `detectWaterType()`,
+  `driftCoverageScore()`, `flowVsNormal()` —
+  drift force model with Manning depth fallback, slip-speed drag, 3-state bottom
+  contact, 5-angle sweep coverage, and flow-adjusted recommendations.
 - **sonar.js** — `envMatchWeight()`, `envCloseness()`, `catchPredictedCenter()`,
   `catchResidual()`, `communitySonar(dbArray, flow, species, siteId)`,
   `getActiveReport()`, `getCurrentFlow()` — the community sonar matches a catch on the SAME

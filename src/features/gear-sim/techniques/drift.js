@@ -1,17 +1,13 @@
 import { logDebug } from '../../../shared/debug.js';
 import { State } from '../../../shared/state.js';
-import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG, tackleWeightPhysicsData, tackleYarnDragData, weightTerminalVelocity, assessBottomContact } from '../inputs.js';
-import { velocityAtSpot, spotDepthFt } from '../continuity.js';
+import { hydraulicVelocity, tackleHookData, tackleBeadData, tackleYarnBuoyancyG, tackleWeightPhysicsData, tackleYarnDragData, weightTerminalVelocity } from '../inputs.js';
+import { velocityAtSpot } from '../continuity.js';
 import { waterTypeMultiplier } from '../water-types.js';
 import { computeLiftGf, totalDragPerFt, lineDragPerFt, presentationHeightInches, CFS_TO_MS } from '../physics.js';
 import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
 import { driftDepth, driftEnvironment, driftSlipSpeed, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal } from '../drift-model.js';
-import { chainSolve } from '../chain.js';
-import { ROUGHNESS_COBBLE } from '../hydro.js';
-import { interceptionProbability } from '../interception.js';
-import { salmonPositionZ } from '../salmon.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *
@@ -91,8 +87,6 @@ export var DRIFT_TECHNIQUE = {
         const wData = (typeof tackleWeightPhysicsData === 'function')
             ? tackleWeightPhysicsData(weightShape, weightOz) : null;
         const weightObj = wData ? { areaCm2: wData.areaCm2, cd: wData.cd } : null;
-        // Gear mass (submerged) for hook-seat momentum calculation in kg
-        const gearMassKg = wData ? wData.submerged_mass_g / 1000 : 0.030;
         const corky1Obj = { areaCm2: foam.areaCm2, cd: foam.cd };
         const corky2Obj = { areaCm2: foam2.areaCm2, cd: foam2.cd };
         const beadObj = bData ? { areaCm2: bData.areaCm2, cd: bData.cd } : null;
@@ -206,23 +200,11 @@ export var DRIFT_TECHNIQUE = {
             }
         }
 
-        let hookDepthM = null, interceptionProb = 0, sweepQuality = 0, salmonDepthM = null;
-        let chainResult = null, chainEnv = null;
-        let driftResult = null;
+        let hookDepthM = null, driftResult = null;
         try {
             // Leader shape at 0° sweep (straight downstream) for the HUD height
             driftResult = driftLeaderShape(rig, driftEnv, 0);
             hookDepthM = driftResult.converged ? driftResult.hookDepthM : null;
-
-            if (typeof interceptionProbability === 'function') {
-                const bedVelMs = driftEnv.vBedMs;
-                const gearMassKg = wData ? wData.submerged_mass_g / 1000 : 0.030;
-                const ip = interceptionProbability(hookDepthM, bedVelMs, gearMassKg);
-                interceptionProb = ip.probability;
-                sweepQuality = ip.avgSweepQuality;
-            }
-            if (typeof salmonPositionZ === 'function')
-                salmonDepthM = salmonPositionZ();
         } catch (e) {
             logDebug('Drift model: ' + String(e.message).split('\n')[0], 'SIM');
         }
@@ -252,19 +234,13 @@ export var DRIFT_TECHNIQUE = {
         } catch (e) {
             logDebug('Flow rec: ' + String(e.message).split('\n')[0], 'SIM');
         }
-        // Blend interception probability into score: 70% positional, 30% interception
-        const blendedScore = score * (0.7 + 0.3 * interceptionProb);
-        score = Math.max(0.0, Math.min(5.0, Number(blendedScore.toFixed(3))));
         // ====== END NEW PIPELINE ======
 
         return {
             velocity: velocity, dragPerFt: dragGfPerFt, lift: liftGf, hgt: hgt, blownOut: blownOut,
             sonar: sonar, zone: zone, score: score, suggestions: suggestions,
             whereToFish: where, outlook: outlook, rigChanges: precise, rigChangesPlain: plainChanges,
-            hookDepthM: hookDepthM, interceptionProb: interceptionProb,
-            sweepQuality: sweepQuality, salmonDepthM: salmonDepthM,
-            chainResult: chainResult, chainEnv: chainEnv,
-            bottomContact: bottomContact,
+            hookDepthM: hookDepthM,
             driftEnv: driftEnv, driftResult: driftResult, driftContact: driftContact,
             depthResult: depthResult,
             coverageScore: coverageScore,

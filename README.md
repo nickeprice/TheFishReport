@@ -44,11 +44,9 @@ src/
     auth/                   anonymous guest session + OAuth-ready upgrade path
     telemetry/              report.js (pipeline), hero.js (run cards), hourly.js,
                             daynav.js (date nav), tide.js (tide curve SVG)
-    gear-sim/               chain.js (unified RK4+solver), continuity.js,
-                            hydro.js, inputs.js, interception.js, physics.js,
-                            registry.js, rig.js, riverbed.js, salmon.js,
-                            sim.js, solver.js, sonar.js, water-types.js,
-                            zone-best.js, zone-core.js, zone-env.js,
+    gear-sim/               continuity.js, drift-model.js, hydro.js, inputs.js, physics.js,
+                            registry.js, rig.js, riverbed.js, sim.js, solver.js,
+                            sonar.js, water-types.js, zone-best.js, zone-core.js, zone-env.js,
                             techniques/drift.js
     catch-log/              outbox.js (durable IndexedDB), pending.js (optimistic),
                             board.js (scope switcher), mycatches.js (your list),

@@ -98,10 +98,6 @@ export function buildSimStats(rig, out) {
         dragCoeff: 1.0,
         blownOut: out.blownOut,
         hookDepthM: out.hookDepthM || null,
-        interceptionProb: out.interceptionProb || 0,
-        sweepQuality: out.sweepQuality || 0,
-        salmonDepthM: out.salmonDepthM || null,
-        bottomContact: out.bottomContact || null,
         driftEnv: out.driftEnv || null,
         driftResult: out.driftResult || null,
         driftContact: out.driftContact || null,
@@ -167,17 +163,7 @@ export function paintSimHud(rig, out, stats) {
             ' \u00b1' + Math.round(spotDepth.uncertainty * 100) + '%' : '') +
         ', zone ' + zone.min.toFixed(1) + '-' + zone.max.toFixed(1) +
         '", line ' + hgt.toFixed(1) + '" ' + zoneColor(hgt, zone) +
-        (out.hookDepthM && out.chainResult && out.chainResult.converged ? '; hook depth ' + (out.hookDepthM * 39.37).toFixed(1) + '"' : '; hook height ~' + hgt.toFixed(1) + '" (drift model)') +
-        (out.interceptionProb ? '; P(intercept)=' + out.interceptionProb.toFixed(3) : '; P(intercept)=0') +
-        (out.sweepQuality ? '; sweepQ=' + out.sweepQuality.toFixed(2) : '') +
-        // Chain solver detail
-        (out.chainResult ? '; chain={' + (out.chainResult.converged ? 'converged' : 'converged=' + out.chainResult.converged) +
-            ' hD=' + out.chainResult.hookDepthM.toFixed(3) + 'm' +
-            (out.chainResult.iterations ? ' iter=' + out.chainResult.iterations : '') +
-            (out.chainResult.detail ? ' ' + out.chainResult.detail : '') + '}' : '') +
-        // Chain env
-        (out.chainEnv ? '; env={H=' + out.chainEnv.depthM.toFixed(2) + 'm uMax=' + out.chainEnv.uMax.toFixed(3) +
-            ' z0=' + out.chainEnv.z0 + ' rodH=' + out.chainEnv.rodHeightM + '}' : '') +
+        (out.hookDepthM ? '; hook depth ' + (out.hookDepthM * 39.37).toFixed(1) + '"' : '; hook height ~' + hgt.toFixed(1) + '" (drift model)') +
         // Drift-model detail
         (out.depthResult ? '; depth={val=' + (out.depthResult.valueFt ? out.depthResult.valueFt.toFixed(1) + 'ft' : 'null') +
             ' src=' + out.depthResult.source +
@@ -201,15 +187,11 @@ export function paintSimHud(rig, out, stats) {
             ' -> ' + hgt.toFixed(1) + '"' : '') +
         (out.whereToFish ? ' | ' + out.whereToFish : ''), 'SIM');
 
-    // Bottom contact check — prefer drift-model 3-state when available
+    // Bottom contact check (drift-model 3-state)
     if (out.driftContact) {
-        logDebug('Bottom contact (drift-model): ' + out.driftContact.note +
+        logDebug('Bottom contact: ' + out.driftContact.note +
             ' (v_term=' + (out.driftContact.terminalVelMs ? out.driftContact.terminalVelMs.toFixed(2) + ' m/s' : '?') +
             ', bed=' + out.driftContact.bedVelMs.toFixed(2) + ' m/s)', 'SIM');
-    } else if (out.bottomContact) {
-        logDebug('Bottom contact: ' + out.bottomContact.note +
-            ' (v_term=' + (out.bottomContact.terminalVelMs ? out.bottomContact.terminalVelMs.toFixed(2) + ' m/s' : '?') +
-            ', bed=' + out.bottomContact.bedVelMs.toFixed(2) + ' m/s)', 'SIM');
     }
     const contactEl = document.getElementById('hud-contact');
     if (contactEl) {
@@ -225,12 +207,6 @@ export function paintSimHud(rig, out, stats) {
                 contactEl.innerText = '↕ Weight suspending above bottom';
                 contactEl.style.color = 'var(--accent-yellow)';
             }
-        } else if (out.bottomContact && out.bottomContact.contacts) {
-            contactEl.innerText = '⚓ Weight reaches bottom';
-            contactEl.style.color = 'var(--text-muted)';
-        } else if (out.bottomContact && out.bottomContact.terminalVelMs !== null) {
-            contactEl.innerText = '↕ Weight suspending above bottom';
-            contactEl.style.color = 'var(--accent-yellow)';
         } else {
             contactEl.innerText = '';
         }

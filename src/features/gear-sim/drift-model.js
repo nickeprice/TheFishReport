@@ -270,9 +270,6 @@ export function driftLeaderShape(rig, env, liftGf, dragGfPerFt, sweepAngle) {
         ? driftLeaderCatenary(liftGf, dragGfPerFt, ldLenFt, env)
         : 12.0;  // safe fallback
 
-    const hookZM = hInches * 0.0254;
-    const hookDepthM = Math.max(0, depthM - hookZM);
-
     const hookZM = hInches * 0.0254;  // inches → metres
     const hookDepthM = Math.max(0, depthM - hookZM);
 

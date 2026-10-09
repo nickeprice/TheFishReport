@@ -307,10 +307,21 @@ export function detectWaterType(slope, streamorder) {
 // ── Sweep + coverage score ─────────────────────────────────────────────────────
 
 /**
- * Sweep angles and their position weights (center = 3, mid = 2, edge = 1).
+ * Sweep angles for coverage scoring — fixed 5-angle spread.
  */
 const SWEEP_ANGLES = [-45, -22.5, 0, 22.5, 45];
-const SWEEP_WEIGHTS = [1, 2, 3, 2, 1];  // edge/mid/center/mid/edge
+
+/**
+ * Weight profiles by channelPosition from WATER_TYPES.
+ * Each is a 5-element array matching SWEEP_ANGLES (edge-left, mid-left, center, mid-right, edge-right).
+ * Keys: 'center-deep' (pool), 'spread' (riffle), 'center' (run), 'edges' (glide).
+ */
+const CHANNEL_WEIGHT_PROFILES = {
+    'center-deep': [1, 2, 5, 2, 1],     // pool: fish hold in deep center
+    'spread':      [2, 2, 2, 2, 2],     // riffle: fish spread across channel
+    'center':      [1, 2, 3, 2, 1],     // run: mild center weighting
+    'edges':       [3, 2, 1, 2, 3]      // glide: fish hold at tailout edges
+};
 
 /**
  * Run 5 quasi-static snapshots of the leader at sweep angles -45° to +45°
@@ -335,9 +346,16 @@ export function driftCoverageScore(rig, env, liftGf, dragGfPerFt, zone) {
     let weightedSum = 0;
     let totalWeight = 0;
 
+    // Select weight profile based on environment's water type and its
+    // associated channel position (where fish hold laterally).
+    const channelPos = {
+        pool: 'center-deep', riffle: 'spread', run: 'center', glide: 'edges'
+    }[env.waterType] || 'center';
+    const weights = CHANNEL_WEIGHT_PROFILES[channelPos] || CHANNEL_WEIGHT_PROFILES.center;
+
     for (let i = 0; i < SWEEP_ANGLES.length; i++) {
         const angle = SWEEP_ANGLES[i];
-        const weight = SWEEP_WEIGHTS[i];
+        const weight = weights[i];
         const shape = driftLeaderShape(rig, env, liftGf, dragGfPerFt, angle);
 
         // Hook height above bottom in inches (strike zone is in inches)

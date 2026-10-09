@@ -48,16 +48,27 @@ export function driftDepth(flow, siteId, nhdData) {
     const Q = (flow && flow > 0) ? flow : 1040;  // reference fallback
 
     // Tier 2: Manning equation  d_ft = ( n * Q / ( w * sqrt(S) ) )^(3/5)
+    // Stage-adjust using the bankfull-fill ratio (wetted / bankfull) which
+    // accounts for the channel being narrower at low flow and wider at flood.
     const w = (typeof spotNearestWidth === 'function')
         ? spotNearestWidth(siteId) : null;
     const wettedFt = (w && w.point && w.point.wetted_ft > 0) ? w.point.wetted_ft : null;
+    const bankfullFt = (w && w.point && w.point.bankfull_ft > 0) ? w.point.bankfull_ft : null;
     const S = (nhdData && nhdData.slope && nhdData.slope > 0) ? nhdData.slope : null;
 
     if (wettedFt && S && S > 0) {
         const dFt = Math.pow(MANNING_N * Q / (wettedFt * Math.sqrt(S)), 3.0 / 5.0);
         if (dFt > 0 && isFinite(dFt)) {
+            // Stage adjustment: at bankfull, use Manning depth as-is.
+            // At partial fill, the channel is narrower → actually shallower than
+            // the constant-width Manning equation predicts. Scale down linearly
+            // with the fill ratio.
+            const fillRatio = bankfullFt && bankfullFt > 0
+                ? Math.min(1.0, wettedFt / bankfullFt)
+                : 1.0;
+            const adjustFt = dFt * (0.5 + 0.5 * fillRatio);
             return {
-                valueFt: dFt,
+                valueFt: adjustFt,
                 source: 'manning',
                 uncertainty: 0.30,
                 note: 'Manning equation via spot width + NHDPlus slope'

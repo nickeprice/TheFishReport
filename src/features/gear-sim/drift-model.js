@@ -133,7 +133,7 @@ export function driftEnvironment(flow, siteId, nhdData) {
     } catch (e) { /* fall back to defaults */ }
 
     // uStar from surface velocity and depth
-    const z0 = ROUGHNESS_COBBLE;
+    const z0 = 0.00825;
     let uStar = null;
     if (depthM && depthM > 0 && vSurfaceMs > 0) {
         const lnArg = depthM / z0;

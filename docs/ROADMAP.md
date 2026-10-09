@@ -357,9 +357,11 @@ Phase 0–6 completion. Offline-first invariant preserved.
 ### New data pipelines
 
 - **NOAA National Water Model (NWM):** Streamflow forecasts 18 hours to
-  10 days out for 2.7M reaches. Requires backend server to download + extract
-  NetCDF files — not feasible client-side. Would enable "flow will be 950 CFS
-  tomorrow morning" predictions for trip planning.
+  10 days out for 2.7M reaches. Belongs on the **Water Report** page
+  (telemetry tab) alongside the hourly cfs chart and momentum arrows
+  — the forecast tells the angler *when* to fish, not *how* to rig.
+  Requires a lightweight backend proxy to fetch + extract NetCDF
+  (NOMADS/NCEP FTP), keyed by NHDPlus `comid` (already in State.nhdData).
 - **USGS Network Linked Data Index (NLDI):** River network navigation.
   Given a reach, find upstream tributaries, downstream confluences, dams,
   and gauge relationships. "You're 3.2 miles below the Carbon confluence"
@@ -375,7 +377,8 @@ Phase 0–6 completion. Offline-first invariant preserved.
 ### Product features
 
 - **Flow forecasts in fishing outlook:** "Flow expected to rise to 1,200
-  CFS by evening — fish will move to the deeper edges."
+  CFS by evening — fish will move to the deeper edges." Rendered on the
+  **Water Report** telemetry chart, not the gear sim HUD.
 - **Crew-shared rig presets:** DB-backed preset sync for signed-in users.
 - **Per-reach regulation polygons:** Regulatory boundary data overlayed
   on the map.

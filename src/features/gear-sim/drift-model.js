@@ -376,59 +376,100 @@ export function driftCoverageScore(rig, env, liftGf, dragGfPerFt, zone) {
 // ── Flow vs normal ─────────────────────────────────────────────────────────────
 
 /**
- * Compare current flow against the NHDPlus 30-yr monthly normal for the current month.
- * Returns the ratio and a recommendation label.
+ * Compare current flow against NHDPlus recurrence-interval flood flows
+ * (Q0001E … Q1000E) for a 7-band flood-frequency label. Falls back to
+ * the 30-yr monthly mean (qa_*) when recurrence data is unavailable.
  *
  * @param {number} currentFlow — discharge in cfs
  * @param {object|null} nhdData — NHDPlus reach data (State.nhdData)
  * @param {number} month — month number 1-12 (default: current month)
- * @returns {{ ratio: number|null, label: string, suggestion: string } | null}
+ * @returns {{ ratio: number|null, label: string, suggestion: string, recurrence: string|null }}
  */
 export function flowVsNormal(currentFlow, nhdData, month) {
     if (!currentFlow || currentFlow <= 0 || !nhdData) {
         return {
-            ratio: null,
-            label: 'unknown',
-            suggestion: 'No flow data — use standard rig'
+            ratio: null, label: 'unknown',
+            suggestion: 'No flow data — use standard rig',
+            recurrence: null
         };
     }
+
+    // First try: recurrence-interval flows (Q0001E … Q1000E)
+    const REC_KEY = ['Q0001E','Q0002E','Q0005E','Q0010E','Q0025E','Q0050E','Q0100E','Q0500E','Q1000E'];
+    const REC_LABEL = ['1.5-yr','2-yr','5-yr','10-yr','25-yr','50-yr','100-yr','500-yr','1000-yr'];
+    let recurBound = null, recurLabel = null;
+    // Find the highest recurrence that the current flow exceeds
+    for (let ri = 0; ri < REC_KEY.length; ri++) {
+        const v = nhdData[REC_KEY[ri]];
+        if (v !== undefined && v !== null && Number(v) > 0 && currentFlow > Number(v)) {
+            recurBound = Number(v);
+            recurLabel = REC_LABEL[ri];
+        }
+    }
+    if (recurBound !== null) {
+        // Found — label based on which recurrence intervals bracket the flow
+        // recurLabel is the highest recurrence that currentFlow exceeds
+        // Find the next one
+        let nextLabel = '>1000-yr';
+        for (let ri = 0; ri < REC_KEY.length; ri++) {
+            const v = nhdData[REC_KEY[ri]];
+            if (v !== undefined && v !== null && Number(v) > 0 && currentFlow <= Number(v)) {
+                nextLabel = REC_LABEL[ri];
+                break;
+            }
+        }
+        const comp = (recurLabel !== null) ? (recurLabel + ' — ' + nextLabel) : nextLabel;
+        let label, suggestion;
+        if (recurLabel === '1.5-yr' && nextLabel === '1.5-yr') {
+            label = 'below normal'; suggestion = 'Lighter weight (1 size down), +1-2 ft leader';
+        } else if (recurLabel === null && nextLabel === '1.5-yr') {
+            label = 'normal'; suggestion = 'Standard rig';
+        } else if (nextLabel === '2-yr' || nextLabel === '5-yr') {
+            label = 'moderately high'; suggestion = 'Consider heavier weight or shorter leader';
+        } else if (nextLabel === '10-yr' || nextLabel === '25-yr') {
+            label = 'very high'; suggestion = 'Heavier weight (1 size up), -1 ft leader';
+        } else {
+            label = 'extreme'; suggestion = 'Heaviest weight, shortest leader, or wait';
+        }
+        return {
+            ratio: recurBound > 0 ? Math.round(currentFlow / recurBound * 100) / 100 : null,
+            label: label,
+            suggestion: suggestion,
+            recurrence: comp
+        };
+    }
+
+    // Fallback: monthly mean (qa_MM)
     const m = (month >= 1 && month <= 12) ? month : new Date().getMonth() + 1;
     const key = 'qa_' + String(m).padStart(2, '0');
     const normalFlow = nhdData[key] ? Number(nhdData[key]) : null;
     if (!normalFlow || normalFlow <= 0) {
         return {
-            ratio: null,
-            label: 'unknown',
-            suggestion: 'No NHDPlus monthly normals — use standard rig'
+            ratio: null, label: 'unknown',
+            suggestion: 'No NHDPlus flow data — use standard rig',
+            recurrence: null
         };
     }
 
     const ratio = currentFlow / normalFlow;
     let label, suggestion;
-
     if (ratio < 0.6) {
-        label = 'very low';
-        suggestion = 'Lighter weight (1 size down), +1-2 ft leader';
+        label = 'very low'; suggestion = 'Lighter weight (1 size down), +1-2 ft leader';
     } else if (ratio < 0.8) {
-        label = 'low';
-        suggestion = 'Consider lighter weight or longer leader';
+        label = 'low'; suggestion = 'Consider lighter weight or longer leader';
     } else if (ratio < 1.2) {
-        label = 'normal';
-        suggestion = 'Standard rig';
+        label = 'normal'; suggestion = 'Standard rig';
     } else if (ratio < 2.0) {
-        label = 'high';
-        suggestion = 'Heavier weight (1 size up), -1 ft leader';
+        label = 'high'; suggestion = 'Heavier weight (1 size up), -1 ft leader';
     } else {
-        label = 'very high';
-        suggestion = 'Heaviest weight, shortest leader, or wait';
+        label = 'very high'; suggestion = 'Heaviest weight, shortest leader, or wait';
     }
 
     return {
         ratio: Math.round(ratio * 100) / 100,
         label: label,
         suggestion: suggestion,
-        currentFlow: currentFlow,
-        normalFlow: normalFlow
+        recurrence: null
     };
 }
 

@@ -46,7 +46,39 @@ export function gaugeWidthFt(siteId) {
     return (w > 0) ? w : null;
 }
 
-// Haversine distance in metres (used for nearest-neighbour SPOT_WIDTHS lookup).
+// Nearest RIVER_SUBSTRATE substrate point.
+// Returns { point, distance_m } or null when unavailable.
+export function spotNearestSubstrate(siteId) {
+    if (!siteId) return null;
+    const key = SPOT_WIDTHS_SITE_MAP[String(siteId)];
+    if (!key) return null;
+    const all = (typeof window !== 'undefined') ? window.RIVER_SUBSTRATE : null;
+    if (!all || !all.rivers) return null;
+    const river = all.rivers[key];
+    if (!river || !river.points || !river.points.length) return null;
+
+    let lat = null, lon = null;
+    try {
+        const raw = localStorage.getItem('active_station');
+        if (raw) {
+            const st = JSON.parse(raw);
+            if (st.lat != null && st.lon != null) {
+                lat = Number(st.lat);
+                lon = Number(st.lon);
+            }
+        }
+    } catch (e) {}
+    if (lat == null || lon == null) return null;
+
+    let best = null, bestDist = Infinity;
+    for (let i = 0; i < river.points.length; i++) {
+        const p = river.points[i];
+        const d = haversineM(lat, lon, p.lat, p.lon);
+        if (d < bestDist) { bestDist = d; best = p; }
+    }
+    return { point: best, distance_m: bestDist };
+}
+
 export function haversineM(lat1, lon1, lat2, lon2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;

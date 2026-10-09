@@ -9,7 +9,7 @@
  *         flowVsNormal()
  * ES module.
  */
-import { spotDepthFt, spotNearestWidth, velocityAtSpot } from './continuity.js';
+import { spotDepthFt, spotNearestWidth, spotNearestSubstrate, velocityAtSpot } from './continuity.js';
 import { weightTerminalVelocity } from './inputs-readers.js';
 import { CFS_TO_MS, presentationHeightInches } from './physics.js';
 
@@ -295,7 +295,15 @@ const Z0_BY_TYPE = {
     pool:   0.000165
 };
 
-export function z0FromWaterType(waterType) {
+export function z0FromWaterType(waterType, siteId) {
+    // Tier 1: measured substrate from HydroATLAS RiverATLAS (nearest DEM cross-section)
+    if (siteId && typeof spotNearestSubstrate === 'function') {
+        const sub = spotNearestSubstrate(siteId);
+        if (sub && sub.point && sub.point.z0_m > 0) {
+            return sub.point.z0_m;
+        }
+    }
+    // Tier 2: water-type estimate
     return Z0_BY_TYPE[waterType] || 0.00825;
 }
 

@@ -207,7 +207,7 @@ export var DRIFT_TECHNIQUE = {
         const waterType = (nhdData && typeof detectWaterType === 'function')
             ? (detectWaterType(nhdData.slope, nhdData.streamorder) || rig.waterType || 'run')
             : (rig.waterType || 'run');
-        const z0 = z0FromWaterType(waterType);
+        const z0 = z0FromWaterType(waterType, siteId);
         driftEnv.z0 = z0;
 
         // ── NHDPlus fcode / lakefract physics validity gate ──────────────

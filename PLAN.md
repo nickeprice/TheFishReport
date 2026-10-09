@@ -2,7 +2,7 @@
 
 ## 🔬 Physics Refinement — Drag & Substrate
 
-- [ ] Phase A: FAO/FAO-equivalent drag coefficients for monofilament
+- [x] Phase A: FAO/FAO-equivalent drag coefficients for monofilament
       → physics.js
       [Detail → docs/PLAN_REFERENCE.md#physics-drag-coefficients]
 

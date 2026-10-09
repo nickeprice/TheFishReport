@@ -28,6 +28,8 @@ METHOD
 """
 
 import math
+import os
+import sys
 
 import numpy as np
 import rasterio
@@ -35,7 +37,31 @@ import rasterio
 TERRARIUM = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
 ZOOM = 15
 R_MERC = 6378137.0
-ORIGIN_SHIFT = math.pi * R_MERC          # half the Web Mercator extent, in metres
+ORIGIN_SHIFT = math.pi * R_MERC
+
+# Local tile cache — set TERRARIUM_CACHE or default to repo-root/data/terrarium_cache/
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.environ.get("TERRARIUM_CACHE") or os.path.join(
+    os.path.dirname(os.path.dirname(_SCRIPT_DIR)), "data", "terrarium_cache"
+)
+if CACHE_DIR:
+    os.makedirs(CACHE_DIR, exist_ok=True)
+
+
+def _open_tile(z, x, y):
+    """Open a terrarium tile from local cache, downloading first if needed."""
+    local = os.path.join(CACHE_DIR, f"{z}-{x}-{y}.png") if CACHE_DIR else None
+    if local and os.path.isfile(local):
+        return rasterio.open(local)
+    url = TERRARIUM.format(z=z, x=x, y=y)
+    if local:
+        try:
+            import urllib.request
+            urllib.request.urlretrieve(url, local)
+            return rasterio.open(local)
+        except Exception:
+            pass
+    return rasterio.open(url)
 
 
 def _mercator(lat, lon):

@@ -58,7 +58,7 @@ RIVERS = [
      "lat": 47.22,      "lon": -122.21,             "usgs_width_ft": 130},
 ]
 
-SAMPLE_INTERVAL_M = 500
+SAMPLE_INTERVAL_M = 100   # 100m: spot-level accuracy, interpolation error <2%
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 OVERPASS_TIMEOUT = 120
 DEM_HALF_M = 250.0
@@ -154,70 +154,33 @@ def chain_ways(ways):
 
 # ── Overpass query ───────────────────────────────────────────────────────────
 
-RIVER_BBOXES = {
-    # (min_lat, min_lon, max_lat, max_lon) for each river
-    "puyallup": (46.8, -122.5, 47.4, -121.8),
-    "white":    (46.8, -122.5, 47.4, -121.8),   # White feeds into Puyallup
-    "carbon":   (46.8, -122.5, 47.4, -121.8),
-    "green":    (47.0, -122.5, 47.5, -121.8),
-    "nisqually": (46.7, -122.7, 47.2, -122.2),
-    # Wider fallback for named rivers outside the core 5
-    "default":  (45.0, -125.0, 50.0, -116.0),
-}
 
-
-def _river_bbox(river_id):
-    """Return bounding box for a river, or the default Washington bbox."""
-    return RIVER_BBOXES.get(river_id, RIVER_BBOXES["default"])
-
-
-def fetch_river_ways(river_name, river_id="default"):
-    """Fetch OSM way geometries for a river by name in Washington state.
-
-    Retries with delay on 429/504. Uses a river-specific bounding box to
-    avoid returning wrong rivers with the same name.
-    """
-    safe_name = river_name.replace("'", "\\'")
-    bbox = _river_bbox(river_id)
-    query = f"""
-    [out:json][timeout:120];
-    area[name="Washington"];
-    way["name"="{safe_name}"]["waterway"="river"]
-      ({bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]})
-      (area);
-    out geom;
-    """
-    for attempt in range(3):
-        try:
-            resp = requests.get(OVERPASS_URL, params={"data": query},
-                                headers={"User-Agent": UA},
-                                timeout=OVERPASS_TIMEOUT)
-            if resp.status_code == 200:
-                data = resp.json()
-                elements = data.get("elements", [])
-                if elements:
-                    return elements
-                print(f"  No OSM ways found for '{river_name}' (attempt {attempt+1})",
-                      file=sys.stderr)
-            elif resp.status_code in (429, 504) and attempt < 2:
-                delay = 15 if resp.status_code == 429 else 5
-                print(f"  Overpass {resp.status_code}; retrying in {delay}s...",
-                      file=sys.stderr)
-                time.sleep(delay)
-                continue
-            else:
-                print(f"  Overpass HTTP {resp.status_code}: {resp.text[:200]}",
-                      file=sys.stderr)
-                return None
-        except requests.RequestException as exc:
-            if attempt < 2:
-                print(f"  Overpass attempt {attempt+1} failed: {exc}; retrying...",
-                      file=sys.stderr)
-                time.sleep(5)
-                continue
-            print(f"  Overpass request failed: {exc}", file=sys.stderr)
-            return None
+def fetch_river_ways(lat, lon, search_radius=5000):
+    """Find river ways near a GPS coordinate. Returns list of way elements or None."""
+    query = f"[out:json][timeout:30];node(around:{search_radius},{lat},{lon});way(bn)[\"waterway\"=\"river\"];(._;>;);out geom;"
+    try:
+        resp = requests.get(OVERPASS_URL, params={"data": query},
+                            headers={"User-Agent": UA}, timeout=OVERPASS_TIMEOUT)
+        if resp.status_code == 200:
+            data = resp.json()
+            elements = data.get("elements", [])
+            ways = [e for e in elements if e.get("type") == "way"]
+            if ways:
+                total_pts = sum(len(w.get("geometry", [])) for w in ways)
+                print(f"  Found {len(ways)} ways ({total_pts} pts) near gauge", file=sys.stderr)
+                return ways
+        elif resp.status_code == 429:
+            return -1  # rate-limited
+    except Exception:
+        pass
     return None
+
+def _normalize(coord_str):
+    """Normalize coordinate string to a float or None."""
+    try:
+        return float(coord_str)
+    except (TypeError, ValueError):
+        return None
 
 
 # ── River path generation ────────────────────────────────────────────────────
@@ -234,9 +197,9 @@ def generate_sample_points(river, dry_run=False):
     print(f"River: {rname}")
     print(f"{'='*60}")
 
-    # 1. Fetch geometry from OSM
-    print(f"  Querying Overpass API for '{rname}'...")
-    ways = fetch_river_ways(rname, river_id=rid)
+    # 1. Fetch geometry from OSM via coordinate proximity
+    print(f"  Finding river near ({river['lat']}, {river['lon']})...")
+    ways = fetch_river_ways(river["lat"], river["lon"])
     if not ways:
         print(f"  ✗ No geometry found for {rname}")
         return None
@@ -372,6 +335,10 @@ def main():
                     help="Fetch geometry and sample, but skip DEM measurements")
     ap.add_argument("--output", default=OUTPUT_JS,
                     help=f"Output JS file (default: {OUTPUT_JS})")
+    ap.add_argument("--json-out", default=None,
+                    help="Directory for per-river JSON output (enables resume)")
+
+
     args = ap.parse_args()
 
     selected = [r for r in RIVERS
@@ -397,6 +364,12 @@ def main():
             "site_id": river["site_id"],
             "points": samples,
         })
+        # Per-river JSON for resume support
+        if args.json_out:
+            os.makedirs(args.json_out, exist_ok=True)
+            jpath = os.path.join(args.json_out, f"{river['id']}.json")
+            with open(jpath, "w", encoding="utf-8") as jf:
+                json.dump(rivers_data[-1], jf)
 
     if not rivers_data:
         print("\nNo data collected.", file=sys.stderr)

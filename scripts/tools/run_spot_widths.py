@@ -53,7 +53,7 @@ def load_progress():
                     data = json.load(fp)
                 pts = data.get("points", [])
                 if pts:
-                    good = sum(1 for p in pts if p.get("wetted_ft", 0) > 0)
+                    good = sum(1 for p in pts if p.get("wetted_ft") and p["wetted_ft"] > 0)
                     done[rid] = good
             except Exception:
                 pass
@@ -72,7 +72,7 @@ def run_river(rid):
                 with open(fp) as f:
                     d = json.load(f)
                 n = len(d.get("points", []))
-                good = sum(1 for p in d.get("points", []) if p.get("wetted_ft", 0) > 0)
+                good = sum(1 for p in d.get("points", []) if p.get("wetted_ft") and p["wetted_ft"] > 0)
                 print(f"  {rid}: {n} points ({good} good)")
                 return True
             except Exception:
@@ -106,7 +106,7 @@ def merge_all():
     print("-" * 40)
     for rd in rivers_data:
         pts = rd.get("points", [])
-        n_good = sum(1 for p in pts if p.get("wetted_ft", 0) > 0)
+        n_good = sum(1 for p in pts if p.get("wetted_ft") and p["wetted_ft"] > 0)
         n_fail = len(pts) - n_good
         print(f"{rd['id']:<20} {n_good:>8} {n_fail:>8}")
     return True

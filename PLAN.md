@@ -20,6 +20,6 @@
       → continuity.js, drift-model.js, drift.js
       [Detail → docs/PLAN_REFERENCE.md#data-chain-fix]
 
-- [ ] Phase 2: Run spot_widths for remaining 10 rivers (wait for Overpass API availability)
-      → python3 scripts/tools/precompute_spot_widths.py --rivers white,carbon,green,snohomish,skagit,puyallup_upper,white_lower
+- [x] Phase 2: Run spot_widths for all 15 rivers — 1,156 DEM cross-sections at 100m
+      → run_spot_widths.py (batch, retry, merge), spot_widths.js (gen)
       [Detail → docs/PLAN_REFERENCE.md#data-expand-all]

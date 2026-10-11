@@ -140,7 +140,7 @@ def chain_ways(ways):
             if best == d_ef:
                 chain.extend(g[1:])
             elif best == d_ee:
-                chain.extend(reversed(g)[1:])
+                chain.extend(list(reversed(g))[1:])
             elif best == d_se:
                 chain = g[:-1] + chain
             else:

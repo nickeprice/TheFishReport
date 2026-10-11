@@ -57,6 +57,9 @@ def load_progress():
                     done[rid] = good
             except Exception:
                 pass
+    return done
+
+
 def run_river(rid):
     result = subprocess.run(
         [sys.executable, RIVER_SCRIPT, "--rivers", rid, "--json-out", OUT_DIR],

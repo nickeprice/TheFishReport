@@ -124,6 +124,52 @@ export function drainageWidthFt(siteId) {
     return Math.round(4.0 * Math.pow(da, 0.4) * 3.28084 * 10) / 10;
 }
 
+// ── DEM thalweg slope ────────────────────────────────────────────────────────
+/**
+ * Channel slope (m/m) at (lat, lon) from adjacent DEM cross-sections in
+ * SPOT_WIDTHS — the measured thalweg gradient over ~300 m around the spot.
+ * Returns null when the spot is off-river or the reach is flat (no fall).
+ * This is the offline-first slope source for the Manning depth tier.
+ */
+export function demSlopeAt(lat, lon) {
+    const all = (typeof window !== 'undefined') ? window.SPOT_WIDTHS : null;
+    if (!all || !all.rivers || lat == null || lon == null) return null;
+    let nearest = null, bestDist = Infinity, bestKey = null;
+    const keys = Object.keys(all.rivers);
+    for (let ri = 0; ri < keys.length; ri++) {
+        const river = all.rivers[keys[ri]];
+        if (!river || !river.points || !river.points.length) continue;
+        const pts = river.points;
+        for (let pi = 0; pi < pts.length; pi++) {
+            const p = pts[pi];
+            const d = haversineM(lat, lon, p.lat, p.lon);
+            if (d < bestDist) { bestDist = d; nearest = p; bestKey = keys[ri]; }
+        }
+    }
+    if (!nearest || bestDist > SPOT_SEARCH_LIMIT_M) return null;
+    const pts = all.rivers[bestKey].points;
+    // Find the nearest point's index, then average the thalweg gradient over the
+    // ±200 m window (up to 4 adjacent 100 m segments) — robust to one bad point.
+    let idx = -1;
+    for (let i = 0; i < pts.length; i++) {
+        if (pts[i] === nearest) { idx = i; break; }
+    }
+    if (idx < 0) return null;
+    let num = 0, den = 0;
+    for (let i = Math.max(1, idx - 3); i <= Math.min(pts.length - 1, idx + 3); i++) {
+        const p1 = pts[i - 1], p2 = pts[i];
+        const th1 = Number(p1.thalweg_m), th2 = Number(p2.thalweg_m);
+        const dc = Number(p2.cum_m) - Number(p1.cum_m);
+        if (!isFinite(th1) || !isFinite(th2) || !(dc > 0)) continue;
+        const s = (th2 - th1) / dc;             // cum_m climbs upstream, so positive = water falls downstream
+        if (s > 0 && isFinite(s)) { num += s; den++; }
+    }
+    if (!den) return null;
+    const slope = num / den;
+    return (slope > 0 && isFinite(slope)) ? slope : null;
+}
+window.demSlopeAt = demSlopeAt;
+
 // ── Inverse-variance blended width ──────────────────────────────────────────
 export function blendedWidthFt(lat, lon, siteId) {
     const src = [];

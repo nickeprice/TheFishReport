@@ -9,7 +9,7 @@
  *         flowVsNormal()
  * ES module.
  */
-import { spotDepthFt, spotNearestWidth, spotNearestSubstrate, velocityAtSpot, blendedWidthFt, spotSubstrateAt } from './continuity.js';
+import { spotDepthFt, spotNearestWidth, spotNearestSubstrate, velocityAtSpot, blendedWidthFt, spotSubstrateAt, demSlopeAt } from './continuity.js';
 import { weightTerminalVelocity } from './inputs-readers.js';
 import { CFS_TO_MS, presentationHeightInches } from './physics.js';
 
@@ -55,15 +55,19 @@ export function driftDepth(flow, siteId, lat, lon, nhdData) {
         ? blendedWidthFt(lat, lon, siteId) : null;
     const wettedFt = (blend && blend.widthFt > 0) ? blend.widthFt : null;
     const S = (nhdData && nhdData.slope && nhdData.slope > 0) ? nhdData.slope : null;
+    const demSlope = (!S && lat != null && lon != null && typeof demSlopeAt === 'function')
+        ? demSlopeAt(lat, lon) : null;
+    const slopeM = S || demSlope;
+    const slopeLabel = S ? 'NHDPlus' : (demSlope ? 'DEM thalweg' : null);
 
-    if (wettedFt && S && S > 0) {
-        const dFt = Math.pow(MANNING_N * Q / (wettedFt * Math.sqrt(S)), 3.0 / 5.0);
+    if (wettedFt && slopeM && slopeM > 0) {
+        const dFt = Math.pow(MANNING_N * Q / (wettedFt * Math.sqrt(slopeM)), 3.0 / 5.0);
         if (dFt > 0 && isFinite(dFt)) {
             return {
                 valueFt: Math.round(dFt * 10) / 10,
                 source: 'manning',
                 uncertainty: (blend && blend.sigma) ? blend.sigma : 0.30,
-                note: 'Manning via blended width + NHDPlus slope'
+                note: 'Manning via blended width + ' + slopeLabel + ' slope'
             };
         }
     }

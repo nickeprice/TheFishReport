@@ -8,6 +8,7 @@ import { communitySonar } from '../sonar.js';
 import { computeStrikeZone, whereToFish, fishOutlook } from '../zone-core.js';
 import { bestZoneRig, rigChangeList, rigChangePlain, joinPlain } from '../zone-best.js';
 import { driftDepth, driftEnvironment, driftLeaderShape, driftBottomState, driftCoverageScore, flowVsNormal, z0FromWaterType, detectWaterType } from '../drift-model.js';
+import { assessBottomContact } from '../inputs-readers.js';
 /**
  * src/features/gear-sim/techniques/drift.js - the DRIFT technique.
  *
@@ -68,10 +69,7 @@ export var DRIFT_TECHNIQUE = {
         }
 
         // Bottom contact check (Phase D2): does the weight reach the bed?
-        let bottomContact = null;
-        if (typeof assessBottomContact === 'function') {
-            bottomContact = assessBottomContact(rig, velocity);
-        }
+        const bottomContact = assessBottomContact(rig, velocity);
 
         // Lift: read NET values from tackle.json (buoyancy_g - mass_g)
         const f1G = foam.net_buoyancy_g;
@@ -107,7 +105,7 @@ export var DRIFT_TECHNIQUE = {
         // This IS the correct physics for drift fishing — anchored at the
         // weight on the bottom, buoyant free end at the hook. No surface
         // shooting. No mainline integration.
-        let hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
+        const hgt = presentationHeightInches(liftGf, dragGfPerFt, ldLen);
         const blownOut = (bedVel > 3.5 && weightOz < 0.5);
 
         // 3. Where the fish are today, then score the presentation --------------------

@@ -53,11 +53,21 @@ export async function fetchNhdPlus(lat, lon) {
     });
 
     try {
-        const resp = await fetch(EPA_URL + '?' + params.toString(), { signal: AbortSignal.timeout(8000) });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        const features = data.features || [];
-        if (!features.length) return null;
+        // EPA's query endpoint is intermittently flaky ("Failed to execute query" /
+        // transient empty responses). Retry a few times with backoff before giving up.
+        let features = null;
+        for (let attempt = 0; attempt < 3 && !features; attempt++) {
+            try {
+                const resp = await fetch(EPA_URL + '?' + params.toString(), { signal: AbortSignal.timeout(8000) });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const feats = data.features || [];
+                    if (feats.length) features = feats;
+                }
+            } catch (e) { /* retry */ }
+            if (!features && attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+        }
+        if (!features) return null;
 
         // Pick closest reach by center-point distance
         let best = null;

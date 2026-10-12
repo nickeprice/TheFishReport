@@ -147,6 +147,9 @@ export function hydraulicVelocity(flow, siteId) {
     const meanEstimate = 0.25 * Math.pow(Math.max(flow, 1), 0.4);      // ft/s power-law estimate
     const bottomEstimate = meanEstimate * Math.pow(0.05, 1 / 6);       // ft/s at bed
     const out = { mean: meanEstimate, bottom: bottomEstimate, source: 'estimate' };
+    // The station id ALWAYS rides along (measured OR estimate), so the sim's
+    // downstream spot lookups (spotWidthRatio, spotDepthFt) never lose the site.
+    if (siteId != null && siteId !== '') out.station = String(siteId);
 
     const here = measuredVelocity(siteId, flow);
     const fit = measuredFit(siteId);

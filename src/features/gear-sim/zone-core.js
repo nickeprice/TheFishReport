@@ -11,6 +11,8 @@ import { provVal } from '../../shared/format.js';
 import { getWaterTempF, lightTerm, tideTerm, turbidityTerm, refHourBlock } from './zone-env.js';
 import { BASE_ZONE_MIN, BASE_ZONE_MAX, thermalOptimum, getActiveStationId } from './inputs.js';
 import { velocityAtSpot, spotDepthFt, SAME_REACH_UNCERTAINTY } from './continuity.js';
+import { driftDepth } from './drift-model.js';
+import { State } from '../../shared/state.js';
 export function computeStrikeZone(sonar) {
     const zone = { min: BASE_ZONE_MIN, max: BASE_ZONE_MAX, shift: 0, sonarShift: 0, notes: [], report: null, sonar: null };
     const rep = getActiveReport();
@@ -112,11 +114,48 @@ export function positionParts(zone, hgt) {
     const near = velocityAtSpot(flow, siteId);
     const mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
     const out = { depth: null, lie: null, liePlain: null, line: null, linePlain: null, depthParts: null, bed: null, unc: null };
-    if (spot && spot.value > 0 && mid !== null) {
-        const band = depthBandText(spot);
-        out.unc = spot.uncertainty || SAME_REACH_UNCERTAINTY;
-        out.depthParts = { midIn: mid, ft: spot.value, band: band, bandLow: spot.bandLow, bandHigh: spot.bandHigh, spreadPct: spot.spreadPct, pct: Math.round(out.unc * 100), flow: flow };
-        out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + spot.value.toFixed(1) + ' ft of water (gauge measurements ' + band + ', \u00b1' + out.depthParts.pct + '%)';
+
+    // Depth source: USGS field rows when the gauge has them; otherwise the drift
+    // model's DEM-width Manning / continuity estimate for THIS spot (honest: it is
+    // labeled by source, never a fabricated placeholder).
+    let depthFt = null, depthBand = null, depthUnc = null, depthSrc = null, depthNote = null;
+    if (spot && spot.value > 0) {
+        depthFt = spot.value;
+        depthBand = depthBandText(spot);
+        depthUnc = spot.uncertainty || SAME_REACH_UNCERTAINTY;
+        depthSrc = 'gauge';
+    } else if (mid !== null) {
+        let lat = null, lon = null;
+        try {
+            const a = JSON.parse(localStorage.getItem('active_station') || 'null');
+            if (a && a.lat != null && a.lon != null) { lat = Number(a.lat); lon = Number(a.lon); }
+        } catch (e) { }
+        const nhd = (State.nhdData && State.nhdData.slope > 0) ? State.nhdData : null;
+        const dd = driftDepth(flow, siteId, lat, lon, nhd);
+        if (dd && dd.valueFt > 0) {
+            depthFt = dd.valueFt;
+            depthUnc = dd.uncertainty || 0.30;
+            depthSrc = dd.source === 'manning' ? 'manning'
+                : (dd.source === 'continuity_estimate' ? 'continuity' : 'estimate');
+            depthNote = dd.note || null;
+        }
+    }
+
+    if (depthFt && mid !== null) {
+        out.unc = depthUnc;
+        const pct = Math.round(out.unc * 100);
+        out.depthParts = { midIn: mid, ft: depthFt, band: depthBand, bandLow: null, bandHigh: null, spreadPct: null, pct: pct, flow: flow };
+        if (depthSrc === 'gauge') {
+            out.depthParts.bandLow = spot.bandLow;
+            out.depthParts.bandHigh = spot.bandHigh;
+            out.depthParts.spreadPct = spot.spreadPct;
+            out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + depthFt.toFixed(1) + ' ft of water (gauge measurements ' + depthBand + ', \u00b1' + pct + '%)';
+        } else {
+            const label = depthSrc === 'manning'
+                ? ((depthNote && depthNote.indexOf('DEM thalweg') >= 0) ? 'DEM width + DEM thalweg slope, Manning' : 'DEM width + NHDPlus slope, Manning')
+                : (depthSrc === 'continuity' ? 'DEM width + NHDPlus velocity' : 'drift estimate');
+            out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + depthFt.toFixed(1) + ' ft of water (' + label + ', \u00b1' + pct + '%)';
+        }
     } else { out.depth = 'no measured cross-section at this gauge, so no spot depth'; }
     if (near && typeof near.bottom === 'number') {
         out.bed = near.bottom;

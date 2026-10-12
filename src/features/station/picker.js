@@ -10,6 +10,7 @@ import { loadWaterReport } from '../telemetry/report.js';
 import { loadFavoriteSpots } from '../map/spots.js';
 import { State } from '../../shared/state.js';
 import { escapeHtml, escapeJsString } from '../../shared/format.js';
+import { fetchNhdPlus } from '../../services/nhdplus.js';
 // --- STATION SELECTOR MODAL & GPS FUNCTIONS ---
 export function openStationModal() {
     document.getElementById('station-modal').style.display = 'block';
@@ -154,6 +155,9 @@ export function selectPreset(id, lat, lon, name, isGps) {
     localStorage.setItem('active_station', JSON.stringify(station));
     logDebug("Selected Station: " + name + " (" + id + ")", "STATE");
     closeStationModal();
+    // Fetch NHDPlus reach (slope/velocity) for THIS station's coordinates so the
+    // drift model's Manning depth tier has data for the spot (fire-and-forget).
+    if (lat != null && lon != null) { try { fetchNhdPlus(Number(lat), Number(lon)); } catch (e) { } }
     loadWaterReport();
 }
 

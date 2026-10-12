@@ -1,10 +1,10 @@
 <a id="data-lane-profile"></a>
-## Phase Φ: Per-transect depth profile + bearing data
+## Phase 1: Per-transect depth profile + bearing data
 
 **Goal:** Extend the measurement pipeline so every one of the 90,873
 cross-sections retains its lateral bank-to-bank depth **shape** and transect
 **orientation** — not just the summarized `wetted_ft / bankfull_ft / thalweg_m`.
-This is the data layer the lane-aware sim (Phase Ω) reads from. The shape data
+This is the data layer the lane-aware sim (Phase 2) reads from. The shape data
 already exists inside `width_elevation.py`; today we throw it away.
 
 **Data source:** 3DEP DEM (AWS Terrain Tiles / terrarium z15) — tiles already
@@ -44,7 +44,7 @@ its 5 bins; confirm the deepest strip's `max_ft` reproduces the raw DEM profile.
 
 ---
 <a id="drift-lane-model"></a>
-## Phase Ω: Compass/GPS → lane fraction → lane depth in the sim
+## Phase 2: Compass/GPS → lane fraction → lane depth in the sim
 
 **Goal:** From the phone, decide which **lane** of the cross-section the angler
 is fishing, convert that lane's depth to `H` for the physics (replacing the
@@ -54,7 +54,7 @@ bank-based assumption.
 **Orientation chain:**
 ```
 1. getCompassHeading()             → phone magnetic facing
-2. profile.bearing_deg             → transect orientation from Phase Φ
+2. profile.bearing_deg             → transect orientation from Phase 1
 3. GPS projection onto line        → perp distance from angler lat/lon to
                                      l_bank→r_bank line
 4. laneFrac = proj / total_width   → 0.0 left bank … 1.0 right bank
@@ -94,7 +94,7 @@ hgt   = (F/w) · asinh(w · L / F)        → catenary rise (inches off bottom)
 
 
 <a id="sim-lane-validate"></a>
-## Phase Ψ: Validation
+## Phase 3: Validation
 
 **Goal:** Prove the lane depth changes the physics the expected way, and every
 fallback stays honest — the same rigor as the depth-blend verification.

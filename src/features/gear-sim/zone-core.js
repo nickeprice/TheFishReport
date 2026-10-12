@@ -136,7 +136,7 @@ export function positionParts(zone, hgt) {
             const names = [];
             let manningPart = null;
             for (const p of depthPartsList) {
-                if (p.source === 'measured') names.push('USGS field rows');
+                if (p.source === 'measured') names.push('USGS gauge rows scaled to this spot (width-ratio)');
                 else if (p.source === 'manning') { manningPart = p; names.push('Manning (blended width + slope)'); }
                 else if (p.source === 'continuity_estimate') names.push('NHDPlus velocity');
                 else names.push(p.source);

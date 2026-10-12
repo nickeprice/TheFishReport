@@ -51,7 +51,8 @@ export function driftDepth(flow, siteId, lat, lon, nhdData) {
             ft: spotDepth.value,
             source: 'measured',
             uncertainty: spotDepth.uncertainty || 0.10,
-            note: 'USGS field measurement (rows near ' + Q + ' cfs)',
+            note: 'USGS gauge rows scaled to this spot via width ratio ' +
+                  '(D_gauge · (w_gauge/w_spot)^0.6, rows near ' + Q + ' cfs)',
             bandLow: spotDepth.bandLow,
             bandHigh: spotDepth.bandHigh
         });

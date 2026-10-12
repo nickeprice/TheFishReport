@@ -24,33 +24,42 @@ const M_TO_FT = 1 / FT_TO_M;
 // ── Manning depth fallback ────────────────────────────────────────────────────
 
 /**
- * Estimate depth at the angler's spot using Manning's equation.
- * Falls back through 3 tiers: measured spot depth → Manning → continuity → null.
+ * Depth estimate at the angler's spot — an inverse-variance BLEND of every
+ * source that is available, mirroring blendedWidthFt:
+ *   measured USGS rows (D = A/W), Manning via blended width + measured slope,
+ *   and NHDPlus continuity (Q/(w·v)). Each source is weighed by 1/σ² so a
+ * measured row dominates and every other estimate — however weak — still
+ * nudges the result. Honest: every source is labeled, nothing is invented.
  *
  * @param {number} flow — discharge in cfs (use getCurrentFlow())
  * @param {string} siteId — USGS gauge site ID
  * @param {number} lat — latitude of the angler's spot
  * @param {number} lon — longitude of the angler's spot
  * @param {object|null} nhdData — NHDPlus reach data (State.nhdData)
- * @returns {{ valueFt: number|null, source: string|null, uncertainty: number|null, note: string }}
+ * @returns {{ valueFt: number|null, source: string|null, uncertainty: number|null,
+ *             note: string, parts: Array, bandLow: number|null, bandHigh: number|null }}
  */
 export function driftDepth(flow, siteId, lat, lon, nhdData) {
-    // Tier 1: measured spot depth from USGS field data
+    const Q = (flow && flow > 0) ? flow : 1040;  // reference fallback
+    const parts = [];
+
+    // Source A: measured spot depth from USGS field rows (D = A/W near this flow)
     const spotDepth = (typeof spotDepthFt === 'function')
         ? spotDepthFt(flow, siteId) : null;
     if (spotDepth && spotDepth.value && spotDepth.value > 0 && spotDepth.source === 'measured') {
-        return {
-            valueFt: spotDepth.value,
+        parts.push({
+            ft: spotDepth.value,
             source: 'measured',
-            uncertainty: 0.10,
-            note: 'USGS field measurement'
-        };
+            uncertainty: spotDepth.uncertainty || 0.10,
+            note: 'USGS field measurement (rows near ' + Q + ' cfs)',
+            bandLow: spotDepth.bandLow,
+            bandHigh: spotDepth.bandHigh
+        });
     }
 
-    const Q = (flow && flow > 0) ? flow : 1040;  // reference fallback
-
-    // Tier 2: Manning equation  d_ft = ( n * Q / ( w * sqrt(S) ) )^(3/5)
-    // Uses blended width (SPOT_WIDTHS → RIVER_WIDTHS → drainage area)
+    // Source B: Manning equation  d_ft = ( n * Q / ( w * sqrt(S) ) )^(3/5)
+    // Uses the BLENDED width (SPOT_WIDTHS → RIVER_WIDTHS → drainage area) and a
+    // measured slope: NHDPlus when reach data is loaded, else DEM thalweg.
     const blend = (typeof blendedWidthFt === 'function')
         ? blendedWidthFt(lat, lon, siteId) : null;
     const wettedFt = (blend && blend.widthFt > 0) ? blend.widthFt : null;
@@ -63,16 +72,16 @@ export function driftDepth(flow, siteId, lat, lon, nhdData) {
     if (wettedFt && slopeM && slopeM > 0) {
         const dFt = Math.pow(MANNING_N * Q / (wettedFt * Math.sqrt(slopeM)), 3.0 / 5.0);
         if (dFt > 0 && isFinite(dFt)) {
-            return {
-                valueFt: Math.round(dFt * 10) / 10,
+            parts.push({
+                ft: Math.round(dFt * 10) / 10,
                 source: 'manning',
                 uncertainty: (blend && blend.sigma) ? blend.sigma : 0.30,
                 note: 'Manning via blended width + ' + slopeLabel + ' slope'
-            };
+            });
         }
     }
 
-    // Tier 3: continuity estimate  d_ft = Q / ( w * va_MM * 0.3048 * 3600 )
+    // Source C: continuity estimate  d_ft = Q / ( w * va * 0.3048 * 3600 )
     if (wettedFt && nhdData) {
         const vaKeys = ['va_MA', 'va_' + String(new Date().getMonth() + 1).padStart(2, '0')];
         let va = null;
@@ -82,22 +91,48 @@ export function driftDepth(flow, siteId, lat, lon, nhdData) {
         if (va && va > 0) {
             const dFt = Q / (wettedFt * va * FT_TO_M * SECONDS_PER_HOUR);
             if (dFt > 0 && isFinite(dFt)) {
-                return {
-                    valueFt: dFt,
+                parts.push({
+                    ft: dFt,
                     source: 'continuity_estimate',
                     uncertainty: 0.40,
                     note: 'Q / (w * va) via NHDPlus mean monthly velocity'
-                };
+                });
             }
         }
     }
 
-    // All fallbacks exhausted
+    if (!parts.length) {
+        return {
+            valueFt: null, source: null, uncertainty: null,
+            note: 'no depth data — no measured cross-section, width, or slope',
+            parts: [], bandLow: null, bandHigh: null
+        };
+    }
+
+    // Inverse-variance blend of every available source (same philosophy as
+    // blendedWidthFt): weight = 1/σ², so the measured rows dominate and each
+    // weaker estimate still pulls the number — never a pick-one fallback.
+    let num = 0, den = 0, low = null, high = null;
+    for (const p of parts) {
+        const sig = (p.uncertainty && p.uncertainty > 0) ? p.uncertainty : 0.30;
+        const w = 1 / (sig * sig);
+        num += p.ft * w;
+        den += w;
+        if (p.source === 'measured') { low = p.bandLow || low; high = p.bandHigh || high; }
+    }
+    const blended = num / den;
+    const sigma = 1 / Math.sqrt(den);
+
     return {
-        valueFt: null,
-        source: null,
-        uncertainty: null,
-        note: 'no depth data — NHDPlus or spot width unavailable'
+        valueFt: Math.round(blended * 10) / 10,
+        source: parts.length > 1 ? 'blended' : parts[0].source,
+        uncertainty: sigma,
+        note: parts.length > 1
+            ? 'inverse-variance blend of ' + parts.length + ' sources'
+            : parts[0].note,
+        parts: parts,
+        bandLow: low,
+        bandHigh: high
     };
 }
 

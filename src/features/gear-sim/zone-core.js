@@ -115,16 +115,12 @@ export function positionParts(zone, hgt) {
     const mid = (zone && isFinite(zone.min) && isFinite(zone.max)) ? (zone.min + zone.max) / 2 : null;
     const out = { depth: null, lie: null, liePlain: null, line: null, linePlain: null, depthParts: null, bed: null, unc: null };
 
-    // Depth source: USGS field rows when the gauge has them; otherwise the drift
-    // model's DEM-width Manning / continuity estimate for THIS spot (honest: it is
-    // labeled by source, never a fabricated placeholder).
-    let depthFt = null, depthBand = null, depthUnc = null, depthSrc = null, depthNote = null;
-    if (spot && spot.value > 0) {
-        depthFt = spot.value;
-        depthBand = depthBandText(spot);
-        depthUnc = spot.uncertainty || SAME_REACH_UNCERTAINTY;
-        depthSrc = 'gauge';
-    } else if (mid !== null) {
+    // Depth: the drift model's inverse-variance BLEND of every source available
+    // for THIS spot — USGS field rows, Manning via blended width + measured slope
+    // (NHDPlus or DEM thalweg), and NHDPlus continuity. Every source is labeled,
+    // nothing is fabricated.
+    let depthFt = null, depthBand = null, depthUnc = null, depthLabel = null, depthPartsList = null;
+    if (mid !== null) {
         let lat = null, lon = null;
         try {
             const a = JSON.parse(localStorage.getItem('active_station') || 'null');
@@ -135,9 +131,28 @@ export function positionParts(zone, hgt) {
         if (dd && dd.valueFt > 0) {
             depthFt = dd.valueFt;
             depthUnc = dd.uncertainty || 0.30;
-            depthSrc = dd.source === 'manning' ? 'manning'
-                : (dd.source === 'continuity_estimate' ? 'continuity' : 'estimate');
-            depthNote = dd.note || null;
+            depthPartsList = dd.parts || [];
+            // Build a source label from every contributing part.
+            const names = [];
+            let manningPart = null;
+            for (const p of depthPartsList) {
+                if (p.source === 'measured') names.push('USGS field rows');
+                else if (p.source === 'manning') { manningPart = p; names.push('Manning (blended width + slope)'); }
+                else if (p.source === 'continuity_estimate') names.push('NHDPlus velocity');
+                else names.push(p.source);
+            }
+            if (manningPart && manningPart.note && manningPart.note.indexOf('DEM thalweg') >= 0) {
+                const idx = names.indexOf('Manning (blended width + slope)');
+                if (idx >= 0) names[idx] = 'Manning (blended width + DEM thalweg slope)';
+            }
+            depthLabel = depthPartsList.length > 1
+                ? 'blend of ' + names.join(' + ')
+                : names[0] || 'depth estimate';
+            const measured = (dd.bandLow > 0 && dd.bandHigh > 0) ? dd : null;
+            if (measured) {
+                depthBand = depthBandText({ value: dd.valueFt, bandLow: dd.bandLow, bandHigh: dd.bandHigh });
+                out.depthPartsBand = depthBand;
+            }
         }
     }
 
@@ -145,17 +160,12 @@ export function positionParts(zone, hgt) {
         out.unc = depthUnc;
         const pct = Math.round(out.unc * 100);
         out.depthParts = { midIn: mid, ft: depthFt, band: depthBand, bandLow: null, bandHigh: null, spreadPct: null, pct: pct, flow: flow };
-        if (depthSrc === 'gauge') {
+        if (depthBand && spot && spot.bandLow > 0) {
             out.depthParts.bandLow = spot.bandLow;
             out.depthParts.bandHigh = spot.bandHigh;
             out.depthParts.spreadPct = spot.spreadPct;
-            out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + depthFt.toFixed(1) + ' ft of water (gauge measurements ' + depthBand + ', \u00b1' + pct + '%)';
-        } else {
-            const label = depthSrc === 'manning'
-                ? ((depthNote && depthNote.indexOf('DEM thalweg') >= 0) ? 'DEM width + DEM thalweg slope, Manning' : 'DEM width + NHDPlus slope, Manning')
-                : (depthSrc === 'continuity' ? 'DEM width + NHDPlus velocity' : 'drift estimate');
-            out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + depthFt.toFixed(1) + ' ft of water (' + label + ', \u00b1' + pct + '%)';
         }
+        out.depth = 'hold ~' + mid.toFixed(1) + '" up in ~' + depthFt.toFixed(1) + ' ft of water (' + depthLabel + ', \u00b1' + pct + '%)';
     } else { out.depth = 'no measured cross-section at this gauge, so no spot depth'; }
     if (near && typeof near.bottom === 'number') {
         out.bed = near.bottom;

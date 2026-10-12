@@ -311,10 +311,12 @@ def render_js(rivers_data):
         for i, p in enumerate(pts):
             comma = "," if i < len(pts) - 1 else ""
             tm = str(p["thalweg_m"]) if p["thalweg_m"] is not None else "null"
+            wf = "null" if p["wetted_ft"] is None else p["wetted_ft"]
+            bf = "null" if p["bankfull_ft"] is None else p["bankfull_ft"]
             lines.append(
                 f'            {{"lat":{p["lat"]}, "lon":{p["lon"]}, '
-                f'"cum_m":{p["cum_m"]}, "wetted_ft":{p["wetted_ft"]}, '
-                f'"bankfull_ft":{p["bankfull_ft"]}, '
+                f'"cum_m":{p["cum_m"]}, "wetted_ft":{wf}, '
+                f'"bankfull_ft":{bf}, '
                 f'"thalweg_m":{tm}, '
                 f'"truncated":{"true" if p["truncated"] else "false"}}}{comma}'
             )

@@ -245,7 +245,7 @@ def render_widths_js(rows):
         r = rows[sid]
         lines.append('    "%s": {' % sid)
         lines.append('        "name": %s,' % json.dumps(r["name"]))
-        lines.append('        "width_ft": %s,' % r["width_ft"])
+        lines.append('        "width_ft": %s,' % ("null" if r["width_ft"] is None else "%.1f" % r["width_ft"]))
         lines.append('        "method": "%s", "validated": %s,' % (
             r["method"], "true" if r["validated"] else "false"))
         lines.append('        "usgs_ft": %s, "naip_ft": %s, "elevation_ft": %s,' % (

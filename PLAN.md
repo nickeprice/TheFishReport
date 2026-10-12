@@ -20,6 +20,6 @@
       → continuity.js, drift-model.js, drift.js
       [Detail → docs/PLAN_REFERENCE.md#data-chain-fix]
 
-- [x] Phase 2: Run spot_widths for all 15 rivers — 1,156 DEM cross-sections at 100m
-      → run_spot_widths.py (batch, retry, merge), spot_widths.js (gen)
+- [x] Phase 2: Run spot_widths for all 15 rivers — 90,873 DEM cross-sections at 100m
+      → HydroRIVERS (primary) + Overpass (secondary), merged to spot_widths.js
       [Detail → docs/PLAN_REFERENCE.md#data-expand-all]

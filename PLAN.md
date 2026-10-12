@@ -1,25 +1,15 @@
 # Fish Report — Active Plan
 
-## 🔬 Physics Refinement — Drag & Substrate
+## 🪄 Lane-Aware Depth (phone GPS + compass → cross-section lane)
 
-- [x] Phase A: FAO/FAO-equivalent drag coefficients for monofilament
-      → physics.js
-      [Detail → docs/PLAN_REFERENCE.md#physics-drag-coefficients]
+- [ ] Phase Φ: Retain bank-to-bank depth profile + transect bearing per cross-section
+      → width_elevation.py, measure_hydro_widths.py, data/hydro_profiles.json, api/spot-geometry.py
+      [Detail → docs/PLAN_REFERENCE.md#data-lane-profile]
 
-- [x] Phase B: HydroATLAS substrate → real bed roughness z₀
-      → extract_river_substrate.py (new), river_substrate.js (gen), continuity.js, drift-model.js
-      [Detail → docs/PLAN_REFERENCE.md#physics-substrate-z0]
+- [ ] Phase Ω: Compass/GPS → lane fraction → lane depth into driftEnv (bank-fallback if no compass)
+      → continuity.js, drift-model.js, drift.js, zone-core.js
+      [Detail → docs/PLAN_REFERENCE.md#drift-lane-model]
 
-## 🔗 Data Expansion (32 gauges / 15 rivers)
-
-- [x] Phase 0: Extraction scripts — river_substrate (15 rivers) + river_widths (33 gauges) generated
-      → precompute_spot_widths.py, extract_river_substrate.py, extract_river_widths.py
-      [Detail → docs/PLAN_REFERENCE.md#data-expand-all]
-
-- [x] Phase 1: Code — lat/lon blended width, spotWidthAt, drainageWidthFt, substrate z0 wired in
-      → continuity.js, drift-model.js, drift.js
-      [Detail → docs/PLAN_REFERENCE.md#data-chain-fix]
-
-- [x] Phase 2: Run spot_widths for all 15 rivers — 90,873 DEM cross-sections at 100m
-      → HydroRIVERS (primary) + Overpass (secondary), merged to spot_widths.js
-      [Detail → docs/PLAN_REFERENCE.md#data-expand-all]
+- [ ] Phase Ψ: Validate lane depth shifts hgt/drag/coverage + offline & compass-denied fallbacks
+      → sanity_pass.cjs, spot_widths.js
+      [Detail → docs/PLAN_REFERENCE.md#sim-lane-validate]
